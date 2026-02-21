@@ -1,0 +1,173 @@
+<div class="profitability-container" *ngIf="property && metrics">
+  <!-- Header -->
+  <div class="section-header">
+    <h3>
+      <i class="bi bi-graph-up-arrow me-2"></i>
+      Analyse Financière & Rentabilité
+    </h3>
+  </div>
+
+  <!-- Alerte si données manquantes -->
+  <div *ngIf="!metrics.hasAllData" class="alert alert-info mb-3">
+    <i class="bi bi-info-circle me-2"></i>
+    <span *ngIf="!metrics.hasPurchasePrice && !metrics.hasRentalData">
+      Ajoutez le prix d'achat et une location active pour voir les métriques de rentabilité
+    </span>
+    <span *ngIf="!metrics.hasPurchasePrice && metrics.hasRentalData">
+      Ajoutez le prix d'achat pour voir la rentabilité
+    </span>
+    <span *ngIf="metrics.hasPurchasePrice && !metrics.hasRentalData">
+      Ajoutez une location active pour voir la rentabilité
+    </span>
+  </div>
+
+  <!-- Charges et Taxes -->
+  <div class="metrics-section">
+    <h5 class="section-title">💰 Charges et Taxes (annuelles)</h5>
+    <div class="row g-3">
+      <div class="col-md-3 col-sm-6">
+        <div class="metric-card">
+          <div class="metric-label">Charges copropriété</div>
+          <div class="metric-value">{{ property.condoFees || 0 | number:'1.2-2' }} €<span class="metric-period">/mois</span></div>
+          <div class="metric-annual">{{ (property.condoFees || 0) * 12 | number:'1.2-2' }} € /an</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="metric-card">
+          <div class="metric-label">Taxe foncière</div>
+          <div class="metric-value">{{ property.propertyTax || 0 | number:'1.2-2' }} €</div>
+          <div class="metric-annual">/an</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="metric-card">
+          <div class="metric-label">Taxe CFE</div>
+          <div class="metric-value">{{ property.businessTax || 0 | number:'1.2-2' }} €</div>
+          <div class="metric-annual">/an</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="metric-card">
+          <div class="metric-label">Assurance habitation</div>
+          <div class="metric-value">{{ property.homeInsurance || 0 | number:'1.2-2' }} €</div>
+          <div class="metric-annual">/an</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-2">
+      <div class="col-md-6">
+        <div class="metric-card highlight">
+          <div class="metric-label">Total charges annuelles</div>
+          <div class="metric-value large text-danger">{{ metrics.annualCharges | number:'1.2-2' }} €</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="metric-card highlight">
+          <div class="metric-label">Prix d'achat</div>
+          <div class="metric-value large text-primary">{{ property.purchasePrice || 0 | number:'1.2-2' }} €</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenus et Rentabilité -->
+  <div class="metrics-section" *ngIf="metrics.hasRentalData">
+    <h5 class="section-title">📊 Revenus et Rentabilité</h5>
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-label">Loyer mensuel</div>
+          <div class="metric-value text-success">{{ metrics.monthlyRent | number:'1.2-2' }} €</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-label">Revenus annuels</div>
+          <div class="metric-value text-success">{{ metrics.annualIncome | number:'1.2-2' }} €</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="metric-card">
+          <div class="metric-label">Revenu net annuel</div>
+          <div class="metric-value" [ngClass]="getCashFlowColor(metrics.netAnnualIncome)">
+            {{ metrics.netAnnualIncome | number:'1.2-2' }} €
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rentabilité -->
+    <div class="row g-3 mt-2" *ngIf="metrics.hasPurchasePrice">
+      <div class="col-md-6">
+        <div class="metric-card yield-card">
+          <div class="metric-label">
+            <i class="bi bi-percent me-1"></i>
+            Rentabilité Brute
+          </div>
+          <div class="metric-value yield-value" [ngClass]="getYieldColor(metrics.grossYield)">
+            {{ metrics.grossYield | number:'1.2-2' }}%
+          </div>
+          <div class="metric-description">Revenus / Prix d'achat</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="metric-card yield-card">
+          <div class="metric-label">
+            <i class="bi bi-percent me-1"></i>
+            Rentabilité Nette
+          </div>
+          <div class="metric-value yield-value" [ngClass]="getYieldColor(metrics.netYield)">
+            {{ metrics.netYield | number:'1.2-2' }}%
+          </div>
+          <div class="metric-description">(Revenus - Charges) / Prix d'achat</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash-flow -->
+    <div class="row g-3 mt-2">
+      <div class="col-12">
+        <div class="metric-card cashflow-card">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <div class="metric-label">
+                <i class="bi bi-cash-coin me-1"></i>
+                Cash-flow mensuel
+              </div>
+              <div class="metric-value" [ngClass]="getCashFlowColor(metrics.monthlyCashFlow)">
+                {{ metrics.monthlyCashFlow | number:'1.2-2' }} €
+              </div>
+            </div>
+            <div class="col-md-6 text-end">
+              <div class="metric-label">Cash-flow annuel</div>
+              <div class="metric-value" [ngClass]="getCashFlowColor(metrics.annualCashFlow)">
+                {{ metrics.annualCashFlow | number:'1.2-2' }} €
+              </div>
+            </div>
+          </div>
+          <div class="progress mt-2" style="height: 8px;">
+            <div
+              class="progress-bar"
+              [ngClass]="metrics.monthlyCashFlow > 0 ? 'bg-success' : 'bg-danger'"
+              [style.width.%]="100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Légende -->
+  <div class="legend mt-3">
+    <small class="text-muted">
+      <i class="bi bi-info-circle me-1"></i>
+      <strong>Rentabilité brute :</strong> Revenus locatifs annuels / Prix d'achat × 100<br>
+      <strong>Rentabilité nette :</strong> (Revenus - Charges annuelles) / Prix d'achat × 100<br>
+      <strong>Cash-flow :</strong> Loyer - Charges mensuelles<br>
+      <span class="text-success">■</span> Excellent (≥5%)
+      <span class="text-warning">■</span> Moyen (3-5%)
+      <span class="text-danger">■</span> Faible (<3%)
+    </small>
+  </div>
+</div>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <include file="db/changelog/001-create-users-table.xml"/>
+    <include file="db/changelog/002-create-properties-table.xml"/>
+    <include file="db/changelog/003-create-rentals-table.xml"/>
+    <include file="db/changelog/004-create-contracts-table.xml"/>
+    <include file="db/changelog/005-create-documents-table.xml"/>
+    <include file="db/changelog/006-create-signatures-table.xml"/>
+    <include file="db/changelog/007-create-payments-table.xml"/>
+    <include file="db/changelog/008-create-invoices-receipts-tables.xml"/>
+    <include file="db/changelog/009-create-expenses-table.xml"/>
+    <include file="db/changelog/010-create-listings-table.xml"/>
+    <include file="db/changelog/011-create-audit-logs-table.xml"/>
+    <include file="db/changelog/012-create-contract-templates-table.xml"/>
+    <include file="db/changelog/013-insert-default-contract-templates.xml"/>
+    <include file="db/changelog/014-add-document-improvements.xml"/>
+    <include file="db/changelog/015-add-missing-document-columns.xml"/>
+    <include file="db/changelog/016-create-property-photos-table.xml"/>
+    <include file="db/changelog/018-make-photo-url-nullable.xml"/>
+    <include file="db/changelog/019-make-document-url-nullable.xml"/>
+    <include file="db/changelog/020-add-file-key-to-contract-versions.xml"/>
+    <include file="db/changelog/021-create-contract-signature-requests-table.xml"/>
+    <include file="db/changelog/022-add-signature-provider-to-contracts.xml"/>
+    <include file="db/changelog/023-increase-country-column-size.xml"/>
+    <include file="db/changelog/024-add-property-financial-fields.xml"/>
+    <include file="db/changelog/025-add-property-technical-fields.xml"/>
+    <include file="db/changelog/026-create-tenant-ratings-table.xml"/>
+    <include file="db/changelog/027-insert-test-users.xml"/>
+    <include file="db/changelog/028-add-missing-contract-columns.xml"/>
+    <include file="db/changelog/029-add-created-by-to-expenses.xml"/>
+    <include file="db/changelog/030-create-user-consents-table.xml"/>
+    <include file="db/changelog/031-add-anonymized-at-to-users.xml"/>
+    <include file="db/changelog/032-create-contract-amendments-table.xml"/>
+    <include file="db/changelog/033-create-etat-des-lieux-table.xml"/>
+    <include file="db/changelog/034-add-signature-reminder-fields.xml"/>
+    <include file="db/changelog/035-create-applications-table.xml"/>
+    <include file="db/changelog/036-create-messages-table.xml"/>
+    <include file="db/changelog/037-add-listing-amenities.xml"/>
+    <include file="db/changelog/038-add-document-archiving-fields.xml"/>
+    <include file="db/changelog/039-create-encryption-keys-table.xml"/>
+    <include file="db/changelog/040-create-subscription-plans-table.xml"/>
+    <include file="db/changelog/041-create-user-subscriptions-table.xml"/>
+    <include file="db/changelog/042-create-usage-tracking-table.xml"/>
+    <include file="db/changelog/043-insert-default-plans.xml"/>
+    <include file="db/changelog/044-add-application-id-to-documents.xml"/>
+    <include file="db/changelog/045-add-department-to-properties.xml"/>
+    <include file="db/changelog/046-create-tenant-search-profiles-table.xml"/>
+    <include file="db/changelog/047-create-tenant-invitations-table.xml"/>
+    <include file="db/changelog/048-enhance-listing-photos-table.xml"/>
+
+</databaseChangeLog>

@@ -1,0 +1,93 @@
+<div class="photo-upload-container">
+  <div class="upload-header">
+    <h3>Ajouter des photos</h3>
+    <span class="photo-counter">{{ currentPhotoCount }}/{{ MAX_PHOTOS }}</span>
+  </div>
+
+  <div
+    class="drop-zone"
+    [class.drag-over]="dragOver"
+    [class.disabled]="!canUpload"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+    (click)="fileInput.click()"
+  >
+    <div class="drop-zone-content">
+      <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
+      <p *ngIf="canUpload">
+        <strong>Glissez-deposez des images ici</strong> ou cliquez pour selectionner
+      </p>
+      <p *ngIf="!canUpload" class="limit-reached">
+        Limite de {{ MAX_PHOTOS }} photos atteinte
+      </p>
+      <small *ngIf="canUpload">JPEG, PNG, WebP - Max 10MB par fichier</small>
+    </div>
+    <input
+      #fileInput
+      type="file"
+      multiple
+      accept="image/jpeg,image/png,image/webp"
+      (change)="onFileSelected($event)"
+      style="display: none"
+      [disabled]="!canUpload"
+    />
+  </div>
+
+  <div class="error-message" *ngIf="error">
+    {{ error }}
+  </div>
+
+  <div class="preview-grid" *ngIf="selectedFiles.length > 0">
+    <div class="preview-item" *ngFor="let filePreview of selectedFiles; let i = index">
+      <div class="preview-image-container">
+        <img [src]="filePreview.preview" [alt]="filePreview.file.name" />
+        <button
+          type="button"
+          class="remove-btn"
+          (click)="removeFile(i)"
+          [disabled]="filePreview.uploading"
+        >
+          &times;
+        </button>
+        <div class="uploading-overlay" *ngIf="filePreview.uploading">
+          <div class="spinner-border text-light" role="status"></div>
+        </div>
+      </div>
+      <div class="preview-details">
+        <input
+          type="text"
+          class="caption-input"
+          placeholder="Legende (optionnel)"
+          [(ngModel)]="filePreview.caption"
+          [disabled]="filePreview.uploading"
+        />
+        <small class="file-info">
+          {{ filePreview.file.name }} - {{ getFileSize(filePreview.file) }}
+        </small>
+        <small class="error-text" *ngIf="filePreview.error">
+          {{ filePreview.error }}
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <div class="upload-actions" *ngIf="selectedFiles.length > 0">
+    <button type="button" class="btn btn-secondary" (click)="clearAll()">
+      Annuler
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="uploadAll()"
+      [disabled]="hasUploadingFiles"
+    >
+      <span *ngIf="!hasUploadingFiles">
+        Telecharger {{ selectedFiles.length }} photo(s)
+      </span>
+      <span *ngIf="hasUploadingFiles">
+        Telechargement en cours...
+      </span>
+    </button>
+  </div>
+</div>

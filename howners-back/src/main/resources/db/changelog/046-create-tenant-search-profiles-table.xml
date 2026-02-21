@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="046-create-tenant-search-profiles-table" author="howners">
+        <createTable tableName="tenant_search_profiles">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="UUID">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_tenant_search_profiles_tenant"
+                             foreignKeyName="fk_tenant_search_profiles_tenant" references="users(id)"/>
+            </column>
+            <column name="desired_city" type="VARCHAR(255)"/>
+            <column name="desired_department" type="VARCHAR(10)"/>
+            <column name="desired_postal_code" type="VARCHAR(10)"/>
+            <column name="budget_min" type="DECIMAL(10,2)"/>
+            <column name="budget_max" type="DECIMAL(10,2)"/>
+            <column name="desired_property_type" type="VARCHAR(30)"/>
+            <column name="min_surface" type="DECIMAL(10,2)"/>
+            <column name="min_bedrooms" type="INT"/>
+            <column name="furnished_preference" type="VARCHAR(20)" defaultValue="NO_PREFERENCE"/>
+            <column name="desired_move_in" type="DATE"/>
+            <column name="description" type="TEXT"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_tenant_search_profiles_tenant" tableName="tenant_search_profiles">
+            <column name="tenant_id"/>
+        </createIndex>
+        <createIndex indexName="idx_tenant_search_profiles_city" tableName="tenant_search_profiles">
+            <column name="desired_city"/>
+        </createIndex>
+        <createIndex indexName="idx_tenant_search_profiles_department" tableName="tenant_search_profiles">
+            <column name="desired_department"/>
+        </createIndex>
+        <createIndex indexName="idx_tenant_search_profiles_active" tableName="tenant_search_profiles">
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

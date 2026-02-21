@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="022-1" author="howners">
+        <comment>Add signature_provider column to contracts table</comment>
+
+        <addColumn tableName="contracts">
+            <column name="signature_provider" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="022-2" author="howners">
+        <comment>Add comment to signature_provider column</comment>
+        <sql>
+            COMMENT ON COLUMN contracts.signature_provider IS 'Electronic signature provider used (DOCUSIGN, HELLOSIGN, etc.)';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

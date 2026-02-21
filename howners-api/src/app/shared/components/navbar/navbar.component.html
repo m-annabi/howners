@@ -1,0 +1,159 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand" routerLink="/">
+      <i class="bi bi-house-door-fill"></i>
+      Howners
+    </a>
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto" *ngIf="isAuthenticated">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+            <i class="bi bi-speedometer2"></i>
+            Tableau de bord
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/properties" routerLinkActive="active">
+            <i class="bi bi-building"></i>
+            Propriétés
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/rentals" routerLinkActive="active">
+            <i class="bi bi-key-fill"></i>
+            Locations
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            id="contractsDropdown"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="bi bi-file-earmark-text"></i>
+            Contrats
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="contractsDropdown">
+            <li><a class="dropdown-item" routerLink="/contracts"><i class="bi bi-file-earmark-text"></i> Mes Contrats</a></li>
+            <li><a class="dropdown-item" routerLink="/contracts/signatures"><i class="bi bi-pen"></i> Suivi signatures</a></li>
+            <li><a class="dropdown-item" routerLink="/templates"><i class="bi bi-file-earmark-ruled"></i> Templates</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/inventory" routerLinkActive="active">
+            <i class="bi bi-clipboard-check"></i>
+            États des lieux
+          </a>
+        </li>
+        <li class="nav-item dropdown" *ngIf="canViewFinances">
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            id="financesDropdown"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="bi bi-cash-stack"></i>
+            Finances
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="financesDropdown">
+            <li><a class="dropdown-item" routerLink="/payments"><i class="bi bi-credit-card"></i> Paiements</a></li>
+            <li><a class="dropdown-item" routerLink="/invoices"><i class="bi bi-receipt"></i> Factures</a></li>
+            <li><a class="dropdown-item" routerLink="/receipts"><i class="bi bi-file-earmark-check"></i> Quittances</a></li>
+            <li><a class="dropdown-item" routerLink="/expenses"><i class="bi bi-wallet2"></i> Dépenses</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" routerLink="/financial"><i class="bi bi-graph-up"></i> Tableau de bord</a></li>
+          </ul>
+        </li>
+        <li class="nav-item" *ngIf="canViewRatings">
+          <a class="nav-link" routerLink="/ratings" routerLinkActive="active">
+            <i class="bi bi-star"></i>
+            Évaluations
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            id="listingsDropdown"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="bi bi-megaphone"></i>
+            Annonces
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="listingsDropdown">
+            <li><a class="dropdown-item" routerLink="/listings"><i class="bi bi-search"></i> Rechercher</a></li>
+            <li *ngIf="canViewFinances"><a class="dropdown-item" routerLink="/listings/my"><i class="bi bi-megaphone"></i> Mes annonces</a></li>
+            <li *ngIf="canViewFinances"><a class="dropdown-item" routerLink="/applications/received"><i class="bi bi-people"></i> Candidatures reçues</a></li>
+            <li><a class="dropdown-item" routerLink="/applications"><i class="bi bi-send-check"></i> Mes candidatures</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/messages" routerLinkActive="active">
+            <i class="bi bi-chat-dots"></i>
+            Messages
+            <span *ngIf="unreadCount > 0" class="badge bg-danger rounded-pill ms-1">{{ unreadCount }}</span>
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="isAdmin">
+          <a class="nav-link" routerLink="/audit" routerLinkActive="active">
+            <i class="bi bi-journal-text"></i>
+            Audit
+          </a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown" *ngIf="isAuthenticated">
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            id="navbarDropdown"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="bi bi-person-circle"></i>
+            {{ userName || 'Utilisateur' }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" routerLink="/profile"><i class="bi bi-person"></i> Profil</a></li>
+            <li><a class="dropdown-item" routerLink="/billing"><i class="bi bi-credit-card-2-front"></i> Mon abonnement</a></li>
+            <li><a class="dropdown-item" routerLink="/billing/pricing"><i class="bi bi-gem"></i> Tarifs & Plans</a></li>
+            <li><a class="dropdown-item" routerLink="/profile/rgpd"><i class="bi bi-shield-check"></i> Confidentialité & RGPD</a></li>
+            <li><a class="dropdown-item" routerLink="/settings"><i class="bi bi-gear"></i> Paramètres</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" (click)="logout()" style="cursor: pointer;"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item" *ngIf="!isAuthenticated">
+          <a class="nav-link" routerLink="/auth/login">
+            <i class="bi bi-box-arrow-in-right"></i>
+            Connexion
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="!isAuthenticated">
+          <a class="nav-link" routerLink="/auth/register">
+            <i class="bi bi-person-plus"></i>
+            Inscription
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

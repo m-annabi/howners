@@ -1,0 +1,51 @@
+<div class="container mt-4">
+  <button class="btn btn-secondary mb-3" (click)="goBack()">&larr; Retour à la liste</button>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>{{ isEditMode ? 'Modifier la dépense' : 'Nouvelle Dépense' }}</h3>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="category" class="form-label">Catégorie *</label>
+            <select id="category" class="form-select" formControlName="category">
+              <option *ngFor="let cat of categories" [value]="cat.value">{{ cat.label }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="expenseDate" class="form-label">Date de la dépense *</label>
+            <input type="date" id="expenseDate" class="form-control" formControlName="expenseDate">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea id="description" class="form-control" formControlName="description" rows="2"></textarea>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="amount" class="form-label">Montant (EUR) *</label>
+            <input type="number" id="amount" class="form-control" formControlName="amount" step="0.01" min="0.01">
+          </div>
+        </div>
+
+        <div class="mb-3" *ngIf="!isEditMode">
+          <label for="file" class="form-label">Justificatif (optionnel)</label>
+          <input type="file" id="file" class="form-control" (change)="onFileSelected($event)">
+          <div class="form-text">PDF, image ou tout document justificatif</div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="expenseForm.invalid || submitting">
+            {{ submitting ? 'Enregistrement...' : (isEditMode ? 'Modifier' : 'Créer la dépense') }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="goBack()">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

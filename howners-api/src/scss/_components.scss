@@ -1,0 +1,202 @@
+// ==========================================================================
+// Bootstrap Overrides & Component Styles
+// ==========================================================================
+
+// --- Form Controls ---
+.form-control,
+.form-select {
+  font-family: var(--hw-font-family);
+  font-size: var(--hw-fs-base);
+  padding: var(--hw-space-2) var(--hw-space-3);
+  border: 1px solid var(--hw-gray-300);
+  border-radius: var(--hw-radius-md);
+  color: var(--hw-gray-800);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: var(--hw-gray-400);
+  }
+
+  &:focus {
+    border-color: var(--hw-primary-500);
+    box-shadow: 0 0 0 3px var(--hw-primary-50);
+    outline: none;
+  }
+
+  &.is-invalid {
+    border-color: var(--hw-danger);
+    &:focus {
+      box-shadow: 0 0 0 3px var(--hw-danger-light);
+    }
+  }
+}
+
+.form-label {
+  font-size: var(--hw-fs-sm);
+  font-weight: var(--hw-fw-medium);
+  color: var(--hw-gray-700);
+  margin-bottom: var(--hw-space-1);
+}
+
+.invalid-feedback {
+  font-size: var(--hw-fs-xs);
+  color: var(--hw-danger);
+}
+
+// --- Bootstrap Modal Overrides ---
+.modal-content {
+  border: none;
+  border-radius: var(--hw-radius-xl);
+  box-shadow: var(--hw-shadow-lg);
+}
+
+.modal-header {
+  border-bottom: var(--hw-border);
+  padding: var(--hw-space-4) var(--hw-space-6);
+}
+
+.modal-body {
+  padding: var(--hw-space-6);
+}
+
+.modal-footer {
+  border-top: var(--hw-border);
+  padding: var(--hw-space-4) var(--hw-space-6);
+  gap: var(--hw-space-2);
+}
+
+.modal-title {
+  font-size: var(--hw-fs-lg);
+  font-weight: var(--hw-fw-semibold);
+}
+
+// --- Bootstrap Alert Overrides ---
+.alert {
+  border-radius: var(--hw-radius-md);
+  font-size: var(--hw-fs-base);
+}
+
+// --- Dropdown Overrides ---
+.dropdown-menu {
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-lg);
+  box-shadow: var(--hw-shadow-lg);
+  padding: var(--hw-space-1);
+  font-size: var(--hw-fs-base);
+}
+
+.dropdown-item {
+  border-radius: var(--hw-radius-md);
+  padding: var(--hw-space-2) var(--hw-space-3);
+  color: var(--hw-gray-700);
+  font-size: var(--hw-fs-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-2);
+
+  i { color: var(--hw-gray-500); font-size: var(--hw-fs-md); }
+
+  &:hover, &:focus {
+    background: var(--hw-gray-50);
+    color: var(--hw-gray-900);
+  }
+
+  &.active, &:active {
+    background: var(--hw-primary-50);
+    color: var(--hw-primary-700);
+  }
+}
+
+.dropdown-divider {
+  margin: var(--hw-space-1) 0;
+  border-color: var(--hw-gray-100);
+}
+
+// --- Pagination ---
+.pagination {
+  gap: var(--hw-space-1);
+
+  .page-link {
+    border: var(--hw-border);
+    border-radius: var(--hw-radius-md);
+    color: var(--hw-gray-700);
+    font-size: var(--hw-fs-sm);
+    padding: var(--hw-space-1) var(--hw-space-3);
+
+    &:hover {
+      background: var(--hw-gray-50);
+      border-color: var(--hw-gray-300);
+      color: var(--hw-gray-900);
+    }
+  }
+
+  .page-item.active .page-link {
+    background: var(--hw-primary-600);
+    border-color: var(--hw-primary-600);
+    color: white;
+  }
+
+  .page-item.disabled .page-link {
+    color: var(--hw-gray-400);
+    background: transparent;
+  }
+}
+
+// --- Scrollbar ---
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hw-gray-300);
+  border-radius: 3px;
+
+  &:hover {
+    background: var(--hw-gray-400);
+  }
+}
+
+// --- Skeleton Loading Animation ---
+@keyframes hw-skeleton-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.hw-skeleton {
+  background: var(--hw-gray-200);
+  border-radius: var(--hw-radius-md);
+  animation: hw-skeleton-pulse 1.5s ease-in-out infinite;
+
+  &--text {
+    height: 14px;
+    margin-bottom: var(--hw-space-2);
+    &:last-child { width: 70%; }
+  }
+
+  &--title {
+    height: 24px;
+    width: 40%;
+    margin-bottom: var(--hw-space-3);
+  }
+
+  &--avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--hw-radius-full);
+  }
+
+  &--card {
+    height: 120px;
+  }
+
+  &--img {
+    height: 180px;
+    border-radius: var(--hw-radius-lg);
+  }
+}

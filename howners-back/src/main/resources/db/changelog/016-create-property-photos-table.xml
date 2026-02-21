@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="016-create-property-photos-table" author="system">
+        <createTable tableName="property_photos">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="property_id" type="UUID">
+                <constraints nullable="false"
+                    foreignKeyName="fk_property_photos_property"
+                    references="properties(id)"
+                    deleteCascade="true"/>
+            </column>
+            <column name="uploader_id" type="UUID">
+                <constraints nullable="false"
+                    foreignKeyName="fk_property_photos_uploader"
+                    references="users(id)"/>
+            </column>
+            <column name="file_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_key" type="VARCHAR(500)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="file_url" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_size" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mime_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="caption" type="TEXT"/>
+            <column name="display_order" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_primary" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Index for getting all photos of a property -->
+        <createIndex indexName="idx_property_photos_property_id" tableName="property_photos">
+            <column name="property_id"/>
+        </createIndex>
+
+        <!-- Index for finding primary photo of a property -->
+        <createIndex indexName="idx_property_photos_property_primary" tableName="property_photos">
+            <column name="property_id"/>
+            <column name="is_primary"/>
+        </createIndex>
+
+        <!-- Index for ordering photos -->
+        <createIndex indexName="idx_property_photos_property_order" tableName="property_photos">
+            <column name="property_id"/>
+            <column name="display_order"/>
+        </createIndex>
+
+        <!-- Partial unique index: only one primary photo per property (PostgreSQL) -->
+        <sql dbms="postgresql">
+            CREATE UNIQUE INDEX uk_property_photos_one_primary
+            ON property_photos (property_id)
+            WHERE is_primary = true;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

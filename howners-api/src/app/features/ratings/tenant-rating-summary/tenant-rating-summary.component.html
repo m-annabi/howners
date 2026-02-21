@@ -1,0 +1,78 @@
+<div class="summary-card" *ngIf="!loading && !error && summary && summary.totalRatings > 0">
+  <div class="summary-header">
+    <h3><i class="bi bi-star-fill"></i> Évaluation du locataire</h3>
+    <div class="overall-score">
+      <span class="score-value">{{ summary.averageOverallRating | number:'1.1-1' }}</span>
+      <span class="score-max">/5</span>
+    </div>
+  </div>
+
+  <div class="summary-body">
+    <div class="criteria-row">
+      <span class="criteria-label">
+        <i class="bi" [ngClass]="criteriaIcons['paymentRating']"></i>
+        {{ criteriaLabels['paymentRating'] }}
+      </span>
+      <span class="stars">
+        <i *ngFor="let star of getStars()"
+           class="bi"
+           [ngClass]="isStarFilled(star, summary.averagePaymentRating) ? 'bi-star-fill filled' : 'bi-star empty'">
+        </i>
+        <span class="avg-value">{{ summary.averagePaymentRating | number:'1.1-1' }}</span>
+      </span>
+    </div>
+
+    <div class="criteria-row">
+      <span class="criteria-label">
+        <i class="bi" [ngClass]="criteriaIcons['propertyRespectRating']"></i>
+        {{ criteriaLabels['propertyRespectRating'] }}
+      </span>
+      <span class="stars">
+        <i *ngFor="let star of getStars()"
+           class="bi"
+           [ngClass]="isStarFilled(star, summary.averagePropertyRespectRating) ? 'bi-star-fill filled' : 'bi-star empty'">
+        </i>
+        <span class="avg-value">{{ summary.averagePropertyRespectRating | number:'1.1-1' }}</span>
+      </span>
+    </div>
+
+    <div class="criteria-row">
+      <span class="criteria-label">
+        <i class="bi" [ngClass]="criteriaIcons['communicationRating']"></i>
+        {{ criteriaLabels['communicationRating'] }}
+      </span>
+      <span class="stars">
+        <i *ngFor="let star of getStars()"
+           class="bi"
+           [ngClass]="isStarFilled(star, summary.averageCommunicationRating) ? 'bi-star-fill filled' : 'bi-star empty'">
+        </i>
+        <span class="avg-value">{{ summary.averageCommunicationRating | number:'1.1-1' }}</span>
+      </span>
+    </div>
+
+    <div class="total-count">
+      {{ summary.totalRatings }} évaluation{{ summary.totalRatings > 1 ? 's' : '' }}
+    </div>
+  </div>
+
+  <!-- Recent ratings -->
+  <div class="recent-ratings" *ngIf="recentRatings.length > 0">
+    <h4>Évaluations récentes</h4>
+    <div *ngFor="let rating of recentRatings" class="recent-item">
+      <div class="recent-header">
+        <span class="rater-name">{{ rating.raterName }}</span>
+        <span class="recent-date">{{ formatDate(rating.createdAt) }}</span>
+      </div>
+      <div class="recent-score">
+        <i class="bi bi-star-fill filled"></i>
+        {{ rating.overallRating | number:'1.1-1' }}/5
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="summary-card empty" *ngIf="!loading && !error && (!summary || summary.totalRatings === 0)">
+  <p class="no-ratings"><i class="bi bi-star"></i> Aucune évaluation</p>
+</div>
+
+<div *ngIf="loading" class="summary-loading">Chargement...</div>

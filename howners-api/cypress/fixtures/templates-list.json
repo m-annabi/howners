@@ -1,0 +1,41 @@
+[
+  {
+    "id": "tpl-001",
+    "name": "Bail longue durée standard",
+    "description": "Template pour les baux de longue durée (loi du 6 juillet 1989)",
+    "rentalType": "LONG_TERM",
+    "content": "<h1>Contrat de bail</h1><p>Entre les soussignés...</p>",
+    "isDefault": true,
+    "isActive": true,
+    "createdById": null,
+    "createdByName": "Système",
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": null
+  },
+  {
+    "id": "tpl-002",
+    "name": "Location saisonnière",
+    "description": "Template pour les locations courte durée / saisonnières",
+    "rentalType": "SHORT_TERM",
+    "content": "<h1>Contrat de location saisonnière</h1><p>Entre les soussignés...</p>",
+    "isDefault": false,
+    "isActive": true,
+    "createdById": "user-owner-001",
+    "createdByName": "Jean Dupont",
+    "createdAt": "2024-02-01T10:00:00Z",
+    "updatedAt": null
+  },
+  {
+    "id": "tpl-003",
+    "name": "Bail meublé",
+    "description": "Template spécifique pour les locations meublées longue durée",
+    "rentalType": "LONG_TERM",
+    "content": "<h1>Contrat de bail meublé</h1><p>Entre les soussignés...</p>",
+    "isDefault": false,
+    "isActive": true,
+    "createdById": "user-owner-001",
+    "createdByName": "Jean Dupont",
+    "createdAt": "2024-03-15T14:00:00Z",
+    "updatedAt": "2024-04-01T09:00:00Z"
+  }
+]

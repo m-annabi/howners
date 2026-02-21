@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="038-1" author="howners">
+        <comment>Add archiving fields to documents table</comment>
+
+        <addColumn tableName="documents">
+            <column name="retention_end_date" type="DATE">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="documents">
+            <column name="archived_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="documents">
+            <column name="is_archived" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="documents">
+            <column name="legal_hold" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="038-2" author="howners">
+        <comment>Add index on is_archived and retention_end_date</comment>
+        <createIndex tableName="documents" indexName="idx_documents_is_archived">
+            <column name="is_archived"/>
+        </createIndex>
+        <createIndex tableName="documents" indexName="idx_documents_retention_end_date">
+            <column name="retention_end_date"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

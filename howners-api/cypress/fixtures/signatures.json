@@ -1,0 +1,14 @@
+[
+  {
+    "id": "sig-001",
+    "contractId": "sent-001",
+    "signerId": "tenant-002",
+    "signerFullName": "Pierre Durand",
+    "signatureType": "SIMPLE",
+    "status": "SIGNED",
+    "provider": "internal",
+    "ipAddress": "192.168.1.100",
+    "signedAt": "2024-05-22T15:30:00Z",
+    "createdAt": "2024-05-22T15:30:00Z"
+  }
+]

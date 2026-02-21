@@ -1,0 +1,164 @@
+.summary-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.summary-card.empty {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.no-ratings {
+  color: #999;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.no-ratings i {
+  margin-right: 0.3rem;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.2rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.summary-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.summary-header h3 i {
+  color: #f5a623;
+}
+
+.overall-score {
+  display: flex;
+  align-items: baseline;
+}
+
+.score-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f5a623;
+}
+
+.score-max {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.summary-body {
+  padding: 1rem 1.2rem;
+}
+
+.criteria-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+}
+
+.criteria-label {
+  font-size: 0.85rem;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.stars i {
+  font-size: 0.8rem;
+}
+
+.stars .filled {
+  color: #f5a623;
+}
+
+.stars .empty {
+  color: #ddd;
+}
+
+.avg-value {
+  margin-left: 0.4rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.total-count {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid #eee;
+}
+
+.recent-ratings {
+  padding: 0.8rem 1.2rem;
+  border-top: 1px solid #eee;
+}
+
+.recent-ratings h4 {
+  font-size: 0.85rem;
+  color: #333;
+  margin: 0 0 0.6rem 0;
+}
+
+.recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  font-size: 0.8rem;
+}
+
+.recent-header {
+  display: flex;
+  flex-direction: column;
+}
+
+.rater-name {
+  color: #333;
+  font-weight: 500;
+}
+
+.recent-date {
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.recent-score {
+  color: #f5a623;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.recent-score i {
+  font-size: 0.75rem;
+}
+
+.summary-loading {
+  text-align: center;
+  padding: 1.5rem;
+  color: #999;
+  font-size: 0.9rem;
+}

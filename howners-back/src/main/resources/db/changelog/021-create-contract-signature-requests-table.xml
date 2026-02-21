@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="021-1" author="howners">
+        <comment>Create contract_signature_requests table for electronic signature tracking</comment>
+
+        <createTable tableName="contract_signature_requests">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="contract_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="provider" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="provider_envelope_id" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="signer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="signer_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="access_token" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="token_expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="signing_url" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="sent_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="viewed_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="signed_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="declined_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="ip_address" type="VARCHAR(45)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="user_agent" type="VARCHAR(500)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="decline_reason" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="resend_count" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last_resent_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="021-2" author="howners">
+        <comment>Add foreign key constraint from contract_signature_requests to contracts</comment>
+        <addForeignKeyConstraint
+            baseTableName="contract_signature_requests"
+            baseColumnNames="contract_id"
+            constraintName="fk_signature_request_contract"
+            referencedTableName="contracts"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="021-3" author="howners">
+        <comment>Add foreign key constraint from contract_signature_requests to users (signer)</comment>
+        <addForeignKeyConstraint
+            baseTableName="contract_signature_requests"
+            baseColumnNames="signer_id"
+            constraintName="fk_signature_request_signer"
+            referencedTableName="users"
+            referencedColumnNames="id"
+            onDelete="RESTRICT"/>
+    </changeSet>
+
+    <changeSet id="021-4" author="howners">
+        <comment>Create indexes for better query performance</comment>
+        <createIndex indexName="idx_signature_request_contract_id" tableName="contract_signature_requests">
+            <column name="contract_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_signature_request_access_token" tableName="contract_signature_requests">
+            <column name="access_token"/>
+        </createIndex>
+
+        <createIndex indexName="idx_signature_request_signer_id" tableName="contract_signature_requests">
+            <column name="signer_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_signature_request_provider_envelope_id" tableName="contract_signature_requests">
+            <column name="provider_envelope_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_signature_request_status" tableName="contract_signature_requests">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

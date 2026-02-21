@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="026-create-tenant-ratings-table" author="howners">
+        <comment>Create tenant_ratings table for tenant evaluation by owners/concierges</comment>
+
+        <createTable tableName="tenant_ratings">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rater_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+            <column name="payment_rating" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="property_respect_rating" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="communication_rating" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="overall_rating" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rating_period" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Foreign keys -->
+        <addForeignKeyConstraint
+                baseTableName="tenant_ratings"
+                baseColumnNames="tenant_id"
+                constraintName="fk_tenant_ratings_tenant"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+                baseTableName="tenant_ratings"
+                baseColumnNames="rater_id"
+                constraintName="fk_tenant_ratings_rater"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+                baseTableName="tenant_ratings"
+                baseColumnNames="rental_id"
+                constraintName="fk_tenant_ratings_rental"
+                referencedTableName="rentals"
+                referencedColumnNames="id"/>
+
+        <!-- Indexes -->
+        <createIndex indexName="idx_tenant_ratings_tenant_id" tableName="tenant_ratings">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tenant_ratings_rater_id" tableName="tenant_ratings">
+            <column name="rater_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tenant_ratings_rental_id" tableName="tenant_ratings">
+            <column name="rental_id"/>
+        </createIndex>
+
+        <!-- CHECK constraints: ratings between 1 and 5 -->
+        <sql>
+            ALTER TABLE tenant_ratings ADD CONSTRAINT chk_payment_rating CHECK (payment_rating BETWEEN 1 AND 5);
+            ALTER TABLE tenant_ratings ADD CONSTRAINT chk_property_respect_rating CHECK (property_respect_rating BETWEEN 1 AND 5);
+            ALTER TABLE tenant_ratings ADD CONSTRAINT chk_communication_rating CHECK (communication_rating BETWEEN 1 AND 5);
+        </sql>
+
+        <rollback>
+            <dropTable tableName="tenant_ratings"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,41 @@
+<div class="sidebar">
+  <!-- Logo -->
+  <div class="sidebar__logo">
+    <a routerLink="/dashboard" (click)="onItemClick()">
+      <i class="bi bi-house-door-fill"></i>
+      <span>Howners</span>
+    </a>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar__nav">
+    <ng-container *ngFor="let section of sections">
+      <div *ngIf="canViewSection(section)" class="sidebar__section">
+        <div class="sidebar__section-title">{{ section.title }}</div>
+        <ng-container *ngFor="let item of section.items">
+          <a *ngIf="canViewItem(item)"
+             class="sidebar__item"
+             [routerLink]="item.route"
+             [class.sidebar__item--active]="isActive(item.route)"
+             (click)="onItemClick()">
+            <i class="bi" [ngClass]="item.icon"></i>
+            <span>{{ item.label }}</span>
+            <span *ngIf="item.badge" class="sidebar__badge">{{ item.badge }}</span>
+          </a>
+        </ng-container>
+      </div>
+    </ng-container>
+  </nav>
+
+  <!-- Plan Badge -->
+  <div class="sidebar__footer">
+    <div class="sidebar__plan">
+      <span class="sidebar__plan-badge" [ngClass]="'sidebar__plan-badge--' + userPlan.toLowerCase()">
+        {{ userPlan }}
+      </span>
+      <a *ngIf="userPlan !== 'PREMIUM'" routerLink="/billing/pricing" class="sidebar__upgrade" (click)="onItemClick()">
+        Mettre à niveau
+      </a>
+    </div>
+  </div>
+</div>

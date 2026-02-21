@@ -1,0 +1,12 @@
+<div class="empty-state">
+  <div class="empty-state__icon">
+    <i class="bi" [ngClass]="icon"></i>
+  </div>
+  <h3 class="empty-state__title">{{ title }}</h3>
+  <p *ngIf="message" class="empty-state__message">{{ message }}</p>
+  <a *ngIf="actionLabel && actionRoute"
+     [routerLink]="actionRoute"
+     class="hw-btn hw-btn--primary empty-state__action">
+    {{ actionLabel }}
+  </a>
+</div>

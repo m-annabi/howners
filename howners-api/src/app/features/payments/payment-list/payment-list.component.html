@@ -1,0 +1,103 @@
+<app-page-header
+  title="Paiements"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Paiements'}]"
+  [actions]="headerActions">
+</app-page-header>
+
+<ng-template #headerActions>
+  <button class="hw-btn hw-btn--primary" (click)="createPayment()">
+    <i class="bi bi-plus-lg"></i> Nouveau Paiement
+  </button>
+</ng-template>
+
+<!-- Filters -->
+<div *ngIf="!loading && payments.length > 0" class="payment-list__toolbar">
+  <div class="payment-list__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Rechercher par propriété ou payeur..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()">
+  </div>
+  <select
+    class="form-select payment-list__filter"
+    [(ngModel)]="selectedStatus"
+    (ngModelChange)="onStatusChange()">
+    <option *ngFor="let status of statuses" [value]="status.value">
+      {{ status.label }}
+    </option>
+  </select>
+</div>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="table" [count]="8"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && !error && payments.length === 0"
+  icon="bi-credit-card"
+  title="Aucun paiement"
+  message="Créez votre premier paiement pour commencer le suivi."
+  actionLabel="Nouveau paiement"
+  actionRoute="/payments/new">
+</app-empty-state>
+
+<!-- No results -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredPayments.length === 0 && payments.length > 0"
+  icon="bi-search"
+  title="Aucun résultat"
+  message="Essayez avec d'autres termes de recherche.">
+</app-empty-state>
+
+<!-- Table -->
+<div *ngIf="!loading && !error && filteredPayments.length > 0" class="hw-card">
+  <div class="hw-table-responsive">
+    <table class="hw-table">
+      <thead>
+        <tr>
+          <th>Propriété</th>
+          <th>Payeur</th>
+          <th>Type</th>
+          <th>Montant</th>
+          <th>Échéance</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let payment of filteredPayments" class="hw-table__row--clickable" (click)="viewPayment(payment)">
+          <td>
+            <span class="hw-text-medium">{{ payment.propertyName }}</span>
+          </td>
+          <td>{{ payment.payerName }}</td>
+          <td>
+            <span class="hw-badge hw-badge--neutral">{{ getTypeLabel(payment.paymentType) }}</span>
+          </td>
+          <td>
+            <span class="hw-text-medium">{{ payment.amount | number:'1.2-2' }} {{ payment.currency }}</span>
+          </td>
+          <td>{{ payment.dueDate | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <app-status-badge [status]="payment.status" type="payment"></app-status-badge>
+          </td>
+          <td>
+            <button
+              class="hw-btn hw-btn--ghost hw-btn--sm"
+              (click)="viewPayment(payment); $event.stopPropagation()">
+              <i class="bi bi-eye"></i> Voir
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

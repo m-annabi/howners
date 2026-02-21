@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="036-1" author="howners">
+        <comment>Create messages table for internal messaging</comment>
+
+        <createTable tableName="messages">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="sender_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_messages_sender" references="users(id)"/>
+            </column>
+            <column name="recipient_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_messages_recipient" references="users(id)"/>
+            </column>
+            <column name="listing_id" type="UUID">
+                <constraints foreignKeyName="fk_messages_listing" references="listings(id)"/>
+            </column>
+            <column name="application_id" type="UUID">
+                <constraints foreignKeyName="fk_messages_application" references="applications(id)"/>
+            </column>
+            <column name="subject" type="VARCHAR(255)"/>
+            <column name="body" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_read" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="read_at" type="TIMESTAMP"/>
+            <column name="parent_id" type="UUID">
+                <constraints foreignKeyName="fk_messages_parent" references="messages(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_messages_sender" tableName="messages">
+            <column name="sender_id"/>
+        </createIndex>
+        <createIndex indexName="idx_messages_recipient" tableName="messages">
+            <column name="recipient_id"/>
+        </createIndex>
+        <createIndex indexName="idx_messages_parent" tableName="messages">
+            <column name="parent_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

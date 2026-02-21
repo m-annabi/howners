@@ -1,0 +1,60 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h2><i class="bi bi-envelope-open"></i> Invitations reçues</h2>
+      <p class="text-muted">Les propriétaires vous invitent à candidater pour leurs annonces.</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && invitations.length === 0" class="text-center py-5">
+    <i class="bi bi-envelope display-1 text-muted"></i>
+    <p class="text-muted mt-3">Aucune invitation pour le moment</p>
+    <p class="text-muted">Complétez votre <a routerLink="/search-profile">profil de recherche</a> pour que les propriétaires puissent vous trouver.</p>
+  </div>
+
+  <div class="row" *ngIf="!loading">
+    <div class="col-md-6 col-lg-4 mb-4" *ngFor="let inv of invitations">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title mb-0">{{ inv.listingTitle }}</h5>
+            <span class="badge" [ngClass]="'bg-' + statusColors[inv.status]">
+              {{ statusLabels[inv.status] }}
+            </span>
+          </div>
+          <p class="text-muted mb-2">
+            <i class="bi bi-person"></i> {{ inv.ownerName }}
+          </p>
+          <p class="card-text" *ngIf="inv.message">
+            <i class="bi bi-chat-quote"></i> {{ inv.message }}
+          </p>
+          <p class="text-muted small">
+            <i class="bi bi-clock"></i> {{ inv.createdAt | date:'dd/MM/yyyy HH:mm' }}
+          </p>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="d-flex gap-2">
+            <a [routerLink]="['/listings', inv.listingId]" class="btn btn-outline-primary btn-sm" (click)="markViewed(inv)">
+              <i class="bi bi-eye"></i> Voir l'annonce
+            </a>
+            <a *ngIf="inv.status !== 'APPLIED' && inv.status !== 'DECLINED'"
+               [routerLink]="['/applications/new']" [queryParams]="{listingId: inv.listingId}"
+               class="btn btn-success btn-sm">
+              <i class="bi bi-send"></i> Candidater
+            </a>
+            <button *ngIf="inv.status !== 'DECLINED' && inv.status !== 'APPLIED'"
+                    class="btn btn-outline-danger btn-sm" (click)="decline(inv)">
+              <i class="bi bi-x-lg"></i> Décliner
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

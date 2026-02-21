@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="012-create-contract-templates-table" author="howners">
+        <createTable tableName="contract_templates">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+            <column name="rental_type" type="varchar(50)"/>
+            <column name="content" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_default" type="boolean" defaultValueBoolean="false"/>
+            <column name="is_active" type="boolean" defaultValueBoolean="true"/>
+            <column name="created_by" type="uuid"/>
+            <column name="created_at" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="contract_templates"
+                baseColumnNames="created_by"
+                constraintName="fk_contract_templates_created_by"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                onDelete="SET NULL"/>
+
+        <createIndex tableName="contract_templates" indexName="idx_contract_templates_rental_type">
+            <column name="rental_type"/>
+        </createIndex>
+
+        <createIndex tableName="contract_templates" indexName="idx_contract_templates_is_default">
+            <column name="is_default"/>
+        </createIndex>
+
+        <createIndex tableName="contract_templates" indexName="idx_contract_templates_is_active">
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,98 @@
+<app-page-header
+  title="Factures"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Factures'}]">
+</app-page-header>
+
+<!-- Filters -->
+<div *ngIf="!loading && invoices.length > 0" class="invoice-list__toolbar">
+  <div class="invoice-list__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Rechercher par numéro, propriété ou locataire..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()">
+  </div>
+  <select
+    class="form-select invoice-list__filter"
+    [(ngModel)]="selectedStatus"
+    (ngModelChange)="onStatusChange()">
+    <option *ngFor="let status of statuses" [value]="status.value">
+      {{ status.label }}
+    </option>
+  </select>
+</div>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="table" [count]="8"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && !error && invoices.length === 0"
+  icon="bi-receipt"
+  title="Aucune facture"
+  message="Les factures apparaîtront ici une fois générées.">
+</app-empty-state>
+
+<!-- No results -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredInvoices.length === 0 && invoices.length > 0"
+  icon="bi-search"
+  title="Aucun résultat"
+  message="Essayez avec d'autres termes de recherche.">
+</app-empty-state>
+
+<!-- Table -->
+<div *ngIf="!loading && !error && filteredInvoices.length > 0" class="hw-card">
+  <div class="hw-table-responsive">
+    <table class="hw-table">
+      <thead>
+        <tr>
+          <th>Numéro</th>
+          <th>Propriété</th>
+          <th>Locataire</th>
+          <th>Type</th>
+          <th>Montant</th>
+          <th>Émission</th>
+          <th>Échéance</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let invoice of filteredInvoices" class="hw-table__row--clickable" (click)="viewInvoice(invoice)">
+          <td>
+            <span class="hw-text-medium">{{ invoice.invoiceNumber }}</span>
+          </td>
+          <td>{{ invoice.propertyName }}</td>
+          <td>{{ invoice.tenantName }}</td>
+          <td>
+            <span class="hw-badge hw-badge--neutral">{{ typeLabels[invoice.invoiceType] }}</span>
+          </td>
+          <td>
+            <span class="hw-text-medium">{{ invoice.amount | number:'1.2-2' }} {{ invoice.currency }}</span>
+          </td>
+          <td>{{ invoice.issueDate | date:'dd/MM/yyyy' }}</td>
+          <td>{{ invoice.dueDate | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <app-status-badge [status]="invoice.status" type="invoice"></app-status-badge>
+          </td>
+          <td>
+            <button
+              class="hw-btn hw-btn--ghost hw-btn--sm"
+              (click)="downloadPdf(invoice, $event)">
+              <i class="bi bi-download"></i> PDF
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

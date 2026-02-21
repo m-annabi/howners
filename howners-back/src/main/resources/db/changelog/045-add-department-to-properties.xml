@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="045-add-department-to-properties" author="howners">
+        <addColumn tableName="properties">
+            <column name="department" type="VARCHAR(100)"/>
+        </addColumn>
+        <createIndex tableName="properties" indexName="idx_properties_department">
+            <column name="department"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

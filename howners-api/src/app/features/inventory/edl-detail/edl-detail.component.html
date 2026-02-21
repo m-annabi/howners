@@ -1,0 +1,158 @@
+<div class="container mt-4">
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && edl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <button class="btn btn-outline-secondary me-2" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i> Retour
+        </button>
+        <h2 class="d-inline-block mb-0 ms-2">
+          État des lieux -
+          <span class="badge bg-{{ typeColors[edl.type] }}">{{ typeLabels[edl.type] }}</span>
+        </h2>
+      </div>
+      <div>
+        <button class="btn btn-outline-primary me-2" (click)="downloadPdf()" *ngIf="edl.documentId">
+          <i class="bi bi-file-pdf"></i> Télécharger PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Info card -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <p class="mb-1 text-muted">Bien</p>
+            <p><strong>{{ edl.propertyName }}</strong></p>
+          </div>
+          <div class="col-md-4">
+            <p class="mb-1 text-muted">Locataire</p>
+            <p><strong>{{ edl.tenantName || 'N/A' }}</strong></p>
+          </div>
+          <div class="col-md-4">
+            <p class="mb-1 text-muted">Date d'inspection</p>
+            <p><strong>{{ edl.inspectionDate | date:'dd/MM/yyyy' }}</strong></p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <p class="mb-1 text-muted">Créé par</p>
+            <p><strong>{{ edl.createdByName }}</strong></p>
+          </div>
+          <div class="col-md-4">
+            <p class="mb-1 text-muted">Créé le</p>
+            <p><strong>{{ edl.createdAt | date:'dd/MM/yyyy HH:mm' }}</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="card mb-3">
+      <div class="card-header"><strong>Signatures</strong></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="d-flex align-items-center">
+              <i class="bi" [ngClass]="edl.ownerSigned ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'" style="font-size: 1.5rem;"></i>
+              <div class="ms-3">
+                <p class="mb-0"><strong>Bailleur</strong></p>
+                <p class="mb-0 text-muted" *ngIf="edl.ownerSigned">
+                  Signé le {{ edl.ownerSignedAt | date:'dd/MM/yyyy à HH:mm' }}
+                </p>
+                <button *ngIf="!edl.ownerSigned" class="btn btn-sm btn-outline-success mt-1" (click)="signAs('OWNER')">
+                  <i class="bi bi-pen"></i> Signer
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex align-items-center">
+              <i class="bi" [ngClass]="edl.tenantSigned ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'" style="font-size: 1.5rem;"></i>
+              <div class="ms-3">
+                <p class="mb-0"><strong>Locataire</strong></p>
+                <p class="mb-0 text-muted" *ngIf="edl.tenantSigned">
+                  Signé le {{ edl.tenantSignedAt | date:'dd/MM/yyyy à HH:mm' }}
+                </p>
+                <button *ngIf="!edl.tenantSigned" class="btn btn-sm btn-outline-success mt-1" (click)="signAs('TENANT')">
+                  <i class="bi bi-pen"></i> Signer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rooms -->
+    <div class="card mb-3" *ngIf="rooms.length > 0">
+      <div class="card-header"><strong>État des pièces</strong></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Pièce</th>
+                <th>État</th>
+                <th>Commentaires</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let room of rooms">
+                <td><strong>{{ room.name }}</strong></td>
+                <td><span class="badge bg-{{ getConditionBadge(room.condition) }}">{{ room.condition }}</span></td>
+                <td>{{ room.comments || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meters -->
+    <div class="card mb-3" *ngIf="meters.length > 0">
+      <div class="card-header"><strong>Relevés des compteurs</strong></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Compteur</th>
+                <th>Relevé</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let meter of meters">
+                <td><strong>{{ meter.type }}</strong></td>
+                <td>{{ meter.value }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keys -->
+    <div class="card mb-3" *ngIf="edl.keysCount">
+      <div class="card-header"><strong>Clés</strong></div>
+      <div class="card-body">
+        <p>Nombre de clés : <strong>{{ edl.keysCount }}</strong></p>
+        <p *ngIf="edl.keysDescription">Description : {{ edl.keysDescription }}</p>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="card mb-3" *ngIf="edl.generalComments">
+      <div class="card-header"><strong>Commentaires généraux</strong></div>
+      <div class="card-body">
+        <p>{{ edl.generalComments }}</p>
+      </div>
+    </div>
+  </div>
+</div>

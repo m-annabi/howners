@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrat refusé</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .warning-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .message {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .contract-details {
+            background-color: #f8f9fa;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .contract-details h3 {
+            margin: 0 0 15px 0;
+            color: #dc3545;
+            font-size: 18px;
+        }
+        .detail-item {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .reason-box {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 25px 0;
+            color: #721c24;
+        }
+        .reason-box strong {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .action-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 25px 0;
+            font-size: 14px;
+            color: #0c5460;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                margin: 10px;
+            }
+            .header, .content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏠 Howners</div>
+            <div class="warning-icon">❌</div>
+            <h1>Contrat refusé</h1>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Bonjour <span th:text="${recipientName}">Propriétaire</span>,</p>
+
+            <p class="message">
+                Nous vous informons que <strong th:text="${tenantName}">le locataire</strong> a refusé
+                de signer le contrat de location suivant :
+            </p>
+
+            <div class="contract-details">
+                <h3>📋 Informations du contrat</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Propriété :</span>
+                    <span th:text="${propertyName}">Appartement Centre-ville</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Locataire :</span>
+                    <span th:text="${tenantName}">Jean Dupont</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">N° de contrat :</span>
+                    <span th:text="${contractNumber}">CONT-2025-001</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Date du refus :</span>
+                    <span th:text="${declinedDate}">07/02/2025 à 14:30</span>
+                </div>
+            </div>
+
+            <div class="reason-box" th:if="${reason != null and !reason.isEmpty()}">
+                <strong>💬 Raison du refus :</strong>
+                <p th:text="${reason}" style="margin: 0;">
+                    Le locataire souhaite renégocier certaines clauses du contrat.
+                </p>
+            </div>
+
+            <div class="action-box">
+                <strong>🔄 Que faire maintenant ?</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Contactez le locataire pour comprendre les raisons du refus</li>
+                    <li>Modifiez le contrat si nécessaire</li>
+                    <li>Renvoyez une nouvelle demande de signature</li>
+                    <li>Ou recherchez un nouveau locataire</li>
+                </ul>
+            </div>
+
+            <p class="message" style="margin-top: 30px; font-size: 14px; color: #666;">
+                Le contrat reste disponible dans votre espace Howners avec le statut "Refusé".
+                Vous pouvez le modifier et le renvoyer, ou créer un nouveau contrat.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>🏠 Howners</strong></p>
+            <p>La plateforme de gestion locative</p>
+            <p style="margin-top: 15px;">
+                Besoin d'aide ? Contactez notre équipe support.
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                © 2025 Howners. Tous droits réservés.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

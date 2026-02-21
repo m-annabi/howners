@@ -1,0 +1,145 @@
+<div class="rental-detail-container">
+  <div *ngIf="loading" class="loading">Chargement...</div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+    <button (click)="goBack()" class="btn btn-secondary">Retour</button>
+  </div>
+
+  <div *ngIf="!loading && !error && rental" class="rental-detail">
+    <div class="detail-header">
+      <button (click)="goBack()" class="btn-back">← Retour</button>
+      <div class="detail-actions">
+        <button (click)="editRental()" class="btn btn-primary">Modifier</button>
+        <button (click)="deleteRental()" class="btn btn-danger">Supprimer</button>
+      </div>
+    </div>
+
+    <div class="detail-content">
+      <div class="detail-main">
+        <div class="detail-title">
+          <div>
+            <h1>{{ rental.propertyName }}</h1>
+            <div class="badges">
+              <span class="type-badge">{{ rentalTypeLabels[rental.rentalType] }}</span>
+              <span class="status-badge" [style.background-color]="getStatusColor(rental.status)">
+                {{ rentalStatusLabels[rental.status] }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h2>👤 Locataire</h2>
+          <div *ngIf="rental.tenantName" class="tenant-info">
+            <p class="tenant-name">{{ rental.tenantName }}</p>
+            <p class="tenant-email">{{ rental.tenantEmail }}</p>
+          </div>
+          <p *ngIf="!rental.tenantName" class="no-tenant">Aucun locataire assigné</p>
+        </div>
+
+        <div class="detail-section">
+          <h2>📅 Période</h2>
+          <div class="dates-grid">
+            <div class="date-item">
+              <span class="label">Date de début</span>
+              <span class="value">{{ rental.startDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="date-item">
+              <span class="label">Date de fin</span>
+              <span class="value">{{ rental.endDate ? (rental.endDate | date:'dd/MM/yyyy') : 'Indéterminée' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h2>💰 Montants</h2>
+          <div class="amounts-grid">
+            <div class="amount-item">
+              <span class="label">Loyer mensuel</span>
+              <span class="value primary">{{ rental.monthlyRent }} {{ rental.currency }}</span>
+            </div>
+            <div class="amount-item" *ngIf="rental.depositAmount">
+              <span class="label">Dépôt de garantie</span>
+              <span class="value">{{ rental.depositAmount }} {{ rental.currency }}</span>
+            </div>
+            <div class="amount-item" *ngIf="rental.charges">
+              <span class="label">Charges</span>
+              <span class="value">{{ rental.charges }} {{ rental.currency }}</span>
+            </div>
+            <div class="amount-item" *ngIf="rental.paymentDay">
+              <span class="label">Jour de paiement</span>
+              <span class="value">{{ rental.paymentDay }} du mois</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section documents -->
+        <div class="detail-section">
+          <app-document-list [rentalId]="rental.id"></app-document-list>
+        </div>
+      </div>
+
+      <div class="detail-sidebar">
+        <!-- Tenant Rating Summary -->
+        <app-tenant-rating-summary
+          *ngIf="rental.tenantId"
+          [tenantId]="rental.tenantId">
+        </app-tenant-rating-summary>
+
+        <div class="sidebar-card">
+          <h3>Informations</h3>
+          <div class="info-item">
+            <span class="info-label">Créée le</span>
+            <span class="info-value">{{ rental.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Modifiée le</span>
+            <span class="info-value">{{ rental.updatedAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h3>Actions rapides</h3>
+
+          <!-- Bouton Contrat -->
+          <div class="contract-actions">
+            <button
+              *ngIf="!hasContract() && !loadingContracts"
+              class="action-btn btn-primary"
+              (click)="openTemplateSelector()"
+              [disabled]="creatingContract">
+              <span *ngIf="!creatingContract">📝 Générer un contrat</span>
+              <span *ngIf="creatingContract">⏳ Génération...</span>
+            </button>
+
+            <button
+              *ngIf="hasContract()"
+              class="action-btn"
+              (click)="viewContract(getMainContract()!.id)">
+              📄 Voir le contrat
+            </button>
+
+            <span *ngIf="loadingContracts" class="loading-text">Chargement...</span>
+          </div>
+
+          <button class="action-btn" [routerLink]="['/inventory', 'new', rental.id]">
+            <i class="bi bi-clipboard-check"></i> Nouvel état des lieux
+          </button>
+          <button class="action-btn" disabled>💳 Voir les paiements</button>
+          <button class="action-btn" disabled>🧾 Voir les factures</button>
+          <button class="action-btn" disabled>📊 Statistiques</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template Selector Dialog -->
+<app-template-selector-dialog
+  *ngIf="showTemplateSelector && rental"
+  [rentalId]="rental.id"
+  [rentalType]="rental.rentalType"
+  (onConfirm)="createContractWithTemplate($event!)"
+  (onCancel)="closeTemplateSelector()">
+</app-template-selector-dialog>

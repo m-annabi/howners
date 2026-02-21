@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrat signé avec succès</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .message {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .contract-details {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .contract-details h3 {
+            margin: 0 0 15px 0;
+            color: #28a745;
+            font-size: 18px;
+        }
+        .detail-item {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .info-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 25px 0;
+            font-size: 14px;
+            color: #0c5460;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                margin: 10px;
+            }
+            .header, .content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏠 Howners</div>
+            <div class="success-icon">✅</div>
+            <h1>Contrat signé !</h1>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Bonjour <span th:text="${recipientName}">Propriétaire</span>,</p>
+
+            <p class="message">
+                Excellente nouvelle ! <strong th:text="${tenantName}">Le locataire</strong> vient de signer
+                le contrat de location pour votre bien.
+            </p>
+
+            <div class="contract-details">
+                <h3>📋 Informations du contrat</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Propriété :</span>
+                    <span th:text="${propertyName}">Appartement Centre-ville</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Locataire :</span>
+                    <span th:text="${tenantName}">Jean Dupont</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">N° de contrat :</span>
+                    <span th:text="${contractNumber}">CONT-2025-001</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Date de signature :</span>
+                    <span th:text="${signedDate}">07/02/2025 à 14:30</span>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>📄 Prochaines étapes :</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Le contrat signé est disponible dans votre espace</li>
+                    <li>Une copie a été envoyée au locataire</li>
+                    <li>Vous pouvez maintenant activer la location</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center;">
+                <a th:href="${contractViewUrl}" class="cta-button">
+                    📄 Voir le contrat signé
+                </a>
+            </div>
+
+            <p class="message" style="margin-top: 30px; font-size: 14px; color: #666;">
+                Le contrat signé est maintenant juridiquement valide et peut être utilisé comme preuve
+                de l'accord entre les parties.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>🏠 Howners</strong></p>
+            <p>La plateforme de gestion locative</p>
+            <p style="margin-top: 15px;">
+                Des questions ? Contactez notre équipe support.
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                © 2025 Howners. Tous droits réservés.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

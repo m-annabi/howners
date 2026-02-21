@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="007-create-payments-table" author="howners">
+        <createTable tableName="payments">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_payments_rental" references="rentals(id)"/>
+            </column>
+            <column name="payer_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_payments_payer" references="users(id)"/>
+            </column>
+            <column name="payment_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)" defaultValue="EUR"/>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stripe_payment_intent_id" type="VARCHAR(255)"/>
+            <column name="stripe_charge_id" type="VARCHAR(255)"/>
+            <column name="payment_method" type="VARCHAR(50)"/>
+            <column name="receipt_url" type="VARCHAR(500)"/>
+            <column name="due_date" type="DATE"/>
+            <column name="paid_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_payments_rental" tableName="payments">
+            <column name="rental_id"/>
+        </createIndex>
+        <createIndex indexName="idx_payments_payer" tableName="payments">
+            <column name="payer_id"/>
+        </createIndex>
+        <createIndex indexName="idx_payments_status" tableName="payments">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

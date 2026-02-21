@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="013-insert-default-contract-templates" author="howners">
+        <!-- Template bail longue durée -->
+        <insert tableName="contract_templates">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Bail d'habitation vide - Longue durée"/>
+            <column name="description" value="Template par défaut pour un bail de location longue durée (loi ALUR)"/>
+            <column name="rental_type" value="LONG_TERM"/>
+            <column name="content"><![CDATA[CONTRAT DE BAIL D'HABITATION VIDE
+
+Entre les soussignés :
+
+LE BAILLEUR
+{{owner.fullName}}
+Adresse : {{owner.email}}
+Téléphone : {{owner.phone}}
+
+Ci-après dénommé « le Bailleur »
+
+D'une part,
+
+Et
+
+LE LOCATAIRE
+{{tenant.fullName}}
+Adresse email : {{tenant.email}}
+Téléphone : {{tenant.phone}}
+
+Ci-après dénommé « le Locataire »
+
+D'autre part,
+
+IL A ÉTÉ CONVENU CE QUI SUIT :
+
+ARTICLE 1 - OBJET DU CONTRAT
+
+Le Bailleur loue au Locataire, qui accepte, le logement suivant :
+
+Adresse : {{property.address.full}}
+Type de bien : {{property.type}}
+Surface habitable : {{property.surface}} m²
+Nombre de pièces : {{property.rooms}}
+Nombre de chambres : {{property.bedrooms}}
+
+ARTICLE 2 - DURÉE DU BAIL
+
+Le présent bail est conclu pour une durée de trois ans à compter du {{rental.startDate}}.
+
+Il prendra fin de plein droit le {{rental.endDate}}, sauf renouvellement ou résiliation dans les conditions prévues par la loi.
+
+ARTICLE 3 - LOYER
+
+Le loyer mensuel charges comprises est fixé à {{rental.monthlyRent}}.
+
+Le loyer est payable mensuellement à terme échu, le 1er de chaque mois.
+
+ARTICLE 4 - DÉPÔT DE GARANTIE
+
+Le Locataire verse au Bailleur un dépôt de garantie d'un montant de {{rental.depositAmount}}.
+
+Ce dépôt sera restitué dans un délai de deux mois à compter de la restitution des clés, déduction faite, le cas échéant, des sommes restant dues au Bailleur et des frais de remise en état du logement.
+
+ARTICLE 5 - OBLIGATIONS DU LOCATAIRE
+
+Le Locataire s'engage à :
+- Payer le loyer et les charges aux termes convenus
+- Occuper paisiblement les lieux loués
+- Entretenir les lieux en bon état
+- Souscrire une assurance multirisque habitation
+
+ARTICLE 6 - OBLIGATIONS DU BAILLEUR
+
+Le Bailleur s'engage à :
+- Délivrer au Locataire un logement décent
+- Assurer au Locataire la jouissance paisible du logement
+- Entretenir les locaux en état de servir à l'usage prévu
+
+ARTICLE 7 - ÉTAT DES LIEUX
+
+Un état des lieux contradictoire sera établi lors de la remise des clés et lors de leur restitution.
+
+ARTICLE 8 - RÉSILIATION
+
+Le Locataire peut résilier le bail à tout moment en respectant un préavis de trois mois.
+Le Bailleur peut résilier le bail à son échéance en respectant un préavis de six mois pour reprendre le logement ou le vendre.
+
+Fait à {{property.address.city}}, le {{today}}
+
+En deux exemplaires originaux dont chacune des parties reconnaît avoir reçu le sien.
+
+Signature du Bailleur                    Signature du Locataire]]></column>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+
+        <!-- Template bail courte durée -->
+        <insert tableName="contract_templates">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Bail meublé - Courte durée"/>
+            <column name="description" value="Template par défaut pour une location meublée de courte durée (vacances, mobilité)"/>
+            <column name="rental_type" value="SHORT_TERM"/>
+            <column name="content"><![CDATA[CONTRAT DE LOCATION MEUBLÉE COURTE DURÉE
+
+Entre les soussignés :
+
+LE BAILLEUR
+{{owner.fullName}}
+Adresse : {{owner.email}}
+Téléphone : {{owner.phone}}
+
+Ci-après dénommé « le Bailleur »
+
+D'une part,
+
+Et
+
+LE LOCATAIRE
+{{tenant.fullName}}
+Adresse email : {{tenant.email}}
+Téléphone : {{tenant.phone}}
+
+Ci-après dénommé « le Locataire »
+
+D'autre part,
+
+IL A ÉTÉ CONVENU CE QUI SUIT :
+
+ARTICLE 1 - OBJET DU CONTRAT
+
+Le Bailleur loue au Locataire, qui accepte, le logement meublé suivant :
+
+Adresse : {{property.address.full}}
+Type de bien : {{property.type}}
+Surface habitable : {{property.surface}} m²
+Nombre de pièces : {{property.rooms}}
+Nombre de chambres : {{property.bedrooms}}
+
+ARTICLE 2 - DURÉE DU SÉJOUR
+
+Le présent contrat est conclu pour une période déterminée :
+Date d'arrivée : {{rental.startDate}}
+Date de départ : {{rental.endDate}}
+
+Le Locataire s'engage à libérer les lieux à la date de départ prévue.
+
+ARTICLE 3 - TARIF ET MODALITÉS DE PAIEMENT
+
+Le montant total du séjour est de {{rental.monthlyRent}}.
+
+Un acompte de {{rental.depositAmount}} a été versé à la réservation.
+Le solde sera versé au plus tard le jour de l'arrivée.
+
+ARTICLE 4 - CAUTION
+
+Une caution/dépôt de garantie d'un montant de {{rental.depositAmount}} sera prélevée à l'arrivée.
+
+Cette caution sera restituée dans les 7 jours suivant le départ, après vérification de l'état du logement et déduction éventuelle des dommages constatés.
+
+ARTICLE 5 - ÉQUIPEMENTS ET SERVICES INCLUS
+
+Le logement est équipé et meublé pour permettre une occupation immédiate.
+
+Les charges (eau, électricité, chauffage, internet) sont incluses dans le tarif, sauf mention contraire.
+
+ARTICLE 6 - OBLIGATIONS DU LOCATAIRE
+
+Le Locataire s'engage à :
+- Occuper les lieux en bon père de famille
+- Respecter le voisinage et le règlement intérieur
+- Maintenir le logement en bon état de propreté
+- Signaler immédiatement tout dommage ou dysfonctionnement
+- Ne pas sous-louer ou héberger plus de personnes que prévu
+
+ARTICLE 7 - OBLIGATIONS DU BAILLEUR
+
+Le Bailleur s'engage à :
+- Mettre à disposition un logement propre et en bon état
+- Assurer le bon fonctionnement des équipements
+- Intervenir en cas de problème technique
+
+ARTICLE 8 - ÉTAT DES LIEUX
+
+Un état des lieux sera réalisé en présence des deux parties à l'arrivée et au départ.
+Tout dommage constaté au départ sera facturé et déduit de la caution.
+
+ARTICLE 9 - ASSURANCE
+
+Le Bailleur dispose d'une assurance propriétaire non occupant.
+Le Locataire est invité à souscrire une assurance villégiature couvrant sa responsabilité civile.
+
+ARTICLE 10 - ANNULATION
+
+En cas d'annulation par le Locataire :
+- Plus de 30 jours avant l'arrivée : remboursement intégral
+- Entre 30 et 15 jours : 50% du montant total
+- Moins de 15 jours : aucun remboursement
+
+Fait à {{property.address.city}}, le {{today}}
+
+En deux exemplaires originaux dont chacune des parties reconnaît avoir reçu le sien.
+
+Signature du Bailleur                    Signature du Locataire]]></column>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

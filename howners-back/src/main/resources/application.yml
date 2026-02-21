@@ -1,0 +1,136 @@
+spring:
+  application:
+    name: howners-api
+
+  docker:
+    compose:
+      enabled: false
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/howners_db}
+    username: ${POSTGRES_USER:howners_user}
+    password: ${POSTGRES_PASSWORD:howners_pass}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    open-in-view: false
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    default-schema: public
+    drop-first: false
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:change-this-secret-in-production-it-must-be-at-least-256-bits-long-for-hs256-algorithm}
+  expiration: ${JWT_EXPIRATION:86400000}  # 24 heures en millisecondes
+
+# MinIO/S3 Configuration
+storage:
+  type: s3  # or 'local' for file system
+  s3:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ROOT_USER:minioadmin}
+    secret-key: ${MINIO_ROOT_PASSWORD:minioadmin123}
+    bucket: ${MINIO_BUCKET:howners-documents}
+    region: us-east-1
+
+# Stripe Configuration
+stripe:
+  api-key: ${STRIPE_SECRET_KEY:}
+  public-key: ${STRIPE_PUBLIC_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+# YouSign Configuration
+yousign:
+  api-key: ${YOUSIGN_API_KEY:}
+  api-url: https://api.yousign.com
+
+# Email Configuration
+email:
+  provider: sendgrid  # or 'smtp'
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY:}
+  from: ${EMAIL_FROM:noreply@howners.com}
+  from-name: Howners
+
+# Electronic Signature Configuration
+esignature:
+  provider: ${ESIGNATURE_PROVIDER:docusign}  # docusign, hellosign, etc.
+  docusign:
+    integration-key: ${DOCUSIGN_INTEGRATION_KEY:}
+    user-id: ${DOCUSIGN_USER_ID:}
+    account-id: ${DOCUSIGN_ACCOUNT_ID:}
+    base-path: ${DOCUSIGN_BASE_PATH:https://demo.docusign.net/restapi}
+    oauth-base-path: ${DOCUSIGN_OAUTH_BASE_PATH:https://account-d.docusign.com}
+    private-key: ${DOCUSIGN_PRIVATE_KEY:}
+    impersonated-user-guid: ${DOCUSIGN_IMPERSONATED_USER_GUID:}
+    expires-in-seconds: 3600
+    webhook-secret: ${DOCUSIGN_WEBHOOK_SECRET:}
+  callback-base-url: ${BACKEND_URL:http://localhost:8080}
+
+# Application URLs
+app:
+  backend-url: ${BACKEND_URL:http://localhost:8080}
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4201}
+
+# Server Configuration
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.howners: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    liquibase: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Management & Actuator (optionnel)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

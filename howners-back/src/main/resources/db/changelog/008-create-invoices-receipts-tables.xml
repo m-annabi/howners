@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="008-create-invoices-receipts-tables" author="howners">
+        <createTable tableName="invoices">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_invoices_rental" references="rentals(id)"/>
+            </column>
+            <column name="invoice_number" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="invoice_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)" defaultValue="EUR"/>
+            <column name="issue_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="due_date" type="DATE"/>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_id" type="UUID">
+                <constraints foreignKeyName="fk_invoices_payment" references="payments(id)"/>
+            </column>
+            <column name="document_id" type="UUID">
+                <constraints foreignKeyName="fk_invoices_document" references="documents(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createTable tableName="receipts">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_receipts_rental" references="rentals(id)"/>
+            </column>
+            <column name="payment_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_receipts_payment" references="payments(id)"/>
+            </column>
+            <column name="receipt_number" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="period_start" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="period_end" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)" defaultValue="EUR"/>
+            <column name="document_id" type="UUID">
+                <constraints foreignKeyName="fk_receipts_document" references="documents(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_invoices_rental" tableName="invoices">
+            <column name="rental_id"/>
+        </createIndex>
+        <createIndex indexName="idx_receipts_rental" tableName="receipts">
+            <column name="rental_id"/>
+        </createIndex>
+        <createIndex indexName="idx_receipts_payment" tableName="receipts">
+            <column name="payment_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

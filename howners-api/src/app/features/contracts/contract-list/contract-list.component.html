@@ -1,0 +1,101 @@
+<app-page-header
+  title="Mes Contrats"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Contrats'}]"
+  [actions]="headerActions">
+</app-page-header>
+
+<ng-template #headerActions>
+  <button class="hw-btn hw-btn--primary" (click)="createContract()">
+    <i class="bi bi-plus-lg"></i> Nouveau Contrat
+  </button>
+</ng-template>
+
+<!-- Filters -->
+<div *ngIf="!loading && contracts.length > 0" class="contract-list__toolbar">
+  <div class="contract-list__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Rechercher par numéro, propriété ou locataire..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()">
+  </div>
+  <select
+    class="form-select contract-list__filter"
+    [(ngModel)]="selectedStatus"
+    (ngModelChange)="onStatusChange()">
+    <option *ngFor="let status of statuses" [value]="status.value">
+      {{ status.label }}
+    </option>
+  </select>
+</div>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="card" [count]="6"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && !error && contracts.length === 0"
+  icon="bi-file-earmark-text"
+  title="Aucun contrat"
+  message="Créez votre premier contrat de location."
+  actionLabel="Nouveau contrat"
+  actionRoute="/contracts/new">
+</app-empty-state>
+
+<!-- No results -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredContracts.length === 0 && contracts.length > 0"
+  icon="bi-search"
+  title="Aucun résultat"
+  message="Essayez avec d'autres termes de recherche.">
+</app-empty-state>
+
+<!-- Contract cards -->
+<div *ngIf="!loading && !error && filteredContracts.length > 0" class="contract-list__grid">
+  <div
+    *ngFor="let contract of filteredContracts"
+    class="contract-card hw-card hw-card--clickable"
+    (click)="viewContract(contract)">
+
+    <div class="contract-card__header">
+      <span class="contract-card__number">{{ contract.contractNumber }}</span>
+      <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
+    </div>
+
+    <div class="contract-card__body">
+      <div class="contract-card__row">
+        <i class="bi bi-building"></i>
+        <span>{{ contract.rentalPropertyName }}</span>
+      </div>
+      <div class="contract-card__row">
+        <i class="bi bi-person"></i>
+        <span>{{ contract.tenantFullName }}</span>
+      </div>
+      <div class="contract-card__row">
+        <i class="bi bi-layers"></i>
+        <span>Version {{ contract.currentVersion }}</span>
+      </div>
+      <div class="contract-card__row">
+        <i class="bi bi-calendar3"></i>
+        <span>{{ contract.createdAt | date:'dd/MM/yyyy' }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="contract.status === ContractStatus.DRAFT" class="contract-card__actions">
+      <button
+        class="hw-btn hw-btn--ghost hw-btn--sm"
+        style="color: var(--hw-danger)"
+        (click)="deleteContract(contract, $event)">
+        <i class="bi bi-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>

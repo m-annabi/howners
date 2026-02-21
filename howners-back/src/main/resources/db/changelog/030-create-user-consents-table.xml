@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="030-create-user-consents-table" author="howners">
+        <createTable tableName="user_consents">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_user_consents_user" references="users(id)"/>
+            </column>
+            <column name="consent_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="granted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="granted_at" type="TIMESTAMP"/>
+            <column name="revoked_at" type="TIMESTAMP"/>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_user_consents_user" tableName="user_consents">
+            <column name="user_id"/>
+        </createIndex>
+        <addUniqueConstraint tableName="user_consents" columnNames="user_id,consent_type"
+                             constraintName="uk_user_consents_user_type"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="027-insert-test-users" author="howners">
+        <comment>Insert test users for development - password: Test1234!</comment>
+
+        <!-- ADMIN -->
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="email" value="admin@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Alice"/>
+            <column name="last_name" value="Admin"/>
+            <column name="phone" value="+33600000001"/>
+            <column name="role" value="ADMIN"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <!-- OWNER 1 -->
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="email" value="owner1@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Pierre"/>
+            <column name="last_name" value="Dupont"/>
+            <column name="phone" value="+33600000002"/>
+            <column name="role" value="OWNER"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <!-- OWNER 2 -->
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="email" value="owner2@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Marie"/>
+            <column name="last_name" value="Martin"/>
+            <column name="phone" value="+33600000003"/>
+            <column name="role" value="OWNER"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <!-- TENANT 1 -->
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="email" value="tenant1@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Jean"/>
+            <column name="last_name" value="Locataire"/>
+            <column name="phone" value="+33600000004"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <!-- TENANT 2 -->
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="email" value="tenant2@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Sophie"/>
+            <column name="last_name" value="Bernard"/>
+            <column name="phone" value="+33600000005"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <!-- TENANT 3 -->
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="email" value="tenant3@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Lucas"/>
+            <column name="last_name" value="Petit"/>
+            <column name="phone" value="+33600000006"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <!-- CONCIERGE -->
+        <insert tableName="users">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="email" value="concierge@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Marc"/>
+            <column name="last_name" value="Concierge"/>
+            <column name="phone" value="+33600000007"/>
+            <column name="role" value="CONCIERGE"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="users">
+                <where>email IN ('admin@howners.test', 'owner1@howners.test', 'owner2@howners.test', 'tenant1@howners.test', 'tenant2@howners.test', 'tenant3@howners.test', 'concierge@howners.test')</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

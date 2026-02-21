@@ -1,0 +1,243 @@
+<div class="property-detail-container">
+  <div *ngIf="loading" class="loading">Chargement...</div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+    <button (click)="goBack()" class="btn btn-secondary">Retour</button>
+  </div>
+
+  <div *ngIf="!loading && !error && property" class="property-detail">
+    <div class="detail-header">
+      <button (click)="goBack()" class="btn-back">← Retour</button>
+      <div class="detail-actions">
+        <button (click)="editProperty()" class="btn btn-primary">Modifier</button>
+        <button (click)="deleteProperty()" class="btn btn-danger">Supprimer</button>
+      </div>
+    </div>
+
+    <div class="detail-content">
+      <div class="detail-main">
+        <div class="detail-title">
+          <h1>{{ property.name }}</h1>
+          <span class="property-type-badge">
+            {{ propertyTypeLabels[property.propertyType] }}
+          </span>
+        </div>
+
+        <div class="detail-section">
+          <h2>📍 Adresse</h2>
+          <p class="address">
+            {{ property.address.addressLine1 }}<br>
+            <span *ngIf="property.address.addressLine2">
+              {{ property.address.addressLine2 }}<br>
+            </span>
+            {{ property.address.postalCode }} {{ property.address.city }}<br>
+            {{ property.address.country }}
+          </p>
+        </div>
+
+        <div class="detail-section" *ngIf="property.description">
+          <h2>📝 Description</h2>
+          <p>{{ property.description }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h2>🏠 Caractéristiques</h2>
+          <div class="characteristics">
+            <div class="characteristic" *ngIf="property.surfaceArea">
+              <span class="icon">📏</span>
+              <span class="label">Surface</span>
+              <span class="value">{{ property.surfaceArea }} m²</span>
+            </div>
+            <div class="characteristic" *ngIf="property.bedrooms">
+              <span class="icon">🛏️</span>
+              <span class="label">Chambres</span>
+              <span class="value">{{ property.bedrooms }}</span>
+            </div>
+            <div class="characteristic" *ngIf="property.bathrooms">
+              <span class="icon">🚿</span>
+              <span class="label">Salles de bain</span>
+              <span class="value">{{ property.bathrooms }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Informations Techniques -->
+        <div class="detail-section" *ngIf="hasTechnicalInfo()">
+          <h2>🔧 Informations Techniques</h2>
+
+          <!-- DPE et GES -->
+          <div class="energy-ratings" *ngIf="property.dpeRating || property.gesRating">
+            <div class="energy-rating-card" *ngIf="property.dpeRating">
+              <div class="rating-label">DPE (Diagnostic Performance Énergétique)</div>
+              <div class="rating-badge" [style.background-color]="getDpeColor(property.dpeRating)">
+                {{ property.dpeRating }}
+              </div>
+              <div class="rating-description">Consommation énergétique</div>
+            </div>
+            <div class="energy-rating-card" *ngIf="property.gesRating">
+              <div class="rating-label">GES (Gaz à Effet de Serre)</div>
+              <div class="rating-badge ges" [style.background-color]="getGesColor(property.gesRating)">
+                {{ property.gesRating }}
+              </div>
+              <div class="rating-description">Impact environnemental</div>
+            </div>
+          </div>
+
+          <!-- Grille d'informations techniques -->
+          <div class="technical-grid">
+            <div class="tech-item" *ngIf="property.constructionYear">
+              <span class="tech-icon">🏗️</span>
+              <div class="tech-content">
+                <span class="tech-label">Année de construction</span>
+                <span class="tech-value">{{ property.constructionYear }}</span>
+              </div>
+            </div>
+
+            <div class="tech-item" *ngIf="property.floorNumber !== null && property.floorNumber !== undefined">
+              <span class="tech-icon">🏢</span>
+              <div class="tech-content">
+                <span class="tech-label">Étage</span>
+                <span class="tech-value">
+                  {{ property.floorNumber }}{{ property.totalFloors ? ' / ' + property.totalFloors : '' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="tech-item" *ngIf="property.heatingType">
+              <span class="tech-icon">🔥</span>
+              <div class="tech-content">
+                <span class="tech-label">Chauffage</span>
+                <span class="tech-value">{{ getHeatingTypeLabel(property.heatingType) }}</span>
+              </div>
+            </div>
+
+            <div class="tech-item" *ngIf="property.propertyCondition">
+              <span class="tech-icon">⭐</span>
+              <div class="tech-content">
+                <span class="tech-label">État</span>
+                <span class="tech-value">{{ getPropertyConditionLabel(property.propertyCondition) }}</span>
+              </div>
+            </div>
+
+            <div class="tech-item" *ngIf="property.hasParking !== null && property.hasParking !== undefined">
+              <span class="tech-icon">🅿️</span>
+              <div class="tech-content">
+                <span class="tech-label">Parking</span>
+                <span class="tech-value">{{ property.hasParking ? 'Oui' : 'Non' }}</span>
+              </div>
+            </div>
+
+            <div class="tech-item" *ngIf="property.hasElevator !== null && property.hasElevator !== undefined">
+              <span class="tech-icon">🛗</span>
+              <div class="tech-content">
+                <span class="tech-label">Ascenseur</span>
+                <span class="tech-value">{{ property.hasElevator ? 'Oui' : 'Non' }}</span>
+              </div>
+            </div>
+
+            <div class="tech-item" *ngIf="property.isFurnished !== null && property.isFurnished !== undefined">
+              <span class="tech-icon">🛋️</span>
+              <div class="tech-content">
+                <span class="tech-label">Meublé</span>
+                <span class="tech-value">{{ property.isFurnished ? 'Oui' : 'Non' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Rentabilité -->
+        <app-property-profitability
+          [property]="property"
+          [monthlyRent]="monthlyRent"
+        ></app-property-profitability>
+
+        <!-- Section galerie photos -->
+        <div class="detail-section">
+          <app-property-photo-gallery
+            [propertyId]="property.id"
+            [editable]="true"
+          ></app-property-photo-gallery>
+        </div>
+
+        <!-- Section documents -->
+        <div class="detail-section">
+          <app-document-list [propertyId]="property.id"></app-document-list>
+        </div>
+      </div>
+
+      <div class="detail-sidebar">
+        <div class="sidebar-card">
+          <h3>Informations</h3>
+          <div class="info-item">
+            <span class="info-label">Créé le</span>
+            <span class="info-value">{{ property.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Modifié le</span>
+            <span class="info-value">{{ property.updatedAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <h3>Actions rapides</h3>
+          <button class="action-btn" (click)="viewDocuments()">📄 Voir les documents</button>
+          <button class="action-btn" (click)="viewRentals()">🏷️ Voir les locations</button>
+          <button class="action-btn" (click)="viewStats()">📊 Statistiques</button>
+        </div>
+
+        <!-- Informations du locataire -->
+        <div class="sidebar-card tenant-card" *ngIf="activeRental">
+          <h3>👤 Locataire Actuel</h3>
+
+          <div class="tenant-status">
+            <span class="status-badge status-active">
+              <i class="bi bi-circle-fill"></i> Location active
+            </span>
+          </div>
+
+          <div class="info-item" *ngIf="activeRental.tenantName">
+            <span class="info-label">Nom</span>
+            <span class="info-value">{{ activeRental.tenantName }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="activeRental.tenantEmail">
+            <span class="info-label">Email</span>
+            <span class="info-value">
+              <a [href]="'mailto:' + activeRental.tenantEmail" class="tenant-email">
+                {{ activeRental.tenantEmail }}
+              </a>
+            </span>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Loyer mensuel</span>
+            <span class="info-value rental-amount">{{ activeRental.monthlyRent | number:'1.2-2' }} €</span>
+          </div>
+
+          <div class="info-item" *ngIf="activeRental.depositAmount">
+            <span class="info-label">Dépôt de garantie</span>
+            <span class="info-value">{{ activeRental.depositAmount | number:'1.2-2' }} €</span>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Début location</span>
+            <span class="info-value">{{ activeRental.startDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <div class="info-item" *ngIf="activeRental.endDate">
+            <span class="info-label">Fin prévue</span>
+            <span class="info-value">{{ activeRental.endDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <button
+            class="action-btn mt-3"
+            (click)="viewRentalDetail()"
+            *ngIf="activeRental.id">
+            <i class="bi bi-eye"></i> Voir la location
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

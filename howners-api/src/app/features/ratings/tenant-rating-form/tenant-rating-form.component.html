@@ -1,0 +1,89 @@
+<div class="rating-form-container">
+  <div class="form-header">
+    <button (click)="cancel()" class="btn-back">
+      <i class="bi bi-arrow-left"></i> Retour
+    </button>
+    <h1>{{ isEditMode ? 'Modifier l\'évaluation' : 'Nouvelle évaluation' }}</h1>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <form [formGroup]="ratingForm" (ngSubmit)="onSubmit()" class="rating-form">
+    <!-- Rental selection (create mode only) -->
+    <div class="form-group" *ngIf="!isEditMode">
+      <label for="rentalId">Location (locataire) *</label>
+      <select id="rentalId" formControlName="rentalId" class="form-control">
+        <option value="">Sélectionner une location...</option>
+        <option *ngFor="let rental of rentals" [value]="rental.id">
+          {{ rental.propertyName }} - {{ rental.tenantName }}
+        </option>
+      </select>
+      <div class="form-hint" *ngIf="loadingRentals">Chargement des locations...</div>
+      <div class="form-error" *ngIf="ratingForm.get('rentalId')?.invalid && ratingForm.get('rentalId')?.touched">
+        Veuillez sélectionner une location
+      </div>
+    </div>
+
+    <!-- Star ratings -->
+    <div class="criteria-section">
+      <h2>Notes par critère</h2>
+
+      <div *ngFor="let criteria of ['paymentRating', 'propertyRespectRating', 'communicationRating']" class="star-rating-group">
+        <label>
+          <i class="bi" [ngClass]="criteriaIcons[criteria]"></i>
+          {{ criteriaLabels[criteria] }} *
+        </label>
+        <div class="star-selector">
+          <i *ngFor="let star of getStars()"
+             class="bi star-icon"
+             [ngClass]="star <= (getHoverValue(criteria) || getStarValue(criteria)) ? 'bi-star-fill active' : 'bi-star'"
+             (click)="setRating(criteria, star)"
+             (mouseenter)="setHover(criteria, star)"
+             (mouseleave)="setHover(criteria, 0)">
+          </i>
+          <span class="star-value" *ngIf="getStarValue(criteria) > 0">
+            {{ getStarValue(criteria) }}/5
+          </span>
+        </div>
+        <div class="form-error" *ngIf="ratingForm.get(criteria)?.invalid && ratingForm.get(criteria)?.touched">
+          Veuillez attribuer une note
+        </div>
+      </div>
+    </div>
+
+    <!-- Rating period -->
+    <div class="form-group">
+      <label for="ratingPeriod">Période d'évaluation</label>
+      <input
+        id="ratingPeriod"
+        type="text"
+        formControlName="ratingPeriod"
+        class="form-control"
+        placeholder="Ex: 2026-Q1, Janvier 2026..."
+      >
+    </div>
+
+    <!-- Internal comment -->
+    <div class="form-group">
+      <label for="comment">
+        Commentaire interne
+        <span class="badge-internal">Non visible par le locataire</span>
+      </label>
+      <textarea
+        id="comment"
+        formControlName="comment"
+        class="form-control"
+        rows="4"
+        placeholder="Ajoutez un commentaire interne sur ce locataire..."
+      ></textarea>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" (click)="cancel()" class="btn btn-secondary">Annuler</button>
+      <button type="submit" [disabled]="ratingForm.invalid || loading" class="btn btn-primary">
+        {{ loading ? 'Enregistrement...' : (isEditMode ? 'Mettre à jour' : 'Créer l\'évaluation') }}
+      </button>
+    </div>
+  </form>
+</div>

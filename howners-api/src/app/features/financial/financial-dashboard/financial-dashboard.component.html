@@ -1,0 +1,107 @@
+<app-page-header
+  title="Tableau de bord financier"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Finances'}]">
+</app-page-header>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="card" [count]="5"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<div *ngIf="!loading && !error && dashboard">
+  <!-- KPI Cards -->
+  <div class="fin-dash__stats">
+    <app-stats-card
+      label="Revenus totaux"
+      [value]="(dashboard.totalRevenue | number:'1.2-2') + ' EUR'"
+      icon="bi-arrow-down-circle"
+      color="success">
+    </app-stats-card>
+    <app-stats-card
+      label="Dépenses totales"
+      [value]="(dashboard.totalExpenses | number:'1.2-2') + ' EUR'"
+      icon="bi-arrow-up-circle"
+      color="danger">
+    </app-stats-card>
+    <app-stats-card
+      label="Revenu net"
+      [value]="(dashboard.netIncome | number:'1.2-2') + ' EUR'"
+      icon="bi-graph-up-arrow"
+      [color]="dashboard.netIncome >= 0 ? 'success' : 'danger'">
+    </app-stats-card>
+    <app-stats-card
+      label="En attente"
+      [value]="(dashboard.pendingPayments | number:'1.2-2') + ' EUR'"
+      icon="bi-clock-history"
+      color="warning">
+    </app-stats-card>
+    <app-stats-card
+      label="En retard"
+      [value]="(dashboard.overduePayments | number:'1.2-2') + ' EUR'"
+      icon="bi-exclamation-circle"
+      color="danger">
+    </app-stats-card>
+  </div>
+
+  <!-- Monthly Breakdown Chart -->
+  <div class="hw-card fin-dash__chart" *ngIf="dashboard.monthlyBreakdown.length > 0">
+    <div class="fin-dash__chart-header">
+      <h3 class="hw-section-title">Revenus vs Dépenses</h3>
+      <span class="hw-text-muted">12 derniers mois</span>
+    </div>
+
+    <div class="fin-dash__bars">
+      <div *ngFor="let month of dashboard.monthlyBreakdown" class="fin-dash__bar-group">
+        <div class="fin-dash__bar-cols">
+          <div
+            class="fin-dash__bar fin-dash__bar--revenue"
+            [style.height]="getBarHeight(month.revenue)"
+            [title]="'Revenus: ' + (month.revenue | number:'1.0-0') + ' EUR'">
+          </div>
+          <div
+            class="fin-dash__bar fin-dash__bar--expenses"
+            [style.height]="getBarHeight(month.expenses)"
+            [title]="'Dépenses: ' + (month.expenses | number:'1.0-0') + ' EUR'">
+          </div>
+        </div>
+        <span class="fin-dash__bar-label">{{ month.month }}</span>
+      </div>
+    </div>
+
+    <div class="fin-dash__legend">
+      <span class="fin-dash__legend-item">
+        <span class="fin-dash__legend-dot fin-dash__legend-dot--revenue"></span> Revenus
+      </span>
+      <span class="fin-dash__legend-item">
+        <span class="fin-dash__legend-dot fin-dash__legend-dot--expenses"></span> Dépenses
+      </span>
+    </div>
+  </div>
+
+  <!-- Expenses by Category -->
+  <div class="hw-card" *ngIf="dashboard.expensesByCategory.length > 0">
+    <h3 class="hw-section-title" style="margin-bottom: var(--hw-space-4)">Dépenses par catégorie</h3>
+
+    <div class="fin-dash__categories">
+      <div *ngFor="let cat of dashboard.expensesByCategory" class="fin-dash__category">
+        <div class="fin-dash__category-header">
+          <span class="fin-dash__category-name">{{ cat.category }}</span>
+          <span class="fin-dash__category-amount">{{ cat.amount | number:'1.2-2' }} EUR</span>
+        </div>
+        <div class="fin-dash__category-bar">
+          <div
+            class="fin-dash__category-fill"
+            [style.width.%]="dashboard.totalExpenses > 0 ? (cat.amount / dashboard.totalExpenses * 100) : 0">
+          </div>
+        </div>
+        <span class="fin-dash__category-pct">
+          {{ dashboard.totalExpenses > 0 ? (cat.amount / dashboard.totalExpenses * 100 | number:'1.0-0') : 0 }}%
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

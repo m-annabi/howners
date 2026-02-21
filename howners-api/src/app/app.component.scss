@@ -1,0 +1,66 @@
+// Sidebar Layout
+.hw-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.hw-sidebar {
+  width: var(--hw-sidebar-width);
+  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1030;
+  background: white;
+  transition: transform 0.25s ease;
+
+  @media (max-width: 991px) {
+    transform: translateX(-100%);
+
+    &--open {
+      transform: translateX(0);
+    }
+  }
+}
+
+.hw-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1020;
+
+  @media (min-width: 992px) {
+    display: none;
+  }
+}
+
+.hw-main {
+  flex: 1;
+  margin-left: var(--hw-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  @media (max-width: 991px) {
+    margin-left: 0;
+  }
+}
+
+.hw-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1010;
+}
+
+.hw-content {
+  flex: 1;
+  padding: var(--hw-space-6);
+  max-width: var(--hw-content-max-width);
+  width: 100%;
+  margin: 0 auto;
+
+  @media (max-width: 767px) {
+    padding: var(--hw-space-4);
+  }
+}

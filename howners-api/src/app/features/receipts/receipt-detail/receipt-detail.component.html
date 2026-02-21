@@ -1,0 +1,50 @@
+<div class="container mt-4">
+  <button class="btn btn-secondary mb-3" (click)="goBack()">&larr; Retour à la liste</button>
+
+  <div *ngIf="loading" class="alert alert-info">Chargement de la quittance...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div *ngIf="!loading && !error && receipt" class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3>Quittance {{ receipt.receiptNumber }}</h3>
+      <span class="badge bg-success">Émise</span>
+    </div>
+
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h5>Informations</h5>
+          <table class="table table-borderless">
+            <tr><td><strong>Numéro:</strong></td><td>{{ receipt.receiptNumber }}</td></tr>
+            <tr><td><strong>Propriété:</strong></td><td>{{ receipt.propertyName }}</td></tr>
+            <tr><td><strong>Locataire:</strong></td><td>{{ receipt.tenantName }}</td></tr>
+            <tr><td><strong>Propriétaire:</strong></td><td>{{ receipt.ownerName }}</td></tr>
+            <tr><td><strong>Montant:</strong></td><td>{{ receipt.amount | number:'1.2-2' }} {{ receipt.currency }}</td></tr>
+          </table>
+        </div>
+
+        <div class="col-md-6">
+          <h5>Période</h5>
+          <table class="table table-borderless">
+            <tr><td><strong>Début:</strong></td><td>{{ receipt.periodStart | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><td><strong>Fin:</strong></td><td>{{ receipt.periodEnd | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><td><strong>Créée le:</strong></td><td>{{ receipt.createdAt | date:'dd/MM/yyyy HH:mm' }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary me-2" (click)="downloadPdf()">
+          Télécharger le PDF
+        </button>
+        <button
+          *ngIf="receipt.documentUrl"
+          class="btn btn-outline-primary"
+          (click)="viewDocument()"
+        >
+          Voir le document
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

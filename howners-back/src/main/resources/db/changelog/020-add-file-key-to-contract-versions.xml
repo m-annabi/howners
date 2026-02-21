@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="020-add-file-key-to-contract-versions" author="system">
+        <comment>Ajouter file_key pour stocker la clé MinIO et générer les URLs à la volée</comment>
+
+        <!-- Ajouter la colonne file_key -->
+        <addColumn tableName="contract_versions">
+            <column name="file_key" type="VARCHAR(500)"/>
+        </addColumn>
+
+        <!-- Extraire la clé de document_url pour les versions existantes -->
+        <sql>
+            UPDATE contract_versions
+            SET file_key = SUBSTRING(document_url FROM '/howners-documents/(.+)$')
+            WHERE document_url IS NOT NULL AND file_key IS NULL;
+        </sql>
+
+        <!-- Rendre document_url nullable pour les nouvelles versions -->
+        <dropNotNullConstraint
+                tableName="contract_versions"
+                columnName="document_url"
+                columnDataType="VARCHAR(500)"/>
+
+    </changeSet>
+
+</databaseChangeLog>

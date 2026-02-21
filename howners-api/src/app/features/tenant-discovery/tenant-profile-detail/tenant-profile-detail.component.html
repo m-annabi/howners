@@ -1,0 +1,222 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col">
+      <a routerLink="/tenant-discovery" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="bi bi-arrow-left"></i> Retour à la recherche
+      </a>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && result" class="row">
+    <!-- Left: Profile info -->
+    <div class="col-lg-8">
+      <!-- Basic info -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h4 class="mb-0"><i class="bi bi-person"></i> {{ result.profile.tenantName }}</h4>
+        </div>
+        <div class="card-body">
+          <p><i class="bi bi-envelope"></i> {{ result.profile.tenantEmail }}</p>
+          <p *ngIf="result.profile.description" class="mb-0">{{ result.profile.description }}</p>
+        </div>
+      </div>
+
+      <!-- Search preferences -->
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-sliders"></i> Critères de recherche</div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <table class="table table-sm">
+                <tbody>
+                  <tr *ngIf="result.profile.desiredCity">
+                    <td class="text-muted">Ville</td>
+                    <td class="fw-bold">{{ result.profile.desiredCity }}</td>
+                  </tr>
+                  <tr *ngIf="result.profile.desiredDepartment">
+                    <td class="text-muted">Département</td>
+                    <td class="fw-bold">{{ result.profile.desiredDepartment }}</td>
+                  </tr>
+                  <tr *ngIf="result.profile.desiredPostalCode">
+                    <td class="text-muted">Code postal</td>
+                    <td class="fw-bold">{{ result.profile.desiredPostalCode }}</td>
+                  </tr>
+                  <tr *ngIf="result.profile.budgetMin || result.profile.budgetMax">
+                    <td class="text-muted">Budget</td>
+                    <td class="fw-bold">
+                      <span *ngIf="result.profile.budgetMin">{{ result.profile.budgetMin | number:'1.0-0' }}</span>
+                      <span *ngIf="result.profile.budgetMin && result.profile.budgetMax"> - </span>
+                      <span *ngIf="result.profile.budgetMax">{{ result.profile.budgetMax | number:'1.0-0' }}</span>
+                      EUR/mois
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <table class="table table-sm">
+                <tbody>
+                  <tr *ngIf="result.profile.desiredPropertyType">
+                    <td class="text-muted">Type de bien</td>
+                    <td class="fw-bold">{{ propertyTypeLabels[result.profile.desiredPropertyType] }}</td>
+                  </tr>
+                  <tr *ngIf="result.profile.minSurface">
+                    <td class="text-muted">Surface min</td>
+                    <td class="fw-bold">{{ result.profile.minSurface }} m²</td>
+                  </tr>
+                  <tr *ngIf="result.profile.minBedrooms">
+                    <td class="text-muted">Chambres min</td>
+                    <td class="fw-bold">{{ result.profile.minBedrooms }}</td>
+                  </tr>
+                  <tr>
+                    <td class="text-muted">Meublé</td>
+                    <td class="fw-bold">{{ furnishedLabels[result.profile.furnishedPreference] }}</td>
+                  </tr>
+                  <tr *ngIf="result.profile.desiredMoveIn">
+                    <td class="text-muted">Emménagement souhaité</td>
+                    <td class="fw-bold">{{ result.profile.desiredMoveIn | date:'dd/MM/yyyy' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tenant score -->
+      <div class="card mb-4" *ngIf="result.tenantScore">
+        <div class="card-header">
+          <i class="bi bi-speedometer2"></i> Score locataire
+          <span class="badge ms-2" [ngClass]="'bg-' + riskLevelColors[result.tenantScore.riskLevel]">
+            {{ result.tenantScore.score }}/100 - Risque {{ riskLevelLabels[result.tenantScore.riskLevel] }}
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="display-6">{{ result.tenantScore.breakdown.paymentScore | number:'1.0-0' }}%</div>
+                <small class="text-muted">Paiements</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="display-6">{{ result.tenantScore.breakdown.ratingScore | number:'1.0-0' }}%</div>
+                <small class="text-muted">Évaluations</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="display-6">{{ result.tenantScore.breakdown.leaseDurationScore | number:'1.0-0' }}%</div>
+                <small class="text-muted">Durée locations</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="display-6">{{ result.tenantScore.breakdown.communicationScore | number:'1.0-0' }}%</div>
+                <small class="text-muted">Communication</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Compatibility + Invitation -->
+    <div class="col-lg-4">
+      <!-- Listing selector for compatibility -->
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-bullseye"></i> Compatibilité</div>
+        <div class="card-body">
+          <label class="form-label">Annonce de référence</label>
+          <select class="form-select mb-3" [(ngModel)]="selectedListingId" (change)="onListingChange()">
+            <option value="">Aucune</option>
+            <option *ngFor="let listing of myListings" [value]="listing.id">{{ listing.title }}</option>
+          </select>
+
+          <div *ngIf="result.compatibilityScore != null">
+            <div class="text-center mb-3">
+              <div class="display-4 fw-bold" [ngClass]="'text-' + getCompatibilityColor(result.compatibilityScore)">
+                {{ result.compatibilityScore }}/100
+              </div>
+            </div>
+            <div class="progress mb-3" style="height: 12px;">
+              <div class="progress-bar"
+                   [ngClass]="'bg-' + getCompatibilityColor(result.compatibilityScore)"
+                   [style.width.%]="result.compatibilityScore">
+              </div>
+            </div>
+
+            <div *ngIf="result.compatibility">
+              <table class="table table-sm">
+                <tbody>
+                  <tr>
+                    <td>Zone</td>
+                    <td class="text-end fw-bold">{{ result.compatibility.zoneScore }}/30</td>
+                  </tr>
+                  <tr>
+                    <td>Budget</td>
+                    <td class="text-end fw-bold">{{ result.compatibility.budgetScore }}/30</td>
+                  </tr>
+                  <tr>
+                    <td>Type de bien</td>
+                    <td class="text-end fw-bold">{{ result.compatibility.propertyTypeScore }}/15</td>
+                  </tr>
+                  <tr>
+                    <td>Surface</td>
+                    <td class="text-end fw-bold">{{ result.compatibility.surfaceScore }}/10</td>
+                  </tr>
+                  <tr>
+                    <td>Chambres</td>
+                    <td class="text-end fw-bold">{{ result.compatibility.bedroomScore }}/10</td>
+                  </tr>
+                  <tr>
+                    <td>Meublé</td>
+                    <td class="text-end fw-bold">{{ result.compatibility.furnishedScore }}/5</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div *ngIf="result.compatibilityScore == null && !selectedListingId" class="text-center text-muted py-3">
+            <i class="bi bi-info-circle"></i> Sélectionnez une annonce pour voir la compatibilité
+          </div>
+        </div>
+      </div>
+
+      <!-- Invitation form -->
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-envelope"></i> Envoyer une invitation</div>
+        <div class="card-body">
+          <div *ngIf="inviteSuccess" class="alert alert-success">{{ inviteSuccess }}</div>
+          <div *ngIf="inviteError" class="alert alert-danger">{{ inviteError }}</div>
+
+          <div class="mb-3">
+            <label class="form-label">Annonce</label>
+            <select class="form-select" [(ngModel)]="inviteListingId">
+              <option value="">Choisir une annonce</option>
+              <option *ngFor="let listing of myListings" [value]="listing.id">{{ listing.title }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Message (optionnel)</label>
+            <textarea class="form-control" [(ngModel)]="inviteMessage" rows="3"
+                      placeholder="Décrivez pourquoi vous souhaitez inviter ce locataire..."></textarea>
+          </div>
+          <button class="btn btn-success w-100" (click)="sendInvitation()" [disabled]="inviteSending || !inviteListingId">
+            <span *ngIf="inviteSending" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!inviteSending" class="bi bi-send"></i>
+            Envoyer l'invitation
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

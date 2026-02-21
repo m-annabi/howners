@@ -1,0 +1,77 @@
+<div class="document-upload-container">
+  <h5>Uploader un document</h5>
+
+  <!-- Messages d'erreur -->
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <!-- Formulaire d'upload -->
+  <form (ngSubmit)="upload()">
+    <!-- Sélection du type de document -->
+    <div class="mb-3">
+      <label for="documentType" class="form-label">Type de document</label>
+      <select
+        id="documentType"
+        class="form-select"
+        [(ngModel)]="selectedDocumentType"
+        name="documentType"
+      >
+        <option *ngFor="let type of documentTypes" [value]="type.value">
+          {{ type.label }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Sélection du fichier -->
+    <div class="mb-3">
+      <label for="fileInput" class="form-label">Fichier (max 10MB)</label>
+      <input
+        type="file"
+        class="form-control"
+        id="fileInput"
+        (change)="onFileSelected($event)"
+        [disabled]="uploading"
+      >
+      <div *ngIf="selectedFile" class="mt-2">
+        <small class="text-muted">
+          Fichier sélectionné: {{ selectedFile.name }} ({{ getFileSize() }})
+        </small>
+      </div>
+    </div>
+
+    <!-- Description optionnelle -->
+    <div class="mb-3">
+      <label for="description" class="form-label">Description (optionnel)</label>
+      <textarea
+        id="description"
+        class="form-control"
+        rows="2"
+        [(ngModel)]="description"
+        name="description"
+        placeholder="Ajouter une description..."
+        [disabled]="uploading"
+      ></textarea>
+    </div>
+
+    <!-- Boutons -->
+    <div class="d-flex gap-2">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!selectedFile || uploading"
+      >
+        <span *ngIf="uploading">Upload en cours...</span>
+        <span *ngIf="!uploading">📤 Uploader</span>
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="cancel()"
+        [disabled]="uploading"
+      >
+        Annuler
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,142 @@
+<div class="container mt-4">
+  <h2>Suivi des signatures</h2>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && dashboard">
+    <!-- KPI Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-muted">Total</h5>
+            <h2>{{ dashboard.totalRequests }}</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card text-center border-success">
+          <div class="card-body">
+            <h5 class="card-title text-success">Signées</h5>
+            <h2 class="text-success">{{ dashboard.signedRequests }}</h2>
+            <small class="text-muted">{{ getSignedPercentage() }}%</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card text-center border-info">
+          <div class="card-body">
+            <h5 class="card-title text-info">En attente</h5>
+            <h2 class="text-info">{{ dashboard.sentRequests + dashboard.viewedRequests }}</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card text-center border-danger">
+          <div class="card-body">
+            <h5 class="card-title text-danger">Refusées / Expirées</h5>
+            <h2 class="text-danger">{{ dashboard.declinedRequests + dashboard.expiredRequests }}</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status breakdown bar -->
+    <div class="card mb-4">
+      <div class="card-header"><strong>Répartition par statut</strong></div>
+      <div class="card-body">
+        <div class="progress" style="height: 30px;" *ngIf="dashboard.totalRequests > 0">
+          <div class="progress-bar bg-success"
+               [style.width.%]="(dashboard.signedRequests / dashboard.totalRequests) * 100"
+               title="Signées">
+            {{ dashboard.signedRequests }}
+          </div>
+          <div class="progress-bar bg-primary"
+               [style.width.%]="(dashboard.viewedRequests / dashboard.totalRequests) * 100"
+               title="Consultées">
+            {{ dashboard.viewedRequests }}
+          </div>
+          <div class="progress-bar bg-info"
+               [style.width.%]="(dashboard.sentRequests / dashboard.totalRequests) * 100"
+               title="Envoyées">
+            {{ dashboard.sentRequests }}
+          </div>
+          <div class="progress-bar bg-secondary"
+               [style.width.%]="(dashboard.pendingRequests / dashboard.totalRequests) * 100"
+               title="En attente">
+            {{ dashboard.pendingRequests }}
+          </div>
+          <div class="progress-bar bg-danger"
+               [style.width.%]="(dashboard.declinedRequests / dashboard.totalRequests) * 100"
+               title="Refusées">
+            {{ dashboard.declinedRequests }}
+          </div>
+          <div class="progress-bar bg-warning"
+               [style.width.%]="(dashboard.expiredRequests / dashboard.totalRequests) * 100"
+               title="Expirées">
+            {{ dashboard.expiredRequests }}
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-3 mt-2">
+          <small><span class="badge bg-success">Signées</span> {{ dashboard.signedRequests }}</small>
+          <small><span class="badge bg-primary">Consultées</span> {{ dashboard.viewedRequests }}</small>
+          <small><span class="badge bg-info">Envoyées</span> {{ dashboard.sentRequests }}</small>
+          <small><span class="badge bg-secondary">En attente</span> {{ dashboard.pendingRequests }}</small>
+          <small><span class="badge bg-danger">Refusées</span> {{ dashboard.declinedRequests }}</small>
+          <small><span class="badge bg-warning">Expirées</span> {{ dashboard.expiredRequests }}</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent requests table -->
+    <div class="card">
+      <div class="card-header"><strong>Demandes récentes</strong></div>
+      <div class="card-body">
+        <div *ngIf="dashboard.recentRequests.length === 0" class="text-center text-muted py-3">
+          Aucune demande de signature
+        </div>
+        <div class="table-responsive" *ngIf="dashboard.recentRequests.length > 0">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Contrat</th>
+                <th>Signataire</th>
+                <th>Statut</th>
+                <th>Envoyé le</th>
+                <th>Rappels</th>
+                <th>Ordre</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let req of dashboard.recentRequests">
+                <td>
+                  <a [routerLink]="['/contracts', req.contractId]">
+                    {{ req.contractNumber }}
+                  </a>
+                </td>
+                <td>
+                  <strong>{{ req.signerName }}</strong><br>
+                  <small class="text-muted">{{ req.signerEmail }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-{{ statusColors[req.status] }}">
+                    {{ statusLabels[req.status] }}
+                  </span>
+                </td>
+                <td>{{ req.sentAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  <span class="badge bg-secondary">{{ req.reminderCount }} / 3</span>
+                </td>
+                <td>{{ req.signerOrder }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

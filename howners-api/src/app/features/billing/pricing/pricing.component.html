@@ -1,0 +1,75 @@
+<div class="pricing-page">
+  <div class="pricing-header">
+    <h2 class="pricing-header__title">Choisissez votre plan</h2>
+    <p class="pricing-header__subtitle">Des plans adaptés à chaque besoin de gestion immobilière</p>
+
+    <div class="pricing-toggle">
+      <button
+        class="pricing-toggle__btn"
+        [class.pricing-toggle__btn--active]="billingPeriod === 'monthly'"
+        (click)="billingPeriod = 'monthly'">
+        Mensuel
+      </button>
+      <button
+        class="pricing-toggle__btn"
+        [class.pricing-toggle__btn--active]="billingPeriod === 'annual'"
+        (click)="billingPeriod = 'annual'">
+        Annuel
+        <span class="pricing-toggle__save">-17%</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+
+  <!-- Plans -->
+  <div class="pricing-grid" *ngIf="!loading">
+    <div *ngFor="let plan of plans"
+      class="pricing-card hw-card"
+      [class.pricing-card--popular]="isPopular(plan)">
+
+      <div *ngIf="isPopular(plan)" class="pricing-card__badge">
+        Le plus populaire
+      </div>
+
+      <div class="pricing-card__body">
+        <h3 class="pricing-card__name">{{ plan.displayName }}</h3>
+
+        <div class="pricing-card__price">
+          <span class="pricing-card__amount">{{ getPrice(plan) | number:'1.0-0' }}</span>
+          <div class="pricing-card__currency">
+            <span>EUR</span>
+            <span>/mois</span>
+          </div>
+        </div>
+
+        <p *ngIf="billingPeriod === 'annual' && plan.monthlyPrice > 0" class="pricing-card__annual">
+          {{ getTotalPrice(plan) | number:'1.0-0' }} EUR facturé annuellement
+        </p>
+        <p *ngIf="plan.monthlyPrice === 0" class="pricing-card__annual">Gratuit pour toujours</p>
+
+        <ul class="pricing-card__features">
+          <li *ngFor="let feature of planFeatures[plan.name]" class="pricing-card__feature">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>{{ feature }}</span>
+          </li>
+        </ul>
+
+        <button *ngIf="plan.monthlyPrice === 0"
+          class="hw-btn hw-btn--secondary pricing-card__cta" disabled>
+          Plan actuel
+        </button>
+        <button *ngIf="plan.monthlyPrice > 0"
+          class="hw-btn pricing-card__cta"
+          [class.hw-btn--primary]="isPopular(plan)"
+          [class.hw-btn--secondary]="!isPopular(plan)"
+          (click)="checkout(plan)"
+          [disabled]="checkingOut">
+          <span *ngIf="checkingOut" class="spinner-border spinner-border-sm"></span>
+          Choisir {{ plan.displayName }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="010-create-listings-table" author="howners">
+        <createTable tableName="listings">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="property_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_listings_property" references="properties(id)"/>
+            </column>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="price_per_night" type="DECIMAL(10,2)"/>
+            <column name="price_per_month" type="DECIMAL(10,2)"/>
+            <column name="currency" type="VARCHAR(3)" defaultValue="EUR"/>
+            <column name="min_stay" type="INT"/>
+            <column name="max_stay" type="INT"/>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createTable tableName="listing_photos">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="listing_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_listing_photos_listing" references="listings(id)" deleteCascade="true"/>
+            </column>
+            <column name="file_path" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="caption" type="VARCHAR(255)"/>
+            <column name="display_order" type="INT" defaultValueNumeric="0"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_listings_property" tableName="listings">
+            <column name="property_id"/>
+        </createIndex>
+        <createIndex indexName="idx_listings_status" tableName="listings">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

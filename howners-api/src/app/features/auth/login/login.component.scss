@@ -1,0 +1,107 @@
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--hw-gray-50);
+  padding: var(--hw-space-4);
+}
+
+.auth-card {
+  background: white;
+  padding: var(--hw-space-8);
+  border-radius: var(--hw-radius-xl);
+  box-shadow: var(--hw-shadow-lg);
+  width: 100%;
+  max-width: 420px;
+
+  &__header {
+    text-align: center;
+    margin-bottom: var(--hw-space-6);
+
+    h1 {
+      font-size: var(--hw-fs-2xl);
+      font-weight: var(--hw-fw-bold);
+      color: var(--hw-gray-900);
+      margin-bottom: var(--hw-space-1);
+    }
+
+    p {
+      font-size: var(--hw-fs-base);
+      color: var(--hw-gray-500);
+    }
+  }
+
+  &__logo {
+    width: 48px;
+    height: 48px;
+    background: var(--hw-primary-50);
+    color: var(--hw-primary-600);
+    border-radius: var(--hw-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--hw-space-4);
+
+    i { font-size: 1.5rem; }
+  }
+
+  &__footer {
+    margin-top: var(--hw-space-6);
+    text-align: center;
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+
+    a {
+      color: var(--hw-primary-600);
+      font-weight: var(--hw-fw-semibold);
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+  }
+}
+
+.auth-field {
+  margin-bottom: var(--hw-space-4);
+}
+
+.password-wrapper {
+  position: relative;
+
+  .form-control {
+    padding-right: 44px;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--hw-gray-400);
+    padding: 0;
+
+    &:hover {
+      color: var(--hw-gray-600);
+    }
+
+    i {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}

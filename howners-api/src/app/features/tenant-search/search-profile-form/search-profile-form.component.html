@@ -1,0 +1,146 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h2><i class="bi bi-person-badge"></i> Mon profil de recherche</h2>
+      <p class="text-muted">Renseignez vos critères de recherche pour que les propriétaires puissent vous trouver.</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading">
+    <!-- Active/Inactive toggle -->
+    <div class="row mb-3" *ngIf="profile">
+      <div class="col-12">
+        <div class="alert" [ngClass]="profile.isActive ? 'alert-success' : 'alert-secondary'">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>
+              <i class="bi" [ngClass]="profile.isActive ? 'bi-eye' : 'bi-eye-slash'"></i>
+              {{ profile.isActive ? 'Votre profil est visible par les propriétaires' : 'Votre profil est masqué' }}
+            </span>
+            <button class="btn btn-sm" [ngClass]="profile.isActive ? 'btn-outline-danger' : 'btn-outline-success'" (click)="toggleActive()">
+              {{ profile.isActive ? 'Désactiver' : 'Activer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="success" class="alert alert-success alert-dismissible">
+      <i class="bi bi-check-circle"></i> Profil enregistré avec succès !
+      <button type="button" class="btn-close" (click)="success = false"></button>
+    </div>
+    <div *ngIf="error" class="alert alert-danger alert-dismissible">
+      {{ error }}
+      <button type="button" class="btn-close" (click)="error = ''"></button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <!-- Zone -->
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-geo-alt"></i> Zone de recherche</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Département</label>
+              <select class="form-select" formControlName="desiredDepartment">
+                <option value="">Tous</option>
+                <option *ngFor="let dept of departments" [value]="dept.code">
+                  {{ getDepartmentLabel(dept) }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Ville</label>
+              <input type="text" class="form-control" formControlName="desiredCity" placeholder="Ex: Paris">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Code postal</label>
+              <input type="text" class="form-control" formControlName="desiredPostalCode" placeholder="Ex: 75">
+              <small class="form-text text-muted">Préfixe accepté</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Budget -->
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-cash"></i> Budget mensuel</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Budget minimum (EUR)</label>
+              <input type="number" class="form-control" formControlName="budgetMin" placeholder="Ex: 500">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Budget maximum (EUR)</label>
+              <input type="number" class="form-control" formControlName="budgetMax" placeholder="Ex: 1200">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferences -->
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-sliders"></i> Préférences</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Type de bien</label>
+              <select class="form-select" formControlName="desiredPropertyType">
+                <option value="">Indifférent</option>
+                <option *ngFor="let type of propertyTypes" [value]="type">
+                  {{ propertyTypeLabels[type] }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Surface min (m²)</label>
+              <input type="number" class="form-control" formControlName="minSurface" placeholder="Ex: 30">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Chambres min</label>
+              <input type="number" class="form-control" formControlName="minBedrooms" placeholder="Ex: 2">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Meublé</label>
+              <select class="form-select" formControlName="furnishedPreference">
+                <option *ngFor="let pref of furnishedPreferences" [value]="pref">
+                  {{ furnishedLabels[pref] }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="row g-3 mt-2">
+            <div class="col-md-4">
+              <label class="form-label">Date souhaitée d'emménagement</label>
+              <input type="date" class="form-control" formControlName="desiredMoveIn">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-pencil"></i> Présentation</div>
+        <div class="card-body">
+          <label class="form-label">Présentez-vous aux propriétaires</label>
+          <textarea class="form-control" formControlName="description" rows="4"
+                    placeholder="Décrivez votre situation, votre profession, pourquoi vous cherchez un logement..."></textarea>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!saving" class="bi bi-check-lg"></i>
+          {{ profile ? 'Mettre à jour' : 'Créer mon profil' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

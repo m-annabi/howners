@@ -1,0 +1,97 @@
+<div class="modal" [class.show]="show" [style.display]="show ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pen"></i> Signature du Contrat
+        </h5>
+        <button type="button" class="btn-close" (click)="onClose()"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Contract Title -->
+        <div class="contract-title">
+          <h4>{{ contractTitle }}</h4>
+        </div>
+
+        <!-- Contract Content Preview -->
+        <div class="contract-preview">
+          <h6>📄 Aperçu du Contrat</h6>
+          <div class="contract-content" [innerHTML]="contractContent"></div>
+        </div>
+
+        <!-- Signer Information -->
+        <div class="signer-info">
+          <h6>👤 Informations du Signataire</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="signerName">Nom complet *</label>
+                <input
+                  type="text"
+                  id="signerName"
+                  class="form-control"
+                  [(ngModel)]="signerName"
+                  placeholder="Ex: Jean Dupont"
+                  required
+                >
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="signerEmail">Email *</label>
+                <input
+                  type="email"
+                  id="signerEmail"
+                  class="form-control"
+                  [(ngModel)]="signerEmail"
+                  placeholder="Ex: jean.dupont@example.com"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signature Pad -->
+        <div class="signature-section">
+          <app-signature-pad (signatureChange)="onSignatureChange($event)"></app-signature-pad>
+        </div>
+
+        <!-- Terms and Conditions -->
+        <div class="terms-section">
+          <div class="form-check">
+            <input
+              type="checkbox"
+              id="acceptTerms"
+              class="form-check-input"
+              [(ngModel)]="acceptTerms"
+            >
+            <label for="acceptTerms" class="form-check-label">
+              <strong>Je certifie avoir lu et accepté les termes de ce contrat</strong>
+            </label>
+          </div>
+          <small class="text-muted">
+            En signant électroniquement ce document, vous acceptez que votre signature ait la même valeur légale qu'une signature manuscrite.
+          </small>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onClose()">
+          <i class="bi bi-x-circle"></i> Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-success"
+          (click)="onSign()"
+          [disabled]="!canSign()"
+        >
+          <i class="bi bi-check-circle"></i> Signer le Contrat
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" [class.show]="show" [style.display]="show ? 'block' : 'none'"></div>

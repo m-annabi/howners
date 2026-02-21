@@ -1,0 +1,10 @@
+{
+  "id": "user-owner-001",
+  "email": "jean.dupont@example.com",
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "phone": "+33612345678",
+  "role": "OWNER",
+  "enabled": true,
+  "createdAt": "2024-01-15T10:00:00Z"
+}

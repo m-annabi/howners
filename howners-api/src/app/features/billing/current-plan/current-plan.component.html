@@ -1,0 +1,126 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-credit-card"></i> Mon abonnement</h2>
+    <a routerLink="/billing/pricing" class="btn btn-primary">
+      <i class="bi bi-arrow-up-circle"></i> Voir les plans
+    </a>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!loading" class="row">
+    <!-- Current Plan Card -->
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <h5 class="mb-0">Plan actuel</h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="subscription; else noPlan">
+            <div class="d-flex align-items-center mb-3">
+              <span class="badge bg-{{ planColors[subscription.plan.name] }} fs-5 me-3">
+                {{ subscription.plan.displayName }}
+              </span>
+              <span class="badge bg-success" *ngIf="subscription.status === 'ACTIVE' && !subscription.cancelAtPeriodEnd">
+                Actif
+              </span>
+              <span class="badge bg-warning" *ngIf="subscription.cancelAtPeriodEnd">
+                Annulation en fin de période
+              </span>
+            </div>
+
+            <div *ngIf="subscription.plan.name !== 'FREE'">
+              <p class="mb-1" *ngIf="subscription.currentPeriodEnd">
+                <strong>Prochaine facturation :</strong>
+                {{ subscription.currentPeriodEnd | date:'dd/MM/yyyy' }}
+              </p>
+              <div class="mt-3 d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" (click)="manageBilling()">
+                  <i class="bi bi-gear"></i> Gérer la facturation
+                </button>
+                <button *ngIf="!subscription.cancelAtPeriodEnd"
+                        class="btn btn-outline-danger btn-sm"
+                        (click)="cancelSubscription()"
+                        [disabled]="cancelling">
+                  <span *ngIf="cancelling" class="spinner-border spinner-border-sm me-1"></span>
+                  Annuler l'abonnement
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="subscription.plan.name === 'FREE'" class="mt-3">
+              <p class="text-muted">Passez à un plan supérieur pour débloquer plus de fonctionnalités.</p>
+              <a routerLink="/billing/pricing" class="btn btn-primary btn-sm">
+                <i class="bi bi-arrow-up-circle"></i> Mettre à niveau
+              </a>
+            </div>
+          </div>
+
+          <ng-template #noPlan>
+            <p class="text-muted">Aucun abonnement actif. Vous utilisez le plan gratuit par défaut.</p>
+            <a routerLink="/billing/pricing" class="btn btn-primary">
+              <i class="bi bi-arrow-up-circle"></i> Choisir un plan
+            </a>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage Card -->
+    <div class="col-lg-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <h5 class="mb-0">Utilisation</h5>
+        </div>
+        <div class="card-body" *ngIf="usage">
+          <!-- Properties usage -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between mb-1">
+              <span>Propriétés</span>
+              <span>{{ usage.currentProperties }} / {{ formatLimit(usage.maxProperties) }}</span>
+            </div>
+            <div class="progress" style="height: 8px;" *ngIf="usage.maxProperties !== -1">
+              <div class="progress-bar"
+                   [class.bg-success]="getPropertyPercent() < 70"
+                   [class.bg-warning]="getPropertyPercent() >= 70 && getPropertyPercent() < 90"
+                   [class.bg-danger]="getPropertyPercent() >= 90"
+                   [style.width.%]="getPropertyPercent()">
+              </div>
+            </div>
+            <div *ngIf="usage.maxProperties === -1" class="progress" style="height: 8px;">
+              <div class="progress-bar bg-success" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <!-- Contracts usage -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between mb-1">
+              <span>Contrats ce mois</span>
+              <span>{{ usage.currentContractsThisMonth }} / {{ formatLimit(usage.maxContractsPerMonth) }}</span>
+            </div>
+            <div class="progress" style="height: 8px;" *ngIf="usage.maxContractsPerMonth !== -1">
+              <div class="progress-bar"
+                   [class.bg-success]="getContractPercent() < 70"
+                   [class.bg-warning]="getContractPercent() >= 70 && getContractPercent() < 90"
+                   [class.bg-danger]="getContractPercent() >= 90"
+                   [style.width.%]="getContractPercent()">
+              </div>
+            </div>
+            <div *ngIf="usage.maxContractsPerMonth === -1" class="progress" style="height: 8px;">
+              <div class="progress-bar bg-success" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <div *ngIf="!usage.canCreateProperty || !usage.canCreateContract"
+               class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle"></i>
+            Vous avez atteint une limite de votre plan.
+            <a routerLink="/billing/pricing" class="alert-link">Mettre à niveau</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

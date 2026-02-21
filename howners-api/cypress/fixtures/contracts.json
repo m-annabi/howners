@@ -1,0 +1,44 @@
+[
+  {
+    "id": "draft-001",
+    "contractNumber": "CTR-2024-001",
+    "rentalId": "rental-001",
+    "rentalPropertyName": "Appartement Paris 11e",
+    "tenantFullName": "Marie Martin",
+    "status": "DRAFT",
+    "currentVersion": 1,
+    "documentUrl": null,
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": null,
+    "sentAt": null,
+    "signedAt": null
+  },
+  {
+    "id": "sent-001",
+    "contractNumber": "CTR-2024-002",
+    "rentalId": "rental-002",
+    "rentalPropertyName": "Studio Lyon 3e",
+    "tenantFullName": "Pierre Durand",
+    "status": "SENT",
+    "currentVersion": 2,
+    "documentUrl": "https://storage.example.com/contracts/ctr-002.pdf",
+    "createdAt": "2024-05-15T14:00:00Z",
+    "updatedAt": "2024-05-20T09:00:00Z",
+    "sentAt": "2024-05-20T09:00:00Z",
+    "signedAt": null
+  },
+  {
+    "id": "active-001",
+    "contractNumber": "CTR-2024-003",
+    "rentalId": "rental-003",
+    "rentalPropertyName": "Maison Bordeaux",
+    "tenantFullName": "Sophie Leclerc",
+    "status": "ACTIVE",
+    "currentVersion": 3,
+    "documentUrl": "https://storage.example.com/contracts/ctr-003.pdf",
+    "createdAt": "2024-03-01T08:00:00Z",
+    "updatedAt": "2024-04-10T11:00:00Z",
+    "sentAt": "2024-03-05T10:00:00Z",
+    "signedAt": "2024-03-10T16:30:00Z"
+  }
+]

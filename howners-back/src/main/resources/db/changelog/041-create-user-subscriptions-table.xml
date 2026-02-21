@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="041-1" author="howners">
+        <comment>Create user_subscriptions table</comment>
+
+        <createTable tableName="user_subscriptions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="plan_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stripe_customer_id" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="stripe_subscription_id" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="status" type="VARCHAR(30)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_period_start" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="current_period_end" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="cancel_at_period_end" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="user_subscriptions" baseColumnNames="user_id"
+            referencedTableName="users" referencedColumnNames="id"
+            constraintName="fk_user_subscriptions_user"/>
+        <addForeignKeyConstraint
+            baseTableName="user_subscriptions" baseColumnNames="plan_id"
+            referencedTableName="subscription_plans" referencedColumnNames="id"
+            constraintName="fk_user_subscriptions_plan"/>
+
+        <createIndex tableName="user_subscriptions" indexName="idx_user_subscriptions_user_id">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="user_subscriptions" indexName="idx_user_subscriptions_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

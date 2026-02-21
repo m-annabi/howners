@@ -1,0 +1,136 @@
+<div class="container mt-4">
+  <div class="mb-4">
+    <h2>{{ isEditMode ? 'Modifier le Template' : 'Nouveau Template' }}</h2>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="loading" class="alert alert-info">
+    Chargement du template...
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <!-- Formulaire -->
+  <form [formGroup]="templateForm" (ngSubmit)="onSubmit()" *ngIf="!loading && !error">
+    <div class="row">
+      <!-- Formulaire principal (col-8) -->
+      <div class="col-md-8">
+        <!-- Nom -->
+        <div class="mb-3">
+          <label for="name" class="form-label">
+            Nom du template <span class="text-danger">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            class="form-control"
+            formControlName="name"
+            [class.is-invalid]="templateForm.get('name')?.invalid && templateForm.get('name')?.touched"
+          >
+          <div
+            *ngIf="templateForm.get('name')?.invalid && templateForm.get('name')?.touched"
+            class="invalid-feedback"
+          >
+            Le nom est requis (max 255 caractères)
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea
+            id="description"
+            class="form-control"
+            rows="2"
+            formControlName="description"
+            [class.is-invalid]="templateForm.get('description')?.invalid && templateForm.get('description')?.touched"
+          ></textarea>
+          <div
+            *ngIf="templateForm.get('description')?.invalid && templateForm.get('description')?.touched"
+            class="invalid-feedback"
+          >
+            La description ne doit pas dépasser 500 caractères
+          </div>
+        </div>
+
+        <!-- Type de location -->
+        <div class="mb-3">
+          <label for="rentalType" class="form-label">
+            Type de location <span class="text-danger">*</span>
+          </label>
+          <select
+            id="rentalType"
+            class="form-select"
+            formControlName="rentalType"
+            [class.is-invalid]="templateForm.get('rentalType')?.invalid && templateForm.get('rentalType')?.touched"
+          >
+            <option *ngFor="let type of rentalTypes" [value]="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+          <div
+            *ngIf="templateForm.get('rentalType')?.invalid && templateForm.get('rentalType')?.touched"
+            class="invalid-feedback"
+          >
+            Le type de location est requis
+          </div>
+        </div>
+
+        <!-- Éditeur Quill -->
+        <div class="mb-3">
+          <label class="form-label">
+            Contenu du template <span class="text-danger">*</span>
+          </label>
+          <p class="text-muted small">
+            Utilisez le panneau de droite pour insérer des variables. Les variables seront remplacées automatiquement lors de la génération du contrat.
+          </p>
+          <quill-editor
+            #editor
+            formControlName="content"
+            [modules]="quillModules"
+            [styles]="{'min-height': '400px'}"
+            [class.is-invalid]="templateForm.get('content')?.invalid && templateForm.get('content')?.touched"
+            (onSelectionChanged)="onEditorSelectionChanged($event)"
+          ></quill-editor>
+          <div
+            *ngIf="templateForm.get('content')?.invalid && templateForm.get('content')?.touched"
+            class="invalid-feedback d-block"
+          >
+            Le contenu est requis
+          </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="d-flex gap-2">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="submitting || templateForm.invalid"
+          >
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+            {{ isEditMode ? 'Mettre à jour' : 'Créer le template' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="cancel()"
+            [disabled]="submitting"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+
+      <!-- Panneau des variables (col-4) -->
+      <div class="col-md-4">
+        <div class="sticky-top" style="top: 20px;">
+          <app-variable-helper
+            (variableSelected)="onVariableSelected($event)"
+          ></app-variable-helper>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

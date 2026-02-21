@@ -1,0 +1,176 @@
+.profitability-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.section-header {
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e0e0e0;
+
+  h3 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+
+    i {
+      color: #3498db;
+    }
+  }
+}
+
+.metrics-section {
+  margin-bottom: 32px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-title {
+  color: #34495e;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.metric-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  height: 100%;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #3498db;
+  }
+
+  &.highlight {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+
+    .metric-label {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .metric-value {
+      color: white !important;
+    }
+  }
+
+  &.yield-card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+
+    .metric-label,
+    .metric-description {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .metric-value {
+      color: white !important;
+      font-size: 2.5rem;
+    }
+  }
+
+  &.cashflow-card {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border: none;
+
+    .metric-label {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .metric-value {
+      color: white !important;
+    }
+  }
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2c3e50;
+
+  &.large {
+    font-size: 2.2rem;
+  }
+
+  &.yield-value {
+    font-size: 3rem;
+  }
+
+  .metric-period {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #6c757d;
+  }
+}
+
+.metric-annual {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.metric-description {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.legend {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border-left: 4px solid #3498db;
+
+  small {
+    line-height: 1.8;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .profitability-container {
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+
+    &.large {
+      font-size: 1.8rem;
+    }
+
+    &.yield-value {
+      font-size: 2.2rem;
+    }
+  }
+
+  .section-header h3 {
+    font-size: 1.2rem;
+  }
+}

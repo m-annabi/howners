@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="042-1" author="howners">
+        <comment>Create usage_tracking table</comment>
+
+        <createTable tableName="usage_tracking">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metric" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="count" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="period_start" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="period_end" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="usage_tracking" baseColumnNames="user_id"
+            referencedTableName="users" referencedColumnNames="id"
+            constraintName="fk_usage_tracking_user"/>
+
+        <createIndex tableName="usage_tracking" indexName="idx_usage_tracking_user_metric">
+            <column name="user_id"/>
+            <column name="metric"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

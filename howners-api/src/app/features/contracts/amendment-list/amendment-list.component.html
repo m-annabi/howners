@@ -1,0 +1,66 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <button class="btn btn-outline-secondary me-2" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i> Retour au contrat
+      </button>
+      <h2 class="d-inline-block mb-0 ms-2">Avenants</h2>
+    </div>
+    <button class="btn btn-primary" (click)="createAmendment()">
+      <i class="bi bi-plus-lg"></i> Nouvel avenant
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && amendments.length === 0" class="text-center py-5">
+    <i class="bi bi-file-earmark-plus display-1 text-muted"></i>
+    <p class="mt-3 text-muted">Aucun avenant pour ce contrat</p>
+  </div>
+
+  <div class="table-responsive" *ngIf="!loading && amendments.length > 0">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>Motif</th>
+          <th>Ancien loyer</th>
+          <th>Nouveau loyer</th>
+          <th>Date d'effet</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of amendments">
+          <td><strong>Avenant n°{{ a.amendmentNumber }}</strong></td>
+          <td>{{ a.reason }}</td>
+          <td>{{ a.previousRent ? (a.previousRent | number:'1.2-2') + ' EUR' : '-' }}</td>
+          <td>{{ a.newRent ? (a.newRent | number:'1.2-2') + ' EUR' : '-' }}</td>
+          <td>{{ a.effectiveDate | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <span class="badge bg-{{ statusColors[a.status] }}">
+              {{ statusLabels[a.status] }}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1" (click)="downloadPdf(a)" title="Télécharger PDF">
+              <i class="bi bi-file-pdf"></i>
+            </button>
+            <button
+              *ngIf="a.status === 'DRAFT' || a.status === 'SENT'"
+              class="btn btn-sm btn-success"
+              (click)="signAmendment(a)"
+              title="Signer">
+              <i class="bi bi-pen"></i> Signer
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

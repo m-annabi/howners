@@ -1,0 +1,13 @@
+{
+  "id": "tpl-002",
+  "name": "Location saisonnière",
+  "description": "Template pour les locations courte durée / saisonnières",
+  "rentalType": "SHORT_TERM",
+  "content": "<h1>Contrat de location saisonnière</h1><p>Entre les soussignés {{owner_name}} et {{tenant_name}}...</p>",
+  "isDefault": false,
+  "isActive": true,
+  "createdById": "user-owner-001",
+  "createdByName": "Jean Dupont",
+  "createdAt": "2024-02-01T10:00:00Z",
+  "updatedAt": null
+}

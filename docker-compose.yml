@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: howners-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-howners_db}
+      POSTGRES_USER: ${POSTGRES_USER:-howners_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-howners_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - howners-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-howners_user} -d ${POSTGRES_DB:-howners_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: howners-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console Web
+    volumes:
+      - minio_data:/data
+    networks:
+      - howners-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # MailHog pour tester les emails en local
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: howners-mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - howners-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optionnel: création automatique du bucket au démarrage
+  minio-setup:
+    image: minio/mc:latest
+    container_name: howners-minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin123};
+      /usr/bin/mc mb myminio/howners-documents --ignore-existing;
+      /usr/bin/mc anonymous set none myminio/howners-documents;
+      exit 0;
+      "
+    networks:
+      - howners-network
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  howners-network:
+    driver: bridge

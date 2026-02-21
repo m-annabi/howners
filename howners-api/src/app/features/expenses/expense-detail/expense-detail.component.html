@@ -1,0 +1,40 @@
+<div class="container mt-4">
+  <button class="btn btn-secondary mb-3" (click)="goBack()">&larr; Retour à la liste</button>
+
+  <div *ngIf="loading" class="alert alert-info">Chargement de la dépense...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div *ngIf="!loading && !error && expense" class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3>Dépense - {{ categoryLabels[expense.category] }}</h3>
+      <span class="badge bg-primary">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</span>
+    </div>
+
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h5>Informations</h5>
+          <table class="table table-borderless">
+            <tr><td><strong>Catégorie:</strong></td><td>{{ categoryLabels[expense.category] }}</td></tr>
+            <tr><td><strong>Description:</strong></td><td>{{ expense.description || '-' }}</td></tr>
+            <tr><td><strong>Montant:</strong></td><td>{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</td></tr>
+            <tr><td><strong>Propriété:</strong></td><td>{{ expense.propertyName || '-' }}</td></tr>
+          </table>
+        </div>
+
+        <div class="col-md-6">
+          <h5>Dates</h5>
+          <table class="table table-borderless">
+            <tr><td><strong>Date dépense:</strong></td><td>{{ expense.expenseDate | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><td><strong>Créée le:</strong></td><td>{{ expense.createdAt | date:'dd/MM/yyyy HH:mm' }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary me-2" (click)="editExpense()">Modifier</button>
+        <button class="btn btn-danger" (click)="deleteExpense()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>

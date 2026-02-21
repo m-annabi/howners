@@ -1,0 +1,21 @@
+<div class="page-header">
+  <nav *ngIf="breadcrumbs.length > 0" class="page-header__breadcrumbs" aria-label="Fil d'Ariane">
+    <ol>
+      <li *ngFor="let crumb of breadcrumbs; let last = last">
+        <a *ngIf="crumb.route && !last" [routerLink]="crumb.route">{{ crumb.label }}</a>
+        <span *ngIf="!crumb.route || last" [class.current]="last">{{ crumb.label }}</span>
+        <i *ngIf="!last" class="bi bi-chevron-right"></i>
+      </li>
+    </ol>
+  </nav>
+
+  <div class="page-header__main">
+    <div class="page-header__text">
+      <h1>{{ title }}</h1>
+      <p *ngIf="subtitle" class="page-header__subtitle">{{ subtitle }}</p>
+    </div>
+    <div *ngIf="actions" class="page-header__actions">
+      <ng-container *ngTemplateOutlet="actions"></ng-container>
+    </div>
+  </div>
+</div>

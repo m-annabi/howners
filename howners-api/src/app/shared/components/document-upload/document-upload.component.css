@@ -1,0 +1,14 @@
+.document-upload-container {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  border: 1px solid #dee2e6;
+}
+
+.document-upload-container h5 {
+  margin-bottom: 1rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}

@@ -1,0 +1,58 @@
+{
+  "variables": [
+    {
+      "key": "owner_name",
+      "label": "Nom du propriétaire",
+      "category": "owner",
+      "example": "Jean Dupont"
+    },
+    {
+      "key": "owner_email",
+      "label": "Email du propriétaire",
+      "category": "owner",
+      "example": "jean.dupont@example.com"
+    },
+    {
+      "key": "tenant_name",
+      "label": "Nom du locataire",
+      "category": "tenant",
+      "example": "Marie Martin"
+    },
+    {
+      "key": "tenant_email",
+      "label": "Email du locataire",
+      "category": "tenant",
+      "example": "marie.martin@example.com"
+    },
+    {
+      "key": "property_address",
+      "label": "Adresse du bien",
+      "category": "property",
+      "example": "12 rue de la Paix, 75002 Paris"
+    },
+    {
+      "key": "property_type",
+      "label": "Type de bien",
+      "category": "property",
+      "example": "Appartement"
+    },
+    {
+      "key": "rental_start_date",
+      "label": "Date de début",
+      "category": "rental",
+      "example": "01/01/2024"
+    },
+    {
+      "key": "rental_monthly_rent",
+      "label": "Loyer mensuel",
+      "category": "rental",
+      "example": "1 200,00 EUR"
+    },
+    {
+      "key": "current_date",
+      "label": "Date du jour",
+      "category": "date",
+      "example": "19/02/2026"
+    }
+  ]
+}

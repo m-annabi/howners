@@ -1,0 +1,114 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Candidatures recues</h2>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!loading && applications.length === 0" class="text-center py-5">
+    <i class="bi bi-people display-1 text-muted"></i>
+    <p class="text-muted mt-3">Aucune candidature recue</p>
+  </div>
+
+  <div *ngIf="!loading && applications.length > 0">
+    <div class="card shadow-sm mb-3" *ngFor="let app of applications">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="mb-1">{{ app.applicantName }}</h5>
+            <p class="text-muted mb-1">
+              <i class="bi bi-envelope"></i> {{ app.applicantEmail }}
+            </p>
+            <p class="mb-1">
+              <strong>Annonce :</strong>
+              <a [routerLink]="['/listings', app.listingId]">{{ app.listingTitle }}</a>
+            </p>
+            <p class="mb-1" *ngIf="app.desiredMoveIn">
+              <strong>Emmenagement souhaite :</strong> {{ app.desiredMoveIn | date:'dd/MM/yyyy' }}
+            </p>
+            <p class="text-muted small mb-0">
+              <i class="bi bi-clock"></i> Candidature du {{ app.createdAt | date:'dd/MM/yyyy a HH:mm' }}
+            </p>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-{{ statusColors[app.status] }} mb-2 d-block">
+              {{ statusLabels[app.status] }}
+            </span>
+            <span class="badge" [class]="getDocumentCount(app) === REQUIRED_DOCUMENT_TYPES.length ? 'bg-success' : 'bg-warning text-dark'">
+              <i class="bi bi-folder"></i> {{ getDocumentCount(app) }}/{{ REQUIRED_DOCUMENT_TYPES.length }} pieces
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="app.coverLetter" class="mt-3 p-3 bg-light rounded">
+          <small class="text-muted d-block mb-1">Lettre de motivation :</small>
+          {{ app.coverLetter }}
+        </div>
+
+        <!-- Dossier section -->
+        <div class="mt-3">
+          <button class="btn btn-outline-secondary btn-sm" (click)="toggleDossier(app.id)">
+            <i class="bi" [class]="expandedDossierId === app.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+            Dossier locataire
+          </button>
+
+          <div *ngIf="expandedDossierId === app.id" class="mt-2 border rounded p-3">
+            <div class="row g-2">
+              <div *ngFor="let req of REQUIRED_DOCUMENT_TYPES" class="col-12">
+                <div class="d-flex align-items-center justify-content-between py-1">
+                  <div class="d-flex align-items-center">
+                    <i class="bi me-2" [class]="hasDocumentType(app, req.type) ? 'bi-check-circle-fill text-success' : 'bi-x-circle text-danger'"></i>
+                    <span>{{ req.label }}</span>
+                  </div>
+                  <div *ngIf="hasDocumentType(app, req.type)">
+                    <span *ngFor="let doc of app.documents" class="ms-2">
+                      <button *ngIf="doc.documentType === req.type"
+                              class="btn btn-outline-primary btn-sm py-0 px-2"
+                              (click)="downloadDocument(doc.id, doc.fileName)"
+                              title="{{ doc.fileName }} ({{ formatFileSize(doc.fileSize) }})">
+                        <i class="bi bi-download"></i> {{ doc.fileName | slice:0:20 }}
+                      </button>
+                    </span>
+                  </div>
+                  <span *ngIf="!hasDocumentType(app, req.type)" class="text-muted small">Manquant</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="app.notes" class="mt-2">
+          <small class="text-muted">Notes : {{ app.notes }}</small>
+        </div>
+
+        <!-- Review panel -->
+        <div *ngIf="canReview(app) && reviewingId !== app.id" class="mt-3">
+          <button class="btn btn-outline-primary btn-sm" (click)="startReview(app.id)">
+            <i class="bi bi-pencil-square"></i> Examiner
+          </button>
+        </div>
+
+        <div *ngIf="reviewingId === app.id" class="mt-3 p-3 border rounded">
+          <div class="mb-3">
+            <label class="form-label">Notes (optionnel)</label>
+            <textarea class="form-control" [(ngModel)]="reviewNotes" rows="2"
+                      placeholder="Ajoutez des notes sur votre decision..."></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-success btn-sm" (click)="accept(app.id)">
+              <i class="bi bi-check-circle"></i> Accepter
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="reject(app.id)">
+              <i class="bi bi-x-circle"></i> Refuser
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="cancelReview()">
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

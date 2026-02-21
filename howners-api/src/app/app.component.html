@@ -1,0 +1,30 @@
+<!-- Non authenticated: full page -->
+<ng-container *ngIf="!isAuthenticated">
+  <router-outlet></router-outlet>
+</ng-container>
+
+<!-- Authenticated: sidebar layout -->
+<div class="hw-layout" *ngIf="isAuthenticated">
+  <!-- Sidebar -->
+  <aside class="hw-sidebar" [class.hw-sidebar--open]="sidebarOpen">
+    <app-sidebar (navigate)="closeSidebar()"></app-sidebar>
+  </aside>
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="hw-sidebar-overlay"
+       *ngIf="sidebarOpen"
+       (click)="closeSidebar()"></div>
+
+  <!-- Main -->
+  <div class="hw-main">
+    <header class="hw-topbar">
+      <app-topbar (toggleSidebar)="toggleSidebar()"></app-topbar>
+    </header>
+    <main class="hw-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
+<app-toast></app-toast>
+<app-confirm-dialog></app-confirm-dialog>

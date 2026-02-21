@@ -1,0 +1,68 @@
+<div class="container mt-4">
+  <button class="btn btn-secondary mb-3" (click)="goBack()">
+    &larr; Retour à la liste
+  </button>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Nouveau Paiement</h3>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <label for="rentalId" class="form-label">Location *</label>
+          <select id="rentalId" class="form-select" formControlName="rentalId">
+            <option value="">Sélectionner une location</option>
+            <option *ngFor="let rental of rentals" [value]="rental.id">
+              {{ rental.propertyName }} - {{ rental.tenantName }}
+            </option>
+          </select>
+          <div *ngIf="loadingRentals" class="form-text">Chargement des locations...</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="paymentType" class="form-label">Type de paiement *</label>
+          <select id="paymentType" class="form-select" formControlName="paymentType">
+            <option *ngFor="let type of paymentTypes" [value]="type.value">{{ type.label }}</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="amount" class="form-label">Montant *</label>
+            <div class="input-group">
+              <input type="number" id="amount" class="form-control" formControlName="amount" step="0.01" min="0.01">
+              <select class="form-select" formControlName="currency" style="max-width: 100px;">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="dueDate" class="form-label">Date d'échéance</label>
+            <input type="date" id="dueDate" class="form-control" formControlName="dueDate">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="paymentMethod" class="form-label">Méthode de paiement</label>
+          <select id="paymentMethod" class="form-select" formControlName="paymentMethod">
+            <option value="BANK_TRANSFER">Virement bancaire</option>
+            <option value="CARD">Carte bancaire</option>
+            <option value="CHECK">Chèque</option>
+            <option value="CASH">Espèces</option>
+            <option value="STRIPE">Stripe</option>
+          </select>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="paymentForm.invalid || submitting">
+            {{ submitting ? 'Création...' : 'Créer le paiement' }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="goBack()">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

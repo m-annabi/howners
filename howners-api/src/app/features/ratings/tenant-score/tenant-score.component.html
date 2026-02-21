@@ -1,0 +1,141 @@
+<app-page-header
+  title="Score locataire"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Évaluations', route: '/ratings'}, {label: 'Score'}]">
+</app-page-header>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="detail"></app-loading-skeleton>
+
+<div *ngIf="!loading && score" class="score-layout">
+  <!-- Left: Arc Gauge -->
+  <div class="score-gauge hw-card">
+    <h3 class="score-gauge__name">{{ score.tenantName }}</h3>
+
+    <!-- SVG Arc 180° -->
+    <div class="score-gauge__visual">
+      <svg viewBox="0 0 200 120" class="score-gauge__svg">
+        <!-- Background arc -->
+        <path
+          d="M 20 100 A 80 80 0 0 1 180 100"
+          fill="none"
+          stroke="var(--hw-gray-100)"
+          stroke-width="12"
+          stroke-linecap="round"/>
+        <!-- Score arc -->
+        <path
+          d="M 20 100 A 80 80 0 0 1 180 100"
+          fill="none"
+          [attr.stroke]="getScoreColor()"
+          stroke-width="12"
+          stroke-linecap="round"
+          [attr.stroke-dasharray]="arcLength"
+          [attr.stroke-dashoffset]="getArcOffset()"/>
+      </svg>
+      <div class="score-gauge__value">
+        <span class="score-gauge__number" [style.color]="getScoreColor()">{{ score.score }}</span>
+        <span class="score-gauge__max">/100</span>
+      </div>
+    </div>
+
+    <div class="score-gauge__risk">
+      <app-status-badge [status]="score.riskLevel" type="application"></app-status-badge>
+    </div>
+
+    <p class="score-gauge__explanation">
+      Ce score reflète la fiabilité globale du locataire sur les 12 derniers mois.
+    </p>
+  </div>
+
+  <!-- Right: Breakdown + Stats -->
+  <div class="score-details">
+    <!-- Breakdown -->
+    <div class="hw-card score-breakdown">
+      <h3 class="hw-section-title">Détail du score</h3>
+
+      <div class="score-criteria">
+        <div class="score-criteria__item">
+          <div class="score-criteria__header">
+            <div class="score-criteria__label">
+              <div class="hw-icon-circle hw-icon-circle--primary hw-icon-circle--sm">
+                <i class="bi bi-credit-card"></i>
+              </div>
+              <span>Paiements (40%)</span>
+            </div>
+            <span class="score-criteria__value">{{ score.breakdown.paymentScore | number:'1.0-0' }}/100</span>
+          </div>
+          <div class="score-criteria__bar">
+            <div class="score-criteria__fill score-criteria__fill--primary" [style.width.%]="score.breakdown.paymentScore"></div>
+          </div>
+        </div>
+
+        <div class="score-criteria__item">
+          <div class="score-criteria__header">
+            <div class="score-criteria__label">
+              <div class="hw-icon-circle hw-icon-circle--success hw-icon-circle--sm">
+                <i class="bi bi-star"></i>
+              </div>
+              <span>Évaluations (40%)</span>
+            </div>
+            <span class="score-criteria__value">{{ score.breakdown.ratingScore | number:'1.0-0' }}/100</span>
+          </div>
+          <div class="score-criteria__bar">
+            <div class="score-criteria__fill score-criteria__fill--success" [style.width.%]="score.breakdown.ratingScore"></div>
+          </div>
+        </div>
+
+        <div class="score-criteria__item">
+          <div class="score-criteria__header">
+            <div class="score-criteria__label">
+              <div class="hw-icon-circle hw-icon-circle--info hw-icon-circle--sm">
+                <i class="bi bi-calendar-check"></i>
+              </div>
+              <span>Durée de bail (10%)</span>
+            </div>
+            <span class="score-criteria__value">{{ score.breakdown.leaseDurationScore | number:'1.0-0' }}/100</span>
+          </div>
+          <div class="score-criteria__bar">
+            <div class="score-criteria__fill score-criteria__fill--info" [style.width.%]="score.breakdown.leaseDurationScore"></div>
+          </div>
+        </div>
+
+        <div class="score-criteria__item">
+          <div class="score-criteria__header">
+            <div class="score-criteria__label">
+              <div class="hw-icon-circle hw-icon-circle--warning hw-icon-circle--sm">
+                <i class="bi bi-chat-dots"></i>
+              </div>
+              <span>Communication (10%)</span>
+            </div>
+            <span class="score-criteria__value">{{ score.breakdown.communicationScore | number:'1.0-0' }}/100</span>
+          </div>
+          <div class="score-criteria__bar">
+            <div class="score-criteria__fill score-criteria__fill--warning" [style.width.%]="score.breakdown.communicationScore"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Stats -->
+    <div class="hw-card score-payment-stats">
+      <h3 class="hw-section-title">Statistiques de paiement</h3>
+      <div class="score-stats-grid">
+        <div class="score-stat">
+          <span class="score-stat__value">{{ score.paymentStats.totalPayments }}</span>
+          <span class="score-stat__label">Total</span>
+        </div>
+        <div class="score-stat">
+          <span class="score-stat__value score-stat__value--success">{{ score.paymentStats.onTimePayments }}</span>
+          <span class="score-stat__label">À temps</span>
+        </div>
+        <div class="score-stat">
+          <span class="score-stat__value score-stat__value--danger">{{ score.paymentStats.latePayments }}</span>
+          <span class="score-stat__label">En retard</span>
+        </div>
+        <div class="score-stat">
+          <span class="score-stat__value">{{ score.paymentStats.onTimePercentage }}%</span>
+          <span class="score-stat__label">Ponctualité</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
