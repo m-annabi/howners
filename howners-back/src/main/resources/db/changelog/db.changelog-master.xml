@@ -52,5 +52,8 @@
     <include file="db/changelog/046-create-tenant-search-profiles-table.xml"/>
     <include file="db/changelog/047-create-tenant-invitations-table.xml"/>
     <include file="db/changelog/048-enhance-listing-photos-table.xml"/>
+    <include file="db/changelog/049-seed-sample-properties.xml"/>
+    <include file="db/changelog/050-seed-sample-listings.xml"/>
+    <include file="db/changelog/051-seed-listing-photos.xml"/>
 
 </databaseChangeLog>

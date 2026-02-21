@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="050-seed-sample-listings" author="howners">
+        <comment>Insert published listings with amenities and requirements</comment>
+
+        <sql>
+            <!-- Listing 1: Studio Suresnes -->
+            INSERT INTO listings (id, property_id, title, description, price_per_month, currency, min_stay, max_stay, status, published_at, amenities, requirements, available_from, created_at, updated_at)
+            VALUES (
+                'b0000001-0000-0000-0000-000000000001',
+                'a0000001-0000-0000-0000-000000000001',
+                'Studio meuble Suresnes - Proche tramway T2',
+                'Charmant studio entierement renove et meuble, ideal pour jeune actif ou etudiant. Situe a 5 minutes a pied du tramway T2 (station Suresnes-Longchamp), vous serez connecte a tout Paris. Cuisine equipee avec plaque induction, refrigerateur et micro-ondes. Salle de bain avec douche a l''italienne. Rangements optimises. Internet fibre inclus.',
+                850.00,
+                'EUR',
+                180,
+                365,
+                'PUBLISHED',
+                NOW() - INTERVAL '5 days',
+                '["wifi","lave_linge","chauffage_collectif","fibre_optique","interphone","digicode"]',
+                '["non_fumeur","garant_obligatoire","revenus_3x_loyer","assurance_habitation","depot_garantie_1_mois"]',
+                CURRENT_DATE + INTERVAL '15 days',
+                NOW() - INTERVAL '6 days',
+                NOW()
+            );
+
+            <!-- Listing 2: T3 Boulogne -->
+            INSERT INTO listings (id, property_id, title, description, price_per_month, currency, min_stay, max_stay, status, published_at, amenities, requirements, available_from, created_at, updated_at)
+            VALUES (
+                'b0000001-0000-0000-0000-000000000002',
+                'a0000001-0000-0000-0000-000000000002',
+                'T3 lumineux avec balcon - Boulogne-Billancourt',
+                'Superbe appartement T3 de 65m2 baigne de lumiere, au 4eme etage avec ascenseur. Sejour spacieux de 25m2 ouvrant sur un balcon plein sud. Deux chambres confortables, cuisine separee entierement equipee. Parquet massif en chene, double vitrage. A 3 minutes du metro Marcel Sembat (ligne 9). Quartier calme et residentiel, commerces au pied de l''immeuble.',
+                1650.00,
+                'EUR',
+                365,
+                NULL,
+                'PUBLISHED',
+                NOW() - INTERVAL '3 days',
+                '["wifi","parking","ascenseur","balcon","lave_linge","lave_vaisselle","chauffage_collectif","fibre_optique","interphone","digicode","cave"]',
+                '["non_fumeur","garant_obligatoire","cdi_requis","revenus_3x_loyer","assurance_habitation","preavis_3_mois","depot_garantie_2_mois"]',
+                CURRENT_DATE + INTERVAL '30 days',
+                NOW() - INTERVAL '4 days',
+                NOW()
+            );
+
+            <!-- Listing 3: Maison Rueil -->
+            INSERT INTO listings (id, property_id, title, description, price_per_month, currency, min_stay, max_stay, status, published_at, amenities, requirements, available_from, created_at, updated_at)
+            VALUES (
+                'b0000001-0000-0000-0000-000000000003',
+                'a0000001-0000-0000-0000-000000000003',
+                'Maison familiale 4 chambres - Rueil-Malmaison',
+                'Belle maison de 120m2 avec jardin paysager de 200m2, ideale pour une famille. Quatre chambres spacieuses, deux salles de bain, grand salon-sejour donnant sur la terrasse. Cuisine ouverte equipee. Garage pour deux voitures, cave. Quartier residentiel prisé, proche ecoles (maternelle, primaire et college a moins de 500m), commerces et parc des Impressionnistes.',
+                2800.00,
+                'EUR',
+                365,
+                NULL,
+                'PUBLISHED',
+                NOW() - INTERVAL '7 days',
+                '["wifi","parking","jardin","terrasse","cave","lave_linge","seche_linge","lave_vaisselle","fibre_optique"]',
+                '["non_fumeur","garant_obligatoire","cdi_requis","revenus_3x_loyer","assurance_habitation","preavis_3_mois","etat_des_lieux_entree","depot_garantie_2_mois"]',
+                CURRENT_DATE,
+                NOW() - INTERVAL '8 days',
+                NOW()
+            );
+
+            <!-- Listing 4: Loft Puteaux -->
+            INSERT INTO listings (id, property_id, title, description, price_per_month, price_per_night, currency, min_stay, max_stay, status, published_at, amenities, requirements, available_from, created_at, updated_at)
+            VALUES (
+                'b0000001-0000-0000-0000-000000000004',
+                'a0000001-0000-0000-0000-000000000004',
+                'Loft design vue La Defense - Puteaux',
+                'Loft atypique de 85m2 dans un ancien atelier d''artiste reconverti. Volumes exceptionnels avec 3,5m de hauteur sous plafond, grandes baies vitrees offrant une vue imprenable sur les tours de La Defense. Espace de vie ouvert, mezzanine amenagee en chambre, cuisine americaine haut de gamme. Decoration contemporaine soignee. Ideal pour couple ou professionnel exigeant.',
+                2200.00,
+                120.00,
+                'EUR',
+                30,
+                365,
+                'PUBLISHED',
+                NOW() - INTERVAL '1 day',
+                '["wifi","climatisation","lave_linge","lave_vaisselle","fibre_optique","interphone","digicode"]',
+                '["non_fumeur","pas_animaux","revenus_3x_loyer","assurance_habitation","depot_garantie_2_mois"]',
+                CURRENT_DATE + INTERVAL '7 days',
+                NOW() - INTERVAL '2 days',
+                NOW()
+            );
+
+            <!-- Listing 5: T2 Paris 15e -->
+            INSERT INTO listings (id, property_id, title, description, price_per_month, currency, min_stay, max_stay, status, published_at, amenities, requirements, available_from, created_at, updated_at)
+            VALUES (
+                'b0000002-0000-0000-0000-000000000001',
+                'a0000002-0000-0000-0000-000000000001',
+                'T2 calme Paris 15e - Metro Convention',
+                'Appartement T2 de 42m2 au 5eme etage avec ascenseur, dans une residence calme et bien entretenue. Sejour lumineux, chambre donnant sur cour interieure (tres calme), cuisine equipee. Vue degagee sur les toits de Paris. A 2 minutes du metro Convention (ligne 12). Quartier vivant avec marche, commerces et restaurants. Ideal jeune couple ou professionnel.',
+                1350.00,
+                'EUR',
+                365,
+                NULL,
+                'PUBLISHED',
+                NOW() - INTERVAL '2 days',
+                '["wifi","ascenseur","chauffage_collectif","fibre_optique","interphone","digicode","gardien"]',
+                '["non_fumeur","garant_obligatoire","cdi_requis","revenus_3x_loyer","assurance_habitation","preavis_3_mois","depot_garantie_1_mois"]',
+                CURRENT_DATE + INTERVAL '45 days',
+                NOW() - INTERVAL '3 days',
+                NOW()
+            );
+
+            <!-- Listing 6: Villa Versailles -->
+            INSERT INTO listings (id, property_id, title, description, price_per_month, price_per_night, currency, min_stay, max_stay, status, published_at, amenities, requirements, available_from, created_at, updated_at)
+            VALUES (
+                'b0000002-0000-0000-0000-000000000002',
+                'a0000002-0000-0000-0000-000000000002',
+                'Villa d''exception avec piscine - Versailles',
+                'Magnifique villa bourgeoise de 180m2 sur un terrain de 800m2, a proximite du chateau de Versailles. Cinq chambres, trois salles de bain, vaste sejour avec cheminee. Cuisine professionnelle entierement equipee. Jardin paysager avec piscine chauffee (10x5m), terrasse en teck. Double garage, cave a vin. Prestations haut de gamme : alarme, domotique, climatisation reversible.',
+                4500.00,
+                250.00,
+                'EUR',
+                90,
+                NULL,
+                'PUBLISHED',
+                NOW() - INTERVAL '10 days',
+                '["wifi","parking","jardin","piscine","terrasse","cave","climatisation","lave_linge","seche_linge","lave_vaisselle","fibre_optique","local_velo"]',
+                '["non_fumeur","pas_animaux","garant_obligatoire","revenus_3x_loyer","assurance_habitation","preavis_3_mois","etat_des_lieux_entree","depot_garantie_2_mois"]',
+                CURRENT_DATE + INTERVAL '60 days',
+                NOW() - INTERVAL '11 days',
+                NOW()
+            );
+        </sql>
+
+        <rollback>
+            <delete tableName="listings">
+                <where>id IN (
+                    'b0000001-0000-0000-0000-000000000001',
+                    'b0000001-0000-0000-0000-000000000002',
+                    'b0000001-0000-0000-0000-000000000003',
+                    'b0000001-0000-0000-0000-000000000004',
+                    'b0000002-0000-0000-0000-000000000001',
+                    'b0000002-0000-0000-0000-000000000002'
+                )</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

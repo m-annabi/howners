@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="049-seed-sample-properties" author="howners">
+        <comment>Insert sample properties for test owners</comment>
+
+        <!-- Owner 1 (Pierre Dupont) - 4 properties -->
+        <sql>
+            INSERT INTO properties (id, owner_id, name, property_type, address_line1, city, postal_code, department, country, surface_area, bedrooms, bathrooms, description, created_at, updated_at)
+            VALUES (
+                'a0000001-0000-0000-0000-000000000001',
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                'Studio Suresnes Centre',
+                'APARTMENT',
+                '12 rue de Verdun',
+                'Suresnes',
+                '92150',
+                '92',
+                'FR',
+                28.00,
+                1,
+                1,
+                'Charmant studio renove au coeur de Suresnes, a 5 min du tramway T2. Cuisine equipee, salle de bain moderne.',
+                NOW(),
+                NOW()
+            );
+
+            INSERT INTO properties (id, owner_id, name, property_type, address_line1, city, postal_code, department, country, surface_area, bedrooms, bathrooms, description, created_at, updated_at)
+            VALUES (
+                'a0000001-0000-0000-0000-000000000002',
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                'T3 Boulogne-Billancourt',
+                'APARTMENT',
+                '45 avenue Jean-Baptiste Clement',
+                'Boulogne-Billancourt',
+                '92100',
+                '92',
+                'FR',
+                65.00,
+                2,
+                1,
+                'Bel appartement T3 lumineux avec balcon, proche metro Marcel Sembat. Parquet massif, double vitrage.',
+                NOW(),
+                NOW()
+            );
+
+            INSERT INTO properties (id, owner_id, name, property_type, address_line1, city, postal_code, department, country, surface_area, bedrooms, bathrooms, description, created_at, updated_at)
+            VALUES (
+                'a0000001-0000-0000-0000-000000000003',
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                'Maison Rueil-Malmaison',
+                'HOUSE',
+                '8 allee des Tilleuls',
+                'Rueil-Malmaison',
+                '92500',
+                '92',
+                'FR',
+                120.00,
+                4,
+                2,
+                'Maison familiale avec jardin arbore de 200m2. Garage, cave, proximite ecoles et commerces.',
+                NOW(),
+                NOW()
+            );
+
+            INSERT INTO properties (id, owner_id, name, property_type, address_line1, city, postal_code, department, country, surface_area, bedrooms, bathrooms, description, created_at, updated_at)
+            VALUES (
+                'a0000001-0000-0000-0000-000000000004',
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                'Loft Puteaux La Defense',
+                'APARTMENT',
+                '3 rue Marius Jacotot',
+                'Puteaux',
+                '92800',
+                '92',
+                'FR',
+                85.00,
+                2,
+                1,
+                'Loft atypique dans ancien atelier reconverti. Plafonds hauts, grandes baies vitrees, vue sur La Defense.',
+                NOW(),
+                NOW()
+            );
+        </sql>
+
+        <!-- Owner 2 (Marie Martin) - 2 properties -->
+        <sql>
+            INSERT INTO properties (id, owner_id, name, property_type, address_line1, city, postal_code, department, country, surface_area, bedrooms, bathrooms, description, created_at, updated_at)
+            VALUES (
+                'a0000002-0000-0000-0000-000000000001',
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                'T2 Paris 15e',
+                'APARTMENT',
+                '22 rue de la Convention',
+                'Paris',
+                '75015',
+                '75',
+                'FR',
+                42.00,
+                1,
+                1,
+                'Appartement T2 calme au 5eme etage avec ascenseur. Vue degagee, proche metro Convention.',
+                NOW(),
+                NOW()
+            );
+
+            INSERT INTO properties (id, owner_id, name, property_type, address_line1, city, postal_code, department, country, surface_area, bedrooms, bathrooms, description, created_at, updated_at)
+            VALUES (
+                'a0000002-0000-0000-0000-000000000002',
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                'Villa Versailles',
+                'HOUSE',
+                '15 avenue de Saint-Cloud',
+                'Versailles',
+                '78000',
+                '78',
+                'FR',
+                180.00,
+                5,
+                3,
+                'Magnifique villa bourgeoise proche chateau de Versailles. Jardin paysager, piscine, double garage.',
+                NOW(),
+                NOW()
+            );
+        </sql>
+
+        <rollback>
+            <delete tableName="properties">
+                <where>id IN (
+                    'a0000001-0000-0000-0000-000000000001',
+                    'a0000001-0000-0000-0000-000000000002',
+                    'a0000001-0000-0000-0000-000000000003',
+                    'a0000001-0000-0000-0000-000000000004',
+                    'a0000002-0000-0000-0000-000000000001',
+                    'a0000002-0000-0000-0000-000000000002'
+                )</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
