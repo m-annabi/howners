@@ -1,0 +1,14 @@
+{
+  "id": "draft-001",
+  "contractNumber": "CTR-2024-001",
+  "rentalId": "rental-001",
+  "rentalPropertyName": "Appartement Paris 11e",
+  "tenantFullName": "Marie Martin",
+  "status": "DRAFT",
+  "currentVersion": 1,
+  "documentUrl": "https://storage.example.com/contracts/ctr-001.pdf",
+  "createdAt": "2024-06-01T10:00:00Z",
+  "updatedAt": null,
+  "sentAt": null,
+  "signedAt": null
+}

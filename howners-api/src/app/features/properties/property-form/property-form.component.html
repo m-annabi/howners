@@ -1,0 +1,413 @@
+<div class="property-form-container">
+  <div class="form-header">
+    <h1>{{ isEditMode ? 'Modifier le bien' : 'Ajouter un bien' }}</h1>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <form [formGroup]="propertyForm" (ngSubmit)="onSubmit()" class="property-form">
+    <div class="form-section">
+      <h2>Informations générales</h2>
+
+      <div class="form-group">
+        <label for="name">Nom du bien *</label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          class="form-control"
+          placeholder="Ex: Appartement Centre-ville"
+        >
+        <div class="error" *ngIf="propertyForm.get('name')?.invalid && propertyForm.get('name')?.touched">
+          Le nom est requis
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="propertyType">Type de bien *</label>
+        <select id="propertyType" formControlName="propertyType" class="form-control">
+          <option *ngFor="let type of propertyTypes" [value]="type.value">
+            {{ type.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          class="form-control"
+          rows="4"
+          placeholder="Description du bien..."
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Adresse</h2>
+
+      <div class="form-group">
+        <label for="addressLine1">Adresse ligne 1 *</label>
+        <input
+          type="text"
+          id="addressLine1"
+          formControlName="addressLine1"
+          class="form-control"
+          placeholder="Ex: 123 Rue de la République"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="addressLine2">Adresse ligne 2</label>
+        <input
+          type="text"
+          id="addressLine2"
+          formControlName="addressLine2"
+          class="form-control"
+          placeholder="Ex: Appartement 4B"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="country">Pays *</label>
+        <select
+          id="country"
+          formControlName="country"
+          class="form-control"
+          (change)="onCountryChange()"
+        >
+          <option *ngFor="let c of countries" [value]="c.code">{{ c.label }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="postalCode">Code postal *</label>
+          <input
+            type="text"
+            id="postalCode"
+            formControlName="postalCode"
+            class="form-control"
+            placeholder="Ex: 75001"
+            (blur)="onPostalCodeChange()"
+            (input)="onPostalCodeChange()"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="department">Departement / Canton</label>
+          <select
+            id="department"
+            formControlName="department"
+            class="form-control"
+          >
+            <option value="">-- Selectionnez --</option>
+            <option *ngFor="let dept of filteredDepartments" [value]="dept.code">
+              {{ getDepartmentLabel(dept) }}
+            </option>
+          </select>
+          <small class="form-text">Auto-rempli depuis le code postal pour la France</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="city">Ville *</label>
+        <input
+          type="text"
+          id="city"
+          formControlName="city"
+          class="form-control"
+          placeholder="Ex: Paris"
+        >
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Caractéristiques</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="surfaceArea">Surface (m²)</label>
+          <input
+            type="number"
+            id="surfaceArea"
+            formControlName="surfaceArea"
+            class="form-control"
+            placeholder="Ex: 75"
+            min="0"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="bedrooms">Chambres</label>
+          <input
+            type="number"
+            id="bedrooms"
+            formControlName="bedrooms"
+            class="form-control"
+            placeholder="Ex: 2"
+            min="0"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="bathrooms">Salles de bain</label>
+          <input
+            type="number"
+            id="bathrooms"
+            formControlName="bathrooms"
+            class="form-control"
+            placeholder="Ex: 1"
+            min="0"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>💰 Finances et Charges</h2>
+      <p class="section-description">Ces informations permettent de calculer la rentabilité du bien</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="purchasePrice">Prix d'achat (€)</label>
+          <input
+            type="number"
+            id="purchasePrice"
+            formControlName="purchasePrice"
+            class="form-control"
+            placeholder="Ex: 250000"
+            min="0"
+            step="0.01"
+          >
+          <small class="form-text">Prix d'achat du bien pour calculer la rentabilité</small>
+        </div>
+
+        <div class="form-group">
+          <label for="condoFees">Charges copropriété (€/mois)</label>
+          <input
+            type="number"
+            id="condoFees"
+            formControlName="condoFees"
+            class="form-control"
+            placeholder="Ex: 120"
+            min="0"
+            step="0.01"
+          >
+          <small class="form-text">Charges mensuelles de copropriété</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="propertyTax">Taxe foncière (€/an)</label>
+          <input
+            type="number"
+            id="propertyTax"
+            formControlName="propertyTax"
+            class="form-control"
+            placeholder="Ex: 850"
+            min="0"
+            step="0.01"
+          >
+          <small class="form-text">Taxe foncière annuelle</small>
+        </div>
+
+        <div class="form-group">
+          <label for="businessTax">Taxe CFE (€/an)</label>
+          <input
+            type="number"
+            id="businessTax"
+            formControlName="businessTax"
+            class="form-control"
+            placeholder="Ex: 300"
+            min="0"
+            step="0.01"
+          >
+          <small class="form-text">Cotisation Foncière des Entreprises annuelle</small>
+        </div>
+
+        <div class="form-group">
+          <label for="homeInsurance">Assurance habitation (€/an)</label>
+          <input
+            type="number"
+            id="homeInsurance"
+            formControlName="homeInsurance"
+            class="form-control"
+            placeholder="Ex: 200"
+            min="0"
+            step="0.01"
+          >
+          <small class="form-text">Assurance habitation annuelle</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>🔧 Informations Techniques</h2>
+      <p class="section-description">Caractéristiques techniques et diagnostics</p>
+
+      <!-- DPE et GES -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dpeRating">DPE (Diagnostic Performance Énergétique)</label>
+          <select id="dpeRating" formControlName="dpeRating" class="form-control">
+            <option value="">-- Sélectionnez --</option>
+            <option *ngFor="let rating of dpeGesRatings" [value]="rating">
+              {{ rating }} - {{ rating === 'A' ? 'Très performant' : rating === 'G' ? 'Peu performant' : '' }}
+            </option>
+          </select>
+          <small class="form-text">Consommation énergétique annuelle</small>
+        </div>
+
+        <div class="form-group">
+          <label for="gesRating">GES (Émission Gaz à Effet de Serre)</label>
+          <select id="gesRating" formControlName="gesRating" class="form-control">
+            <option value="">-- Sélectionnez --</option>
+            <option *ngFor="let rating of dpeGesRatings" [value]="rating">
+              {{ rating }} - {{ rating === 'A' ? 'Faible émission' : rating === 'G' ? 'Forte émission' : '' }}
+            </option>
+          </select>
+          <small class="form-text">Impact environnemental</small>
+        </div>
+      </div>
+
+      <!-- Construction et Étage -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="constructionYear">Année de construction</label>
+          <input
+            type="number"
+            id="constructionYear"
+            formControlName="constructionYear"
+            class="form-control"
+            placeholder="Ex: 1995"
+            min="1800"
+          >
+          <small class="form-text">Année de construction du bien</small>
+        </div>
+
+        <div class="form-group">
+          <label for="floorNumber">Numéro d'étage</label>
+          <input
+            type="number"
+            id="floorNumber"
+            formControlName="floorNumber"
+            class="form-control"
+            placeholder="Ex: 3"
+          >
+          <small class="form-text">Étage du bien (si applicable)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="totalFloors">Nombre d'étages total</label>
+          <input
+            type="number"
+            id="totalFloors"
+            formControlName="totalFloors"
+            class="form-control"
+            placeholder="Ex: 5"
+            min="1"
+          >
+          <small class="form-text">Nombre d'étages dans l'immeuble</small>
+        </div>
+      </div>
+
+      <!-- Chauffage et État -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="heatingType">Type de chauffage</label>
+          <select id="heatingType" formControlName="heatingType" class="form-control">
+            <option value="">-- Sélectionnez --</option>
+            <option *ngFor="let type of heatingTypes" [value]="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+          <small class="form-text">Système de chauffage du bien</small>
+        </div>
+
+        <div class="form-group">
+          <label for="propertyCondition">État du bien</label>
+          <select id="propertyCondition" formControlName="propertyCondition" class="form-control">
+            <option value="">-- Sélectionnez --</option>
+            <option *ngFor="let condition of propertyConditions" [value]="condition.value">
+              {{ condition.label }}
+            </option>
+          </select>
+          <small class="form-text">État général du bien</small>
+        </div>
+      </div>
+
+      <!-- Options booléennes -->
+      <div class="form-row checkbox-row">
+        <div class="form-check">
+          <input
+            type="checkbox"
+            id="hasParking"
+            formControlName="hasParking"
+            class="form-check-input"
+          >
+          <label for="hasParking" class="form-check-label">
+            🅿️ Parking/Garage disponible
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            id="hasElevator"
+            formControlName="hasElevator"
+            class="form-check-input"
+          >
+          <label for="hasElevator" class="form-check-label">
+            🛗 Ascenseur dans l'immeuble
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            id="isFurnished"
+            formControlName="isFurnished"
+            class="form-check-input"
+          >
+          <label for="isFurnished" class="form-check-label">
+            🛋️ Bien meublé
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" (click)="cancel()" class="btn btn-secondary">
+        Annuler
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="loading || propertyForm.invalid"
+      >
+        {{ loading ? 'Enregistrement...' : (isEditMode ? 'Mettre à jour' : 'Créer') }}
+      </button>
+    </div>
+  </form>
+
+  <!-- Section photos en mode édition -->
+  <div class="form-section" *ngIf="isEditMode && propertyId">
+    <h3>Photos du bien</h3>
+    <app-property-photo-gallery
+      [propertyId]="propertyId"
+      [editable]="true"
+    ></app-property-photo-gallery>
+  </div>
+
+  <!-- Message info en mode création -->
+  <div class="info-message" *ngIf="!isEditMode">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+      <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+    </svg>
+    <p>Vous pourrez ajouter des photos après la création du bien.</p>
+  </div>
+</div>

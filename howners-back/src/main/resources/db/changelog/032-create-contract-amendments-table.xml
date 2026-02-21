@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="032-create-contract-amendments-table" author="howners">
+        <createTable tableName="contract_amendments">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="contract_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_amendments_contract" references="contracts(id)"/>
+            </column>
+            <column name="amendment_number" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changes" type="JSONB"/>
+            <column name="previous_rent" type="DECIMAL(10,2)"/>
+            <column name="new_rent" type="DECIMAL(10,2)"/>
+            <column name="effective_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="document_id" type="UUID">
+                <constraints foreignKeyName="fk_amendments_document" references="documents(id)"/>
+            </column>
+            <column name="created_by" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_amendments_created_by" references="users(id)"/>
+            </column>
+            <column name="signed_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_amendments_contract" tableName="contract_amendments">
+            <column name="contract_id"/>
+        </createIndex>
+        <addUniqueConstraint tableName="contract_amendments" columnNames="contract_id,amendment_number"
+                             constraintName="uk_amendment_contract_number"/>
+    </changeSet>
+
+</databaseChangeLog>

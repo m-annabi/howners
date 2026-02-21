@@ -1,0 +1,13 @@
+{
+  "id": "tpl-001",
+  "name": "Bail longue durée standard",
+  "description": "Template pour les baux de longue durée (loi du 6 juillet 1989)",
+  "rentalType": "LONG_TERM",
+  "content": "<h1>Contrat de bail</h1><p>Entre les soussignés {{owner_name}} et {{tenant_name}}...</p>",
+  "isDefault": true,
+  "isActive": true,
+  "createdById": null,
+  "createdByName": "Système",
+  "createdAt": "2024-01-01T10:00:00Z",
+  "updatedAt": null
+}

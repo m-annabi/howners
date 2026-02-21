@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="048-enhance-listing-photos-table" author="howners">
+        <comment>Enhance listing_photos table to align with property_photos (S3 storage, metadata)</comment>
+
+        <addColumn tableName="listing_photos">
+            <column name="file_name" type="VARCHAR(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="listing_photos">
+            <column name="file_key" type="VARCHAR(500)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="listing_photos">
+            <column name="file_size" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="listing_photos">
+            <column name="mime_type" type="VARCHAR(100)" defaultValue="image/jpeg">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="listing_photos">
+            <column name="is_primary" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="listing_photos">
+            <column name="uploader_id" type="UUID">
+                <constraints nullable="true"
+                    foreignKeyName="fk_listing_photos_uploader"
+                    references="users(id)"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="listing_photos">
+            <column name="updated_at" type="TIMESTAMP"/>
+        </addColumn>
+
+        <!-- Index for finding primary photo of a listing -->
+        <createIndex indexName="idx_listing_photos_listing_primary" tableName="listing_photos">
+            <column name="listing_id"/>
+            <column name="is_primary"/>
+        </createIndex>
+
+        <!-- Index for ordering photos -->
+        <createIndex indexName="idx_listing_photos_listing_order" tableName="listing_photos">
+            <column name="listing_id"/>
+            <column name="display_order"/>
+        </createIndex>
+
+        <!-- Partial unique index: only one primary photo per listing (PostgreSQL) -->
+        <sql dbms="postgresql">
+            CREATE UNIQUE INDEX uk_listing_photos_one_primary
+            ON listing_photos (listing_id)
+            WHERE is_primary = true;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

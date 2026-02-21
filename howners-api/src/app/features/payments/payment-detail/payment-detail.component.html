@@ -1,0 +1,76 @@
+<div class="container mt-4">
+  <button class="btn btn-secondary mb-3" (click)="goBack()">
+    &larr; Retour à la liste
+  </button>
+
+  <div *ngIf="loading" class="alert alert-info">Chargement du paiement...</div>
+  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+  <div *ngIf="!loading && !error && payment" class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3>Paiement - {{ typeLabels[payment.paymentType] }}</h3>
+      <span class="badge bg-{{ statusColors[payment.status] }}">
+        {{ statusLabels[payment.status] }}
+      </span>
+    </div>
+
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h5>Informations</h5>
+          <table class="table table-borderless">
+            <tr><td><strong>Propriété:</strong></td><td>{{ payment.propertyName }}</td></tr>
+            <tr><td><strong>Payeur:</strong></td><td>{{ payment.payerName }}</td></tr>
+            <tr><td><strong>Type:</strong></td><td>{{ typeLabels[payment.paymentType] }}</td></tr>
+            <tr><td><strong>Montant:</strong></td><td>{{ payment.amount | number:'1.2-2' }} {{ payment.currency }}</td></tr>
+            <tr><td><strong>Méthode:</strong></td><td>{{ payment.paymentMethod || '-' }}</td></tr>
+          </table>
+        </div>
+
+        <div class="col-md-6">
+          <h5>Dates</h5>
+          <table class="table table-borderless">
+            <tr><td><strong>Échéance:</strong></td><td>{{ payment.dueDate | date:'dd/MM/yyyy' }}</td></tr>
+            <tr *ngIf="payment.paidAt"><td><strong>Payé le:</strong></td><td>{{ payment.paidAt | date:'dd/MM/yyyy HH:mm' }}</td></tr>
+            <tr><td><strong>Créé le:</strong></td><td>{{ payment.createdAt | date:'dd/MM/yyyy HH:mm' }}</td></tr>
+          </table>
+
+          <div *ngIf="payment.stripePaymentIntentId">
+            <h5>Stripe</h5>
+            <p><strong>Payment Intent:</strong> <code>{{ payment.stripePaymentIntentId }}</code></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button
+          *ngIf="canConfirm()"
+          class="btn btn-success me-2"
+          (click)="confirmPayment()"
+          [disabled]="confirming"
+        >
+          {{ confirming ? 'Confirmation...' : 'Confirmer le paiement' }}
+        </button>
+
+        <button
+          *ngIf="canConfirm() && !payment.stripePaymentIntentId"
+          class="btn btn-primary me-2"
+          (click)="createStripeIntent()"
+          [disabled]="creatingIntent"
+        >
+          {{ creatingIntent ? 'Création...' : 'Créer intent Stripe' }}
+        </button>
+
+        <a
+          *ngIf="payment.receiptUrl"
+          [href]="payment.receiptUrl"
+          target="_blank"
+          class="btn btn-outline-primary"
+        >
+          Voir le reçu Stripe
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

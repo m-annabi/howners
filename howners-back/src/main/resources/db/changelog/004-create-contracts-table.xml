@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="004-create-contracts-table" author="howners">
+        <createTable tableName="contracts">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_contracts_rental" references="rentals(id)"/>
+            </column>
+            <column name="contract_number" type="VARCHAR(50)">
+                <constraints unique="true"/>
+            </column>
+            <column name="current_version" type="INT" defaultValueNumeric="1"/>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createTable tableName="contract_versions">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="contract_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_contract_versions_contract" references="contracts(id)"/>
+            </column>
+            <column name="version" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="TEXT"/>
+            <column name="document_url" type="VARCHAR(500)"/>
+            <column name="document_hash" type="VARCHAR(64)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <addUniqueConstraint
+            tableName="contract_versions"
+            columnNames="contract_id, version"
+            constraintName="uk_contract_versions_contract_version"/>
+
+        <createIndex indexName="idx_contracts_rental" tableName="contracts">
+            <column name="rental_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

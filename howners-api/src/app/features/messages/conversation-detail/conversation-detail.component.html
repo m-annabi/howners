@@ -1,0 +1,65 @@
+<div class="container-fluid py-4">
+  <div class="row mb-3">
+    <div class="col">
+      <a routerLink="/messages" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour aux conversations
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm" style="height: calc(100vh - 200px);">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">
+        <i class="bi bi-chat-dots"></i>
+        Conversation
+        <span *ngIf="messages.length > 0"> avec {{ isMyMessage(messages[0]) ? messages[0].recipientName : messages[0].senderName }}</span>
+      </h5>
+    </div>
+
+    <div class="card-body overflow-auto" style="flex: 1;">
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+      </div>
+
+      <div *ngIf="!loading && messages.length === 0" class="text-center py-5 text-muted">
+        <i class="bi bi-chat-square display-1"></i>
+        <p class="mt-3">Commencez la conversation</p>
+      </div>
+
+      <div *ngFor="let msg of messages" class="mb-3 d-flex" [class.justify-content-end]="isMyMessage(msg)">
+        <div class="p-3 rounded-3"
+             [class.bg-primary]="isMyMessage(msg)"
+             [class.text-white]="isMyMessage(msg)"
+             [class.bg-light]="!isMyMessage(msg)"
+             style="max-width: 70%;">
+          <div class="small mb-1" [class.text-white-50]="isMyMessage(msg)" [class.text-muted]="!isMyMessage(msg)">
+            {{ isMyMessage(msg) ? 'Vous' : msg.senderName }}
+            <span class="ms-2">{{ msg.createdAt | date:'dd/MM HH:mm' }}</span>
+          </div>
+          <div>{{ msg.body }}</div>
+          <div *ngIf="isMyMessage(msg)" class="text-end mt-1">
+            <small [class.text-white-50]="isMyMessage(msg)">
+              <i class="bi" [class.bi-check2-all]="msg.isRead" [class.bi-check2]="!msg.isRead"></i>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="newMessage"
+          placeholder="Tapez votre message..."
+          (keyup.enter)="send()"
+          [disabled]="sending">
+        <button class="btn btn-primary" (click)="send()" [disabled]="!newMessage.trim() || sending">
+          <span *ngIf="sending" class="spinner-border spinner-border-sm me-1"></span>
+          <i class="bi bi-send"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

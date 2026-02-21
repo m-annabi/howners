@@ -1,0 +1,34 @@
+[
+  {
+    "id": "amend-001",
+    "contractId": "draft-001",
+    "contractNumber": "CTR-2024-001",
+    "amendmentNumber": 1,
+    "reason": "Augmentation du loyer annuelle",
+    "changes": "Le loyer mensuel passe de 1200 EUR à 1250 EUR",
+    "previousRent": 1200,
+    "newRent": 1250,
+    "effectiveDate": "2025-01-01",
+    "status": "DRAFT",
+    "createdByName": "Jean Dupont",
+    "signedAt": null,
+    "documentId": null,
+    "createdAt": "2024-11-15T10:00:00Z"
+  },
+  {
+    "id": "amend-002",
+    "contractId": "draft-001",
+    "contractNumber": "CTR-2024-001",
+    "amendmentNumber": 2,
+    "reason": "Modification des charges",
+    "changes": "Les charges mensuelles passent de 150 EUR à 160 EUR",
+    "previousRent": null,
+    "newRent": null,
+    "effectiveDate": "2024-09-01",
+    "status": "SIGNED",
+    "createdByName": "Jean Dupont",
+    "signedAt": "2024-08-25T14:00:00Z",
+    "documentId": "doc-002",
+    "createdAt": "2024-08-01T10:00:00Z"
+  }
+]

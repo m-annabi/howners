@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="043-1" author="howners">
+        <comment>Insert default subscription plans</comment>
+
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="FREE"/>
+            <column name="display_name" value="Gratuit"/>
+            <column name="monthly_price" valueNumeric="0"/>
+            <column name="annual_price" valueNumeric="0"/>
+            <column name="max_properties" valueNumeric="2"/>
+            <column name="max_contracts_per_month" valueNumeric="3"/>
+            <column name="features" value='{"documents": true, "messaging": true, "basic_reporting": true}'/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="PRO"/>
+            <column name="display_name" value="Pro"/>
+            <column name="monthly_price" valueNumeric="19.90"/>
+            <column name="annual_price" valueNumeric="199.00"/>
+            <column name="max_properties" valueNumeric="10"/>
+            <column name="max_contracts_per_month" valueNumeric="-1"/>
+            <column name="features" value='{"documents": true, "messaging": true, "basic_reporting": true, "advanced_reporting": true, "esignature": true, "tenant_scoring": true}'/>
+        </insert>
+
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="PREMIUM"/>
+            <column name="display_name" value="Premium"/>
+            <column name="monthly_price" valueNumeric="49.90"/>
+            <column name="annual_price" valueNumeric="499.00"/>
+            <column name="max_properties" valueNumeric="-1"/>
+            <column name="max_contracts_per_month" valueNumeric="-1"/>
+            <column name="features" value='{"documents": true, "messaging": true, "basic_reporting": true, "advanced_reporting": true, "esignature": true, "tenant_scoring": true, "document_encryption": true, "priority_support": true, "api_access": true}'/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

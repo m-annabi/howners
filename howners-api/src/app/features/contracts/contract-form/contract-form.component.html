@@ -1,0 +1,129 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3>Créer un nouveau contrat</h3>
+        </div>
+
+        <div class="card-body">
+          <!-- Messages -->
+          <div *ngIf="loading" class="alert alert-info">
+            Chargement des locations...
+          </div>
+
+          <div *ngIf="error" class="alert alert-danger">
+            {{ error }}
+          </div>
+
+          <div *ngIf="!loading && rentals.length === 0" class="alert alert-warning">
+            Aucune location active ou en attente. Créez d'abord une location avant de générer un contrat.
+          </div>
+
+          <!-- Formulaire -->
+          <form
+            *ngIf="!loading && rentals.length > 0"
+            [formGroup]="contractForm"
+          >
+            <div class="mb-3">
+              <label for="rentalId" class="form-label">
+                Sélectionner la location <span class="text-danger">*</span>
+              </label>
+              <select
+                id="rentalId"
+                class="form-select"
+                formControlName="rentalId"
+                [class.is-invalid]="rentalId?.invalid && rentalId?.touched"
+              >
+                <option value="">-- Choisir une location --</option>
+                <option *ngFor="let rental of rentals" [value]="rental.id">
+                  {{ rental.propertyName }} - {{ rental.tenantName }}
+                  ({{ rental.status }})
+                </option>
+              </select>
+              <div
+                *ngIf="rentalId?.invalid && rentalId?.touched"
+                class="invalid-feedback"
+              >
+                Veuillez sélectionner une location
+              </div>
+            </div>
+
+            <!-- Sélection du template (optionnel) -->
+            <div class="mb-3" *ngIf="contractForm.value.rentalId">
+              <label for="templateId" class="form-label">
+                Template de contrat (optionnel)
+              </label>
+              <select
+                id="templateId"
+                class="form-select"
+                formControlName="templateId"
+              >
+                <option [value]="null">-- Template par défaut --</option>
+                <option *ngFor="let template of getFilteredTemplates()" [value]="template.id">
+                  {{ template.name }}
+                  <span *ngIf="template.isDefault">(Par défaut)</span>
+                </option>
+              </select>
+              <small class="text-muted">
+                Si aucun template n'est sélectionné, le template par défaut sera utilisé.
+              </small>
+            </div>
+
+            <div class="alert alert-info">
+              <h6 class="alert-heading">Deux options de création :</h6>
+              <ul class="mb-0">
+                <li>
+                  <strong>Génération rapide :</strong> Créer le contrat directement avec le template sélectionné
+                </li>
+                <li>
+                  <strong>Personnaliser avant génération :</strong> Modifier le contenu du contrat avant de le générer
+                  <em *ngIf="!isTemplateSelected" class="text-muted d-block mt-1">
+                    (Sélectionnez un template pour activer cette option)
+                  </em>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Boutons -->
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="cancel()"
+                [disabled]="submitting"
+              >
+                Annuler
+              </button>
+              <span
+                [title]="!isTemplateSelected ? 'Veuillez sélectionner un template pour personnaliser le contrat' : ''"
+              >
+                <button
+                  type="button"
+                  class="btn btn-outline-primary"
+                  (click)="customizeBeforeGenerate()"
+                  [disabled]="submitting || contractForm.invalid || !isTemplateSelected"
+                >
+                  <i class="bi bi-pencil me-1"></i>
+                  Personnaliser avant génération
+                </button>
+              </span>
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="quickGenerate()"
+                [disabled]="submitting || contractForm.invalid"
+              >
+                <span *ngIf="submitting">Création en cours...</span>
+                <span *ngIf="!submitting">
+                  <i class="bi bi-lightning-fill me-1"></i>
+                  Génération rapide
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

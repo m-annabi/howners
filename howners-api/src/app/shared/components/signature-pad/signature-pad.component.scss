@@ -1,0 +1,95 @@
+.signature-pad-container {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.signature-pad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e0e0e0;
+
+  h4 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .signature-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.signature-canvas-wrapper {
+  position: relative;
+  background: #f8f9fa;
+  border: 2px dashed #667eea;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  
+  &:hover {
+    border-color: #5568d3;
+  }
+}
+
+.signature-canvas {
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+  background: white;
+}
+
+.signature-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #999;
+  font-size: 1.1rem;
+  font-weight: 500;
+  pointer-events: none;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.signature-help-text {
+  text-align: center;
+  
+  small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .signature-pad-container {
+    padding: 1rem;
+  }
+
+  .signature-pad-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+
+    .signature-actions {
+      width: 100%;
+      
+      button {
+        flex: 1;
+      }
+    }
+  }
+
+  .signature-placeholder {
+    font-size: 0.9rem;
+  }
+}

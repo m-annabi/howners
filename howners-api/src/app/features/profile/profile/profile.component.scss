@@ -1,0 +1,70 @@
+.avatar-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0 auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+  border-left: 4px solid #667eea;
+}
+
+.account-info {
+  border-left: 4px solid #28a745;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  
+  &:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+}
+
+.btn {
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  
+  i {
+    margin-right: 0.25rem;
+  }
+}
+
+.card {
+  border-radius: 12px;
+  border: none;
+}
+
+@media (max-width: 768px) {
+  .avatar-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
+  .profile-header {
+    text-align: center;
+    
+    .row {
+      flex-direction: column;
+    }
+  }
+}

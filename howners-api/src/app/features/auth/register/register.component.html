@@ -1,0 +1,106 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-card__header">
+      <div class="auth-card__logo">
+        <i class="bi bi-house-door-fill"></i>
+      </div>
+      <h1>Créer un compte</h1>
+      <p>Rejoignez Howners</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div *ngIf="error" class="hw-alert hw-alert--danger" style="margin-bottom: var(--hw-space-4)">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{{ error }}</span>
+      </div>
+
+      <div class="auth-row">
+        <div class="auth-field">
+          <label class="form-label" for="firstName">Prénom</label>
+          <input
+            type="text"
+            id="firstName"
+            formControlName="firstName"
+            class="form-control"
+            placeholder="Jean"
+          >
+        </div>
+        <div class="auth-field">
+          <label class="form-label" for="lastName">Nom</label>
+          <input
+            type="text"
+            id="lastName"
+            formControlName="lastName"
+            class="form-control"
+            placeholder="Dupont"
+          >
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label class="form-label" for="email">Adresse email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          placeholder="votre@email.com"
+        >
+      </div>
+
+      <div class="auth-field">
+        <label class="form-label" for="password">Mot de passe</label>
+        <div class="password-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            class="form-control"
+            placeholder="Min. 6 caractères"
+          >
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="showPassword = !showPassword"
+            tabindex="-1"
+          >
+            <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label class="form-label" for="phone">Téléphone <span class="hw-text-muted">(optionnel)</span></label>
+        <input
+          type="tel"
+          id="phone"
+          formControlName="phone"
+          class="form-control"
+          placeholder="+33 6 12 34 56 78"
+        >
+      </div>
+
+      <div class="auth-field">
+        <label class="form-label" for="role">Je suis</label>
+        <select id="role" formControlName="role" class="form-control form-select">
+          <option *ngFor="let role of roles" [value]="role.value">
+            {{ role.label }}
+          </option>
+        </select>
+      </div>
+
+      <button
+        type="submit"
+        class="hw-btn hw-btn--primary hw-btn--lg hw-btn--block"
+        [disabled]="loading || registerForm.invalid"
+      >
+        <i *ngIf="loading" class="bi bi-arrow-repeat spin"></i>
+        {{ loading ? 'Création...' : 'Créer mon compte' }}
+      </button>
+
+      <p class="auth-card__footer">
+        Déjà un compte ? <a routerLink="/auth/login">Se connecter</a>
+      </p>
+    </form>
+  </div>
+</div>

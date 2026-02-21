@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="024-add-property-financial-fields" author="howners">
+        <comment>Add financial fields to properties table for profitability calculation</comment>
+
+        <!-- Charges de copropriété mensuelles -->
+        <addColumn tableName="properties">
+            <column name="condo_fees" type="DECIMAL(10,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Taxe foncière annuelle -->
+        <addColumn tableName="properties">
+            <column name="property_tax" type="DECIMAL(10,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Taxe CFE annuelle -->
+        <addColumn tableName="properties">
+            <column name="business_tax" type="DECIMAL(10,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Assurance habitation annuelle -->
+        <addColumn tableName="properties">
+            <column name="home_insurance" type="DECIMAL(10,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Prix d'achat pour calcul de rentabilité -->
+        <addColumn tableName="properties">
+            <column name="purchase_price" type="DECIMAL(12,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="properties" columnName="condo_fees"/>
+            <dropColumn tableName="properties" columnName="property_tax"/>
+            <dropColumn tableName="properties" columnName="business_tax"/>
+            <dropColumn tableName="properties" columnName="home_insurance"/>
+            <dropColumn tableName="properties" columnName="purchase_price"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

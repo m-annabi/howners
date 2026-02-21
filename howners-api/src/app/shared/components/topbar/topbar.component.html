@@ -1,0 +1,45 @@
+<div class="topbar">
+  <!-- Hamburger (mobile) -->
+  <button class="topbar__toggle hw-btn hw-btn--ghost hw-btn--icon" (click)="onToggleSidebar()">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Spacer -->
+  <div class="topbar__spacer"></div>
+
+  <!-- Right side -->
+  <div class="topbar__right">
+    <!-- Notifications -->
+    <a class="topbar__icon-btn" routerLink="/messages" title="Messages">
+      <i class="bi bi-bell"></i>
+      <span *ngIf="unreadCount > 0" class="topbar__badge">{{ unreadCount }}</span>
+    </a>
+
+    <!-- User dropdown -->
+    <div class="topbar__user" (click)="toggleDropdown()">
+      <div class="topbar__avatar">{{ userInitials }}</div>
+      <span class="topbar__username">{{ userName }}</span>
+      <i class="bi bi-chevron-down topbar__chevron"></i>
+    </div>
+
+    <!-- Dropdown menu -->
+    <div *ngIf="dropdownOpen" class="topbar__dropdown" (click)="closeDropdown()">
+      <a class="topbar__dropdown-item" routerLink="/profile">
+        <i class="bi bi-person"></i> Mon profil
+      </a>
+      <a class="topbar__dropdown-item" routerLink="/billing">
+        <i class="bi bi-credit-card-2-front"></i> Mon abonnement
+      </a>
+      <a class="topbar__dropdown-item" routerLink="/profile/rgpd">
+        <i class="bi bi-shield-check"></i> Confidentialité
+      </a>
+      <div class="topbar__dropdown-divider"></div>
+      <a class="topbar__dropdown-item topbar__dropdown-item--danger" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i> Déconnexion
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop for dropdown -->
+<div *ngIf="dropdownOpen" class="topbar__backdrop" (click)="closeDropdown()"></div>

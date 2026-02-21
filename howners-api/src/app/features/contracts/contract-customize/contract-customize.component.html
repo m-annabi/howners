@@ -1,0 +1,79 @@
+<div class="container mt-4">
+  <div class="mb-4">
+    <h2>{{ isEditMode ? 'Modifier le Contrat' : 'Personnaliser le Contrat' }}</h2>
+    <p class="text-muted" *ngIf="rentalPropertyName && tenantFullName">
+      <strong>Propriété:</strong> {{ rentalPropertyName }} |
+      <strong>Locataire:</strong> {{ tenantFullName }}
+    </p>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="loading" class="alert alert-info">
+    Chargement de la prévisualisation...
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-2" (click)="cancel()">
+      Retour
+    </button>
+  </div>
+
+  <!-- Éditeur -->
+  <div *ngIf="!loading && !error">
+    <div class="row">
+      <!-- Éditeur principal (col-8) -->
+      <div class="col-md-8">
+        <div class="mb-3">
+          <label class="form-label">
+            Contenu du contrat <span class="text-danger">*</span>
+          </label>
+          <p class="text-muted small">
+            Modifiez le contenu ci-dessous. Utilisez le panneau de droite pour insérer des variables.
+            Les variables déjà présentes ont été remplacées par les valeurs réelles.
+          </p>
+          <quill-editor
+            #editor
+            [modules]="quillModules"
+            [styles]="{'min-height': '500px'}"
+            (onEditorCreated)="onEditorCreated($event)"
+            (onSelectionChanged)="onEditorSelectionChanged($event)"
+          ></quill-editor>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="d-flex gap-2">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="cancel()"
+            [disabled]="submitting"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="generateContract()"
+            [disabled]="submitting"
+          >
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+            <span *ngIf="!submitting">
+              <i class="bi bi-file-earmark-check me-1"></i>
+            </span>
+            {{ isEditMode ? 'Enregistrer les modifications' : 'Générer le contrat' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Panneau des variables (col-4) -->
+      <div class="col-md-4">
+        <div class="sticky-top" style="top: 20px;">
+          <app-variable-helper
+            (variableSelected)="onVariableSelected($event)"
+          ></app-variable-helper>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

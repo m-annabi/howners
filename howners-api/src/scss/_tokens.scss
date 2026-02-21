@@ -1,0 +1,84 @@
+// ==========================================================================
+// Howners Design Tokens
+// ==========================================================================
+
+:root {
+  // Primary - Bleu profond (confiance, professionnalisme)
+  --hw-primary-50: #EEF2FF;
+  --hw-primary-100: #DBE4FF;
+  --hw-primary-200: #BAC8FF;
+  --hw-primary-500: #4263EB;
+  --hw-primary-600: #3B5BDB;
+  --hw-primary-700: #364FC7;
+  --hw-primary-800: #2B3EA0;
+
+  // Neutral - Gris chauds
+  --hw-gray-50: #F8F9FA;
+  --hw-gray-100: #F1F3F5;
+  --hw-gray-200: #E9ECEF;
+  --hw-gray-300: #DEE2E6;
+  --hw-gray-400: #CED4DA;
+  --hw-gray-500: #ADB5BD;
+  --hw-gray-600: #868E96;
+  --hw-gray-700: #495057;
+  --hw-gray-800: #343A40;
+  --hw-gray-900: #212529;
+
+  // Semantic
+  --hw-success: #2B8A3E;
+  --hw-success-light: #EBFBEE;
+  --hw-warning: #E67700;
+  --hw-warning-light: #FFF4E6;
+  --hw-danger: #C92A2A;
+  --hw-danger-light: #FFF5F5;
+  --hw-info: #1971C2;
+  --hw-info-light: #E7F5FF;
+
+  // Typography
+  --hw-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --hw-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --hw-fs-xs: 0.75rem;
+  --hw-fs-sm: 0.8125rem;
+  --hw-fs-base: 0.875rem;
+  --hw-fs-md: 1rem;
+  --hw-fs-lg: 1.125rem;
+  --hw-fs-xl: 1.25rem;
+  --hw-fs-2xl: 1.5rem;
+  --hw-fs-3xl: 1.875rem;
+  --hw-fw-normal: 400;
+  --hw-fw-medium: 500;
+  --hw-fw-semibold: 600;
+  --hw-fw-bold: 700;
+  --hw-lh-tight: 1.25;
+  --hw-lh-normal: 1.5;
+
+  // Spacing (base 4px)
+  --hw-space-1: 0.25rem;
+  --hw-space-2: 0.5rem;
+  --hw-space-3: 0.75rem;
+  --hw-space-4: 1rem;
+  --hw-space-5: 1.25rem;
+  --hw-space-6: 1.5rem;
+  --hw-space-8: 2rem;
+  --hw-space-10: 2.5rem;
+  --hw-space-12: 3rem;
+
+  // Borders & Radius
+  --hw-radius-sm: 4px;
+  --hw-radius-md: 6px;
+  --hw-radius-lg: 8px;
+  --hw-radius-xl: 12px;
+  --hw-radius-full: 9999px;
+  --hw-border: 1px solid var(--hw-gray-200);
+
+  // Shadows
+  --hw-shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --hw-shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --hw-shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --hw-shadow-lg: 0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.04);
+
+  // Layout
+  --hw-sidebar-width: 260px;
+  --hw-topbar-height: 56px;
+  --hw-content-max-width: 1200px;
+}

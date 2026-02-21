@@ -1,0 +1,108 @@
+<app-page-header
+  title="Comparaison de locataires"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Évaluations', route: '/ratings'}, {label: 'Comparaison'}]">
+</app-page-header>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && scores.length === 0"
+  icon="bi-people"
+  title="Aucun locataire à comparer"
+  message="Utilisez le paramètre ?tenantIds=id1,id2 pour comparer des locataires.">
+</app-empty-state>
+
+<!-- Comparison cards -->
+<div *ngIf="!loading && scores.length > 0" class="comparison-grid">
+  <div *ngFor="let s of scores"
+    class="hw-card comparison-card"
+    [class.comparison-card--best]="getBestScore()?.tenantId === s.tenantId">
+
+    <div class="comparison-card__header">
+      <span class="comparison-card__name">{{ s.tenantName }}</span>
+      <app-status-badge [status]="s.riskLevel" type="application"></app-status-badge>
+    </div>
+
+    <!-- Score gauge -->
+    <div class="comparison-card__gauge">
+      <svg viewBox="0 0 200 120" class="comparison-card__svg">
+        <path
+          d="M 20 100 A 80 80 0 0 1 180 100"
+          fill="none"
+          stroke="var(--hw-gray-100)"
+          stroke-width="10"
+          stroke-linecap="round"/>
+        <path
+          d="M 20 100 A 80 80 0 0 1 180 100"
+          fill="none"
+          [attr.stroke]="getScoreColor(s.score)"
+          stroke-width="10"
+          stroke-linecap="round"
+          stroke-dasharray="251.3"
+          [attr.stroke-dashoffset]="251.3 - (251.3 * s.score / 100)"/>
+      </svg>
+      <div class="comparison-card__score-value">
+        <span class="comparison-card__number" [style.color]="getScoreColor(s.score)">{{ s.score }}</span>
+        <span class="comparison-card__max">/100</span>
+      </div>
+    </div>
+
+    <!-- Breakdown bars -->
+    <div class="comparison-card__breakdown">
+      <div class="comparison-bar">
+        <div class="comparison-bar__header">
+          <span>Paiements</span>
+          <span class="comparison-bar__pct">{{ s.breakdown.paymentScore | number:'1.0-0' }}%</span>
+        </div>
+        <div class="comparison-bar__track">
+          <div class="comparison-bar__fill comparison-bar__fill--primary" [style.width.%]="s.breakdown.paymentScore"></div>
+        </div>
+      </div>
+      <div class="comparison-bar">
+        <div class="comparison-bar__header">
+          <span>Évaluations</span>
+          <span class="comparison-bar__pct">{{ s.breakdown.ratingScore | number:'1.0-0' }}%</span>
+        </div>
+        <div class="comparison-bar__track">
+          <div class="comparison-bar__fill comparison-bar__fill--success" [style.width.%]="s.breakdown.ratingScore"></div>
+        </div>
+      </div>
+      <div class="comparison-bar">
+        <div class="comparison-bar__header">
+          <span>Durée bail</span>
+          <span class="comparison-bar__pct">{{ s.breakdown.leaseDurationScore | number:'1.0-0' }}%</span>
+        </div>
+        <div class="comparison-bar__track">
+          <div class="comparison-bar__fill comparison-bar__fill--info" [style.width.%]="s.breakdown.leaseDurationScore"></div>
+        </div>
+      </div>
+      <div class="comparison-bar">
+        <div class="comparison-bar__header">
+          <span>Communication</span>
+          <span class="comparison-bar__pct">{{ s.breakdown.communicationScore | number:'1.0-0' }}%</span>
+        </div>
+        <div class="comparison-bar__track">
+          <div class="comparison-bar__fill comparison-bar__fill--warning" [style.width.%]="s.breakdown.communicationScore"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment stats -->
+    <div class="comparison-card__stats">
+      <div class="comparison-stat">
+        <span class="comparison-stat__value comparison-stat__value--success">{{ s.paymentStats.onTimePayments }}</span>
+        <span class="comparison-stat__label">À temps</span>
+      </div>
+      <div class="comparison-stat">
+        <span class="comparison-stat__value comparison-stat__value--danger">{{ s.paymentStats.latePayments }}</span>
+        <span class="comparison-stat__label">En retard</span>
+      </div>
+    </div>
+
+    <div *ngIf="getBestScore()?.tenantId === s.tenantId" class="comparison-card__trophy">
+      <i class="bi bi-trophy-fill"></i> Meilleur score
+    </div>
+  </div>
+</div>

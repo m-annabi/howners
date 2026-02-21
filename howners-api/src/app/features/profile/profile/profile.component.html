@@ -1,0 +1,144 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-person-circle me-2"></i>Mon Profil</h2>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Chargement...</span>
+        </div>
+      </div>
+
+      <!-- Profile Form -->
+      <div *ngIf="!loading && user" class="card shadow-sm">
+        <div class="card-body">
+          <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+            <!-- User Info Header -->
+            <div class="profile-header mb-4 p-3 bg-light rounded">
+              <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                  <div class="avatar-circle">
+                    {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+                  </div>
+                </div>
+                <div class="col-md-10">
+                  <h4 class="mb-1">{{ user.firstName }} {{ user.lastName }}</h4>
+                  <p class="text-muted mb-1">
+                    <i class="bi bi-envelope me-2"></i>{{ user.email }}
+                  </p>
+                  <span class="badge" [class.bg-success]="user.role === 'TENANT'" [class.bg-primary]="user.role === 'OWNER'">
+                    {{ user.role === 'TENANT' ? 'Locataire' : 'Propriétaire' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="firstName" class="form-label">Prénom *</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  class="form-control"
+                  formControlName="firstName"
+                  [class.is-invalid]="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched"
+                >
+                <div class="invalid-feedback" *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
+                  Le prénom est requis (min. 2 caractères)
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="lastName" class="form-label">Nom *</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  class="form-control"
+                  formControlName="lastName"
+                  [class.is-invalid]="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched"
+                >
+                <div class="invalid-feedback" *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
+                  Le nom est requis (min. 2 caractères)
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email *</label>
+              <input
+                type="email"
+                id="email"
+                class="form-control"
+                formControlName="email"
+                [class.is-invalid]="profileForm.get('email')?.invalid && profileForm.get('email')?.touched"
+              >
+              <div class="invalid-feedback" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                Email invalide
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="phone" class="form-label">Téléphone</label>
+              <input
+                type="tel"
+                id="phone"
+                class="form-control"
+                formControlName="phone"
+                placeholder="+33 6 12 34 56 78"
+              >
+            </div>
+
+            <!-- Account Info -->
+            <div class="account-info mb-4 p-3 bg-light rounded">
+              <h6 class="mb-3"><i class="bi bi-info-circle me-2"></i>Informations du compte</h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="mb-2">
+                    <strong>Statut:</strong>
+                    <span class="badge bg-success ms-2">
+                      <i class="bi bi-check-circle me-1"></i>Actif
+                    </span>
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-2">
+                    <strong>Membre depuis:</strong> {{ user.createdAt | date: 'dd/MM/yyyy' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                routerLink="/dashboard"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="profileForm.invalid || saving"
+              >
+                <span *ngIf="!saving">
+                  <i class="bi bi-check-circle me-1"></i>Enregistrer
+                </span>
+                <span *ngIf="saving">
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                  Enregistrement...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

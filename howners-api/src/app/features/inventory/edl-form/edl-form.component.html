@@ -1,0 +1,124 @@
+<div class="container mt-4">
+  <h2>Nouvel état des lieux</h2>
+
+  <form (ngSubmit)="submit()">
+    <!-- Informations générales -->
+    <div class="card mb-3">
+      <div class="card-header"><strong>Informations générales</strong></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Type <span class="text-danger">*</span></label>
+            <select class="form-select" [(ngModel)]="type" name="type" required>
+              <option value="ENTREE">Entrée</option>
+              <option value="SORTIE">Sortie</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Date de l'inspection <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" [(ngModel)]="inspectionDate" name="inspectionDate" required>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- État des pièces -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>État des pièces</strong>
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="addRoom()">
+          <i class="bi bi-plus"></i> Ajouter une pièce
+        </button>
+      </div>
+      <div class="card-body">
+        <div *ngFor="let room of rooms; let i = index" class="row mb-3 align-items-end border-bottom pb-3">
+          <div class="col-md-3">
+            <label class="form-label">Pièce</label>
+            <input type="text" class="form-control" [(ngModel)]="room.name" [name]="'roomName' + i"
+                   placeholder="Nom de la pièce">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">État</label>
+            <select class="form-select" [(ngModel)]="room.condition" [name]="'roomCondition' + i">
+              <option *ngFor="let c of conditionOptions" [value]="c">{{ c }}</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Commentaires</label>
+            <input type="text" class="form-control" [(ngModel)]="room.comments" [name]="'roomComments' + i"
+                   placeholder="Observations...">
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeRoom(i)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relevés des compteurs -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Relevés des compteurs</strong>
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="addMeter()">
+          <i class="bi bi-plus"></i> Ajouter un compteur
+        </button>
+      </div>
+      <div class="card-body">
+        <div *ngFor="let meter of meters; let i = index" class="row mb-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Type de compteur</label>
+            <input type="text" class="form-control" [(ngModel)]="meter.type" [name]="'meterType' + i"
+                   placeholder="Ex: Électricité, Gaz, Eau">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Relevé</label>
+            <input type="text" class="form-control" [(ngModel)]="meter.value" [name]="'meterValue' + i"
+                   placeholder="Valeur du compteur">
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeMeter(i)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clés -->
+    <div class="card mb-3">
+      <div class="card-header"><strong>Clés</strong></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Nombre de clés</label>
+            <input type="number" class="form-control" [(ngModel)]="keysCount" name="keysCount" min="0">
+          </div>
+          <div class="col-md-9 mb-3">
+            <label class="form-label">Description des clés</label>
+            <input type="text" class="form-control" [(ngModel)]="keysDescription" name="keysDescription"
+                   placeholder="Ex: 2 clés porte d'entrée, 1 clé boîte aux lettres, 1 badge parking...">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commentaires -->
+    <div class="card mb-3">
+      <div class="card-header"><strong>Commentaires généraux</strong></div>
+      <div class="card-body">
+        <textarea class="form-control" [(ngModel)]="generalComments" name="generalComments" rows="4"
+                  placeholder="Observations générales sur l'état du logement..."></textarea>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+      <button type="submit" class="btn btn-primary" [disabled]="submitting || !inspectionDate">
+        <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+        Créer l'état des lieux
+      </button>
+      <button type="button" class="btn btn-outline-secondary" (click)="cancel()">Annuler</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,110 @@
+<app-page-header
+  title="Dépenses"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Dépenses'}]"
+  [actions]="headerActions">
+</app-page-header>
+
+<ng-template #headerActions>
+  <button class="hw-btn hw-btn--primary" (click)="createExpense()">
+    <i class="bi bi-plus-lg"></i> Nouvelle Dépense
+  </button>
+</ng-template>
+
+<!-- Total summary -->
+<div *ngIf="!loading && filteredExpenses.length > 0" class="expense-list__summary">
+  <div class="hw-icon-circle hw-icon-circle--danger hw-icon-circle--sm">
+    <i class="bi bi-cash-stack"></i>
+  </div>
+  <div>
+    <span class="expense-list__summary-label">Total</span>
+    <span class="expense-list__summary-value">{{ getTotalExpenses() | number:'1.2-2' }} EUR</span>
+    <span class="expense-list__summary-count">({{ filteredExpenses.length }} dépense{{ filteredExpenses.length > 1 ? 's' : '' }})</span>
+  </div>
+</div>
+
+<!-- Filters -->
+<div *ngIf="!loading && expenses.length > 0" class="expense-list__toolbar">
+  <div class="expense-list__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Rechercher par propriété ou description..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()">
+  </div>
+  <select
+    class="form-select expense-list__filter"
+    [(ngModel)]="selectedCategory"
+    (ngModelChange)="onCategoryChange()">
+    <option *ngFor="let cat of categories" [value]="cat.value">
+      {{ cat.label }}
+    </option>
+  </select>
+</div>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="table" [count]="8"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && !error && expenses.length === 0"
+  icon="bi-wallet2"
+  title="Aucune dépense"
+  message="Enregistrez vos dépenses pour un suivi financier complet."
+  actionLabel="Nouvelle dépense"
+  actionRoute="/expenses/new">
+</app-empty-state>
+
+<!-- No results -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredExpenses.length === 0 && expenses.length > 0"
+  icon="bi-search"
+  title="Aucun résultat"
+  message="Essayez avec d'autres termes de recherche.">
+</app-empty-state>
+
+<!-- Table -->
+<div *ngIf="!loading && !error && filteredExpenses.length > 0" class="hw-card">
+  <div class="hw-table-responsive">
+    <table class="hw-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Catégorie</th>
+          <th>Description</th>
+          <th>Propriété</th>
+          <th>Montant</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let expense of filteredExpenses" class="hw-table__row--clickable" (click)="viewExpense(expense)">
+          <td>{{ expense.expenseDate | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <span class="hw-badge hw-badge--neutral">{{ categoryLabels[expense.category] }}</span>
+          </td>
+          <td>{{ expense.description || '-' }}</td>
+          <td>{{ expense.propertyName || '-' }}</td>
+          <td>
+            <span class="hw-text-medium">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</span>
+          </td>
+          <td>
+            <button
+              class="hw-btn hw-btn--ghost hw-btn--sm"
+              style="color: var(--hw-danger)"
+              (click)="deleteExpense(expense, $event)">
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

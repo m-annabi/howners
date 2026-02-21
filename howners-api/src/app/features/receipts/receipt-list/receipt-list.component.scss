@@ -1,0 +1,25 @@
+.receipt-list {
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-4);
+    margin-bottom: var(--hw-space-4);
+    flex-wrap: wrap;
+  }
+
+  &__search {
+    position: relative;
+    max-width: 400px;
+    flex: 1;
+
+    i {
+      position: absolute;
+      left: var(--hw-space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--hw-gray-400);
+    }
+
+    input { padding-left: var(--hw-space-10); }
+  }
+}

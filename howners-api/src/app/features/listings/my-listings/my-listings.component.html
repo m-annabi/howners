@@ -1,0 +1,75 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-megaphone"></i> Mes annonces</h2>
+    <a routerLink="/listings/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> Nouvelle annonce
+    </a>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!loading && listings.length === 0" class="text-center py-5">
+    <i class="bi bi-megaphone display-1 text-muted"></i>
+    <p class="text-muted mt-3">Aucune annonce créée</p>
+    <a routerLink="/listings/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> Créer ma première annonce
+    </a>
+  </div>
+
+  <div class="table-responsive" *ngIf="!loading && listings.length > 0">
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>Titre</th>
+          <th>Propriété</th>
+          <th>Prix</th>
+          <th>Statut</th>
+          <th>Publiée le</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let listing of listings">
+          <td>
+            <a [routerLink]="['/listings', listing.id]" class="text-decoration-none fw-bold">
+              {{ listing.title }}
+            </a>
+          </td>
+          <td>{{ listing.propertyName }}</td>
+          <td>
+            <span *ngIf="listing.pricePerMonth">{{ listing.pricePerMonth | number:'1.0-0' }} EUR/mois</span>
+            <span *ngIf="listing.pricePerNight && listing.pricePerMonth"> | </span>
+            <span *ngIf="listing.pricePerNight">{{ listing.pricePerNight | number:'1.0-0' }} EUR/nuit</span>
+          </td>
+          <td>
+            <span class="badge bg-{{ statusColors[listing.status] }}">
+              {{ statusLabels[listing.status] }}
+            </span>
+          </td>
+          <td>{{ listing.publishedAt ? (listing.publishedAt | date:'dd/MM/yyyy') : '-' }}</td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a [routerLink]="['/listings', listing.id, 'edit']" class="btn btn-outline-primary" title="Modifier">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button *ngIf="canPublish(listing)" class="btn btn-outline-success" (click)="publish(listing.id)" title="Publier">
+                <i class="bi bi-globe"></i>
+              </button>
+              <button *ngIf="canPause(listing)" class="btn btn-outline-warning" (click)="pause(listing.id)" title="Mettre en pause">
+                <i class="bi bi-pause-circle"></i>
+              </button>
+              <button *ngIf="canClose(listing)" class="btn btn-outline-secondary" (click)="close(listing.id)" title="Fermer">
+                <i class="bi bi-x-circle"></i>
+              </button>
+              <button class="btn btn-outline-danger" (click)="delete(listing.id)" title="Supprimer">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

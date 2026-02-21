@@ -1,0 +1,14 @@
+{
+  "id": "sent-001",
+  "contractNumber": "CTR-2024-002",
+  "rentalId": "rental-002",
+  "rentalPropertyName": "Studio Lyon 3e",
+  "tenantFullName": "Pierre Durand",
+  "status": "SENT",
+  "currentVersion": 2,
+  "documentUrl": "https://storage.example.com/contracts/ctr-002.pdf",
+  "createdAt": "2024-05-15T14:00:00Z",
+  "updatedAt": "2024-05-20T09:00:00Z",
+  "sentAt": "2024-05-20T09:00:00Z",
+  "signedAt": null
+}

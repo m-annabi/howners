@@ -1,0 +1,80 @@
+<app-page-header
+  title="Quittances de loyer"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Quittances'}]">
+</app-page-header>
+
+<!-- Filters -->
+<div *ngIf="!loading && receipts.length > 0" class="receipt-list__toolbar">
+  <div class="receipt-list__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Rechercher par numéro, propriété ou locataire..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()">
+  </div>
+</div>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="table" [count]="6"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && !error && receipts.length === 0"
+  icon="bi-file-earmark-check"
+  title="Aucune quittance"
+  message="Les quittances seront générées automatiquement après confirmation des paiements.">
+</app-empty-state>
+
+<!-- No results -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredReceipts.length === 0 && receipts.length > 0"
+  icon="bi-search"
+  title="Aucun résultat"
+  message="Essayez avec d'autres termes de recherche.">
+</app-empty-state>
+
+<!-- Table -->
+<div *ngIf="!loading && !error && filteredReceipts.length > 0" class="hw-card">
+  <div class="hw-table-responsive">
+    <table class="hw-table">
+      <thead>
+        <tr>
+          <th>Numéro</th>
+          <th>Propriété</th>
+          <th>Locataire</th>
+          <th>Période</th>
+          <th>Montant</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let receipt of filteredReceipts" class="hw-table__row--clickable" (click)="viewReceipt(receipt)">
+          <td>
+            <span class="hw-text-medium">{{ receipt.receiptNumber }}</span>
+          </td>
+          <td>{{ receipt.propertyName }}</td>
+          <td>{{ receipt.tenantName }}</td>
+          <td>{{ receipt.periodStart | date:'dd/MM/yyyy' }} - {{ receipt.periodEnd | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <span class="hw-text-medium">{{ receipt.amount | number:'1.2-2' }} {{ receipt.currency }}</span>
+          </td>
+          <td>
+            <button
+              class="hw-btn hw-btn--ghost hw-btn--sm"
+              (click)="downloadPdf(receipt, $event)">
+              <i class="bi bi-download"></i> PDF
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,185 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col">
+      <h2><i class="bi bi-person-lines-fill"></i> Trouver des locataires</h2>
+      <p class="text-muted">Recherchez des locataires correspondant à vos critères et invitez-les à candidater.</p>
+    </div>
+  </div>
+
+  <div *ngIf="inviteSuccess" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle"></i> {{ inviteSuccess }}
+    <button type="button" class="btn-close" (click)="inviteSuccess = ''"></button>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Département</label>
+          <select class="form-select" [(ngModel)]="filterDepartment">
+            <option value="">Tous</option>
+            <option *ngFor="let dept of departments" [value]="dept.code">
+              {{ getDepartmentLabel(dept) }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Ville</label>
+          <input type="text" class="form-control" [(ngModel)]="filterCity" placeholder="Ex: Paris">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Code postal</label>
+          <input type="text" class="form-control" [(ngModel)]="filterPostalCode" placeholder="Ex: 75">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Budget min</label>
+          <input type="number" class="form-control" [(ngModel)]="filterBudgetMin" placeholder="EUR">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Budget max</label>
+          <input type="number" class="form-control" [(ngModel)]="filterBudgetMax" placeholder="EUR">
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button class="btn btn-outline-secondary" (click)="clearFilters()" *ngIf="hasActiveFilters" title="Effacer les filtres">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+      <div class="row g-3 mt-1">
+        <div class="col-md-3">
+          <label class="form-label">Type de bien</label>
+          <select class="form-select" [(ngModel)]="filterPropertyType">
+            <option value="">Tous</option>
+            <option *ngFor="let type of propertyTypes" [value]="type">
+              {{ propertyTypeLabels[type] }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Annonce de référence</label>
+          <select class="form-select" [(ngModel)]="filterListingId">
+            <option value="">Aucune (pas de compatibilité)</option>
+            <option *ngFor="let listing of myListings" [value]="listing.id">
+              {{ listing.title }} - {{ listing.pricePerMonth | number:'1.0-0' }} EUR/mois
+            </option>
+          </select>
+          <small class="form-text text-muted">Sélectionnez une annonce pour voir les scores de compatibilité</small>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Trier par</label>
+          <select class="form-select" [(ngModel)]="sortBy">
+            <option value="">Plus récents</option>
+            <option value="score">Meilleur score locataire</option>
+            <option value="relevance">Meilleure compatibilité</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-primary w-100" (click)="search()">
+            <i class="bi bi-search"></i> Rechercher
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading && results.length === 0" class="text-center py-5">
+    <i class="bi bi-person-slash display-1 text-muted"></i>
+    <p class="text-muted mt-3">Aucun locataire trouvé avec ces critères</p>
+  </div>
+
+  <!-- Results -->
+  <div class="row" *ngIf="!loading">
+    <div class="col-md-6 col-lg-4 mb-4" *ngFor="let result of results">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title mb-0">{{ result.profile.tenantName }}</h5>
+            <span *ngIf="result.tenantScore" class="badge"
+                  [ngClass]="'bg-' + riskLevelColors[result.tenantScore.riskLevel]">
+              Score: {{ result.tenantScore.score }}/100
+            </span>
+          </div>
+
+          <p class="text-muted mb-1" *ngIf="result.profile.desiredCity || result.profile.desiredDepartment">
+            <i class="bi bi-geo-alt"></i>
+            {{ result.profile.desiredCity }}
+            <span *ngIf="result.profile.desiredDepartment"> ({{ result.profile.desiredDepartment }})</span>
+          </p>
+
+          <p class="mb-1" *ngIf="result.profile.budgetMin || result.profile.budgetMax">
+            <i class="bi bi-cash"></i>
+            <span *ngIf="result.profile.budgetMin">{{ result.profile.budgetMin | number:'1.0-0' }}</span>
+            <span *ngIf="result.profile.budgetMin && result.profile.budgetMax"> - </span>
+            <span *ngIf="result.profile.budgetMax">{{ result.profile.budgetMax | number:'1.0-0' }}</span>
+            EUR/mois
+          </p>
+
+          <p class="mb-1" *ngIf="result.profile.desiredPropertyType">
+            <i class="bi bi-building"></i> {{ propertyTypeLabels[result.profile.desiredPropertyType] }}
+          </p>
+
+          <p class="card-text text-truncate" *ngIf="result.profile.description">
+            {{ result.profile.description }}
+          </p>
+
+          <!-- Compatibility gauge -->
+          <div *ngIf="result.compatibilityScore != null" class="mt-2">
+            <div class="d-flex justify-content-between mb-1">
+              <small class="fw-bold">Compatibilité</small>
+              <small class="fw-bold">{{ result.compatibilityScore }}/100</small>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar"
+                   [ngClass]="'bg-' + getCompatibilityColor(result.compatibilityScore)"
+                   [style.width.%]="result.compatibilityScore">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-transparent">
+          <div class="d-flex gap-2">
+            <a [routerLink]="['/tenant-discovery', result.profile.id]"
+               [queryParams]="filterListingId ? {listingId: filterListingId} : {}"
+               class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-eye"></i> Voir profil
+            </a>
+            <button class="btn btn-success btn-sm" (click)="openInviteModal(result.profile.id)"
+                    *ngIf="invitingProfileId !== result.profile.id">
+              <i class="bi bi-envelope"></i> Inviter
+            </button>
+          </div>
+
+          <!-- Inline invite form -->
+          <div *ngIf="invitingProfileId === result.profile.id" class="mt-3 border-top pt-3">
+            <div class="mb-2">
+              <select class="form-select form-select-sm" [(ngModel)]="inviteListingId">
+                <option value="">Choisir une annonce</option>
+                <option *ngFor="let listing of myListings" [value]="listing.id">{{ listing.title }}</option>
+              </select>
+            </div>
+            <div class="mb-2">
+              <textarea class="form-control form-control-sm" [(ngModel)]="inviteMessage"
+                        rows="2" placeholder="Message (optionnel)"></textarea>
+            </div>
+            <div *ngIf="inviteError" class="text-danger small mb-2">{{ inviteError }}</div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-success btn-sm" (click)="sendInvitation(result.profile.tenantId)">
+                <i class="bi bi-send"></i> Envoyer
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" (click)="cancelInvite()">Annuler</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

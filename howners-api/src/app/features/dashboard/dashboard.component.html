@@ -1,0 +1,248 @@
+<div class="dashboard">
+  <app-page-header title="Tableau de bord"
+    [subtitle]="currentUser ? 'Bienvenue, ' + currentUser.firstName : ''">
+  </app-page-header>
+
+  <!-- Loading -->
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
+
+  <!-- Error -->
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Stats Cards — TENANT -->
+  <div *ngIf="!loading && !error && stats && isTenant" class="dashboard__stats">
+    <app-stats-card
+      label="Mes locations"
+      [value]="stats.activeRentals"
+      icon="bi-key"
+      color="success"
+      routerLink="/rentals">
+    </app-stats-card>
+    <app-stats-card
+      label="Mon loyer"
+      [value]="stats.monthlyRevenue + ' ' + stats.currency"
+      icon="bi-cash-stack"
+      color="warning"
+      routerLink="/invoices">
+    </app-stats-card>
+    <app-stats-card
+      label="En attente"
+      [value]="stats.pendingRentals"
+      icon="bi-clock-history"
+      color="danger"
+      routerLink="/rentals">
+    </app-stats-card>
+    <app-stats-card
+      label="Messages"
+      [value]="0"
+      icon="bi-chat-dots"
+      color="primary"
+      routerLink="/messages">
+    </app-stats-card>
+  </div>
+
+  <!-- Stats Cards — OWNER / ADMIN -->
+  <div *ngIf="!loading && !error && stats && !isTenant" class="dashboard__stats">
+    <app-stats-card
+      label="Biens"
+      [value]="stats.totalProperties"
+      icon="bi-building"
+      color="primary"
+      routerLink="/properties">
+    </app-stats-card>
+    <app-stats-card
+      label="Locations actives"
+      [value]="stats.activeRentals"
+      icon="bi-key"
+      color="success"
+      routerLink="/rentals">
+    </app-stats-card>
+    <app-stats-card
+      label="Revenus mensuels"
+      [value]="stats.monthlyRevenue + ' ' + stats.currency"
+      icon="bi-cash-stack"
+      color="warning"
+      routerLink="/financial">
+    </app-stats-card>
+    <app-stats-card
+      label="En attente"
+      [value]="stats.pendingRentals"
+      icon="bi-clock-history"
+      color="danger"
+      routerLink="/rentals">
+    </app-stats-card>
+  </div>
+
+  <!-- Recent Activity -->
+  <div *ngIf="!loading && !error && stats && hasActivity" class="dashboard__section">
+    <h3 class="dashboard__section-title">
+      <i class="bi bi-activity"></i>
+      Activité récente
+    </h3>
+
+    <!-- Pending rentals alert -->
+    <div *ngIf="stats.pendingRentals > 0" class="hw-alert hw-alert--warning" style="margin-bottom: var(--hw-space-4)">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ stats.pendingRentals }} location{{ stats.pendingRentals > 1 ? 's' : '' }} en attente de validation</span>
+      <a routerLink="/rentals" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Voir</a>
+    </div>
+
+    <div class="dashboard__activity-list">
+      <!-- Latest property (OWNER/ADMIN only) -->
+      <a *ngIf="stats.recentActivity.latestProperty && !isTenant"
+         class="dashboard__activity-item hw-card hw-card--clickable"
+         [routerLink]="'/properties/' + stats.recentActivity.latestProperty.id">
+        <div class="hw-icon-circle hw-icon-circle--primary">
+          <i class="bi bi-building"></i>
+        </div>
+        <div class="dashboard__activity-content">
+          <span class="dashboard__activity-label">Dernier bien ajouté</span>
+          <span class="dashboard__activity-value">{{ stats.recentActivity.latestProperty.name }}</span>
+          <span class="hw-text-xs hw-text-muted">{{ stats.recentActivity.latestProperty.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+        </div>
+        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
+      </a>
+
+      <!-- Latest rental -->
+      <a *ngIf="stats.recentActivity.latestRental"
+         class="dashboard__activity-item hw-card hw-card--clickable"
+         [routerLink]="'/rentals/' + stats.recentActivity.latestRental.id">
+        <div class="hw-icon-circle hw-icon-circle--success">
+          <i class="bi bi-key"></i>
+        </div>
+        <div class="dashboard__activity-content">
+          <span class="dashboard__activity-label">Dernière location créée</span>
+          <span class="dashboard__activity-value">{{ stats.recentActivity.latestRental.propertyName }}</span>
+          <span class="hw-text-xs hw-text-muted">{{ stats.recentActivity.latestRental.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+        </div>
+        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div *ngIf="!loading && !error" class="dashboard__section">
+    <h3 class="dashboard__section-title">
+      <i class="bi bi-lightning"></i>
+      Actions rapides
+    </h3>
+    <!-- Quick Actions — TENANT -->
+    <div *ngIf="isTenant" class="dashboard__actions-grid">
+      <a routerLink="/rentals" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--success">
+          <i class="bi bi-key"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Mes Locations</span>
+          <span class="dashboard__action-desc">Voir mes locations</span>
+        </div>
+      </a>
+      <a routerLink="/contracts" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--info">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Mes Contrats</span>
+          <span class="dashboard__action-desc">Consulter mes contrats</span>
+        </div>
+      </a>
+      <a routerLink="/listings" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--primary">
+          <i class="bi bi-search"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Rechercher</span>
+          <span class="dashboard__action-desc">Rechercher un logement</span>
+        </div>
+      </a>
+      <a routerLink="/applications" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--neutral">
+          <i class="bi bi-people"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Candidatures</span>
+          <span class="dashboard__action-desc">Mes candidatures</span>
+        </div>
+      </a>
+      <a routerLink="/messages" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--warning">
+          <i class="bi bi-chat-dots"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Messages</span>
+          <span class="dashboard__action-desc">Mes conversations</span>
+        </div>
+      </a>
+      <a routerLink="/profile" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--danger">
+          <i class="bi bi-person"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Mon Profil</span>
+          <span class="dashboard__action-desc">Gérer mon profil</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Quick Actions — OWNER / ADMIN -->
+    <div *ngIf="!isTenant" class="dashboard__actions-grid">
+      <a routerLink="/properties" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--primary">
+          <i class="bi bi-building"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Mes Biens</span>
+          <span class="dashboard__action-desc">Gérer mes propriétés</span>
+        </div>
+      </a>
+      <a routerLink="/rentals" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--success">
+          <i class="bi bi-key"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Locations</span>
+          <span class="dashboard__action-desc">Gérer mes locations</span>
+        </div>
+      </a>
+      <a routerLink="/contracts" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--info">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Contrats</span>
+          <span class="dashboard__action-desc">Créer et gérer</span>
+        </div>
+      </a>
+      <a routerLink="/payments" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--warning">
+          <i class="bi bi-credit-card"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Paiements</span>
+          <span class="dashboard__action-desc">Suivre les paiements</span>
+        </div>
+      </a>
+      <a routerLink="/listings" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--neutral">
+          <i class="bi bi-megaphone"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Annonces</span>
+          <span class="dashboard__action-desc">Publier et rechercher</span>
+        </div>
+      </a>
+      <a routerLink="/invoices" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--danger">
+          <i class="bi bi-receipt"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Factures</span>
+          <span class="dashboard__action-desc">Gérer la facturation</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,126 @@
+<div class="container-fluid py-4">
+  <div class="row mb-3">
+    <div class="col">
+      <h2><i class="bi bi-send"></i> Candidater</h2>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!loading" class="row">
+    <div class="col-lg-8">
+      <div *ngIf="listing" class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5>{{ listing.title }}</h5>
+          <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ listing.propertyCity }} - {{ listing.propertyName }}</p>
+          <span *ngIf="listing.pricePerMonth" class="badge bg-primary">
+            {{ listing.pricePerMonth | number:'1.0-0' }} EUR/mois
+          </span>
+        </div>
+      </div>
+
+      <!-- Etape 1: Soumission de la candidature -->
+      <form *ngIf="!applicationId" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="card shadow-sm">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <span class="badge bg-primary me-2">1</span> Votre candidature
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="coverLetter" class="form-label">Lettre de motivation</label>
+              <textarea id="coverLetter" class="form-control" formControlName="coverLetter" rows="6"
+                        placeholder="Presentez-vous et expliquez pourquoi vous etes interesse(e) par ce bien..."></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="desiredMoveIn" class="form-label">Date d'emmenagement souhaitee</label>
+              <input id="desiredMoveIn" type="date" class="form-control" formControlName="desiredMoveIn">
+            </div>
+          </div>
+          <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting">
+              <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+              <i class="bi bi-arrow-right"></i> Continuer
+            </button>
+            <a routerLink="/listings" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </div>
+      </form>
+
+      <!-- Etape 2: Upload des documents du dossier -->
+      <div *ngIf="applicationId">
+        <div class="alert alert-success mb-4">
+          <i class="bi bi-check-circle"></i> Candidature soumise avec succes ! Completez maintenant votre dossier.
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <span class="badge bg-primary me-2">2</span> Pieces du dossier
+            </h5>
+            <span class="badge" [class]="isComplete ? 'bg-success' : 'bg-warning text-dark'">
+              {{ uploadedCount }}/{{ totalRequired }} pieces
+            </span>
+          </div>
+          <div class="card-body">
+            <p class="text-muted mb-4">
+              Ajoutez les pieces justificatives de votre dossier de location. Formats acceptes : PDF, JPG, PNG (max 10 Mo).
+            </p>
+
+            <div *ngIf="uploadError" class="alert alert-danger alert-dismissible fade show">
+              {{ uploadError }}
+              <button type="button" class="btn-close" (click)="uploadError = null"></button>
+            </div>
+
+            <div class="list-group">
+              <div *ngFor="let req of REQUIRED_DOCUMENTS" class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                      <i class="bi me-2" [class]="isTypeUploaded(req.type) ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"></i>
+                      <strong>{{ req.label }}</strong>
+                    </div>
+                    <small class="text-muted ms-4">{{ req.description }}</small>
+
+                    <!-- Documents uploades pour ce type -->
+                    <div *ngFor="let doc of getDocumentsForType(req.type)" class="ms-4 mt-2 d-flex align-items-center gap-2">
+                      <span class="badge bg-light text-dark">
+                        <i class="bi bi-file-earmark"></i> {{ doc.fileName }}
+                        <small class="text-muted">({{ formatFileSize(doc.fileSize) }})</small>
+                      </span>
+                      <button class="btn btn-outline-danger btn-sm py-0 px-1" (click)="removeDocument(doc)" title="Supprimer">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="ms-3">
+                    <label class="btn btn-outline-primary btn-sm" [class.disabled]="uploadingType === req.type">
+                      <span *ngIf="uploadingType === req.type" class="spinner-border spinner-border-sm me-1"></span>
+                      <i *ngIf="uploadingType !== req.type" class="bi bi-upload"></i>
+                      {{ isTypeUploaded(req.type) ? 'Ajouter' : 'Choisir' }}
+                      <input type="file" class="d-none" accept=".pdf,.jpg,.jpeg,.png"
+                             (change)="onFileSelected($event, req.type)"
+                             [disabled]="uploadingType === req.type">
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer d-flex justify-content-between">
+            <span class="text-muted align-self-center">
+              <small *ngIf="!isComplete">Vous pourrez completer votre dossier plus tard depuis "Mes candidatures".</small>
+            </span>
+            <button class="btn btn-success" (click)="finish()">
+              <i class="bi bi-check-lg"></i> {{ isComplete ? 'Terminer' : 'Terminer plus tard' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

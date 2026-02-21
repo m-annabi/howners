@@ -1,0 +1,40 @@
+[
+  {
+    "id": "rental-001",
+    "propertyId": "prop-001",
+    "propertyName": "Appartement Paris 11e",
+    "tenantId": "tenant-001",
+    "tenantName": "Marie Martin",
+    "tenantEmail": "marie.martin@example.com",
+    "rentalType": "LONG_TERM",
+    "status": "ACTIVE",
+    "startDate": "2024-01-01",
+    "endDate": "2025-12-31",
+    "monthlyRent": 1200,
+    "currency": "EUR",
+    "depositAmount": 2400,
+    "charges": 150,
+    "paymentDay": 5,
+    "createdAt": "2024-01-01T10:00:00Z",
+    "updatedAt": "2024-01-01T10:00:00Z"
+  },
+  {
+    "id": "rental-002",
+    "propertyId": "prop-002",
+    "propertyName": "Studio Lyon 3e",
+    "tenantId": "tenant-002",
+    "tenantName": "Pierre Durand",
+    "tenantEmail": "pierre.durand@example.com",
+    "rentalType": "SHORT_TERM",
+    "status": "PENDING",
+    "startDate": "2024-07-01",
+    "endDate": "2024-09-30",
+    "monthlyRent": 800,
+    "currency": "EUR",
+    "depositAmount": 800,
+    "charges": 50,
+    "paymentDay": 1,
+    "createdAt": "2024-06-15T14:00:00Z",
+    "updatedAt": "2024-06-15T14:00:00Z"
+  }
+]

@@ -1,0 +1,68 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-send-check"></i> Mes candidatures</h2>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="!loading && applications.length === 0" class="text-center py-5">
+    <i class="bi bi-send display-1 text-muted"></i>
+    <p class="text-muted mt-3">Aucune candidature envoyee</p>
+    <a routerLink="/listings" class="btn btn-primary">
+      <i class="bi bi-search"></i> Rechercher des annonces
+    </a>
+  </div>
+
+  <div class="table-responsive" *ngIf="!loading && applications.length > 0">
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>Annonce</th>
+          <th>Propriete</th>
+          <th>Date de candidature</th>
+          <th>Emmenagement souhaite</th>
+          <th>Dossier</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let app of applications">
+          <td>
+            <a [routerLink]="['/listings', app.listingId]" class="text-decoration-none fw-bold">
+              {{ app.listingTitle }}
+            </a>
+          </td>
+          <td>{{ app.propertyName }}</td>
+          <td>{{ app.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>{{ app.desiredMoveIn ? (app.desiredMoveIn | date:'dd/MM/yyyy') : '-' }}</td>
+          <td>
+            <span class="badge" [class]="isDossierComplete(app) ? 'bg-success' : 'bg-warning text-dark'">
+              <i class="bi bi-folder"></i> {{ getDocumentCount(app) }}/{{ totalRequired }}
+            </span>
+            <a *ngIf="!isDossierComplete(app) && canWithdraw(app)"
+               [routerLink]="['/applications/apply']" [queryParams]="{ listingId: app.listingId }"
+               class="ms-1 small text-primary" title="Completer le dossier">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+          </td>
+          <td>
+            <span class="badge bg-{{ statusColors[app.status] }}">
+              {{ statusLabels[app.status] }}
+            </span>
+          </td>
+          <td>
+            <button *ngIf="canWithdraw(app)" class="btn btn-outline-danger btn-sm" (click)="withdraw(app.id)">
+              <i class="bi bi-x-circle"></i> Retirer
+            </button>
+            <span *ngIf="app.notes" class="ms-2 text-muted" title="{{ app.notes }}">
+              <i class="bi bi-chat-square-text"></i>
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

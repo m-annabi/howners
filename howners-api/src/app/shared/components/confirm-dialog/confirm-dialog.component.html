@@ -1,0 +1,19 @@
+<div *ngIf="visible" class="confirm-overlay" (click)="onCancel()">
+  <div class="confirm-dialog" (click)="$event.stopPropagation()">
+    <div class="confirm-dialog__icon">
+      <div class="hw-icon-circle hw-icon-circle--lg" [ngClass]="iconColorClass">
+        <i class="bi" [ngClass]="iconClass"></i>
+      </div>
+    </div>
+    <h3 class="confirm-dialog__title">{{ config.title }}</h3>
+    <p class="confirm-dialog__message">{{ config.message }}</p>
+    <div class="confirm-dialog__actions">
+      <button class="hw-btn hw-btn--secondary" (click)="onCancel()">
+        {{ config.cancelLabel || 'Annuler' }}
+      </button>
+      <button class="hw-btn" [ngClass]="confirmBtnClass" (click)="onConfirm()">
+        {{ config.confirmLabel || 'Confirmer' }}
+      </button>
+    </div>
+  </div>
+</div>

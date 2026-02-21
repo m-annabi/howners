@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="018-make-photo-url-nullable" author="system">
+        <comment>Rendre la colonne file_url nullable car les URLs sont générées à la volée</comment>
+
+        <!-- Supprimer la contrainte NOT NULL sur file_url -->
+        <dropNotNullConstraint
+                tableName="property_photos"
+                columnName="file_url"
+                columnDataType="VARCHAR(1000)"/>
+
+        <!-- Mettre à jour les URLs existantes à null -->
+        <update tableName="property_photos">
+            <column name="file_url" value="null"/>
+        </update>
+
+    </changeSet>
+
+</databaseChangeLog>

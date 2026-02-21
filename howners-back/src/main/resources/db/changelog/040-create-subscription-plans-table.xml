@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="040-1" author="howners">
+        <comment>Create subscription_plans table</comment>
+
+        <createTable tableName="subscription_plans">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stripe_price_id_monthly" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="stripe_price_id_annual" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="monthly_price" type="DECIMAL(10,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="annual_price" type="DECIMAL(10,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_properties" type="INT" defaultValueNumeric="-1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_contracts_per_month" type="INT" defaultValueNumeric="-1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="features" type="JSONB">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

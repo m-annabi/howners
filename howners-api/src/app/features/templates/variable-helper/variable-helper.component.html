@@ -1,0 +1,66 @@
+<div class="variable-helper">
+  <div class="header mb-3">
+    <h5 class="mb-2">Variables Disponibles</h5>
+    <p class="text-muted small mb-2">
+      Cliquez pour insérer une variable dans le contenu
+    </p>
+
+    <!-- Filtre par catégorie -->
+    <select
+      class="form-select form-select-sm mb-2"
+      [(ngModel)]="selectedCategory"
+      (ngModelChange)="onCategoryChange()"
+    >
+      <option value="all">Toutes les catégories</option>
+      <option *ngFor="let cat of categories.slice(1)" [value]="cat">
+        {{ getCategoryLabel(cat) }}
+      </option>
+    </select>
+
+    <!-- Recherche -->
+    <input
+      type="text"
+      class="form-control form-control-sm"
+      placeholder="Rechercher..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()"
+    >
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="loading" class="alert alert-info alert-sm">
+    Chargement...
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger alert-sm">
+    {{ error }}
+  </div>
+
+  <!-- Liste des variables -->
+  <div *ngIf="!loading && !error" class="variables-list">
+    <div *ngIf="filteredVariables.length === 0" class="alert alert-warning alert-sm">
+      Aucune variable trouvée.
+    </div>
+
+    <div
+      *ngFor="let variable of filteredVariables"
+      class="variable-item"
+      (click)="insertVariable(variable)"
+      [title]="'Exemple: ' + variable.example"
+    >
+      <div class="d-flex align-items-start">
+        <span
+          class="badge me-2"
+          [style.background-color]="getCategoryColor(variable.category)"
+        >
+          {{ getCategoryLabel(variable.category) }}
+        </span>
+      </div>
+      <div class="variable-info">
+        <div class="variable-key">{{ variable.key }}</div>
+        <div class="variable-label">{{ variable.label }}</div>
+        <div class="variable-example text-muted">Ex: {{ variable.example }}</div>
+      </div>
+    </div>
+  </div>
+</div>

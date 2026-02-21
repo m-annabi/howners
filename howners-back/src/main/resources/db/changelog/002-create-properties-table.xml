@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="002-create-properties-table" author="howners">
+        <createTable tableName="properties">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_properties_owner" references="users(id)"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="property_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address_line1" type="VARCHAR(255)"/>
+            <column name="address_line2" type="VARCHAR(255)"/>
+            <column name="city" type="VARCHAR(100)"/>
+            <column name="postal_code" type="VARCHAR(20)"/>
+            <column name="country" type="VARCHAR(2)" defaultValue="FR"/>
+            <column name="surface_area" type="DECIMAL(10,2)"/>
+            <column name="bedrooms" type="INT"/>
+            <column name="bathrooms" type="INT"/>
+            <column name="description" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_properties_owner" tableName="properties">
+            <column name="owner_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

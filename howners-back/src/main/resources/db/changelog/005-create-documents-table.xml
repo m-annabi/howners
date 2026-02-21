@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="005-create-documents-table" author="howners">
+        <createTable tableName="documents">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints foreignKeyName="fk_documents_rental" references="rentals(id)"/>
+            </column>
+            <column name="property_id" type="UUID">
+                <constraints foreignKeyName="fk_documents_property" references="properties(id)"/>
+            </column>
+            <column name="uploader_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_documents_uploader" references="users(id)"/>
+            </column>
+            <column name="document_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_path" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_size" type="BIGINT"/>
+            <column name="mime_type" type="VARCHAR(100)"/>
+            <column name="document_hash" type="VARCHAR(64)"/>
+            <column name="metadata" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <createIndex indexName="idx_documents_rental" tableName="documents">
+            <column name="rental_id"/>
+        </createIndex>
+        <createIndex indexName="idx_documents_property" tableName="documents">
+            <column name="property_id"/>
+        </createIndex>
+        <createIndex indexName="idx_documents_type" tableName="documents">
+            <column name="document_type"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

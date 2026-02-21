@@ -1,0 +1,108 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Mes Templates de Contrat</h2>
+    <button class="btn btn-primary" (click)="createTemplate()">
+      + Nouveau Template
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Rechercher par nom ou description..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+      >
+    </div>
+    <div class="col-md-3">
+      <select
+        class="form-select"
+        [(ngModel)]="selectedType"
+        (ngModelChange)="onTypeChange()"
+      >
+        <option *ngFor="let type of types" [value]="type.value">
+          {{ type.label }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="loading" class="alert alert-info">
+    Chargement des templates...
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <!-- Liste des templates -->
+  <div *ngIf="!loading && !error">
+    <div *ngIf="filteredTemplates.length === 0" class="alert alert-warning">
+      Aucun template trouvé.
+    </div>
+
+    <div class="table-responsive" *ngIf="filteredTemplates.length > 0">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let template of filteredTemplates">
+            <td>
+              <strong>{{ template.name }}</strong>
+              <span *ngIf="template.isDefault" class="badge bg-info ms-2">Par défaut</span>
+            </td>
+            <td>
+              <span class="badge bg-secondary">
+                {{ getRentalTypeLabel(template.rentalType) }}
+              </span>
+            </td>
+            <td>
+              <small class="text-muted">
+                {{ template.description || '-' }}
+              </small>
+            </td>
+            <td>{{ template.createdAt | date: 'dd/MM/yyyy' }}</td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <button
+                  *ngIf="!template.isDefault"
+                  class="btn btn-outline-primary"
+                  (click)="editTemplate(template, $event)"
+                  title="Modifier"
+                >
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button
+                  class="btn btn-outline-secondary"
+                  (click)="duplicateTemplate(template, $event)"
+                  title="Dupliquer"
+                >
+                  <i class="bi bi-files"></i>
+                </button>
+                <button
+                  *ngIf="!template.isDefault"
+                  class="btn btn-outline-danger"
+                  (click)="deleteTemplate(template, $event)"
+                  title="Supprimer"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

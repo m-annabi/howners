@@ -1,0 +1,162 @@
+<div class="container-fluid py-4">
+  <div class="row mb-3">
+    <div class="col">
+      <h2>{{ isEditMode ? 'Modifier l\'annonce' : 'Nouvelle annonce' }}</h2>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header"><h5 class="mb-0">Informations generales</h5></div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="propertyId" class="form-label">Propriete *</label>
+              <select id="propertyId" class="form-select" formControlName="propertyId">
+                <option value="">Selectionner une propriete</option>
+                <option *ngFor="let p of properties" [value]="p.id">{{ p.name }} - {{ p.address?.city }}</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="title" class="form-label">Titre de l'annonce *</label>
+              <input id="title" type="text" class="form-control" formControlName="title"
+                     placeholder="Ex: Appartement lumineux T3 centre-ville">
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea id="description" class="form-control" formControlName="description" rows="5"
+                        placeholder="Decrivez le bien en detail..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-header"><h5 class="mb-0">Tarification et duree</h5></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="pricePerMonth" class="form-label">Loyer mensuel</label>
+                <div class="input-group">
+                  <input id="pricePerMonth" type="number" class="form-control" formControlName="pricePerMonth">
+                  <span class="input-group-text">EUR/mois</span>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="pricePerNight" class="form-label">Prix par nuit</label>
+                <div class="input-group">
+                  <input id="pricePerNight" type="number" class="form-control" formControlName="pricePerNight">
+                  <span class="input-group-text">EUR/nuit</span>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="availableFrom" class="form-label">Disponible des</label>
+                <input id="availableFrom" type="date" class="form-control" formControlName="availableFrom">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="minStay" class="form-label">Duree min (jours)</label>
+                <input id="minStay" type="number" class="form-control" formControlName="minStay">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="maxStay" class="form-label">Duree max (jours)</label>
+                <input id="maxStay" type="number" class="form-control" formControlName="maxStay">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photos section -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-images me-2"></i>Photos</h5></div>
+          <div class="card-body">
+            <div *ngIf="isEditMode && listingId">
+              <!-- Existing photos gallery -->
+              <div *ngIf="listingPhotos.length > 0" class="row g-3 mb-3">
+                <div *ngFor="let photo of listingPhotos" class="col-6 col-md-4 col-lg-3">
+                  <div class="position-relative">
+                    <img [src]="photo.fileUrl" [alt]="photo.caption || photo.fileName"
+                         class="img-fluid rounded" style="height: 120px; width: 100%; object-fit: cover;">
+                    <span *ngIf="photo.isPrimary" class="badge bg-primary position-absolute top-0 start-0 m-1" style="font-size: 0.7rem;">
+                      Couverture
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                            (click)="deletePhoto(photo)" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                  <small class="text-muted d-block text-truncate mt-1">{{ photo.caption || photo.fileName }}</small>
+                </div>
+              </div>
+
+              <!-- Upload component -->
+              <app-listing-photo-upload
+                [listingId]="listingId"
+                [currentPhotoCount]="listingPhotos.length"
+                (photoUploaded)="onPhotoUploaded($event)">
+              </app-listing-photo-upload>
+            </div>
+
+            <div *ngIf="!isEditMode" class="text-center py-3">
+              <i class="bi bi-info-circle text-muted me-1"></i>
+              <span class="text-muted">Enregistrez l'annonce pour ajouter des photos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <!-- Equipements -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Equipements</h5></div>
+          <div class="card-body">
+            <div class="row g-2">
+              <div *ngFor="let amenity of predefinedAmenities" class="col-6">
+                <div class="form-check" (click)="toggleAmenity(amenity.key)" style="cursor: pointer;">
+                  <input class="form-check-input" type="checkbox"
+                         [checked]="selectedAmenities.has(amenity.key)"
+                         [id]="'amenity-' + amenity.key">
+                  <label class="form-check-label" [for]="'amenity-' + amenity.key" style="cursor: pointer;">
+                    <i class="bi {{ amenity.icon }} me-1"></i>{{ amenity.label }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conditions -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Conditions</h5></div>
+          <div class="card-body">
+            <div class="row g-2">
+              <div *ngFor="let req of predefinedRequirements" class="col-12">
+                <div class="form-check" (click)="toggleRequirement(req.key)" style="cursor: pointer;">
+                  <input class="form-check-input" type="checkbox"
+                         [checked]="selectedRequirements.has(req.key)"
+                         [id]="'req-' + req.key">
+                  <label class="form-check-label" [for]="'req-' + req.key" style="cursor: pointer;">
+                    <i class="bi {{ req.icon }} me-1"></i>{{ req.label }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting">
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+            {{ isEditMode ? 'Mettre a jour' : 'Creer l\'annonce' }}
+          </button>
+          <a routerLink="/listings/my" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

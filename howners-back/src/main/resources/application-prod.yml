@@ -1,0 +1,19 @@
+# Profil pour la production
+spring:
+  jpa:
+    show-sql: false
+
+  liquibase:
+    enabled: true
+
+logging:
+  level:
+    root: WARN
+    com.howners: INFO
+    org.springframework.security: WARN
+
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never

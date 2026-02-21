@@ -1,0 +1,236 @@
+<div class="rental-form-container">
+  <div class="form-header">
+    <h1>{{ isEditMode ? 'Modifier la location' : 'Nouvelle location' }}</h1>
+  </div>
+
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <form [formGroup]="rentalForm" (ngSubmit)="onSubmit()" class="rental-form">
+    <div class="form-section">
+      <h2>Bien immobilier</h2>
+
+      <div class="form-group">
+        <label for="propertyId">Bien *</label>
+        <select
+          id="propertyId"
+          formControlName="propertyId"
+          class="form-control"
+          [disabled]="isEditMode"
+        >
+          <option value="">Sélectionner un bien</option>
+          <option *ngFor="let property of properties" [value]="property.id">
+            {{ property.name }} - {{ property.address.city }}
+          </option>
+        </select>
+        <div class="error" *ngIf="rentalForm.get('propertyId')?.invalid && rentalForm.get('propertyId')?.touched">
+          Veuillez sélectionner un bien
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section" *ngIf="!isEditMode">
+      <h2>Locataire</h2>
+
+      <div class="tenant-mode">
+        <label class="radio-label">
+          <input type="radio" [value]="true" [(ngModel)]="createNewTenant" [ngModelOptions]="{standalone: true}" (change)="toggleTenantMode()">
+          <span>Créer un nouveau locataire</span>
+        </label>
+        <label class="radio-label">
+          <input type="radio" [value]="false" [(ngModel)]="createNewTenant" [ngModelOptions]="{standalone: true}" (change)="toggleTenantMode()" [disabled]="tenants.length === 0">
+          <span>Sélectionner un locataire existant</span>
+          <span *ngIf="tenants.length === 0" class="hint" style="margin-left: 0.5rem;">(aucun locataire)</span>
+        </label>
+      </div>
+
+      <div *ngIf="!createNewTenant" class="tenant-fields">
+        <div class="form-group">
+          <label for="tenantId">Locataire *</label>
+          <select
+            id="tenantId"
+            formControlName="tenantId"
+            class="form-control"
+          >
+            <option value="">Sélectionner un locataire</option>
+            <option *ngFor="let tenant of tenants" [value]="tenant.id">
+              {{ tenant.firstName }} {{ tenant.lastName }} — {{ tenant.email }}
+            </option>
+          </select>
+          <div class="error" *ngIf="rentalForm.get('tenantId')?.invalid && rentalForm.get('tenantId')?.touched">
+            Veuillez sélectionner un locataire
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="createNewTenant" class="tenant-fields">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tenantFirstName">Prénom *</label>
+            <input
+              type="text"
+              id="tenantFirstName"
+              formControlName="tenantFirstName"
+              class="form-control"
+              placeholder="Ex: Jean"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="tenantLastName">Nom *</label>
+            <input
+              type="text"
+              id="tenantLastName"
+              formControlName="tenantLastName"
+              class="form-control"
+              placeholder="Ex: Dupont"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tenantEmail">Email *</label>
+          <input
+            type="email"
+            id="tenantEmail"
+            formControlName="tenantEmail"
+            class="form-control"
+            placeholder="Ex: jean.dupont@example.com"
+          >
+          <small class="hint">Un compte sera créé et le locataire recevra un email avec ses identifiants</small>
+        </div>
+
+        <div class="form-group">
+          <label for="tenantPhone">Téléphone</label>
+          <input
+            type="tel"
+            id="tenantPhone"
+            formControlName="tenantPhone"
+            class="form-control"
+            placeholder="Ex: +33 6 12 34 56 78"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Détails de la location</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rentalType">Type de location *</label>
+          <select id="rentalType" formControlName="rentalType" class="form-control">
+            <option *ngFor="let type of rentalTypes" [value]="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="isEditMode">
+          <label for="status">Statut *</label>
+          <select id="status" formControlName="status" class="form-control">
+            <option *ngFor="let status of rentalStatuses" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="startDate">Date de début *</label>
+          <input
+            type="date"
+            id="startDate"
+            formControlName="startDate"
+            class="form-control"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="endDate">Date de fin</label>
+          <input
+            type="date"
+            id="endDate"
+            formControlName="endDate"
+            class="form-control"
+          >
+          <small class="hint">Laisser vide pour une location sans date de fin</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Montants</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="monthlyRent">Loyer mensuel * (€)</label>
+          <input
+            type="number"
+            id="monthlyRent"
+            formControlName="monthlyRent"
+            class="form-control"
+            placeholder="Ex: 850"
+            min="0"
+            step="0.01"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="depositAmount">Dépôt de garantie (€)</label>
+          <input
+            type="number"
+            id="depositAmount"
+            formControlName="depositAmount"
+            class="form-control"
+            placeholder="Ex: 850"
+            min="0"
+            step="0.01"
+          >
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="charges">Charges (€)</label>
+          <input
+            type="number"
+            id="charges"
+            formControlName="charges"
+            class="form-control"
+            placeholder="Ex: 100"
+            min="0"
+            step="0.01"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="paymentDay">Jour de paiement</label>
+          <input
+            type="number"
+            id="paymentDay"
+            formControlName="paymentDay"
+            class="form-control"
+            placeholder="Ex: 1"
+            min="1"
+            max="31"
+          >
+          <small class="hint">Jour du mois pour le prélèvement (1-31)</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" (click)="cancel()" class="btn btn-secondary">
+        Annuler
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="loading || rentalForm.invalid"
+      >
+        {{ loading ? 'Enregistrement...' : (isEditMode ? 'Mettre à jour' : 'Créer') }}
+      </button>
+    </div>
+  </form>
+</div>

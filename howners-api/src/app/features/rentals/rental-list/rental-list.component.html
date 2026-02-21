@@ -1,0 +1,99 @@
+<app-page-header
+  title="Mes Locations"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Locations'}]"
+  [actions]="headerActions">
+</app-page-header>
+
+<ng-template #headerActions>
+  <button class="hw-btn hw-btn--primary" (click)="navigateToCreate()">
+    <i class="bi bi-plus-lg"></i> Nouvelle location
+  </button>
+</ng-template>
+
+<!-- Filters -->
+<div *ngIf="!loading && rentals.length > 0" class="rental-list__toolbar">
+  <div class="rental-list__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="applyFilters()"
+      placeholder="Rechercher par bien ou locataire..."
+      class="form-control">
+  </div>
+  <select [(ngModel)]="filterStatus" (change)="applyFilters()" class="form-select rental-list__filter">
+    <option value="all">Tous les statuts</option>
+    <option *ngFor="let status of statuses" [value]="status.value">
+      {{ status.label }}
+    </option>
+  </select>
+</div>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="card" [count]="6"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && !error && rentals.length === 0"
+  icon="bi-key"
+  title="Aucune location"
+  message="Créez votre première location pour commencer la gestion."
+  actionLabel="Nouvelle location"
+  actionRoute="/rentals/new">
+</app-empty-state>
+
+<!-- No search results -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredRentals.length === 0 && rentals.length > 0"
+  icon="bi-search"
+  title="Aucun résultat"
+  message="Essayez avec d'autres termes de recherche.">
+</app-empty-state>
+
+<!-- Grid -->
+<div *ngIf="!loading && !error && filteredRentals.length > 0" class="rental-list__grid">
+  <div
+    *ngFor="let rental of filteredRentals"
+    class="rental-card hw-card hw-card--clickable"
+    (click)="viewRental(rental.id)">
+
+    <div class="rental-card__header">
+      <div class="rental-card__title-row">
+        <h3>{{ rental.propertyName }}</h3>
+        <app-status-badge [status]="rental.status" type="rental"></app-status-badge>
+      </div>
+      <span class="hw-badge hw-badge--neutral">{{ rentalTypeLabels[rental.rentalType] }}</span>
+    </div>
+
+    <div class="rental-card__body">
+      <div class="rental-card__row">
+        <i class="bi bi-person"></i>
+        <span>{{ rental.tenantName || 'Locataire non assigné' }}</span>
+      </div>
+      <div class="rental-card__row">
+        <i class="bi bi-calendar-event"></i>
+        <span>{{ rental.startDate | date:'dd/MM/yyyy' }}
+          <span *ngIf="rental.endDate"> - {{ rental.endDate | date:'dd/MM/yyyy' }}</span>
+        </span>
+      </div>
+      <div class="rental-card__amount">
+        {{ rental.monthlyRent | number:'1.2-2' }} {{ rental.currency }}<span class="hw-text-muted">/mois</span>
+      </div>
+    </div>
+
+    <div class="rental-card__actions">
+      <button (click)="editRental(rental.id, $event)" class="hw-btn hw-btn--secondary hw-btn--sm">
+        <i class="bi bi-pencil"></i> Modifier
+      </button>
+      <button (click)="deleteRental(rental.id, $event)" class="hw-btn hw-btn--ghost hw-btn--sm" style="color: var(--hw-danger)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+  </div>
+</div>

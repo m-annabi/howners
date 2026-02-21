@@ -1,0 +1,104 @@
+<app-page-header
+  title="Mes Biens"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Biens'}]"
+  [actions]="headerActions">
+</app-page-header>
+
+<ng-template #headerActions>
+  <button class="hw-btn hw-btn--primary" (click)="navigateToCreate()">
+    <i class="bi bi-plus-lg"></i> Ajouter un bien
+  </button>
+</ng-template>
+
+<!-- Search -->
+<div *ngIf="!loading && properties.length > 0" class="property-list__toolbar">
+  <div class="property-list__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="filterProperties()"
+      placeholder="Rechercher par nom, ville ou code postal..."
+      class="form-control">
+  </div>
+  <span class="hw-text-sm hw-text-muted">{{ filteredProperties.length }} bien{{ filteredProperties.length > 1 ? 's' : '' }}</span>
+</div>
+
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="card" [count]="6"></app-loading-skeleton>
+
+<!-- Error -->
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<!-- Empty -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredProperties.length === 0 && properties.length === 0"
+  icon="bi-building"
+  title="Aucun bien"
+  message="Commencez par ajouter votre premier bien immobilier."
+  actionLabel="Ajouter un bien"
+  actionRoute="/properties/new">
+</app-empty-state>
+
+<!-- No search results -->
+<app-empty-state
+  *ngIf="!loading && !error && filteredProperties.length === 0 && properties.length > 0"
+  icon="bi-search"
+  title="Aucun résultat"
+  message="Essayez avec d'autres termes de recherche.">
+</app-empty-state>
+
+<!-- Grid -->
+<div *ngIf="!loading && !error && filteredProperties.length > 0" class="property-list__grid">
+  <div
+    *ngFor="let property of filteredProperties"
+    class="property-card hw-card hw-card--clickable"
+    (click)="viewProperty(property.id)">
+
+    <!-- Image -->
+    <div class="property-card__image" *ngIf="property.primaryPhotoUrl">
+      <img [src]="property.primaryPhotoUrl" [alt]="property.name" />
+    </div>
+    <div class="property-card__image property-card__image--placeholder" *ngIf="!property.primaryPhotoUrl">
+      <i class="bi bi-building"></i>
+    </div>
+
+    <div class="property-card__body">
+      <div class="property-card__header">
+        <h3>{{ property.name }}</h3>
+        <span class="hw-badge hw-badge--primary">{{ propertyTypeLabels[property.propertyType] }}</span>
+      </div>
+
+      <div class="property-card__info">
+        <span class="property-card__location">
+          <i class="bi bi-geo-alt"></i>
+          {{ property.address.city }}, {{ property.address.postalCode }}
+        </span>
+      </div>
+
+      <div class="property-card__details">
+        <span *ngIf="property.surfaceArea" class="property-card__detail">
+          <i class="bi bi-arrows-angle-expand"></i> {{ property.surfaceArea }} m²
+        </span>
+        <span *ngIf="property.bedrooms" class="property-card__detail">
+          <i class="bi bi-door-open"></i> {{ property.bedrooms }} ch.
+        </span>
+        <span *ngIf="property.bathrooms" class="property-card__detail">
+          <i class="bi bi-droplet"></i> {{ property.bathrooms }} sdb.
+        </span>
+      </div>
+
+      <div class="property-card__actions">
+        <button (click)="editProperty(property.id, $event)" class="hw-btn hw-btn--secondary hw-btn--sm">
+          <i class="bi bi-pencil"></i> Modifier
+        </button>
+        <button (click)="deleteProperty(property.id, $event)" class="hw-btn hw-btn--ghost hw-btn--sm" style="color: var(--hw-danger)">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

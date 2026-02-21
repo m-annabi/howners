@@ -1,0 +1,135 @@
+<div class="container-fluid py-4">
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && listing">
+    <div class="row mb-3">
+      <div class="col">
+        <a routerLink="/listings" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left"></i> Retour aux annonces
+        </a>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+          <!-- Photos carousel -->
+          <div *ngIf="listing.photos && listing.photos.length > 0" class="card-img-top">
+            <div id="listingCarousel" class="carousel slide" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                <div class="carousel-item" *ngFor="let photo of listing.photos; let i = index" [class.active]="i === 0">
+                  <img [src]="photo.fileUrl" class="d-block w-100" style="max-height: 400px; object-fit: cover;"
+                       [alt]="photo.caption || listing.title">
+                </div>
+              </div>
+              <button *ngIf="listing.photos.length > 1" class="carousel-control-prev" type="button" data-bs-target="#listingCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+              </button>
+              <button *ngIf="listing.photos.length > 1" class="carousel-control-next" type="button" data-bs-target="#listingCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+              </button>
+            </div>
+          </div>
+          <div *ngIf="!listing.photos || listing.photos.length === 0"
+               class="bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+            <i class="bi bi-image display-1 text-muted"></i>
+          </div>
+
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h2>{{ listing.title }}</h2>
+              <span class="badge bg-{{ statusColors[listing.status] }}">
+                {{ statusLabels[listing.status] }}
+              </span>
+            </div>
+
+            <p class="text-muted mb-3">
+              <i class="bi bi-geo-alt"></i> {{ listing.propertyCity }} - {{ listing.propertyName }}
+            </p>
+
+            <p class="fs-5">{{ listing.description }}</p>
+
+            <div *ngIf="listing.amenities && listing.amenities.length > 0" class="mt-4">
+              <h5><i class="bi bi-check2-square me-2"></i>Equipements</h5>
+              <div class="d-flex flex-wrap gap-2">
+                <span *ngFor="let key of listing.amenities" class="badge bg-light text-dark border">
+                  <i class="bi {{ getAmenityIcon(key) }} me-1"></i>{{ getAmenityLabel(key) }}
+                </span>
+              </div>
+            </div>
+
+            <div *ngIf="listing.requirements && listing.requirements.length > 0" class="mt-4">
+              <h5><i class="bi bi-exclamation-triangle me-2"></i>Conditions</h5>
+              <ul class="list-unstyled">
+                <li *ngFor="let key of listing.requirements" class="mb-1">
+                  <i class="bi {{ getRequirementIcon(key) }} me-1 text-warning"></i>{{ getRequirementLabel(key) }}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Tarification</h5>
+            <div *ngIf="listing.pricePerMonth" class="mb-2">
+              <span class="fs-3 fw-bold text-primary">{{ listing.pricePerMonth | number:'1.0-0' }}</span>
+              <span class="text-muted"> {{ listing.currency }}/mois</span>
+            </div>
+            <div *ngIf="listing.pricePerNight" class="mb-2">
+              <span class="fs-3 fw-bold text-info">{{ listing.pricePerNight | number:'1.0-0' }}</span>
+              <span class="text-muted"> {{ listing.currency }}/nuit</span>
+            </div>
+            <hr>
+            <div *ngIf="listing.minStay || listing.maxStay">
+              <p class="mb-1" *ngIf="listing.minStay"><strong>Duree min :</strong> {{ listing.minStay }} jours</p>
+              <p class="mb-1" *ngIf="listing.maxStay"><strong>Duree max :</strong> {{ listing.maxStay }} jours</p>
+            </div>
+            <div *ngIf="listing.availableFrom">
+              <p class="mb-1"><strong>Disponible des :</strong> {{ listing.availableFrom | date:'dd/MM/yyyy' }}</p>
+            </div>
+
+            <!-- Actions locataire : candidater / contacter (masquees pour les proprietaires) -->
+            <hr *ngIf="isAuthenticated && isTenant">
+            <div class="d-grid gap-2" *ngIf="isAuthenticated && isTenant">
+              <button class="btn btn-primary" (click)="apply()">
+                <i class="bi bi-send"></i> Candidater
+              </button>
+              <button class="btn btn-outline-primary" (click)="contactOwner()">
+                <i class="bi bi-chat-dots"></i> Contacter le proprietaire
+              </button>
+            </div>
+
+            <!-- Actions proprietaire : modifier / candidatures (visibles uniquement pour le proprio de cette annonce) -->
+            <hr *ngIf="isOwner">
+            <div class="d-grid gap-2" *ngIf="isOwner">
+              <a [routerLink]="['/listings', listing.id, 'edit']" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> Modifier
+              </a>
+              <a [routerLink]="['/applications']" [queryParams]="{ listingId: listing.id }" class="btn btn-outline-info">
+                <i class="bi bi-people"></i> Voir les candidatures
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info proprietaire (masquee pour le proprietaire lui-meme) -->
+        <div class="card shadow-sm" *ngIf="!isOwner">
+          <div class="card-body">
+            <h5 class="card-title">Proprietaire</h5>
+            <p><i class="bi bi-person"></i> {{ listing.ownerName }}</p>
+            <p class="text-muted small mb-0">
+              <i class="bi bi-clock"></i> Publiee le {{ listing.publishedAt | date:'dd/MM/yyyy' }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

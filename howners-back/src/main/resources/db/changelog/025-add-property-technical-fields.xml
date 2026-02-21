@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="025-add-property-technical-fields" author="howners">
+        <comment>Add technical information fields to properties table</comment>
+
+        <!-- DPE Rating (A-G) -->
+        <addColumn tableName="properties">
+            <column name="dpe_rating" type="VARCHAR(1)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- GES Rating (A-G) -->
+        <addColumn tableName="properties">
+            <column name="ges_rating" type="VARCHAR(1)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Construction Year -->
+        <addColumn tableName="properties">
+            <column name="construction_year" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Floor Number -->
+        <addColumn tableName="properties">
+            <column name="floor_number" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Total Floors -->
+        <addColumn tableName="properties">
+            <column name="total_floors" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Heating Type -->
+        <addColumn tableName="properties">
+            <column name="heating_type" type="VARCHAR(30)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Has Parking -->
+        <addColumn tableName="properties">
+            <column name="has_parking" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Has Elevator -->
+        <addColumn tableName="properties">
+            <column name="has_elevator" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Is Furnished -->
+        <addColumn tableName="properties">
+            <column name="is_furnished" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Property Condition -->
+        <addColumn tableName="properties">
+            <column name="property_condition" type="VARCHAR(20)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="properties" columnName="dpe_rating"/>
+            <dropColumn tableName="properties" columnName="ges_rating"/>
+            <dropColumn tableName="properties" columnName="construction_year"/>
+            <dropColumn tableName="properties" columnName="floor_number"/>
+            <dropColumn tableName="properties" columnName="total_floors"/>
+            <dropColumn tableName="properties" columnName="heating_type"/>
+            <dropColumn tableName="properties" columnName="has_parking"/>
+            <dropColumn tableName="properties" columnName="has_elevator"/>
+            <dropColumn tableName="properties" columnName="is_furnished"/>
+            <dropColumn tableName="properties" columnName="property_condition"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

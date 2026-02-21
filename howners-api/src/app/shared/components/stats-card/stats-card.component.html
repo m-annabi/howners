@@ -1,0 +1,15 @@
+<a class="stats-card hw-card hw-card--clickable"
+   [routerLink]="routerLink || null"
+   [class.stats-card--linked]="routerLink">
+  <div class="stats-card__icon hw-icon-circle" [ngClass]="'hw-icon-circle--' + color">
+    <i class="bi" [ngClass]="icon"></i>
+  </div>
+  <div class="stats-card__content">
+    <span class="stats-card__value">{{ value }}</span>
+    <span class="stats-card__label">{{ label }}</span>
+  </div>
+  <div *ngIf="trend" class="stats-card__trend" [ngClass]="trendClass">
+    <i class="bi" [ngClass]="trendIcon"></i>
+    <span>{{ trend > 0 ? '+' : '' }}{{ trend }}%</span>
+  </div>
+</a>

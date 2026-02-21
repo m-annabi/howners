@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="028-add-missing-contract-columns" author="howners">
+        <comment>Add missing columns to contracts and contract_versions tables</comment>
+
+        <!-- contracts: created_by, document_url, sent_at, signed_at -->
+        <addColumn tableName="contracts">
+            <column name="created_by" type="uuid">
+                <constraints foreignKeyName="fk_contracts_created_by" references="users(id)"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="contracts">
+            <column name="document_url" type="varchar(500)"/>
+        </addColumn>
+
+        <addColumn tableName="contracts">
+            <column name="sent_at" type="timestamp"/>
+        </addColumn>
+
+        <addColumn tableName="contracts">
+            <column name="signed_at" type="timestamp"/>
+        </addColumn>
+
+        <!-- contract_versions: created_by -->
+        <addColumn tableName="contract_versions">
+            <column name="created_by" type="uuid">
+                <constraints foreignKeyName="fk_contract_versions_created_by" references="users(id)"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="contracts" columnName="created_by"/>
+            <dropColumn tableName="contracts" columnName="document_url"/>
+            <dropColumn tableName="contracts" columnName="sent_at"/>
+            <dropColumn tableName="contracts" columnName="signed_at"/>
+            <dropColumn tableName="contract_versions" columnName="created_by"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

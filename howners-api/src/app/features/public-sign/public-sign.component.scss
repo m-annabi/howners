@@ -1,0 +1,43 @@
+.card {
+  border-radius: 8px;
+
+  .card-header {
+    border-radius: 8px 8px 0 0;
+  }
+}
+
+.border-start {
+  padding-left: 1rem;
+}
+
+.btn-lg {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.alert {
+  border-radius: 6px;
+}
+
+label.text-muted {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.bi {
+  vertical-align: middle;
+}

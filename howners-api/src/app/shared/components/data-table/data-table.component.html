@@ -1,0 +1,130 @@
+<!-- Loading -->
+<app-loading-skeleton *ngIf="loading" type="table" [count]="pageSize > 5 ? 5 : pageSize"></app-loading-skeleton>
+
+<div *ngIf="!loading">
+  <!-- Search bar -->
+  <div *ngIf="searchable && data.length > 0" class="data-table__search">
+    <div class="data-table__search-input">
+      <i class="bi bi-search"></i>
+      <input type="text"
+             [(ngModel)]="searchTerm"
+             (input)="onSearch()"
+             placeholder="Rechercher..."
+             class="form-control">
+    </div>
+    <span class="data-table__count hw-text-sm hw-text-muted">
+      {{ filteredData.length }} résultat{{ filteredData.length > 1 ? 's' : '' }}
+    </span>
+  </div>
+
+  <!-- Empty state -->
+  <app-empty-state *ngIf="data.length === 0"
+    [icon]="emptyIcon"
+    [message]="emptyMessage">
+  </app-empty-state>
+
+  <!-- No results from search -->
+  <app-empty-state *ngIf="data.length > 0 && filteredData.length === 0"
+    icon="bi-search"
+    title="Aucun résultat"
+    message="Essayez avec d'autres termes de recherche.">
+  </app-empty-state>
+
+  <!-- Table -->
+  <div *ngIf="filteredData.length > 0" class="data-table__wrapper">
+    <div class="data-table__scroll">
+      <table class="hw-table">
+        <thead>
+          <tr>
+            <th *ngFor="let col of columns"
+                [style.width]="col.width || 'auto'"
+                [class.sortable]="col.sortable"
+                (click)="onSort(col)">
+              {{ col.label }}
+              <i *ngIf="col.sortable && sortKey === col.key"
+                 class="bi"
+                 [ngClass]="sortDirection === 'asc' ? 'bi-chevron-up' : 'bi-chevron-down'"
+                 style="font-size: 0.625rem; margin-left: 4px;"></i>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of pagedData" (click)="onRowClick(row)" style="cursor: pointer;">
+            <td *ngFor="let col of columns">
+              <!-- Text -->
+              <span *ngIf="col.type === 'text' || !col.type">{{ getValue(row, col.key) }}</span>
+
+              <!-- Date -->
+              <span *ngIf="col.type === 'date'" class="hw-text-sm">
+                {{ getValue(row, col.key) | date:'dd/MM/yyyy' }}
+              </span>
+
+              <!-- Currency -->
+              <span *ngIf="col.type === 'currency'" class="hw-text-semibold">
+                {{ getValue(row, col.key) | number:'1.2-2' }} &euro;
+              </span>
+
+              <!-- Badge -->
+              <app-status-badge *ngIf="col.type === 'badge'"
+                [status]="getValue(row, col.key)"
+                [type]="col.badgeType || 'payment'">
+              </app-status-badge>
+
+              <!-- Actions -->
+              <div *ngIf="col.type === 'actions'" class="data-table__actions">
+                <button *ngIf="row._actions?.view !== false"
+                        class="hw-btn hw-btn--ghost hw-btn--sm hw-btn--icon"
+                        (click)="onAction('view', row, $event)"
+                        title="Voir">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button *ngIf="row._actions?.edit !== false"
+                        class="hw-btn hw-btn--ghost hw-btn--sm hw-btn--icon"
+                        (click)="onAction('edit', row, $event)"
+                        title="Modifier">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button *ngIf="row._actions?.delete !== false"
+                        class="hw-btn hw-btn--ghost hw-btn--sm hw-btn--icon"
+                        (click)="onAction('delete', row, $event)"
+                        title="Supprimer">
+                  <i class="bi bi-trash"></i>
+                </button>
+                <button *ngIf="row._actions?.download"
+                        class="hw-btn hw-btn--ghost hw-btn--sm hw-btn--icon"
+                        (click)="onAction('download', row, $event)"
+                        title="Télécharger">
+                  <i class="bi bi-download"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="data-table__pagination">
+      <span class="hw-text-sm hw-text-muted">
+        Page {{ currentPage }} sur {{ totalPages }}
+      </span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a class="page-link" (click)="goToPage(currentPage - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          <li *ngFor="let p of pages" class="page-item" [class.active]="p === currentPage">
+            <a class="page-link" (click)="goToPage(p)">{{ p }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a class="page-link" (click)="goToPage(currentPage + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>

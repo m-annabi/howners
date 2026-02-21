@@ -1,0 +1,27 @@
+<div class="signature-pad-container">
+  <div class="signature-pad-header">
+    <h4>✍️ Signature</h4>
+    <div class="signature-actions">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="undo()" [disabled]="disabled || isEmpty()">
+        <i class="bi bi-arrow-counterclockwise"></i> Annuler
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="clear()" [disabled]="disabled || isEmpty()">
+        <i class="bi bi-trash"></i> Effacer
+      </button>
+    </div>
+  </div>
+
+  <div class="signature-canvas-wrapper">
+    <canvas #signatureCanvas class="signature-canvas"></canvas>
+    <div class="signature-placeholder" *ngIf="isEmpty()">
+      ✍️ Signez ici avec votre souris ou votre doigt
+    </div>
+  </div>
+
+  <div class="signature-help-text">
+    <small class="text-muted">
+      <i class="bi bi-info-circle"></i>
+      Dessinez votre signature dans le cadre ci-dessus. Utilisez les boutons pour annuler ou effacer.
+    </small>
+  </div>
+</div>

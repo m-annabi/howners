@@ -1,0 +1,63 @@
+<!-- Card Skeleton -->
+<div *ngIf="type === 'card'" class="skeleton-grid">
+  <div *ngFor="let _ of items" class="skeleton-card hw-card hw-card--flat">
+    <div class="hw-skeleton hw-skeleton--img"></div>
+    <div style="padding: var(--hw-space-4)">
+      <div class="hw-skeleton hw-skeleton--title"></div>
+      <div class="hw-skeleton hw-skeleton--text"></div>
+      <div class="hw-skeleton hw-skeleton--text"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Table Skeleton -->
+<div *ngIf="type === 'table'" class="skeleton-table hw-card hw-card--flat">
+  <div class="skeleton-table__header">
+    <div class="hw-skeleton" style="height: 14px; width: 15%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 25%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 20%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 15%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 10%"></div>
+  </div>
+  <div *ngFor="let _ of items" class="skeleton-table__row">
+    <div class="hw-skeleton" style="height: 14px; width: 15%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 25%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 20%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 15%"></div>
+    <div class="hw-skeleton" style="height: 14px; width: 10%"></div>
+  </div>
+</div>
+
+<!-- Detail Skeleton -->
+<div *ngIf="type === 'detail'" class="skeleton-detail">
+  <div class="hw-skeleton hw-skeleton--title" style="width: 30%; margin-bottom: var(--hw-space-6)"></div>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="hw-card hw-card--flat">
+        <div class="hw-skeleton hw-skeleton--img" style="height: 240px; margin-bottom: var(--hw-space-4)"></div>
+        <div class="hw-skeleton hw-skeleton--text"></div>
+        <div class="hw-skeleton hw-skeleton--text"></div>
+        <div class="hw-skeleton hw-skeleton--text" style="width: 60%"></div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="hw-card hw-card--flat">
+        <div class="hw-skeleton hw-skeleton--text"></div>
+        <div class="hw-skeleton hw-skeleton--text"></div>
+        <div class="hw-skeleton hw-skeleton--text"></div>
+        <div class="hw-skeleton hw-skeleton--text" style="width: 50%"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- List Skeleton -->
+<div *ngIf="type === 'list'" class="skeleton-list">
+  <div *ngFor="let _ of items" class="skeleton-list__item">
+    <div class="hw-skeleton hw-skeleton--avatar"></div>
+    <div style="flex: 1">
+      <div class="hw-skeleton hw-skeleton--text" style="width: 40%"></div>
+      <div class="hw-skeleton hw-skeleton--text" style="width: 70%"></div>
+    </div>
+  </div>
+</div>

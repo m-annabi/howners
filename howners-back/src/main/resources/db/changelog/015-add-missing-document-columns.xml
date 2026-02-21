@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="015-add-missing-document-columns" author="claude">
+        <comment>Add missing file_url and uploaded_at columns to documents table</comment>
+
+        <!-- Add file_url column -->
+        <addColumn tableName="documents">
+            <column name="file_url" type="VARCHAR(1000)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add uploaded_at column -->
+        <addColumn tableName="documents">
+            <column name="uploaded_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Populate uploaded_at from created_at for existing records -->
+        <sql>
+            UPDATE documents
+            SET uploaded_at = created_at
+            WHERE uploaded_at IS NULL AND created_at IS NOT NULL;
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>

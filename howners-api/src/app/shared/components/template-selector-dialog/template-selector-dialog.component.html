@@ -1,0 +1,132 @@
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          Sélectionner un template de contrat
+        </h5>
+        <button type="button" class="btn-close" (click)="cancel()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row">
+          <!-- Left panel: Template list -->
+          <div class="col-md-4">
+            <h6 class="mb-3">Templates disponibles</h6>
+
+            <!-- Loading state -->
+            <div *ngIf="loadingTemplates" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <p class="text-muted mt-2">Chargement des templates...</p>
+            </div>
+
+            <!-- Template list -->
+            <div *ngIf="!loadingTemplates" class="template-list">
+              <!-- Default template option -->
+              <div
+                class="template-card mb-2"
+                [class.selected]="isDefaultSelected()"
+                (click)="useDefaultTemplate()">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-star-fill text-warning me-2"></i>
+                  <div class="flex-grow-1">
+                    <strong>Template par défaut</strong>
+                    <small class="d-block text-muted">Recommandé pour ce type de location</small>
+                  </div>
+                  <i *ngIf="isDefaultSelected()" class="bi bi-check-circle-fill text-success"></i>
+                </div>
+              </div>
+
+              <!-- Custom templates -->
+              <div
+                *ngFor="let template of templates"
+                class="template-card mb-2"
+                [class.selected]="isTemplateSelected(template)"
+                (click)="selectTemplate(template)">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-file-earmark me-2"></i>
+                  <div class="flex-grow-1">
+                    <strong>{{ template.name }}</strong>
+                    <small class="d-block text-muted">{{ template.description || 'Aucune description' }}</small>
+                    <span
+                      *ngIf="template.isDefault"
+                      class="badge bg-primary badge-sm mt-1">
+                      Par défaut
+                    </span>
+                  </div>
+                  <i *ngIf="isTemplateSelected(template)" class="bi bi-check-circle-fill text-success"></i>
+                </div>
+              </div>
+
+              <!-- No templates message -->
+              <div *ngIf="templates.length === 0" class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Aucun template personnalisé trouvé. Le template par défaut sera utilisé.
+              </div>
+            </div>
+          </div>
+
+          <!-- Right panel: Preview -->
+          <div class="col-md-8">
+            <h6 class="mb-3">Aperçu du contrat</h6>
+
+            <!-- Default template selected -->
+            <div *ngIf="isDefaultSelected()" class="preview-placeholder">
+              <i class="bi bi-file-earmark-text display-1 text-muted mb-3"></i>
+              <h5>Template par défaut sélectionné</h5>
+              <p class="text-muted">
+                Le contrat sera généré avec le template standard pour ce type de location.
+                <br>
+                Vous pourrez le modifier après sa création.
+              </p>
+            </div>
+
+            <!-- Loading preview -->
+            <div *ngIf="loadingPreview" class="preview-placeholder">
+              <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <p class="text-muted">Génération de l'aperçu...</p>
+            </div>
+
+            <!-- Preview content -->
+            <div *ngIf="preview && !loadingPreview" class="preview-content">
+              <div class="alert alert-info mb-3">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Aperçu du contrat</strong> - Les données seront remplies automatiquement
+              </div>
+
+              <div class="preview-document">
+                <div [innerHTML]="preview.filledContent" class="contract-preview"></div>
+              </div>
+            </div>
+
+            <!-- No preview available -->
+            <div *ngIf="!preview && !loadingPreview && !isDefaultSelected()" class="preview-placeholder">
+              <i class="bi bi-eye-slash display-1 text-muted mb-3"></i>
+              <p class="text-muted">Aperçu non disponible</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          <i class="bi bi-x-circle me-2"></i>
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="confirm()"
+          [disabled]="loadingTemplates">
+          <i class="bi bi-check-circle me-2"></i>
+          {{ isDefaultSelected() ? 'Utiliser le template par défaut' : 'Utiliser ce template' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
