@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="051-seed-listing-photos" author="howners">
+        <comment>Insert sample photos for published listings using placeholder images (file_key empty = filePath fallback)</comment>
+
+        <sql>
+            <!-- ===== Listing 1: Studio Suresnes (3 photos) ===== -->
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000001-0000-0000-0000-000000000001',
+                'b0000001-0000-0000-0000-000000000001',
+                'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&amp;h=600&amp;fit=crop',
+                'studio-salon.jpg', '', 0, 'image/jpeg',
+                'Salon lumineux avec canape et bureau',
+                0, true,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000001-0000-0000-0000-000000000002',
+                'b0000001-0000-0000-0000-000000000001',
+                'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&amp;h=600&amp;fit=crop',
+                'studio-cuisine.jpg', '', 0, 'image/jpeg',
+                'Cuisine equipee moderne',
+                1, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000001-0000-0000-0000-000000000003',
+                'b0000001-0000-0000-0000-000000000001',
+                'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&amp;h=600&amp;fit=crop',
+                'studio-sdb.jpg', '', 0, 'image/jpeg',
+                'Salle de bain avec douche italienne',
+                2, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+
+            <!-- ===== Listing 2: T3 Boulogne (4 photos) ===== -->
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000002-0000-0000-0000-000000000001',
+                'b0000001-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&amp;h=600&amp;fit=crop',
+                't3-sejour.jpg', '', 0, 'image/jpeg',
+                'Sejour spacieux avec parquet chene',
+                0, true,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000002-0000-0000-0000-000000000002',
+                'b0000001-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&amp;h=600&amp;fit=crop',
+                't3-chambre1.jpg', '', 0, 'image/jpeg',
+                'Chambre principale avec dressing',
+                1, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000002-0000-0000-0000-000000000003',
+                'b0000001-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&amp;h=600&amp;fit=crop',
+                't3-cuisine.jpg', '', 0, 'image/jpeg',
+                'Cuisine separee equipee',
+                2, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000002-0000-0000-0000-000000000004',
+                'b0000001-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&amp;h=600&amp;fit=crop',
+                't3-balcon.jpg', '', 0, 'image/jpeg',
+                'Balcon plein sud',
+                3, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+
+            <!-- ===== Listing 3: Maison Rueil (5 photos) ===== -->
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000003-0000-0000-0000-000000000001',
+                'b0000001-0000-0000-0000-000000000003',
+                'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&amp;h=600&amp;fit=crop',
+                'maison-facade.jpg', '', 0, 'image/jpeg',
+                'Facade de la maison avec jardin',
+                0, true,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000003-0000-0000-0000-000000000002',
+                'b0000001-0000-0000-0000-000000000003',
+                'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&amp;h=600&amp;fit=crop',
+                'maison-salon.jpg', '', 0, 'image/jpeg',
+                'Grand salon-sejour',
+                1, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000003-0000-0000-0000-000000000003',
+                'b0000001-0000-0000-0000-000000000003',
+                'https://images.unsplash.com/photo-1556909114-44e3e70034e2?w=800&amp;h=600&amp;fit=crop',
+                'maison-cuisine.jpg', '', 0, 'image/jpeg',
+                'Cuisine ouverte equipee',
+                2, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000003-0000-0000-0000-000000000004',
+                'b0000001-0000-0000-0000-000000000003',
+                'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&amp;h=600&amp;fit=crop',
+                'maison-jardin.jpg', '', 0, 'image/jpeg',
+                'Jardin paysager avec terrasse',
+                3, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000003-0000-0000-0000-000000000005',
+                'b0000001-0000-0000-0000-000000000003',
+                'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&amp;h=600&amp;fit=crop',
+                'maison-chambre.jpg', '', 0, 'image/jpeg',
+                'Chambre parentale',
+                4, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+
+            <!-- ===== Listing 4: Loft Puteaux (4 photos) ===== -->
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000004-0000-0000-0000-000000000001',
+                'b0000001-0000-0000-0000-000000000004',
+                'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&amp;h=600&amp;fit=crop',
+                'loft-vue.jpg', '', 0, 'image/jpeg',
+                'Vue panoramique depuis le loft',
+                0, true,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000004-0000-0000-0000-000000000002',
+                'b0000001-0000-0000-0000-000000000004',
+                'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&amp;h=600&amp;fit=crop',
+                'loft-espace.jpg', '', 0, 'image/jpeg',
+                'Espace de vie ouvert',
+                1, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000004-0000-0000-0000-000000000003',
+                'b0000001-0000-0000-0000-000000000004',
+                'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&amp;h=600&amp;fit=crop',
+                'loft-mezzanine.jpg', '', 0, 'image/jpeg',
+                'Mezzanine chambre',
+                2, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000004-0000-0000-0000-000000000004',
+                'b0000001-0000-0000-0000-000000000004',
+                'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&amp;h=600&amp;fit=crop',
+                'loft-cuisine.jpg', '', 0, 'image/jpeg',
+                'Cuisine americaine design',
+                3, false,
+                (SELECT id FROM users WHERE email = 'owner1@howners.test'),
+                NOW()
+            );
+
+            <!-- ===== Listing 5: T2 Paris 15e (3 photos) ===== -->
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000005-0000-0000-0000-000000000001',
+                'b0000002-0000-0000-0000-000000000001',
+                'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&amp;h=600&amp;fit=crop',
+                'paris-sejour.jpg', '', 0, 'image/jpeg',
+                'Sejour avec vue sur les toits',
+                0, true,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000005-0000-0000-0000-000000000002',
+                'b0000002-0000-0000-0000-000000000001',
+                'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=800&amp;h=600&amp;fit=crop',
+                'paris-chambre.jpg', '', 0, 'image/jpeg',
+                'Chambre calme sur cour',
+                1, false,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000005-0000-0000-0000-000000000003',
+                'b0000002-0000-0000-0000-000000000001',
+                'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800&amp;h=600&amp;fit=crop',
+                'paris-cuisine.jpg', '', 0, 'image/jpeg',
+                'Cuisine equipee',
+                2, false,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+
+            <!-- ===== Listing 6: Villa Versailles (5 photos) ===== -->
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000006-0000-0000-0000-000000000001',
+                'b0000002-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&amp;h=600&amp;fit=crop',
+                'villa-facade.jpg', '', 0, 'image/jpeg',
+                'Facade de la villa',
+                0, true,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000006-0000-0000-0000-000000000002',
+                'b0000002-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&amp;h=600&amp;fit=crop',
+                'villa-salon.jpg', '', 0, 'image/jpeg',
+                'Grand salon avec cheminee',
+                1, false,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000006-0000-0000-0000-000000000003',
+                'b0000002-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&amp;h=600&amp;fit=crop',
+                'villa-piscine.jpg', '', 0, 'image/jpeg',
+                'Piscine chauffee et jardin',
+                2, false,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000006-0000-0000-0000-000000000004',
+                'b0000002-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1600585154363-67eb9e2e2099?w=800&amp;h=600&amp;fit=crop',
+                'villa-cuisine.jpg', '', 0, 'image/jpeg',
+                'Cuisine professionnelle',
+                3, false,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+            INSERT INTO listing_photos (id, listing_id, file_path, file_name, file_key, file_size, mime_type, caption, display_order, is_primary, uploader_id, created_at)
+            VALUES (
+                'c0000006-0000-0000-0000-000000000005',
+                'b0000002-0000-0000-0000-000000000002',
+                'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=800&amp;h=600&amp;fit=crop',
+                'villa-chambre.jpg', '', 0, 'image/jpeg',
+                'Suite parentale',
+                4, false,
+                (SELECT id FROM users WHERE email = 'owner2@howners.test'),
+                NOW()
+            );
+        </sql>
+
+        <rollback>
+            <delete tableName="listing_photos">
+                <where>id LIKE 'c000000%'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
