@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { SignatureTrackingService } from '../../../core/services/signature-tracking.service';
 import {
   SignatureTrackingDashboard,
-  SignatureRequest,
   SIGNATURE_STATUS_LABELS,
   SIGNATURE_STATUS_COLORS
 } from '../../../core/models/signature-tracking.model';
@@ -14,6 +13,7 @@ import {
 export class SignatureDashboardComponent implements OnInit {
   dashboard: SignatureTrackingDashboard | null = null;
   loading = true;
+  error: string | null = null;
   statusLabels = SIGNATURE_STATUS_LABELS;
   statusColors = SIGNATURE_STATUS_COLORS;
 
@@ -25,6 +25,7 @@ export class SignatureDashboardComponent implements OnInit {
 
   loadDashboard(): void {
     this.loading = true;
+    this.error = null;
     this.trackingService.getDashboard().subscribe({
       next: (data) => {
         this.dashboard = data;
@@ -32,6 +33,7 @@ export class SignatureDashboardComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
+        this.error = 'Impossible de charger le tableau de bord. Veuillez réessayer.';
       }
     });
   }
