@@ -12,6 +12,7 @@ import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ContractTemplateRepository;
 import com.howners.gestion.repository.RentalRepository;
+import com.howners.gestion.util.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,7 +65,7 @@ public class ContractTemplateService {
         // Variables propriétaire
         variables.put("owner.firstName", owner.getFirstName() != null ? owner.getFirstName() : "");
         variables.put("owner.lastName", owner.getLastName() != null ? owner.getLastName() : "");
-        variables.put("owner.fullName", getFullName(owner));
+        variables.put("owner.fullName", UserDisplayUtils.getFullName(owner));
         variables.put("owner.email", owner.getEmail());
         variables.put("owner.phone", owner.getPhone() != null ? owner.getPhone() : "");
 
@@ -72,7 +73,7 @@ public class ContractTemplateService {
         if (tenant != null) {
             variables.put("tenant.firstName", tenant.getFirstName() != null ? tenant.getFirstName() : "");
             variables.put("tenant.lastName", tenant.getLastName() != null ? tenant.getLastName() : "");
-            variables.put("tenant.fullName", getFullName(tenant));
+            variables.put("tenant.fullName", UserDisplayUtils.getFullName(tenant));
             variables.put("tenant.email", tenant.getEmail());
             variables.put("tenant.phone", tenant.getPhone() != null ? tenant.getPhone() : "");
         } else {
@@ -186,12 +187,6 @@ public class ContractTemplateService {
         return sb.toString();
     }
 
-    private String getFullName(User user) {
-        String firstName = user.getFirstName() != null ? user.getFirstName() : "";
-        String lastName = user.getLastName() != null ? user.getLastName() : "";
-        return (firstName + " " + lastName).trim();
-    }
-
     private String getFullAddress(Property property) {
         return String.format("%s, %s %s, %s",
                 property.getAddressLine1() != null ? property.getAddressLine1() : "",
@@ -268,7 +263,7 @@ public class ContractTemplateService {
         return new PreviewTemplateResponse(
                 filledContent,
                 rental.getProperty().getName(),
-                getFullName(rental.getTenant())
+                UserDisplayUtils.getFullName(rental.getTenant())
         );
     }
 
@@ -285,7 +280,7 @@ public class ContractTemplateService {
         return new PreviewTemplateResponse(
                 filledContent,
                 rental.getProperty().getName(),
-                getFullName(rental.getTenant())
+                UserDisplayUtils.getFullName(rental.getTenant())
         );
     }
 
