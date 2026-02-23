@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Application, CreateApplicationRequest, ReviewApplicationRequest } from '../models/application.model';
+import { Application, CreateApplicationRequest, CreateRentalFromApplicationRequest, ReviewApplicationRequest } from '../models/application.model';
+import { Rental } from '../models/rental.model';
 
 @Injectable({
   providedIn: 'root'
@@ -38,5 +39,9 @@ export class ApplicationService {
 
   withdraw(id: string): Observable<Application> {
     return this.http.put<Application>(`${this.apiUrl}/${id}/withdraw`, {});
+  }
+
+  createRentalFromApplication(applicationId: string, request: CreateRentalFromApplicationRequest): Observable<Rental> {
+    return this.http.post<Rental>(`${this.apiUrl}/${applicationId}/create-rental`, request);
   }
 }

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidature accept&#233;e</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .message {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .property-details {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .property-details h3 {
+            margin: 0 0 15px 0;
+            color: #667eea;
+            font-size: 18px;
+        }
+        .detail-item {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .notes-box {
+            background-color: #f0f7ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 25px 0;
+            font-size: 14px;
+            color: #004085;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin: 30px 0;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 4px;
+            }
+            .header {
+                padding: 30px 20px;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .cta-button {
+                display: block;
+                padding: 14px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">&#127968; Howners</div>
+            <h1>Candidature accept&#233;e !</h1>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Bonjour <span th:text="${recipientName}">Locataire</span>,</p>
+
+            <p class="message">
+                &#127881; Bonne nouvelle ! Votre candidature a &#233;t&#233; accept&#233;e par
+                <strong th:text="${ownerName}">Propri&#233;taire</strong>.
+            </p>
+
+            <div class="property-details">
+                <h3>&#127968; D&#233;tails du bien</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Bien :</span>
+                    <span th:text="${propertyName}">Appartement</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Annonce :</span>
+                    <span th:text="${listingTitle}">Titre de l'annonce</span>
+                </div>
+            </div>
+
+            <div th:if="${notes != null}" class="notes-box">
+                <strong>&#128172; Message du propri&#233;taire :</strong><br>
+                <span th:text="${notes}">Notes du propri&#233;taire</span>
+            </div>
+
+            <p class="message">
+                Les prochaines &#233;tapes seront la cr&#233;ation de votre contrat de location.
+                Vous serez notifi&#233;(e) d&#232;s que votre contrat sera pr&#234;t &#224; signer.
+            </p>
+
+            <div style="text-align: center;">
+                <a th:href="${dashboardUrl}" class="cta-button">
+                    &#128279; Voir mon espace
+                </a>
+            </div>
+
+            <p class="message" style="margin-top: 30px; font-size: 14px; color: #666;">
+                Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :<br>
+                <span th:text="${dashboardUrl}" style="word-break: break-all; color: #667eea;">
+                    https://app.howners.com/dashboard
+                </span>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>&#127968; Howners</strong></p>
+            <p>La plateforme de gestion locative</p>
+            <p style="margin-top: 15px;">
+                Vous avez des questions ? Contactez votre propri&#233;taire ou notre &#233;quipe support.
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                &#169; 2025 Howners. Tous droits r&#233;serv&#233;s.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

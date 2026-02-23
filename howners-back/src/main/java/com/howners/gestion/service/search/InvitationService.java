@@ -1,6 +1,9 @@
 package com.howners.gestion.service.search;
 
+import com.howners.gestion.domain.application.Application;
+import com.howners.gestion.domain.application.ApplicationStatus;
 import com.howners.gestion.domain.listing.Listing;
+import com.howners.gestion.domain.listing.ListingStatus;
 import com.howners.gestion.domain.search.InvitationStatus;
 import com.howners.gestion.domain.search.TenantInvitation;
 import com.howners.gestion.domain.user.User;
@@ -8,6 +11,7 @@ import com.howners.gestion.dto.search.CreateInvitationRequest;
 import com.howners.gestion.dto.search.InvitationResponse;
 import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.ResourceNotFoundException;
+import com.howners.gestion.repository.ApplicationRepository;
 import com.howners.gestion.repository.ListingRepository;
 import com.howners.gestion.repository.TenantInvitationRepository;
 import com.howners.gestion.repository.UserRepository;
@@ -28,6 +32,7 @@ public class InvitationService {
     private final TenantInvitationRepository invitationRepository;
     private final ListingRepository listingRepository;
     private final UserRepository userRepository;
+    private final ApplicationRepository applicationRepository;
 
     @Transactional
     public InvitationResponse invite(CreateInvitationRequest request) {
@@ -88,6 +93,38 @@ public class InvitationService {
         invitation.setStatus(status);
         invitation = invitationRepository.save(invitation);
         log.info("Invitation {} status updated to {}", id, status);
+
+        // When tenant accepts (APPLIED), auto-create an application for the listing
+        if (status == InvitationStatus.APPLIED) {
+            createApplicationFromInvitation(invitation);
+        }
+
         return InvitationResponse.from(invitation);
+    }
+
+    private void createApplicationFromInvitation(TenantInvitation invitation) {
+        Listing listing = invitation.getListing();
+        User tenant = invitation.getTenant();
+
+        // Skip if listing is not published or tenant already applied
+        if (listing.getStatus() != ListingStatus.PUBLISHED) {
+            log.warn("Cannot create application from invitation {}: listing is not published", invitation.getId());
+            return;
+        }
+
+        if (applicationRepository.existsByListingIdAndApplicantId(listing.getId(), tenant.getId())) {
+            log.info("Tenant {} already has an application for listing {}, skipping auto-creation", tenant.getId(), listing.getId());
+            return;
+        }
+
+        Application application = Application.builder()
+                .listing(listing)
+                .applicant(tenant)
+                .coverLetter("Candidature suite à invitation du propriétaire.")
+                .status(ApplicationStatus.SUBMITTED)
+                .build();
+
+        applicationRepository.save(application);
+        log.info("Auto-created application for tenant {} on listing {} from invitation {}", tenant.getId(), listing.getId(), invitation.getId());
     }
 }

@@ -1,5 +1,6 @@
 package com.howners.gestion.service.email;
 
+import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
@@ -35,4 +36,14 @@ public interface EmailService {
      * Envoie un email de notification au locataire quand sa quittance de loyer est générée
      */
     void sendReceiptEmail(ReceiptEmailData data);
+
+    /**
+     * Envoie un email au candidat quand sa candidature est acceptée
+     */
+    void sendApplicationAcceptedEmail(ApplicationReviewedEmailData data);
+
+    /**
+     * Envoie un email au candidat quand sa candidature est refusée
+     */
+    void sendApplicationRejectedEmail(ApplicationReviewedEmailData data);
 }

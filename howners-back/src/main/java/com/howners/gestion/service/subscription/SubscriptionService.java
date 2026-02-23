@@ -39,6 +39,13 @@ public class SubscriptionService {
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
 
+    @Value("${stripe.api-key:}")
+    private String stripeApiKey;
+
+    private boolean isStripeConfigured() {
+        return stripeApiKey != null && !stripeApiKey.isBlank();
+    }
+
     @Transactional(readOnly = true)
     public List<SubscriptionPlanResponse> getAllPlans() {
         return planRepository.findAll().stream()
@@ -51,7 +58,15 @@ public class SubscriptionService {
         UUID userId = AuthService.getCurrentUserId();
         return subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .map(UserSubscriptionResponse::from)
-                .orElse(null);
+                .orElseGet(() -> {
+                    // Return a virtual FREE plan response
+                    SubscriptionPlanResponse freePlan = planRepository.findByName(PlanName.FREE)
+                            .map(SubscriptionPlanResponse::from)
+                            .orElse(new SubscriptionPlanResponse(null, PlanName.FREE, "Gratuit",
+                                    java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, 2, 3, null));
+                    return new UserSubscriptionResponse(null, userId, freePlan,
+                            SubscriptionStatus.ACTIVE, null, null, false, LocalDateTime.now());
+                });
     }
 
     @Transactional
@@ -65,6 +80,14 @@ public class SubscriptionService {
 
         if (plan.getName() == PlanName.FREE) {
             throw new BadRequestException("Cannot checkout for free plan");
+        }
+
+        // Dev mode: if Stripe is not configured, switch plan directly
+        if (!isStripeConfigured()) {
+            log.info("Stripe not configured — switching plan directly for user {}", userId);
+            switchPlanDirectly(userId, user, plan, request.billingPeriod());
+            String successUrl = frontendUrl + "/billing/success?session_id=dev-mode";
+            return new CheckoutSessionResponse("dev-mode", successUrl);
         }
 
         try {
@@ -103,11 +126,40 @@ public class SubscriptionService {
         }
     }
 
+    private void switchPlanDirectly(UUID userId, User user, SubscriptionPlan newPlan, String billingPeriod) {
+        // Deactivate current subscription
+        subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .ifPresent(sub -> {
+                    sub.setStatus(SubscriptionStatus.CANCELLED);
+                    sub.setUpdatedAt(LocalDateTime.now());
+                    subscriptionRepository.save(sub);
+                });
+
+        // Create new subscription
+        boolean isAnnual = "annual".equalsIgnoreCase(billingPeriod);
+        LocalDateTime now = LocalDateTime.now();
+        UserSubscription subscription = UserSubscription.builder()
+                .user(user)
+                .plan(newPlan)
+                .status(SubscriptionStatus.ACTIVE)
+                .currentPeriodStart(now)
+                .currentPeriodEnd(isAnnual ? now.plusYears(1) : now.plusMonths(1))
+                .cancelAtPeriodEnd(false)
+                .build();
+
+        subscriptionRepository.save(subscription);
+        log.info("Plan switched directly to {} for user {}", newPlan.getName(), userId);
+    }
+
     @Transactional
     public String createBillingPortalSession() {
         UUID userId = AuthService.getCurrentUserId();
         UserSubscription sub = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("No active subscription found"));
+
+        if (!isStripeConfigured()) {
+            return frontendUrl + "/billing";
+        }
 
         try {
             com.stripe.param.billingportal.SessionCreateParams params =
@@ -132,7 +184,7 @@ public class SubscriptionService {
         UserSubscription sub = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("No active subscription found"));
 
-        if (sub.getStripeSubscriptionId() != null) {
+        if (isStripeConfigured() && sub.getStripeSubscriptionId() != null) {
             try {
                 Subscription stripeSub = Subscription.retrieve(sub.getStripeSubscriptionId());
                 stripeSub.update(com.stripe.param.SubscriptionUpdateParams.builder()
@@ -142,6 +194,16 @@ public class SubscriptionService {
                 log.error("Stripe error cancelling subscription: {}", e.getMessage());
                 throw new RuntimeException("Failed to cancel subscription", e);
             }
+        }
+
+        // In dev mode (no Stripe), cancel immediately and assign FREE plan
+        if (!isStripeConfigured()) {
+            sub.setStatus(SubscriptionStatus.CANCELLED);
+            sub.setUpdatedAt(LocalDateTime.now());
+            subscriptionRepository.save(sub);
+            assignFreePlan(userId);
+            log.info("Subscription cancelled (dev mode) for user {}", userId);
+            return;
         }
 
         sub.setCancelAtPeriodEnd(true);

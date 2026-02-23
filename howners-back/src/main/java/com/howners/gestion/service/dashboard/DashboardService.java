@@ -1,20 +1,18 @@
 package com.howners.gestion.service.dashboard;
 
-import com.howners.gestion.domain.contract.Contract;
-import com.howners.gestion.domain.contract.ContractStatus;
+import com.howners.gestion.domain.application.ApplicationStatus;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.rental.RentalStatus;
+import com.howners.gestion.domain.search.InvitationStatus;
+import com.howners.gestion.domain.search.TenantSearchProfile;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.response.DashboardStatsResponse;
 import com.howners.gestion.dto.response.PropertyResponse;
 import com.howners.gestion.dto.response.RentalResponse;
 import com.howners.gestion.exception.ResourceNotFoundException;
-import com.howners.gestion.repository.ContractRepository;
-import com.howners.gestion.repository.PropertyRepository;
-import com.howners.gestion.repository.RentalRepository;
-import com.howners.gestion.repository.UserRepository;
+import com.howners.gestion.repository.*;
 import com.howners.gestion.service.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +23,6 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +31,11 @@ public class DashboardService {
 
     private final PropertyRepository propertyRepository;
     private final RentalRepository rentalRepository;
-    private final ContractRepository contractRepository;
     private final UserRepository userRepository;
+    private final ApplicationRepository applicationRepository;
+    private final TenantInvitationRepository tenantInvitationRepository;
+    private final TenantSearchProfileRepository tenantSearchProfileRepository;
+    private final MessageRepository messageRepository;
 
     @Transactional(readOnly = true)
     public DashboardStatsResponse getStats() {
@@ -101,14 +101,9 @@ public class DashboardService {
                 latestRental
         );
 
-        return new DashboardStatsResponse(
-                totalProperties,
-                activeRentals,
-                pendingRentals,
-                terminatedRentals,
-                monthlyRevenue,
-                "EUR",
-                recentActivity
+        return DashboardStatsResponse.forOwner(
+                totalProperties, activeRentals, pendingRentals,
+                terminatedRentals, monthlyRevenue, "EUR", recentActivity
         );
     }
 
@@ -116,50 +111,54 @@ public class DashboardService {
      * Statistiques pour les locataires
      */
     private DashboardStatsResponse getTenantStats(UUID tenantId) {
-        // Récupérer les locations du locataire
+        // Candidatures
+        var applications = applicationRepository.findByApplicantIdOrderByCreatedAtDesc(tenantId);
+        long totalApplications = applications.size();
+        long pendingApplications = applications.stream()
+                .filter(a -> a.getStatus() == ApplicationStatus.SUBMITTED || a.getStatus() == ApplicationStatus.UNDER_REVIEW)
+                .count();
+
+        // Invitations
+        var invitations = tenantInvitationRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
+        long totalInvitations = invitations.size();
+        long pendingInvitations = invitations.stream()
+                .filter(i -> i.getStatus() == InvitationStatus.PENDING)
+                .count();
+
+        // Profil de recherche
+        boolean searchProfileActive = tenantSearchProfileRepository.findByTenantId(tenantId)
+                .map(TenantSearchProfile::getIsActive)
+                .orElse(false);
+
+        // Messages non lus
+        long unreadMessages = messageRepository.countUnreadByRecipientId(tenantId);
+
+        // Locations du locataire (pour le loyer)
         List<Rental> rentals = rentalRepository.findByTenantId(tenantId);
-
-        // Compter les locations par statut
         long activeRentals = rentals.stream()
-                .filter(r -> r.getStatus() == RentalStatus.ACTIVE)
-                .count();
-
+                .filter(r -> r.getStatus() == RentalStatus.ACTIVE).count();
         long pendingRentals = rentals.stream()
-                .filter(r -> r.getStatus() == RentalStatus.PENDING)
-                .count();
-
+                .filter(r -> r.getStatus() == RentalStatus.PENDING).count();
         long terminatedRentals = rentals.stream()
-                .filter(r -> r.getStatus() == RentalStatus.TERMINATED)
-                .count();
-
-        // Calculer le loyer mensuel total
+                .filter(r -> r.getStatus() == RentalStatus.TERMINATED).count();
         BigDecimal monthlyRent = rentals.stream()
                 .filter(r -> r.getStatus() == RentalStatus.ACTIVE)
                 .map(Rental::getMonthlyRent)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Pour un locataire, totalProperties = 0 (ils ne possèdent pas de propriétés)
-        long totalProperties = 0L;
-
-        // Récupérer la location la plus récente
-        RentalResponse latestRental = rentals.stream()
-                .max(Comparator.comparing(Rental::getCreatedAt))
-                .map(RentalResponse::from)
-                .orElse(null);
-
         DashboardStatsResponse.RecentActivity recentActivity = new DashboardStatsResponse.RecentActivity(
-                null, // Pas de propriété pour un locataire
-                latestRental
+                null, null
         );
 
-        return new DashboardStatsResponse(
-                totalProperties,
-                activeRentals,
-                pendingRentals,
-                terminatedRentals,
-                monthlyRent,
-                "EUR",
-                recentActivity
+        DashboardStatsResponse.TenantInfo tenantInfo = new DashboardStatsResponse.TenantInfo(
+                totalApplications, pendingApplications,
+                pendingInvitations, totalInvitations,
+                searchProfileActive, unreadMessages
+        );
+
+        return DashboardStatsResponse.forTenant(
+                activeRentals, pendingRentals, terminatedRentals,
+                monthlyRent, "EUR", recentActivity, tenantInfo
         );
     }
 }

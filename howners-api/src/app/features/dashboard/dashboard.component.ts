@@ -34,6 +34,14 @@ export class DashboardComponent implements OnInit {
     this.loadStats();
   }
 
+  get hasTenantAlerts(): boolean {
+    return !!this.stats?.tenantInfo && (
+      this.stats.tenantInfo.pendingInvitations > 0 ||
+      this.stats.tenantInfo.pendingApplications > 0 ||
+      !this.stats.tenantInfo.searchProfileActive
+    );
+  }
+
   get hasActivity(): boolean {
     return !!this.stats && (
       this.stats.pendingRentals > 0 ||

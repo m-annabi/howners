@@ -6,12 +6,14 @@ import { ApplicationsRoutingModule } from './applications-routing.module';
 import { MyApplicationsComponent } from './my-applications/my-applications.component';
 import { ApplicationListComponent } from './application-list/application-list.component';
 import { ApplicationFormComponent } from './application-form/application-form.component';
+import { CreateRentalModalComponent } from './create-rental-modal/create-rental-modal.component';
 
 @NgModule({
   declarations: [
     MyApplicationsComponent,
     ApplicationListComponent,
-    ApplicationFormComponent
+    ApplicationFormComponent,
+    CreateRentalModalComponent
   ],
   imports: [
     CommonModule,

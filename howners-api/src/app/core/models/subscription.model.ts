@@ -46,6 +46,11 @@ export interface UsageLimits {
   maxContractsPerMonth: number;
   canCreateProperty: boolean;
   canCreateContract: boolean;
+  canCreateRental: boolean;
+  canCreateListing: boolean;
+  hasESignature: boolean;
+  hasTenantScoring: boolean;
+  hasDocumentEncryption: boolean;
 }
 
 export const PLAN_FEATURES: { [key in PlanName]: string[] } = {

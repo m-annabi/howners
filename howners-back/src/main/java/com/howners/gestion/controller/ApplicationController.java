@@ -2,7 +2,9 @@ package com.howners.gestion.controller;
 
 import com.howners.gestion.dto.application.ApplicationResponse;
 import com.howners.gestion.dto.application.CreateApplicationRequest;
+import com.howners.gestion.dto.application.CreateRentalFromApplicationRequest;
 import com.howners.gestion.dto.application.ReviewApplicationRequest;
+import com.howners.gestion.dto.response.RentalResponse;
 import com.howners.gestion.service.application.ApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -80,5 +82,15 @@ public class ApplicationController {
         log.info("Withdrawing application: {}", id);
         ApplicationResponse application = applicationService.withdraw(id);
         return ResponseEntity.ok(application);
+    }
+
+    @PostMapping("/{id}/create-rental")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<RentalResponse> createRentalFromApplication(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateRentalFromApplicationRequest request) {
+        log.info("Creating rental from application: {}", id);
+        RentalResponse rental = applicationService.createRentalFromApplication(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(rental);
     }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ContractService } from '../../../core/services/contract.service';
 import { ContractTemplateService } from '../../../core/services/contract-template.service';
 import { RentalService } from '../../rentals/rental.service';
@@ -27,7 +27,8 @@ export class ContractFormComponent implements OnInit {
     private contractService: ContractService,
     private templateService: ContractTemplateService,
     private rentalService: RentalService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.contractForm = this.fb.group({
       rentalId: ['', Validators.required],
@@ -38,6 +39,13 @@ export class ContractFormComponent implements OnInit {
   ngOnInit(): void {
     this.loadRentals();
     this.loadTemplates();
+
+    // Pre-select rental from query params
+    this.route.queryParams.subscribe(params => {
+      if (params['rentalId']) {
+        this.contractForm.patchValue({ rentalId: params['rentalId'] });
+      }
+    });
   }
 
   loadRentals(): void {

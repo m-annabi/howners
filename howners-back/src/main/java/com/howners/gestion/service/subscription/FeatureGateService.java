@@ -104,7 +104,12 @@ public class FeatureGateService {
                 currentContracts,
                 plan.getMaxContractsPerMonth(),
                 plan.getMaxProperties() == -1 || currentProperties < plan.getMaxProperties(),
-                plan.getMaxContractsPerMonth() == -1 || currentContracts < plan.getMaxContractsPerMonth()
+                plan.getMaxContractsPerMonth() == -1 || currentContracts < plan.getMaxContractsPerMonth(),
+                true, // canCreateRental - always allowed
+                true, // canCreateListing - always allowed
+                hasFeature(userId, "e_signature"),
+                hasFeature(userId, "tenant_scoring"),
+                hasFeature(userId, "document_encryption")
         );
     }
 

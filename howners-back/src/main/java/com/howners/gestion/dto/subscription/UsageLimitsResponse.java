@@ -7,5 +7,10 @@ public record UsageLimitsResponse(
         int currentContractsThisMonth,
         int maxContractsPerMonth,
         boolean canCreateProperty,
-        boolean canCreateContract
+        boolean canCreateContract,
+        boolean canCreateRental,
+        boolean canCreateListing,
+        boolean hasESignature,
+        boolean hasTenantScoring,
+        boolean hasDocumentEncryption
 ) {}

@@ -8,7 +8,9 @@ import com.howners.gestion.dto.request.UpdatePropertyRequest;
 import com.howners.gestion.dto.response.PropertyResponse;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.exception.ResourceNotFoundException;
+import com.howners.gestion.domain.rental.RentalStatus;
 import com.howners.gestion.repository.PropertyRepository;
+import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import java.util.stream.Collectors;
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
+    private final RentalRepository rentalRepository;
     private final UserRepository userRepository;
     private final com.howners.gestion.service.subscription.FeatureGateService featureGateService;
 
@@ -182,8 +185,16 @@ public class PropertyService {
         Property property = findPropertyByIdAndCheckOwnership(propertyId);
         log.info("Deleting property {}", propertyId);
 
-        // TODO: Check if property has active rentals before deleting
-        // For now, just delete
+        // Check if property has active or pending rentals
+        long activeRentals = rentalRepository.findByPropertyId(propertyId).stream()
+                .filter(r -> r.getStatus() == RentalStatus.ACTIVE || r.getStatus() == RentalStatus.PENDING)
+                .count();
+        if (activeRentals > 0) {
+            throw new BusinessException(
+                String.format("Cannot delete property. %d active/pending rental(s) exist. Please terminate rentals first.", activeRentals)
+            );
+        }
+
         propertyRepository.delete(property);
         log.info("Property {} deleted successfully", propertyId);
     }

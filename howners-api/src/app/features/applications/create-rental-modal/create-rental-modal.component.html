@@ -1,0 +1,123 @@
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-house-add me-2"></i>
+          Creer une location
+        </h5>
+        <button type="button" class="btn-close" (click)="cancel()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Summary banner -->
+        <div class="alert alert-info mb-4">
+          <div class="row">
+            <div class="col-md-4">
+              <small class="text-muted d-block">Candidat</small>
+              <strong>{{ application.applicantName }}</strong>
+              <small class="d-block">{{ application.applicantEmail }}</small>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted d-block">Bien</small>
+              <strong>{{ application.propertyName }}</strong>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted d-block">Annonce</small>
+              <strong>{{ application.listingTitle }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error message -->
+        <div *ngIf="error" class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ error }}
+        </div>
+
+        <!-- Form -->
+        <form [formGroup]="rentalForm">
+          <div class="row g-3">
+            <!-- Rental type -->
+            <div class="col-md-6">
+              <label class="form-label">Type de location *</label>
+              <select class="form-select" formControlName="rentalType">
+                <option *ngFor="let type of rentalTypes" [value]="type">
+                  {{ rentalTypeLabels[type] }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Payment day -->
+            <div class="col-md-6">
+              <label class="form-label">Jour de paiement</label>
+              <input type="number" class="form-control" formControlName="paymentDay"
+                     min="1" max="31" placeholder="1">
+            </div>
+
+            <!-- Start date -->
+            <div class="col-md-6">
+              <label class="form-label">Date de debut *</label>
+              <input type="date" class="form-control" formControlName="startDate"
+                     [class.is-invalid]="rentalForm.get('startDate')?.invalid && rentalForm.get('startDate')?.touched">
+              <div class="invalid-feedback">La date de debut est requise</div>
+            </div>
+
+            <!-- End date -->
+            <div class="col-md-6">
+              <label class="form-label">Date de fin</label>
+              <input type="date" class="form-control" formControlName="endDate">
+            </div>
+
+            <!-- Monthly rent -->
+            <div class="col-md-4">
+              <label class="form-label">Loyer mensuel *</label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="monthlyRent"
+                       min="0.01" step="0.01"
+                       [class.is-invalid]="rentalForm.get('monthlyRent')?.invalid && rentalForm.get('monthlyRent')?.touched">
+                <span class="input-group-text">{{ rentalForm.get('currency')?.value || 'EUR' }}</span>
+              </div>
+              <div *ngIf="rentalForm.get('monthlyRent')?.invalid && rentalForm.get('monthlyRent')?.touched"
+                   class="text-danger small mt-1">Le loyer est requis</div>
+            </div>
+
+            <!-- Deposit -->
+            <div class="col-md-4">
+              <label class="form-label">Depot de garantie</label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="depositAmount"
+                       min="0" step="0.01">
+                <span class="input-group-text">{{ rentalForm.get('currency')?.value || 'EUR' }}</span>
+              </div>
+            </div>
+
+            <!-- Charges -->
+            <div class="col-md-4">
+              <label class="form-label">Charges</label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="charges"
+                       min="0" step="0.01">
+                <span class="input-group-text">{{ rentalForm.get('currency')?.value || 'EUR' }}</span>
+              </div>
+            </div>
+
+            <!-- Currency (hidden unless needed) -->
+            <input type="hidden" formControlName="currency">
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="submitting">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-primary" (click)="confirm()" [disabled]="submitting">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          <i *ngIf="!submitting" class="bi bi-check-circle me-2"></i>
+          Creer la location
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

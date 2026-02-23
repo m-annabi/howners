@@ -113,10 +113,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
         title: 'GESTION',
         items: [
           { label: 'Biens', icon: 'bi-building', route: '/properties', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Locations', icon: 'bi-key', route: '/rentals' },
-          { label: 'Contrats', icon: 'bi-file-earmark-text', route: '/contracts' },
+          { label: 'Locations', icon: 'bi-key', route: '/rentals', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
+          { label: 'Contrats', icon: 'bi-file-earmark-text', route: '/contracts', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
           { label: 'États des lieux', icon: 'bi-clipboard-check', route: '/inventory', roles: ['OWNER', 'ADMIN'] },
-        ]
+        ],
+        roles: ['OWNER', 'ADMIN', 'CONCIERGE']
       },
       {
         title: 'ANNONCES',
