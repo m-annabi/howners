@@ -145,7 +145,7 @@ public class ContractTemplateService {
      * pour que le remplacement de variables fonctionne avec le contenu HTML de Quill
      */
     private String cleanVariablesInHtml(String htmlContent) {
-        if (htmlContent == null) return null;
+        if (htmlContent == null) return "";
 
         // 1. Supprimer TOUS les caractères zero-width de tout le contenu
         //    (Quill insère des zero-width spaces autour du curseur)

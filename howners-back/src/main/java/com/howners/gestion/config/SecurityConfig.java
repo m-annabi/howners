@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
-                                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *; font-src 'self' data:; connect-src 'self' *"))
+                                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.howners.com https://api.stripe.com"))
                         .frameOptions(frame -> frame.deny())
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
@@ -65,7 +65,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/webhooks/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/listings", "/api/listings/{id}").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/subscriptions/plans").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -97,7 +97,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

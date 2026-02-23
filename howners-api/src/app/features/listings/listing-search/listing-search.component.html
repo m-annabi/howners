@@ -12,6 +12,7 @@
           type="text"
           class="form-control form-control-lg"
           placeholder="Rechercher par titre, description, ville, code postal..."
+          aria-label="Rechercher des annonces"
           [(ngModel)]="searchQuery"
           (keyup.enter)="search()">
         <button class="btn btn-primary" (click)="search()">
@@ -34,8 +35,8 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-3">
-              <label class="form-label">Departement / Canton</label>
-              <select class="form-select" [(ngModel)]="filterDepartment">
+              <label class="form-label" for="filterDepartment">Departement / Canton</label>
+              <select class="form-select" id="filterDepartment" [(ngModel)]="filterDepartment">
                 <option value="">Tous</option>
                 <option *ngFor="let dept of filteredDepartments" [value]="dept.code">
                   {{ getDepartmentLabel(dept) }}
@@ -43,25 +44,27 @@
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Ville</label>
+              <label class="form-label" for="filterCity">Ville</label>
               <input
                 type="text"
                 class="form-control"
+                id="filterCity"
                 placeholder="Ex: Suresnes"
                 [(ngModel)]="filterCity">
             </div>
             <div class="col-md-2">
-              <label class="form-label">Code postal</label>
+              <label class="form-label" for="filterPostalCode">Code postal</label>
               <input
                 type="text"
                 class="form-control"
+                id="filterPostalCode"
                 placeholder="Ex: 92"
                 [(ngModel)]="filterPostalCode">
               <small class="form-text text-muted">Prefixe accepte</small>
             </div>
             <div class="col-md-2">
-              <label class="form-label">Pays</label>
-              <select class="form-select" [(ngModel)]="filterCountry" (change)="onCountryFilterChange()">
+              <label class="form-label" for="filterCountry">Pays</label>
+              <select class="form-select" id="filterCountry" [(ngModel)]="filterCountry" (change)="onCountryFilterChange()">
                 <option value="">Tous</option>
                 <option *ngFor="let c of countries" [value]="c.code">{{ c.label }}</option>
               </select>
@@ -78,16 +81,16 @@
           <hr class="my-3">
           <div class="row g-3">
             <div class="col-md-2">
-              <label class="form-label">Prix min (EUR)</label>
-              <input type="number" class="form-control" [(ngModel)]="filterPriceMin" placeholder="Min">
+              <label class="form-label" for="filterPriceMin">Prix min (EUR)</label>
+              <input type="number" class="form-control" id="filterPriceMin" [(ngModel)]="filterPriceMin" placeholder="Min">
             </div>
             <div class="col-md-2">
-              <label class="form-label">Prix max (EUR)</label>
-              <input type="number" class="form-control" [(ngModel)]="filterPriceMax" placeholder="Max">
+              <label class="form-label" for="filterPriceMax">Prix max (EUR)</label>
+              <input type="number" class="form-control" id="filterPriceMax" [(ngModel)]="filterPriceMax" placeholder="Max">
             </div>
             <div class="col-md-2">
-              <label class="form-label">Type de bien</label>
-              <select class="form-select" [(ngModel)]="filterPropertyType">
+              <label class="form-label" for="filterPropertyType">Type de bien</label>
+              <select class="form-select" id="filterPropertyType" [(ngModel)]="filterPropertyType">
                 <option value="">Tous</option>
                 <option *ngFor="let type of propertyTypes" [value]="type">
                   {{ propertyTypeLabels[type] }}
@@ -95,28 +98,28 @@
               </select>
             </div>
             <div class="col-md-1">
-              <label class="form-label">Meublé</label>
-              <select class="form-select" [(ngModel)]="filterFurnished">
+              <label class="form-label" for="filterFurnished">Meublé</label>
+              <select class="form-select" id="filterFurnished" [(ngModel)]="filterFurnished">
                 <option value="">Tous</option>
                 <option value="true">Oui</option>
                 <option value="false">Non</option>
               </select>
             </div>
             <div class="col-md-1">
-              <label class="form-label">Surface</label>
-              <input type="number" class="form-control" [(ngModel)]="filterMinSurface" placeholder="m²">
+              <label class="form-label" for="filterMinSurface">Surface</label>
+              <input type="number" class="form-control" id="filterMinSurface" [(ngModel)]="filterMinSurface" placeholder="m²">
             </div>
             <div class="col-md-1">
-              <label class="form-label">Chambres</label>
-              <input type="number" class="form-control" [(ngModel)]="filterMinBedrooms" placeholder="Min">
+              <label class="form-label" for="filterMinBedrooms">Chambres</label>
+              <input type="number" class="form-control" id="filterMinBedrooms" [(ngModel)]="filterMinBedrooms" placeholder="Min">
             </div>
             <div class="col-md-2">
-              <label class="form-label">Disponible dès</label>
-              <input type="date" class="form-control" [(ngModel)]="filterAvailableFrom">
+              <label class="form-label" for="filterAvailableFrom">Disponible dès</label>
+              <input type="date" class="form-control" id="filterAvailableFrom" [(ngModel)]="filterAvailableFrom">
             </div>
             <div class="col-md-1">
-              <label class="form-label">Tri</label>
-              <select class="form-select" [(ngModel)]="sortBy" (change)="search()">
+              <label class="form-label" for="filterSortBy">Tri</label>
+              <select class="form-select" id="filterSortBy" [(ngModel)]="sortBy" (change)="search()">
                 <option value="">Récent</option>
                 <option value="price_asc">Prix ↑</option>
                 <option value="price_desc">Prix ↓</option>

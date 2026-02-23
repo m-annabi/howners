@@ -16,8 +16,8 @@
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-3">
-          <label class="form-label">Département</label>
-          <select class="form-select" [(ngModel)]="filterDepartment">
+          <label class="form-label" for="tdFilterDepartment">Département</label>
+          <select class="form-select" id="tdFilterDepartment" [(ngModel)]="filterDepartment">
             <option value="">Tous</option>
             <option *ngFor="let dept of departments" [value]="dept.code">
               {{ getDepartmentLabel(dept) }}
@@ -25,31 +25,31 @@
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">Ville</label>
-          <input type="text" class="form-control" [(ngModel)]="filterCity" placeholder="Ex: Paris">
+          <label class="form-label" for="tdFilterCity">Ville</label>
+          <input type="text" class="form-control" id="tdFilterCity" [(ngModel)]="filterCity" placeholder="Ex: Paris">
         </div>
         <div class="col-md-2">
-          <label class="form-label">Code postal</label>
-          <input type="text" class="form-control" [(ngModel)]="filterPostalCode" placeholder="Ex: 75">
+          <label class="form-label" for="tdFilterPostalCode">Code postal</label>
+          <input type="text" class="form-control" id="tdFilterPostalCode" [(ngModel)]="filterPostalCode" placeholder="Ex: 75">
         </div>
         <div class="col-md-2">
-          <label class="form-label">Budget min</label>
-          <input type="number" class="form-control" [(ngModel)]="filterBudgetMin" placeholder="EUR">
+          <label class="form-label" for="tdFilterBudgetMin">Budget min</label>
+          <input type="number" class="form-control" id="tdFilterBudgetMin" [(ngModel)]="filterBudgetMin" placeholder="EUR">
         </div>
         <div class="col-md-2">
-          <label class="form-label">Budget max</label>
-          <input type="number" class="form-control" [(ngModel)]="filterBudgetMax" placeholder="EUR">
+          <label class="form-label" for="tdFilterBudgetMax">Budget max</label>
+          <input type="number" class="form-control" id="tdFilterBudgetMax" [(ngModel)]="filterBudgetMax" placeholder="EUR">
         </div>
         <div class="col-md-1 d-flex align-items-end">
-          <button class="btn btn-outline-secondary" (click)="clearFilters()" *ngIf="hasActiveFilters" title="Effacer les filtres">
+          <button class="btn btn-outline-secondary" (click)="clearFilters()" *ngIf="hasActiveFilters" title="Effacer les filtres" aria-label="Effacer les filtres">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
       </div>
       <div class="row g-3 mt-1">
         <div class="col-md-3">
-          <label class="form-label">Type de bien</label>
-          <select class="form-select" [(ngModel)]="filterPropertyType">
+          <label class="form-label" for="tdFilterPropertyType">Type de bien</label>
+          <select class="form-select" id="tdFilterPropertyType" [(ngModel)]="filterPropertyType">
             <option value="">Tous</option>
             <option *ngFor="let type of propertyTypes" [value]="type">
               {{ propertyTypeLabels[type] }}
@@ -57,8 +57,8 @@
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Annonce de référence</label>
-          <select class="form-select" [(ngModel)]="filterListingId">
+          <label class="form-label" for="tdFilterListingId">Annonce de référence</label>
+          <select class="form-select" id="tdFilterListingId" [(ngModel)]="filterListingId">
             <option value="">Aucune (pas de compatibilité)</option>
             <option *ngFor="let listing of myListings" [value]="listing.id">
               {{ listing.title }} - {{ listing.pricePerMonth | number:'1.0-0' }} EUR/mois
@@ -67,8 +67,8 @@
           <small class="form-text text-muted">Sélectionnez une annonce pour voir les scores de compatibilité</small>
         </div>
         <div class="col-md-3">
-          <label class="form-label">Trier par</label>
-          <select class="form-select" [(ngModel)]="sortBy">
+          <label class="form-label" for="tdSortBy">Trier par</label>
+          <select class="form-select" id="tdSortBy" [(ngModel)]="sortBy">
             <option value="">Plus récents</option>
             <option value="score">Meilleur score locataire</option>
             <option value="relevance">Meilleure compatibilité</option>
@@ -161,14 +161,14 @@
           <!-- Inline invite form -->
           <div *ngIf="invitingProfileId === result.profile.id" class="mt-3 border-top pt-3">
             <div class="mb-2">
-              <select class="form-select form-select-sm" [(ngModel)]="inviteListingId">
+              <select class="form-select form-select-sm" [(ngModel)]="inviteListingId" aria-label="Choisir une annonce pour l'invitation">
                 <option value="">Choisir une annonce</option>
                 <option *ngFor="let listing of myListings" [value]="listing.id">{{ listing.title }}</option>
               </select>
             </div>
             <div class="mb-2">
               <textarea class="form-control form-control-sm" [(ngModel)]="inviteMessage"
-                        rows="2" placeholder="Message (optionnel)"></textarea>
+                        rows="2" placeholder="Message (optionnel)" aria-label="Message d'invitation"></textarea>
             </div>
             <div *ngIf="inviteError" class="text-danger small mb-2">{{ inviteError }}</div>
             <div class="d-flex gap-2">

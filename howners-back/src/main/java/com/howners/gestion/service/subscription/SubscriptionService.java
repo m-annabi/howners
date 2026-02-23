@@ -4,6 +4,7 @@ import com.howners.gestion.domain.subscription.*;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.subscription.*;
 import com.howners.gestion.exception.BadRequestException;
+import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.SubscriptionPlanRepository;
 import com.howners.gestion.repository.UserRepository;
@@ -51,7 +52,13 @@ public class SubscriptionService {
         UUID userId = AuthService.getCurrentUserId();
         return subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .map(UserSubscriptionResponse::from)
-                .orElse(null);
+                .orElseGet(() -> {
+                    // Auto-assign free plan if none exists
+                    assignFreePlan(userId);
+                    return subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                            .map(UserSubscriptionResponse::from)
+                            .orElse(null);
+                });
     }
 
     @Transactional
@@ -99,7 +106,7 @@ public class SubscriptionService {
             return new CheckoutSessionResponse(session.getId(), session.getUrl());
         } catch (StripeException e) {
             log.error("Stripe error creating checkout session: {}", e.getMessage());
-            throw new RuntimeException("Failed to create checkout session", e);
+            throw new BusinessException("Failed to create checkout session: " + e.getMessage(), e);
         }
     }
 
@@ -122,7 +129,7 @@ public class SubscriptionService {
             return session.getUrl();
         } catch (StripeException e) {
             log.error("Stripe error creating billing portal: {}", e.getMessage());
-            throw new RuntimeException("Failed to create billing portal session", e);
+            throw new BusinessException("Failed to create billing portal session: " + e.getMessage(), e);
         }
     }
 
@@ -140,7 +147,7 @@ public class SubscriptionService {
                         .build());
             } catch (StripeException e) {
                 log.error("Stripe error cancelling subscription: {}", e.getMessage());
-                throw new RuntimeException("Failed to cancel subscription", e);
+                throw new BusinessException("Failed to cancel subscription: " + e.getMessage(), e);
             }
         }
 
