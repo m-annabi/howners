@@ -13,8 +13,27 @@
     {{ error }}
   </div>
 
-  <!-- Contract View -->
-  <div *ngIf="contract && !loading" class="row">
+  <!-- Success State -->
+  <div *ngIf="signed && !loading" class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+          <div class="mb-4" style="font-size: 4rem;">&#10003;</div>
+          <h3 class="text-success mb-3">Contrat sign&eacute; avec succ&egrave;s !</h3>
+          <p class="text-muted">
+            Votre signature a &eacute;t&eacute; appliqu&eacute;e sur le contrat. Le propri&eacute;taire sera notifi&eacute; automatiquement.
+          </p>
+          <p class="text-muted small mt-4">
+            <i class="bi bi-shield-check me-1"></i>
+            Vous recevrez une copie du contrat sign&eacute; par email.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contract View & Signature -->
+  <div *ngIf="contract && !loading && !signed" class="row">
     <div class="col-lg-8 mx-auto">
       <!-- Header -->
       <div class="card shadow-sm mb-4">
@@ -28,7 +47,7 @@
           <!-- Contract Info -->
           <div class="row mb-4">
             <div class="col-md-6 mb-3">
-              <label class="text-muted small">N° de contrat</label>
+              <label class="text-muted small">N&deg; de contrat</label>
               <div class="fw-bold">{{ contract.contractNumber }}</div>
             </div>
             <div class="col-md-6 mb-3">
@@ -47,7 +66,7 @@
             </h5>
             <div class="row">
               <div class="col-12 mb-2">
-                <label class="text-muted small">Propriété</label>
+                <label class="text-muted small">Propri&eacute;t&eacute;</label>
                 <div class="fw-bold">{{ contract.propertyName }}</div>
               </div>
               <div class="col-12 mb-2">
@@ -65,7 +84,7 @@
             </h5>
             <div class="row">
               <div class="col-md-6 mb-2">
-                <label class="text-muted small">Propriétaire</label>
+                <label class="text-muted small">Propri&eacute;taire</label>
                 <div class="fw-bold">{{ contract.ownerName }}</div>
               </div>
               <div class="col-md-6 mb-2">
@@ -79,11 +98,11 @@
           <div class="border-start border-4 border-warning ps-3 mb-4">
             <h5 class="mb-3">
               <i class="bi bi-calendar-range me-2"></i>
-              Détails de la location
+              D&eacute;tails de la location
             </h5>
             <div class="row">
               <div class="col-md-4 mb-2">
-                <label class="text-muted small">Date de début</label>
+                <label class="text-muted small">Date de d&eacute;but</label>
                 <div>{{ formatDate(contract.rentalStartDate) }}</div>
               </div>
               <div class="col-md-4 mb-2">
@@ -97,27 +116,69 @@
             </div>
           </div>
 
-          <!-- Important Notice -->
-          <div class="alert alert-info d-flex align-items-start" role="alert">
-            <i class="bi bi-info-circle-fill me-2 mt-1"></i>
-            <div>
-              <strong>Important :</strong> En cliquant sur "Signer le contrat", vous serez redirigé vers une plateforme
-              de signature électronique sécurisée (DocuSign). Vous pourrez y consulter le document complet et apposer
-              votre signature de manière légalement valide.
-            </div>
+          <!-- PDF Preview -->
+          <div *ngIf="pdfUrl" class="mb-4">
+            <h5 class="mb-3">
+              <i class="bi bi-file-earmark-pdf me-2"></i>
+              Contrat &agrave; signer
+            </h5>
+            <iframe [src]="pdfUrl" class="w-100 border rounded" style="height: 500px;" title="Contrat PDF"></iframe>
+          </div>
+          <div *ngIf="loadingPdf" class="text-center mb-4">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <span class="ms-2 text-muted">Chargement du PDF...</span>
           </div>
 
-          <!-- Action Buttons -->
+          <!-- Signer Name -->
+          <div class="mb-4">
+            <h5 class="mb-3">
+              <i class="bi bi-person me-2"></i>
+              Votre nom
+            </h5>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="signerName"
+              placeholder="Votre nom complet"
+              required
+            >
+          </div>
+
+          <!-- Signature Pad -->
+          <div class="mb-4">
+            <h5 class="mb-3">Votre signature</h5>
+            <app-signature-pad (signatureChange)="onSignatureChange($event)"></app-signature-pad>
+          </div>
+
+          <!-- Terms and Conditions -->
+          <div class="mb-4">
+            <div class="form-check">
+              <input
+                type="checkbox"
+                id="acceptTerms"
+                class="form-check-input"
+                [(ngModel)]="acceptTerms"
+              >
+              <label for="acceptTerms" class="form-check-label">
+                <strong>Je certifie avoir lu et accept&eacute; les termes de ce contrat</strong>
+              </label>
+            </div>
+            <small class="text-muted">
+              En signant &eacute;lectroniquement ce document, vous acceptez que votre signature ait la m&ecirc;me valeur l&eacute;gale qu'une signature manuscrite.
+            </small>
+          </div>
+
+          <!-- Sign Button -->
           <div class="d-grid gap-2">
             <button
-              class="btn btn-primary btn-lg"
+              class="btn btn-success btn-lg"
               (click)="signContract()"
-              [disabled]="signing">
+              [disabled]="!canSign()">
               <i class="bi bi-pen me-2"></i>
               <span *ngIf="!signing">Signer le contrat</span>
               <span *ngIf="signing">
                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Redirection en cours...
+                Signature en cours...
               </span>
             </button>
           </div>
@@ -125,7 +186,7 @@
           <!-- Footer Info -->
           <div class="text-center mt-4 text-muted small">
             <i class="bi bi-shield-check me-1"></i>
-            Signature sécurisée et conforme à la réglementation eIDAS
+            Signature s&eacute;curis&eacute;e et conforme &agrave; la r&eacute;glementation eIDAS
           </div>
         </div>
       </div>
@@ -138,8 +199,8 @@
             Besoin d'aide ?
           </h5>
           <p class="card-text text-muted mb-0">
-            Si vous rencontrez des difficultés ou avez des questions concernant ce contrat,
-            veuillez contacter votre propriétaire : <strong>{{ contract.ownerName }}</strong>
+            Si vous rencontrez des difficult&eacute;s ou avez des questions concernant ce contrat,
+            veuillez contacter votre propri&eacute;taire : <strong>{{ contract.ownerName }}</strong>
           </p>
         </div>
       </div>

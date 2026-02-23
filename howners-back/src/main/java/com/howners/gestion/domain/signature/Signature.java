@@ -41,7 +41,7 @@ public class Signature {
     @Column(name = "signature_type", nullable = false)
     private SignatureType signatureType;
 
-    private String provider;  // YOUSIGN, DOCUSIGN, INTERNAL, etc.
+    private String provider;  // DIRECT, INTERNAL, etc.
 
     @Column(name = "provider_signature_id")
     private String providerSignatureId;

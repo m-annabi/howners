@@ -87,18 +87,7 @@ email:
 
 # Electronic Signature Configuration
 esignature:
-  provider: ${ESIGNATURE_PROVIDER:docusign}  # docusign, hellosign, etc.
-  docusign:
-    integration-key: ${DOCUSIGN_INTEGRATION_KEY:}
-    user-id: ${DOCUSIGN_USER_ID:}
-    account-id: ${DOCUSIGN_ACCOUNT_ID:}
-    base-path: ${DOCUSIGN_BASE_PATH:https://demo.docusign.net/restapi}
-    oauth-base-path: ${DOCUSIGN_OAUTH_BASE_PATH:https://account-d.docusign.com}
-    private-key: ${DOCUSIGN_PRIVATE_KEY:}
-    impersonated-user-guid: ${DOCUSIGN_IMPERSONATED_USER_GUID:}
-    expires-in-seconds: 3600
-    webhook-secret: ${DOCUSIGN_WEBHOOK_SECRET:}
-  callback-base-url: ${BACKEND_URL:http://localhost:8080}
+  token-expiration-days: 30
 
 # Application URLs
 app:
