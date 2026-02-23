@@ -38,8 +38,20 @@ export class CreateRentalModalComponent implements OnInit {
     });
   }
 
+  get dateRangeInvalid(): boolean {
+    const start = this.rentalForm?.get('startDate')?.value;
+    const end = this.rentalForm?.get('endDate')?.value;
+    return !!start && !!end && end < start;
+  }
+
+  onBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget && !this.submitting) {
+      this.cancel();
+    }
+  }
+
   confirm(): void {
-    if (this.rentalForm.invalid) {
+    if (this.rentalForm.invalid || this.dateRangeInvalid) {
       this.rentalForm.markAllAsTouched();
       return;
     }

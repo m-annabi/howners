@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { User } from '../../core/models/user.model';
@@ -10,7 +11,8 @@ import { DashboardStats } from '../../core/models/dashboard.model';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  private userSub!: Subscription;
   currentUser: User | null = null;
   stats: DashboardStats | null = null;
   loading = true;
@@ -27,11 +29,15 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
 
     this.loadStats();
+  }
+
+  ngOnDestroy(): void {
+    this.userSub?.unsubscribe();
   }
 
   get hasTenantAlerts(): boolean {
@@ -45,8 +51,8 @@ export class DashboardComponent implements OnInit {
   get hasActivity(): boolean {
     return !!this.stats && (
       this.stats.pendingRentals > 0 ||
-      !!this.stats.recentActivity.latestProperty ||
-      !!this.stats.recentActivity.latestRental
+      !!this.stats.recentActivity?.latestProperty ||
+      !!this.stats.recentActivity?.latestRental
     );
   }
 

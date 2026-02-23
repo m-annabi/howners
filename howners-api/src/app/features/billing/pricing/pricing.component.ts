@@ -11,6 +11,7 @@ import { SubscriptionPlan, PlanName, PLAN_FEATURES, PLAN_COLORS } from '../../..
 export class PricingComponent implements OnInit {
   plans: SubscriptionPlan[] = [];
   loading = false;
+  error: string | null = null;
   billingPeriod: 'monthly' | 'annual' = 'monthly';
   checkingOut = false;
 
@@ -24,12 +25,16 @@ export class PricingComponent implements OnInit {
 
   ngOnInit(): void {
     this.loading = true;
+    this.error = null;
     this.subscriptionService.getPlans().subscribe({
       next: (plans) => {
         this.plans = plans;
         this.loading = false;
       },
-      error: () => this.loading = false
+      error: (err) => {
+        this.error = err.error?.message || 'Erreur lors du chargement des plans';
+        this.loading = false;
+      }
     });
   }
 
