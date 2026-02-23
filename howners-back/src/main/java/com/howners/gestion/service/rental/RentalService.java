@@ -13,7 +13,10 @@ import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.dto.email.WelcomeTenantEmailData;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.exception.ResourceNotFoundException;
+import com.howners.gestion.domain.payment.Payment;
+import com.howners.gestion.domain.payment.PaymentStatus;
 import com.howners.gestion.repository.ContractRepository;
+import com.howners.gestion.repository.PaymentRepository;
 import com.howners.gestion.repository.PropertyRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
@@ -41,6 +44,7 @@ public class RentalService {
     private final UserRepository userRepository;
     private final com.howners.gestion.service.audit.AuditService auditService;
     private final ContractRepository contractRepository;
+    private final PaymentRepository paymentRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
@@ -183,7 +187,16 @@ public class RentalService {
             );
         }
 
-        // TODO: Vérifier qu'il n'y a pas de paiements en cours
+        List<Payment> pendingPayments = paymentRepository.findByRentalId(rentalId).stream()
+                .filter(p -> p.getStatus() == PaymentStatus.PENDING || p.getStatus() == PaymentStatus.LATE)
+                .toList();
+
+        if (!pendingPayments.isEmpty()) {
+            throw new BusinessException(
+                String.format("Cannot delete rental. %d pending or late payment(s) are associated with this rental. Please resolve them first.", pendingPayments.size())
+            );
+        }
+
         rentalRepository.delete(rental);
         log.info("Rental {} deleted successfully", rentalId);
     }

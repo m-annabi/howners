@@ -113,13 +113,18 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   viewDocuments(): void {
-    // TODO: Implémenter la vue des documents
-    this.notificationService.info('Fonctionnalité à venir');
+    const el = document.querySelector('app-document-list');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   viewStats(): void {
-    // TODO: Implémenter les statistiques
-    this.notificationService.info('Fonctionnalité à venir');
+    if (this.property) {
+      this.router.navigate(['/financial'], {
+        queryParams: { propertyId: this.property.id }
+      });
+    }
   }
 
   viewRentalDetail(): void {
