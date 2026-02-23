@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { TenantSearchProfileService } from '../../../core/services/tenant-search-profile.service';
 import { TenantSearchProfile, FurnishedPreference, FURNISHED_PREFERENCE_LABELS, CreateTenantSearchProfileRequest } from '../../../core/models/tenant-search-profile.model';
@@ -10,7 +10,8 @@ import { Department, getDepartmentsByCountry, getDepartmentLabel } from '../../.
   templateUrl: './search-profile-form.component.html',
   styleUrls: ['./search-profile-form.component.scss']
 })
-export class SearchProfileFormComponent implements OnInit {
+export class SearchProfileFormComponent implements OnInit, OnDestroy {
+  private successTimeout: any;
   form!: FormGroup;
   profile: TenantSearchProfile | null = null;
   loading = false;
@@ -103,13 +104,18 @@ export class SearchProfileFormComponent implements OnInit {
         this.profile = profile;
         this.saving = false;
         this.success = true;
-        setTimeout(() => this.success = false, 3000);
+        if (this.successTimeout) clearTimeout(this.successTimeout);
+        this.successTimeout = setTimeout(() => this.success = false, 3000);
       },
       error: (err) => {
         this.saving = false;
         this.error = 'Erreur lors de la sauvegarde du profil.';
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimeout) clearTimeout(this.successTimeout);
   }
 
   toggleActive(): void {

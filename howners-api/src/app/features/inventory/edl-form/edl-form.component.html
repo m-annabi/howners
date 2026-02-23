@@ -1,6 +1,11 @@
 <div class="container mt-4">
   <h2>Nouvel état des lieux</h2>
 
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    <button type="button" class="btn-close" (click)="error = null"></button>
+  </div>
+
   <form (ngSubmit)="submit()">
     <!-- Informations générales -->
     <div class="card mb-3">

@@ -10,6 +10,7 @@ import { CreateEtatDesLieuxRequest, EtatDesLieuxType } from '../../../core/model
 export class EdlFormComponent implements OnInit {
   rentalId = '';
   submitting = false;
+  error: string | null = null;
 
   type: EtatDesLieuxType = EtatDesLieuxType.ENTREE;
   inspectionDate = '';
@@ -78,12 +79,14 @@ export class EdlFormComponent implements OnInit {
       generalComments: this.generalComments || undefined
     };
 
+    this.error = null;
     this.edlService.create(this.rentalId, request).subscribe({
       next: (edl) => {
         this.router.navigate(['/inventory', edl.rentalId, edl.id]);
       },
-      error: () => {
+      error: (err) => {
         this.submitting = false;
+        this.error = err.error?.message || 'Erreur lors de la creation de l\'etat des lieux';
       }
     });
   }

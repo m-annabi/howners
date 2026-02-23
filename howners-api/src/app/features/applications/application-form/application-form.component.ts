@@ -121,6 +121,9 @@ export class ApplicationFormComponent implements OnInit {
     this.documentService.deleteDocument(doc.id).subscribe({
       next: () => {
         this.uploadedDocuments = this.uploadedDocuments.filter(d => d.id !== doc.id);
+      },
+      error: () => {
+        this.uploadError = 'Erreur lors de la suppression du document';
       }
     });
   }

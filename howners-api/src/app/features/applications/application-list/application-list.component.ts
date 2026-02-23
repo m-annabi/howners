@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApplicationService } from '../../../core/services/application.service';
 import { DocumentService } from '../../../core/services/document.service';
+
 import {
   Application,
   ApplicationStatus,
@@ -23,6 +24,7 @@ interface RequiredDocumentType {
 export class ApplicationListComponent implements OnInit {
   applications: Application[] = [];
   loading = false;
+  error: string | null = null;
   listingId: string | null = null;
   reviewingId: string | null = null;
   reviewNotes = '';
@@ -52,6 +54,7 @@ export class ApplicationListComponent implements OnInit {
 
   loadApplications(): void {
     this.loading = true;
+    this.error = null;
     const obs = this.listingId
       ? this.applicationService.getByListing(this.listingId)
       : this.applicationService.getReceivedApplications();
@@ -61,7 +64,10 @@ export class ApplicationListComponent implements OnInit {
         this.applications = apps;
         this.loading = false;
       },
-      error: () => this.loading = false
+      error: () => {
+        this.error = 'Erreur lors du chargement des candidatures';
+        this.loading = false;
+      }
     });
   }
 
@@ -93,6 +99,9 @@ export class ApplicationListComponent implements OnInit {
         this.reviewingId = null;
         this.reviewNotes = '';
         this.loadApplications();
+      },
+      error: () => {
+        this.error = 'Erreur lors du traitement de la candidature';
       }
     });
   }
@@ -124,6 +133,9 @@ export class ApplicationListComponent implements OnInit {
         a.download = fileName;
         a.click();
         window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.error = 'Erreur lors du telechargement du document';
       }
     });
   }

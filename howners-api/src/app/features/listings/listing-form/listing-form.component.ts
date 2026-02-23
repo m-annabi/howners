@@ -59,7 +59,8 @@ export class ListingFormComponent implements OnInit {
     this.isEditMode = !!this.listingId;
 
     this.propertyService.getProperties().subscribe({
-      next: (properties) => this.properties = properties
+      next: (properties) => this.properties = properties,
+      error: () => {} // silent — dropdown stays empty
     });
 
     if (this.isEditMode && this.listingId) {

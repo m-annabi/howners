@@ -1,5 +1,6 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { QuillEditorComponent } from 'ngx-quill';
 import { ContractService } from '../../../core/services/contract.service';
 import { ContractTemplateService } from '../../../core/services/contract-template.service';
@@ -10,7 +11,7 @@ import { CreateContractRequest, UpdateContractRequest } from '../../../core/mode
   templateUrl: './contract-customize.component.html',
   styleUrls: ['./contract-customize.component.css']
 })
-export class ContractCustomizeComponent implements OnInit {
+export class ContractCustomizeComponent implements OnInit, OnDestroy {
   @ViewChild('editor') editor!: QuillEditorComponent;
 
   loading = false;
@@ -31,6 +32,7 @@ export class ContractCustomizeComponent implements OnInit {
   // Contenu initial à injecter dans Quill une fois l'éditeur prêt
   private initialContent: string | null = null;
   private editorReady = false;
+  private queryParamsSub?: Subscription;
 
   // Configuration Quill
   quillModules = {
@@ -57,7 +59,7 @@ export class ContractCustomizeComponent implements OnInit {
     if (this.isEditMode && this.contractId) {
       this.loadExistingContract(this.contractId);
     } else {
-      this.route.queryParams.subscribe(params => {
+      this.queryParamsSub = this.route.queryParams.subscribe(params => {
         this.rentalId = params['rentalId'];
         this.templateId = params['templateId'] || null;
 
@@ -69,6 +71,10 @@ export class ContractCustomizeComponent implements OnInit {
         this.loadPreview();
       });
     }
+  }
+
+  ngOnDestroy(): void {
+    this.queryParamsSub?.unsubscribe();
   }
 
   /**

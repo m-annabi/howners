@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MessageService } from '../../../core/services/message.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Message, CreateMessageRequest } from '../../../core/models/message.model';
@@ -17,6 +18,7 @@ export class ConversationDetailComponent implements OnInit, OnDestroy {
   sending = false;
   listingId: string | null = null;
   private refreshInterval: any;
+  private userSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -25,7 +27,7 @@ export class ConversationDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUserId = user?.id || null;
     });
 
@@ -47,6 +49,7 @@ export class ConversationDetailComponent implements OnInit, OnDestroy {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    this.userSub?.unsubscribe();
   }
 
   loadMessages(): void {
@@ -94,7 +97,10 @@ export class ConversationDetailComponent implements OnInit, OnDestroy {
     this.messages
       .filter(m => !m.isRead && m.recipientId === this.currentUserId)
       .forEach(m => {
-        this.messageService.markAsRead(m.id).subscribe(() => m.isRead = true);
+        this.messageService.markAsRead(m.id).subscribe({
+          next: () => m.isRead = true,
+          error: () => {} // silent — best effort
+        });
       });
   }
 }

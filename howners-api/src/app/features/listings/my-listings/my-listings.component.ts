@@ -9,6 +9,7 @@ import { Listing, ListingStatus, LISTING_STATUS_LABELS, LISTING_STATUS_COLORS } 
 export class MyListingsComponent implements OnInit {
   listings: Listing[] = [];
   loading = false;
+  error: string | null = null;
 
   statusLabels = LISTING_STATUS_LABELS;
   statusColors = LISTING_STATUS_COLORS;
@@ -21,30 +22,46 @@ export class MyListingsComponent implements OnInit {
 
   loadListings(): void {
     this.loading = true;
+    this.error = null;
     this.listingService.getMyListings().subscribe({
       next: (listings) => {
         this.listings = listings;
         this.loading = false;
       },
-      error: () => this.loading = false
+      error: () => {
+        this.error = 'Erreur lors du chargement des annonces';
+        this.loading = false;
+      }
     });
   }
 
   publish(id: string): void {
-    this.listingService.publishListing(id).subscribe(() => this.loadListings());
+    this.listingService.publishListing(id).subscribe({
+      next: () => this.loadListings(),
+      error: () => this.error = 'Erreur lors de la publication'
+    });
   }
 
   pause(id: string): void {
-    this.listingService.pauseListing(id).subscribe(() => this.loadListings());
+    this.listingService.pauseListing(id).subscribe({
+      next: () => this.loadListings(),
+      error: () => this.error = 'Erreur lors de la mise en pause'
+    });
   }
 
   close(id: string): void {
-    this.listingService.closeListing(id).subscribe(() => this.loadListings());
+    this.listingService.closeListing(id).subscribe({
+      next: () => this.loadListings(),
+      error: () => this.error = 'Erreur lors de la fermeture'
+    });
   }
 
   delete(id: string): void {
     if (confirm('Supprimer cette annonce ?')) {
-      this.listingService.deleteListing(id).subscribe(() => this.loadListings());
+      this.listingService.deleteListing(id).subscribe({
+        next: () => this.loadListings(),
+        error: () => this.error = 'Erreur lors de la suppression'
+      });
     }
   }
 

@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { ListingService } from '../../../core/services/listing.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Listing, LISTING_STATUS_LABELS, LISTING_STATUS_COLORS } from '../../../core/models/listing.model';
@@ -10,7 +11,8 @@ import { Role } from '../../../core/models/user.model';
   selector: 'app-listing-detail',
   templateUrl: './listing-detail.component.html'
 })
-export class ListingDetailComponent implements OnInit {
+export class ListingDetailComponent implements OnInit, OnDestroy {
+  private userSub?: Subscription;
   listing: Listing | null = null;
   loading = true;
   isOwner = false;
@@ -31,7 +33,7 @@ export class ListingDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUserId = user?.id || null;
       this.currentUserRole = user?.role || null;
       this.isAuthenticated = !!user;
@@ -58,6 +60,10 @@ export class ListingDetailComponent implements OnInit {
         this.router.navigate(['/listings']);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.userSub?.unsubscribe();
   }
 
   get isTenant(): boolean {
