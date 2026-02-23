@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TenantDiscoveryService, TenantDiscoveryFilters } from '../../../core/services/tenant-discovery.service';
 import { InvitationService } from '../../../core/services/invitation.service';
 import { ListingService } from '../../../core/services/listing.service';
@@ -13,7 +13,8 @@ import { Department, getDepartmentsByCountry, getDepartmentLabel } from '../../.
   templateUrl: './tenant-search.component.html',
   styleUrls: ['./tenant-search.component.scss']
 })
-export class TenantSearchComponent implements OnInit {
+export class TenantSearchComponent implements OnInit, OnDestroy {
+  private successTimeout: any;
   results: TenantSearchResult[] = [];
   myListings: Listing[] = [];
   loading = false;
@@ -58,7 +59,8 @@ export class TenantSearchComponent implements OnInit {
     this.listingService.getMyListings().subscribe({
       next: (listings) => {
         this.myListings = listings.filter(l => l.status === 'PUBLISHED');
-      }
+      },
+      error: () => {} // silent — listings dropdown stays empty
     });
   }
 
@@ -127,12 +129,16 @@ export class TenantSearchComponent implements OnInit {
       next: () => {
         this.inviteSuccess = 'Invitation envoyée !';
         this.invitingProfileId = null;
-        setTimeout(() => this.inviteSuccess = '', 3000);
+        this.successTimeout = setTimeout(() => this.inviteSuccess = '', 3000);
       },
       error: (err) => {
         this.inviteError = err.error?.message || 'Erreur lors de l\'envoi de l\'invitation.';
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimeout) clearTimeout(this.successTimeout);
   }
 
   getCompatibilityColor(score: number): string {
