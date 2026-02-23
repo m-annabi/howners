@@ -15,31 +15,31 @@
   <!-- Stats Cards — TENANT -->
   <div *ngIf="!loading && !error && stats && isTenant" class="dashboard__stats">
     <app-stats-card
-      label="Mes locations"
-      [value]="stats.activeRentals"
-      icon="bi-key"
+      label="Candidatures"
+      [value]="stats.tenantInfo?.totalApplications || 0"
+      icon="bi-send"
+      color="primary"
+      routerLink="/applications">
+    </app-stats-card>
+    <app-stats-card
+      label="Invitations"
+      [value]="stats.tenantInfo?.totalInvitations || 0"
+      icon="bi-envelope-open"
       color="success"
-      routerLink="/rentals">
+      routerLink="/search-profile/invitations">
     </app-stats-card>
     <app-stats-card
-      label="Mon loyer"
-      [value]="stats.monthlyRevenue + ' ' + stats.currency"
-      icon="bi-cash-stack"
-      color="warning"
-      routerLink="/invoices">
-    </app-stats-card>
-    <app-stats-card
-      label="En attente"
-      [value]="stats.pendingRentals"
-      icon="bi-clock-history"
-      color="danger"
-      routerLink="/rentals">
+      label="Profil recherche"
+      [value]="stats.tenantInfo?.searchProfileActive ? 'Actif' : 'Inactif'"
+      icon="bi-person-badge"
+      [color]="stats.tenantInfo?.searchProfileActive ? 'success' : 'warning'"
+      routerLink="/search-profile">
     </app-stats-card>
     <app-stats-card
       label="Messages"
-      [value]="0"
+      [value]="stats.tenantInfo?.unreadMessages || 0"
       icon="bi-chat-dots"
-      color="primary"
+      color="danger"
       routerLink="/messages">
     </app-stats-card>
   </div>
@@ -76,14 +76,39 @@
     </app-stats-card>
   </div>
 
-  <!-- Recent Activity -->
-  <div *ngIf="!loading && !error && stats && hasActivity" class="dashboard__section">
+  <!-- Tenant Alerts -->
+  <div *ngIf="!loading && !error && stats && isTenant && hasTenantAlerts" class="dashboard__section">
+    <h3 class="dashboard__section-title">
+      <i class="bi bi-bell"></i>
+      Notifications
+    </h3>
+
+    <div *ngIf="stats.tenantInfo?.pendingInvitations" class="hw-alert hw-alert--success" style="margin-bottom: var(--hw-space-4)">
+      <i class="bi bi-envelope-open-fill"></i>
+      <span>{{ stats.tenantInfo?.pendingInvitations }} invitation{{ (stats.tenantInfo?.pendingInvitations || 0) > 1 ? 's' : '' }} en attente</span>
+      <a routerLink="/search-profile/invitations" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Voir</a>
+    </div>
+
+    <div *ngIf="stats.tenantInfo?.pendingApplications" class="hw-alert hw-alert--info" style="margin-bottom: var(--hw-space-4)">
+      <i class="bi bi-hourglass-split"></i>
+      <span>{{ stats.tenantInfo?.pendingApplications }} candidature{{ (stats.tenantInfo?.pendingApplications || 0) > 1 ? 's' : '' }} en cours d'examen</span>
+      <a routerLink="/applications" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Voir</a>
+    </div>
+
+    <div *ngIf="!stats.tenantInfo?.searchProfileActive" class="hw-alert hw-alert--warning" style="margin-bottom: var(--hw-space-4)">
+      <i class="bi bi-eye-slash-fill"></i>
+      <span>Votre profil de recherche est inactif — les propriétaires ne peuvent pas vous trouver</span>
+      <a routerLink="/search-profile" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Activer</a>
+    </div>
+  </div>
+
+  <!-- Recent Activity — OWNER / ADMIN -->
+  <div *ngIf="!loading && !error && stats && !isTenant && hasActivity" class="dashboard__section">
     <h3 class="dashboard__section-title">
       <i class="bi bi-activity"></i>
       Activité récente
     </h3>
 
-    <!-- Pending rentals alert -->
     <div *ngIf="stats.pendingRentals > 0" class="hw-alert hw-alert--warning" style="margin-bottom: var(--hw-space-4)">
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>{{ stats.pendingRentals }} location{{ stats.pendingRentals > 1 ? 's' : '' }} en attente de validation</span>
@@ -91,8 +116,7 @@
     </div>
 
     <div class="dashboard__activity-list">
-      <!-- Latest property (OWNER/ADMIN only) -->
-      <a *ngIf="stats.recentActivity.latestProperty && !isTenant"
+      <a *ngIf="stats.recentActivity.latestProperty"
          class="dashboard__activity-item hw-card hw-card--clickable"
          [routerLink]="'/properties/' + stats.recentActivity.latestProperty.id">
         <div class="hw-icon-circle hw-icon-circle--primary">
@@ -106,7 +130,6 @@
         <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
       </a>
 
-      <!-- Latest rental -->
       <a *ngIf="stats.recentActivity.latestRental"
          class="dashboard__activity-item hw-card hw-card--clickable"
          [routerLink]="'/rentals/' + stats.recentActivity.latestRental.id">
@@ -131,44 +154,44 @@
     </h3>
     <!-- Quick Actions — TENANT -->
     <div *ngIf="isTenant" class="dashboard__actions-grid">
-      <a routerLink="/rentals" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--success">
-          <i class="bi bi-key"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Mes Locations</span>
-          <span class="dashboard__action-desc">Voir mes locations</span>
-        </div>
-      </a>
-      <a routerLink="/contracts" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--info">
-          <i class="bi bi-file-earmark-text"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Mes Contrats</span>
-          <span class="dashboard__action-desc">Consulter mes contrats</span>
-        </div>
-      </a>
       <a routerLink="/listings" class="dashboard__action-card hw-card hw-card--clickable">
         <div class="hw-icon-circle hw-icon-circle--primary">
           <i class="bi bi-search"></i>
         </div>
         <div>
           <span class="dashboard__action-title">Rechercher</span>
-          <span class="dashboard__action-desc">Rechercher un logement</span>
+          <span class="dashboard__action-desc">Trouver un logement</span>
         </div>
       </a>
       <a routerLink="/applications" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--neutral">
-          <i class="bi bi-people"></i>
+        <div class="hw-icon-circle hw-icon-circle--info">
+          <i class="bi bi-send"></i>
         </div>
         <div>
           <span class="dashboard__action-title">Candidatures</span>
-          <span class="dashboard__action-desc">Mes candidatures</span>
+          <span class="dashboard__action-desc">Suivre mes candidatures</span>
+        </div>
+      </a>
+      <a routerLink="/search-profile" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--success">
+          <i class="bi bi-person-badge"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Profil recherche</span>
+          <span class="dashboard__action-desc">Critères et visibilité</span>
+        </div>
+      </a>
+      <a routerLink="/search-profile/invitations" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--warning">
+          <i class="bi bi-envelope-open"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Invitations</span>
+          <span class="dashboard__action-desc">Propositions reçues</span>
         </div>
       </a>
       <a routerLink="/messages" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--warning">
+        <div class="hw-icon-circle hw-icon-circle--neutral">
           <i class="bi bi-chat-dots"></i>
         </div>
         <div>
@@ -176,13 +199,13 @@
           <span class="dashboard__action-desc">Mes conversations</span>
         </div>
       </a>
-      <a routerLink="/profile" class="dashboard__action-card hw-card hw-card--clickable">
+      <a routerLink="/receipts" class="dashboard__action-card hw-card hw-card--clickable">
         <div class="hw-icon-circle hw-icon-circle--danger">
-          <i class="bi bi-person"></i>
+          <i class="bi bi-file-earmark-check"></i>
         </div>
         <div>
-          <span class="dashboard__action-title">Mon Profil</span>
-          <span class="dashboard__action-desc">Gérer mon profil</span>
+          <span class="dashboard__action-title">Quittances</span>
+          <span class="dashboard__action-desc">Mes quittances de loyer</span>
         </div>
       </a>
     </div>

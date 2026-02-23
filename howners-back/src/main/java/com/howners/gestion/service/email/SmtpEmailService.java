@@ -1,5 +1,6 @@
 package com.howners.gestion.service.email;
 
+import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
@@ -176,6 +177,60 @@ public class SmtpEmailService implements EmailService {
         } catch (Exception e) {
             log.error("Failed to send receipt email to: {}", data.recipientEmail(), e);
             throw new RuntimeException("Failed to send receipt email", e);
+        }
+    }
+
+    @Override
+    public void sendApplicationAcceptedEmail(ApplicationReviewedEmailData data) {
+        log.info("Sending application accepted email to: {}", data.recipientEmail());
+
+        try {
+            Context context = new Context();
+            context.setVariable("recipientName", data.recipientName());
+            context.setVariable("ownerName", data.ownerName());
+            context.setVariable("propertyName", data.propertyName());
+            context.setVariable("listingTitle", data.listingTitle());
+            context.setVariable("notes", data.notes());
+            context.setVariable("dashboardUrl", data.dashboardUrl());
+
+            String htmlContent = templateEngine.process("email/application-accepted", context);
+
+            sendHtmlEmail(
+                    data.recipientEmail(),
+                    "Candidature acceptée - " + data.propertyName(),
+                    htmlContent
+            );
+
+            log.info("Application accepted email sent successfully to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            log.error("Failed to send application accepted email to: {}", data.recipientEmail(), e);
+        }
+    }
+
+    @Override
+    public void sendApplicationRejectedEmail(ApplicationReviewedEmailData data) {
+        log.info("Sending application rejected email to: {}", data.recipientEmail());
+
+        try {
+            Context context = new Context();
+            context.setVariable("recipientName", data.recipientName());
+            context.setVariable("ownerName", data.ownerName());
+            context.setVariable("propertyName", data.propertyName());
+            context.setVariable("listingTitle", data.listingTitle());
+            context.setVariable("notes", data.notes());
+            context.setVariable("dashboardUrl", data.dashboardUrl());
+
+            String htmlContent = templateEngine.process("email/application-rejected", context);
+
+            sendHtmlEmail(
+                    data.recipientEmail(),
+                    "Réponse à votre candidature - " + data.propertyName(),
+                    htmlContent
+            );
+
+            log.info("Application rejected email sent successfully to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            log.error("Failed to send application rejected email to: {}", data.recipientEmail(), e);
         }
     }
 

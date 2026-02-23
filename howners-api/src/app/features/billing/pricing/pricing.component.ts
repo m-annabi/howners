@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { SubscriptionPlan, PlanName, PLAN_FEATURES, PLAN_COLORS } from '../../../core/models/subscription.model';
 
@@ -16,7 +17,10 @@ export class PricingComponent implements OnInit {
   planFeatures = PLAN_FEATURES;
   planColors = PLAN_COLORS;
 
-  constructor(private subscriptionService: SubscriptionService) {}
+  constructor(
+    private subscriptionService: SubscriptionService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loading = true;
@@ -45,7 +49,11 @@ export class PricingComponent implements OnInit {
     this.checkingOut = true;
     this.subscriptionService.createCheckout(plan.id, this.billingPeriod).subscribe({
       next: (response) => {
-        window.location.href = response.checkoutUrl;
+        if (response.sessionId === 'dev-mode') {
+          this.router.navigate(['/billing/success'], { queryParams: { session_id: 'dev-mode' } });
+        } else {
+          window.location.href = response.checkoutUrl;
+        }
       },
       error: () => this.checkingOut = false
     });
