@@ -67,6 +67,17 @@ public class ExpenseService {
 
     @Transactional(readOnly = true)
     public List<ExpenseResponse> findByPropertyId(UUID propertyId) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
+
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property", "id", propertyId.toString()));
+
+        if (currentUser.getRole() != Role.ADMIN && !property.getOwner().getId().equals(currentUserId)) {
+            throw new ForbiddenException("You are not authorized to access expenses for this property");
+        }
+
         return expenseRepository.findByPropertyId(propertyId).stream()
                 .map(ExpenseResponse::from)
                 .collect(Collectors.toList());

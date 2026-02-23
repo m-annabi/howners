@@ -16,6 +16,7 @@ import com.howners.gestion.dto.document.DocumentResponse;
 import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
 import com.howners.gestion.dto.response.RentalResponse;
 import com.howners.gestion.exception.BadRequestException;
+import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ApplicationRepository;
 import com.howners.gestion.repository.DocumentRepository;
@@ -115,18 +116,22 @@ public class ApplicationService {
 
     @Transactional
     public ApplicationResponse findById(UUID id) {
+        UUID currentUserId = AuthService.getCurrentUserId();
         Application application = applicationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
+        // Access check: only the applicant or the property owner can view
+        UUID applicantId = application.getApplicant().getId();
+        UUID ownerId = application.getListing().getProperty().getOwner().getId();
+        if (!applicantId.equals(currentUserId) && !ownerId.equals(currentUserId)) {
+            throw new ForbiddenException("You are not authorized to view this application");
+        }
+
         // Auto-escalate to UNDER_REVIEW when the property owner views a SUBMITTED application
-        if (application.getStatus() == ApplicationStatus.SUBMITTED) {
-            UUID currentUserId = AuthService.getCurrentUserId();
-            UUID ownerId = application.getListing().getProperty().getOwner().getId();
-            if (ownerId.equals(currentUserId)) {
-                application.setStatus(ApplicationStatus.UNDER_REVIEW);
-                application = applicationRepository.save(application);
-                log.info("Application {} auto-escalated to UNDER_REVIEW", id);
-            }
+        if (application.getStatus() == ApplicationStatus.SUBMITTED && ownerId.equals(currentUserId)) {
+            application.setStatus(ApplicationStatus.UNDER_REVIEW);
+            application = applicationRepository.save(application);
+            log.info("Application {} auto-escalated to UNDER_REVIEW", id);
         }
 
         return toResponseWithDocuments(application);
@@ -140,6 +145,11 @@ public class ApplicationService {
 
         Application application = applicationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        // Ownership check: only the property owner can review
+        if (!application.getListing().getProperty().getOwner().getId().equals(currentUserId)) {
+            throw new ForbiddenException("You can only review applications for your own properties");
+        }
 
         if (application.getStatus() != ApplicationStatus.SUBMITTED &&
                 application.getStatus() != ApplicationStatus.UNDER_REVIEW) {
