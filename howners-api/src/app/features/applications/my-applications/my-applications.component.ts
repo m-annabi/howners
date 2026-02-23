@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApplicationService } from '../../../core/services/application.service';
 import { DocumentService } from '../../../core/services/document.service';
@@ -22,9 +23,11 @@ interface RequiredDocumentType {
   selector: 'app-my-applications',
   templateUrl: './my-applications.component.html'
 })
-export class MyApplicationsComponent implements OnInit {
+export class MyApplicationsComponent implements OnInit, OnDestroy {
   applications: Application[] = [];
   loading = false;
+  error: string | null = null;
+  submitting = false;
   activeTab: 'received' | 'sent' = 'sent';
   isOwner = false;
 
@@ -36,6 +39,8 @@ export class MyApplicationsComponent implements OnInit {
   // Create rental modal
   showCreateRentalModal = false;
   acceptedApplication: Application | null = null;
+
+  private userSub!: Subscription;
 
   statusLabels = APPLICATION_STATUS_LABELS;
   statusColors = APPLICATION_STATUS_COLORS;
@@ -56,11 +61,15 @@ export class MyApplicationsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
+    this.userSub = this.authService.currentUser$.subscribe(user => {
       this.isOwner = user?.role === 'OWNER' || user?.role === 'ADMIN';
       this.activeTab = this.isOwner ? 'received' : 'sent';
       this.loadApplications();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.userSub?.unsubscribe();
   }
 
   switchTab(tab: 'received' | 'sent'): void {
@@ -72,6 +81,7 @@ export class MyApplicationsComponent implements OnInit {
 
   loadApplications(): void {
     this.loading = true;
+    this.error = null;
     const obs = this.activeTab === 'received'
       ? this.applicationService.getReceivedApplications()
       : this.applicationService.getMyApplications();
@@ -81,14 +91,22 @@ export class MyApplicationsComponent implements OnInit {
         this.applications = apps;
         this.loading = false;
       },
-      error: () => this.loading = false
+      error: (err) => {
+        this.error = err.error?.message || 'Erreur lors du chargement des candidatures';
+        this.loading = false;
+      }
     });
   }
 
   // --- Tenant actions ---
   withdraw(id: string): void {
     if (confirm('Retirer cette candidature ?')) {
-      this.applicationService.withdraw(id).subscribe(() => this.loadApplications());
+      this.applicationService.withdraw(id).subscribe({
+        next: () => this.loadApplications(),
+        error: (err) => {
+          this.error = err.error?.message || 'Erreur lors du retrait de la candidature';
+        }
+      });
     }
   }
 
@@ -108,17 +126,24 @@ export class MyApplicationsComponent implements OnInit {
   }
 
   accept(id: string): void {
+    this.submitting = true;
+    this.error = null;
     const request: ReviewApplicationRequest = {
       status: ApplicationStatus.ACCEPTED,
       notes: this.reviewNotes || undefined
     };
     this.applicationService.review(id, request).subscribe({
       next: (updatedApp) => {
+        this.submitting = false;
         this.reviewingId = null;
         this.reviewNotes = '';
         this.acceptedApplication = updatedApp;
         this.showCreateRentalModal = true;
         this.loadApplications();
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.error = err.error?.message || 'Erreur lors de l\'acceptation de la candidature';
       }
     });
   }
@@ -128,15 +153,22 @@ export class MyApplicationsComponent implements OnInit {
   }
 
   private review(id: string, status: ApplicationStatus): void {
+    this.submitting = true;
+    this.error = null;
     const request: ReviewApplicationRequest = {
       status,
       notes: this.reviewNotes || undefined
     };
     this.applicationService.review(id, request).subscribe({
       next: () => {
+        this.submitting = false;
         this.reviewingId = null;
         this.reviewNotes = '';
         this.loadApplications();
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.error = err.error?.message || 'Erreur lors du traitement de la candidature';
       }
     });
   }

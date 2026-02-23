@@ -1,5 +1,5 @@
-<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
-  <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);" (click)="onBackdropClick($event)">
+  <div class="modal-dialog modal-lg" role="document" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
@@ -37,6 +37,7 @@
 
         <!-- Form -->
         <form [formGroup]="rentalForm">
+          <fieldset [disabled]="submitting">
           <div class="row g-3">
             <!-- Rental type -->
             <div class="col-md-6">
@@ -66,7 +67,11 @@
             <!-- End date -->
             <div class="col-md-6">
               <label class="form-label">Date de fin</label>
-              <input type="date" class="form-control" formControlName="endDate">
+              <input type="date" class="form-control" formControlName="endDate"
+                     [class.is-invalid]="dateRangeInvalid">
+              <div *ngIf="dateRangeInvalid" class="invalid-feedback">
+                La date de fin doit etre apres la date de debut
+              </div>
             </div>
 
             <!-- Monthly rent -->
@@ -105,6 +110,7 @@
             <!-- Currency (hidden unless needed) -->
             <input type="hidden" formControlName="currency">
           </div>
+          </fieldset>
         </form>
       </div>
 

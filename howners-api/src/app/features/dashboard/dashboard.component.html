@@ -62,7 +62,7 @@
     </app-stats-card>
     <app-stats-card
       label="Revenus mensuels"
-      [value]="stats.monthlyRevenue + ' ' + stats.currency"
+      [value]="(stats?.monthlyRevenue || 0) + ' ' + (stats?.currency || 'EUR')"
       icon="bi-cash-stack"
       color="warning"
       routerLink="/financial">
@@ -116,30 +116,30 @@
     </div>
 
     <div class="dashboard__activity-list">
-      <a *ngIf="stats.recentActivity.latestProperty"
+      <a *ngIf="stats?.recentActivity?.latestProperty as prop"
          class="dashboard__activity-item hw-card hw-card--clickable"
-         [routerLink]="'/properties/' + stats.recentActivity.latestProperty.id">
+         [routerLink]="'/properties/' + prop.id">
         <div class="hw-icon-circle hw-icon-circle--primary">
           <i class="bi bi-building"></i>
         </div>
         <div class="dashboard__activity-content">
           <span class="dashboard__activity-label">Dernier bien ajouté</span>
-          <span class="dashboard__activity-value">{{ stats.recentActivity.latestProperty.name }}</span>
-          <span class="hw-text-xs hw-text-muted">{{ stats.recentActivity.latestProperty.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+          <span class="dashboard__activity-value">{{ prop.name }}</span>
+          <span class="hw-text-xs hw-text-muted">{{ prop.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
         </div>
         <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
       </a>
 
-      <a *ngIf="stats.recentActivity.latestRental"
+      <a *ngIf="stats?.recentActivity?.latestRental as rental"
          class="dashboard__activity-item hw-card hw-card--clickable"
-         [routerLink]="'/rentals/' + stats.recentActivity.latestRental.id">
+         [routerLink]="'/rentals/' + rental.id">
         <div class="hw-icon-circle hw-icon-circle--success">
           <i class="bi bi-key"></i>
         </div>
         <div class="dashboard__activity-content">
           <span class="dashboard__activity-label">Dernière location créée</span>
-          <span class="dashboard__activity-value">{{ stats.recentActivity.latestRental.propertyName }}</span>
-          <span class="hw-text-xs hw-text-muted">{{ stats.recentActivity.latestRental.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
+          <span class="dashboard__activity-value">{{ rental.propertyName }}</span>
+          <span class="hw-text-xs hw-text-muted">{{ rental.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
         </div>
         <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
       </a>

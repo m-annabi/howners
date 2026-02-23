@@ -23,8 +23,14 @@
   <!-- Loading -->
   <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
 
+  <!-- Error -->
+  <div *ngIf="error" class="hw-alert hw-alert--danger" style="margin-top: var(--hw-space-4, 1rem)">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+
   <!-- Plans -->
-  <div class="pricing-grid" *ngIf="!loading">
+  <div class="pricing-grid" *ngIf="!loading && !error">
     <div *ngFor="let plan of plans"
       class="pricing-card hw-card"
       [class.pricing-card--popular]="isPopular(plan)">
