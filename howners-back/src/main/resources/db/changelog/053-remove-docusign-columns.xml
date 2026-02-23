@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="053-1" author="howners">
+        <comment>Drop provider_envelope_id index and column (no longer used after DocuSign removal)</comment>
+        <dropIndex indexName="idx_signature_request_provider_envelope_id" tableName="contract_signature_requests"/>
+        <dropColumn tableName="contract_signature_requests" columnName="provider_envelope_id"/>
+    </changeSet>
+
+    <changeSet id="053-2" author="howners">
+        <comment>Drop signing_url column (no longer used, signing link is generated dynamically)</comment>
+        <dropColumn tableName="contract_signature_requests" columnName="signing_url"/>
+    </changeSet>
+
+</databaseChangeLog>

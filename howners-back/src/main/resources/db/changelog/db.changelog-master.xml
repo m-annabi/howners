@@ -56,5 +56,6 @@
     <include file="db/changelog/050-seed-sample-listings.xml"/>
     <include file="db/changelog/051-seed-listing-photos.xml"/>
     <include file="db/changelog/052-add-performance-indexes.xml"/>
+    <include file="db/changelog/053-remove-docusign-columns.xml"/>
 
 </databaseChangeLog>
