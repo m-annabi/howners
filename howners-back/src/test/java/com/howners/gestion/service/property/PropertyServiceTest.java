@@ -2,6 +2,8 @@ package com.howners.gestion.service.property;
 
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.property.PropertyType;
+import com.howners.gestion.domain.rental.Rental;
+import com.howners.gestion.domain.rental.RentalStatus;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.AddressDTO;
@@ -10,6 +12,7 @@ import com.howners.gestion.dto.request.UpdatePropertyRequest;
 import com.howners.gestion.dto.response.PropertyResponse;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.repository.PropertyRepository;
+import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.security.UserPrincipal;
 import com.howners.gestion.service.subscription.FeatureGateService;
@@ -37,6 +40,7 @@ import static org.mockito.Mockito.*;
 class PropertyServiceTest {
 
     @Mock private PropertyRepository propertyRepository;
+    @Mock private RentalRepository rentalRepository;
     @Mock private UserRepository userRepository;
     @Mock private FeatureGateService featureGateService;
 
@@ -291,5 +295,84 @@ class PropertyServiceTest {
         AddressDTO address = new AddressDTO("1 Rue", null, "Paris", "75001", "75", "  ");
 
         assertThat(address.country()).isEqualTo("FR");
+    }
+
+    // --- delete ---
+
+    @Test
+    void delete_noActiveRentals_shouldSucceed() {
+        Property p = Property.builder()
+                .id(UUID.randomUUID())
+                .owner(owner)
+                .name("Apt to delete")
+                .propertyType(PropertyType.APARTMENT)
+                .city("Paris")
+                .postalCode("75001")
+                .country("FR")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(propertyRepository.findById(p.getId())).thenReturn(Optional.of(p));
+        when(rentalRepository.findByPropertyId(p.getId())).thenReturn(List.of());
+
+        propertyService.delete(p.getId());
+
+        verify(propertyRepository).delete(p);
+    }
+
+    @Test
+    void delete_withActiveRental_shouldThrow() {
+        Property p = Property.builder()
+                .id(UUID.randomUUID())
+                .owner(owner)
+                .name("Apt with rental")
+                .propertyType(PropertyType.APARTMENT)
+                .city("Paris")
+                .postalCode("75001")
+                .country("FR")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Rental activeRental = Rental.builder()
+                .id(UUID.randomUUID())
+                .property(p)
+                .status(RentalStatus.ACTIVE)
+                .build();
+
+        when(propertyRepository.findById(p.getId())).thenReturn(Optional.of(p));
+        when(rentalRepository.findByPropertyId(p.getId())).thenReturn(List.of(activeRental));
+
+        assertThatThrownBy(() -> propertyService.delete(p.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Cannot delete property");
+
+        verify(propertyRepository, never()).delete(any());
+    }
+
+    @Test
+    void delete_withTerminatedRental_shouldSucceed() {
+        Property p = Property.builder()
+                .id(UUID.randomUUID())
+                .owner(owner)
+                .name("Apt with old rental")
+                .propertyType(PropertyType.APARTMENT)
+                .city("Paris")
+                .postalCode("75001")
+                .country("FR")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Rental terminatedRental = Rental.builder()
+                .id(UUID.randomUUID())
+                .property(p)
+                .status(RentalStatus.TERMINATED)
+                .build();
+
+        when(propertyRepository.findById(p.getId())).thenReturn(Optional.of(p));
+        when(rentalRepository.findByPropertyId(p.getId())).thenReturn(List.of(terminatedRental));
+
+        propertyService.delete(p.getId());
+
+        verify(propertyRepository).delete(p);
     }
 }
