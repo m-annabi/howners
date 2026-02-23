@@ -3,11 +3,9 @@ export interface SignatureRequest {
   contractId: string;
   contractNumber: string;
   provider: string;
-  providerEnvelopeId: string;
   signerEmail: string;
   signerName: string;
   status: SignatureRequestStatus;
-  signingUrl: string | null;
   sentAt: string | null;
   viewedAt: string | null;
   signedAt: string | null;

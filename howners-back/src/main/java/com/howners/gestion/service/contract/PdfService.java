@@ -2,13 +2,13 @@ package com.howners.gestion.service.contract;
 
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
+import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfPage;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
-import com.itextpdf.layout.element.Image;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -162,20 +162,21 @@ public class PdfService {
                     .showText("Signature du locataire")
                     .endText();
 
-            // Image de la signature
-            Image signatureImage = new Image(ImageDataFactory.create(signatureImageBytes));
+            // Image de la signature (redimensionnée pour tenir dans la zone)
+            ImageData signatureImageData = ImageDataFactory.create(signatureImageBytes);
+            float origWidth = signatureImageData.getWidth();
+            float origHeight = signatureImageData.getHeight();
             float sigWidth = 180;
-            float sigHeight = signatureImage.getImageHeight() * (sigWidth / signatureImage.getImageWidth());
+            float sigHeight = origHeight * (sigWidth / origWidth);
             if (sigHeight > 60) {
                 sigHeight = 60;
-                sigWidth = signatureImage.getImageWidth() * (sigHeight / signatureImage.getImageHeight());
+                sigWidth = origWidth * (sigHeight / origHeight);
             }
 
-            canvas.addImageAt(
-                    ImageDataFactory.create(signatureImageBytes),
-                    sigBlockX + 10,
-                    sigBlockY + 15,
-                    false
+            canvas.addImageWithTransformationMatrix(
+                    signatureImageData,
+                    sigWidth, 0, 0, sigHeight,
+                    sigBlockX + 10, sigBlockY + 15
             );
 
             // Nom et date sous la signature

@@ -54,12 +54,6 @@ public class GlobalExceptionHandler {
         return buildESignatureErrorResponse(ex, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(WebhookValidationException.class)
-    public ResponseEntity<Map<String, Object>> handleWebhookValidationException(WebhookValidationException ex) {
-        log.error("Webhook validation failed: {}", ex.getMessage());
-        return buildESignatureErrorResponse(ex, HttpStatus.BAD_REQUEST);
-    }
-
     @ExceptionHandler(DocumentDownloadException.class)
     public ResponseEntity<Map<String, Object>> handleDocumentDownloadException(DocumentDownloadException ex) {
         log.error("Document download failed: {}", ex.getMessage(), ex);
@@ -70,12 +64,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleEmailSendException(EmailSendException ex) {
         log.error("Email send failed: {}", ex.getMessage(), ex);
         return buildESignatureErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @ExceptionHandler(ESignatureProviderException.class)
-    public ResponseEntity<Map<String, Object>> handleESignatureProviderException(ESignatureProviderException ex) {
-        log.error("E-signature provider error: {}", ex.getMessage(), ex);
-        return buildESignatureErrorResponse(ex, HttpStatus.BAD_GATEWAY);
     }
 
     @ExceptionHandler(ESignatureException.class)
