@@ -73,9 +73,34 @@
         </div>
       </div>
 
-      <!-- E-Signature Status (DocuSign - deprecated, hidden) -->
-      <div *ngIf="false && signatureRequest" class="card mb-4 border-primary">
-        <!-- DocuSign integration disabled -->
+      <!-- Signature Request Status -->
+      <div *ngIf="signatureRequest" class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+          Demande de signature
+        </div>
+        <div class="card-body">
+          <p><strong>Signataire :</strong> {{ signatureRequest.signerName }} ({{ signatureRequest.signerEmail }})</p>
+          <p><strong>Statut :</strong>
+            <span class="badge" [ngClass]="{
+              'bg-info': signatureRequest.status === SignatureRequestStatus.SENT,
+              'bg-success': signatureRequest.status === SignatureRequestStatus.SIGNED,
+              'bg-warning': signatureRequest.status === SignatureRequestStatus.EXPIRED,
+              'bg-secondary': signatureRequest.status === SignatureRequestStatus.CANCELLED
+            }">
+              {{ signatureRequest.status }}
+            </span>
+          </p>
+          <p *ngIf="signatureRequest.sentAt"><strong>Envoy&eacute; le :</strong> {{ signatureRequest.sentAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+          <p *ngIf="signatureRequest.signedAt"><strong>Sign&eacute; le :</strong> {{ signatureRequest.signedAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+          <div *ngIf="canManageSignatureRequest()" class="mt-2">
+            <button class="btn btn-sm btn-outline-primary me-2" (click)="resendSignatureRequest()">
+              Renvoyer l'email
+            </button>
+            <button class="btn btn-sm btn-outline-danger" (click)="cancelSignatureRequest()">
+              Annuler la demande
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Actions -->
@@ -84,7 +109,7 @@
           class="btn btn-primary me-2"
           (click)="downloadPdf()"
         >
-          📄 Télécharger le PDF
+          <i class="bi bi-file-earmark-pdf me-1"></i> T&eacute;l&eacute;charger le PDF
         </button>
 
         <button
@@ -95,13 +120,16 @@
           <i class="bi bi-pencil me-1"></i> Modifier
         </button>
 
-        <!-- New Signature Button -->
         <button
-          *ngIf="contract.status === ContractStatus.DRAFT"
+          *ngIf="contract.status === ContractStatus.DRAFT && !signatureRequest"
           class="btn btn-success me-2"
           (click)="sendForSignature()"
+          [disabled]="sendingForSignature"
         >
-          ✍️ Envoyer pour signature
+          <span *ngIf="!sendingForSignature"><i class="bi bi-send me-1"></i> Envoyer pour signature</span>
+          <span *ngIf="sendingForSignature">
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span> Envoi...
+          </span>
         </button>
 
         <button
@@ -115,7 +143,7 @@
           class="btn btn-info me-2"
           (click)="loadVersions()"
         >
-          📋 Voir les versions
+          <i class="bi bi-clock-history me-1"></i> Voir les versions
         </button>
 
         <button
@@ -123,7 +151,7 @@
           class="btn btn-danger"
           (click)="deleteContract()"
         >
-          🗑️ Supprimer
+          <i class="bi bi-trash me-1"></i> Supprimer
         </button>
       </div>
 

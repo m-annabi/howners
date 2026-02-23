@@ -2,14 +2,24 @@ package com.howners.gestion.service.contract;
 
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
+import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfPage;
+import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
+import com.itextpdf.layout.element.Image;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 
 @Service
@@ -113,5 +123,72 @@ public class PdfService {
                 contractNumber,
                 version,
                 System.currentTimeMillis());
+    }
+
+    /**
+     * Applique une image de signature sur la dernière page d'un PDF existant
+     *
+     * @param originalPdf le contenu du PDF original
+     * @param signatureImageBytes l'image de la signature (PNG)
+     * @param signerName le nom du signataire
+     * @return le PDF avec la signature appliquée
+     */
+    public byte[] applySignatureToPdf(byte[] originalPdf, byte[] signatureImageBytes, String signerName) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try (PdfReader reader = new PdfReader(new ByteArrayInputStream(originalPdf));
+             PdfWriter writer = new PdfWriter(outputStream);
+             PdfDocument pdfDoc = new PdfDocument(reader, writer)) {
+
+            PdfPage lastPage = pdfDoc.getLastPage();
+            PdfCanvas canvas = new PdfCanvas(lastPage);
+            float pageWidth = lastPage.getPageSize().getWidth();
+            float pageHeight = lastPage.getPageSize().getHeight();
+
+            // Zone de signature en bas à droite de la dernière page
+            float sigBlockX = pageWidth - 250;
+            float sigBlockY = 60;
+
+            // Ligne de séparation au-dessus de la signature
+            canvas.setLineWidth(0.5f)
+                    .moveTo(sigBlockX, sigBlockY + 80)
+                    .lineTo(sigBlockX + 200, sigBlockY + 80)
+                    .stroke();
+
+            // Texte "Signature du locataire"
+            canvas.beginText()
+                    .setFontAndSize(com.itextpdf.kernel.font.PdfFontFactory.createFont(), 8)
+                    .moveText(sigBlockX, sigBlockY + 85)
+                    .showText("Signature du locataire")
+                    .endText();
+
+            // Image de la signature
+            Image signatureImage = new Image(ImageDataFactory.create(signatureImageBytes));
+            float sigWidth = 180;
+            float sigHeight = signatureImage.getImageHeight() * (sigWidth / signatureImage.getImageWidth());
+            if (sigHeight > 60) {
+                sigHeight = 60;
+                sigWidth = signatureImage.getImageWidth() * (sigHeight / signatureImage.getImageHeight());
+            }
+
+            canvas.addImageAt(
+                    ImageDataFactory.create(signatureImageBytes),
+                    sigBlockX + 10,
+                    sigBlockY + 15,
+                    false
+            );
+
+            // Nom et date sous la signature
+            String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"));
+            canvas.beginText()
+                    .setFontAndSize(com.itextpdf.kernel.font.PdfFontFactory.createFont(), 7)
+                    .moveText(sigBlockX, sigBlockY + 5)
+                    .showText(signerName + " - " + dateStr)
+                    .endText();
+
+            log.info("Signature applied to PDF for signer: {}", signerName);
+        }
+
+        return outputStream.toByteArray();
     }
 }

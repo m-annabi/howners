@@ -116,68 +116,7 @@
 			<version>5.0.3</version>
 		</dependency>
 
-		<!-- DocuSign SDK for electronic signatures -->
-		<dependency>
-			<groupId>com.docusign</groupId>
-			<artifactId>docusign-esign-java</artifactId>
-			<version>6.5.0</version>
-		</dependency>
-
-		<!-- Jakarta JAX-RS API (required by DocuSign SDK) -->
-		<dependency>
-			<groupId>jakarta.ws.rs</groupId>
-			<artifactId>jakarta.ws.rs-api</artifactId>
-			<version>3.1.0</version>
-		</dependency>
-
-		<!-- Jersey Multipart (required by DocuSign SDK for file uploads) -->
-		<dependency>
-			<groupId>org.glassfish.jersey.media</groupId>
-			<artifactId>jersey-media-multipart</artifactId>
-			<version>3.1.3</version>
-		</dependency>
-
-		<!-- Jersey Client (required by DocuSign SDK) -->
-		<dependency>
-			<groupId>org.glassfish.jersey.core</groupId>
-			<artifactId>jersey-client</artifactId>
-			<version>3.1.3</version>
-		</dependency>
-
-		<!-- Jersey Inject HK2 (required for dependency injection in Jersey) -->
-		<dependency>
-			<groupId>org.glassfish.jersey.inject</groupId>
-			<artifactId>jersey-hk2</artifactId>
-			<version>3.1.3</version>
-		</dependency>
-
-		<!-- Jersey Jackson (JSON serialization for Jersey/DocuSign) -->
-		<dependency>
-			<groupId>org.glassfish.jersey.media</groupId>
-			<artifactId>jersey-media-json-jackson</artifactId>
-			<version>3.1.3</version>
-		</dependency>
-
-		<!-- BouncyCastle (cryptography provider for DocuSign) -->
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcprov-jdk18on</artifactId>
-			<version>1.78.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.bouncycastle</groupId>
-			<artifactId>bcpkix-jdk18on</artifactId>
-			<version>1.78.1</version>
-		</dependency>
-
-		<!-- Auth0 JWT (required by DocuSign for JWT authentication) -->
-		<dependency>
-			<groupId>com.auth0</groupId>
-			<artifactId>java-jwt</artifactId>
-			<version>4.4.0</version>
-		</dependency>
-
-		<!-- Jackson for JSON processing (required by DocuSign) -->
+		<!-- Jackson for JSON processing -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

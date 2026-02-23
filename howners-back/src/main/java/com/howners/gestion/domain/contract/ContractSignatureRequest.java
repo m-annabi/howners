@@ -38,7 +38,7 @@ public class ContractSignatureRequest {
     private Contract contract;
 
     /**
-     * Le fournisseur de signature électronique (DOCUSIGN, HELLOSIGN, etc.)
+     * Le fournisseur de signature électronique (DIRECT)
      */
     @Column(name = "provider", nullable = false, length = 50)
     private String provider;

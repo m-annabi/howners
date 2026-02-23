@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ContractPublicView, SigningRedirectResponse } from '../models/esignature.model';
+import { ContractPublicView } from '../models/esignature.model';
 
 /**
  * Service pour l'accès public aux contrats via token (sans authentification)
@@ -23,18 +23,21 @@ export class PublicContractService {
   }
 
   /**
-   * Obtient l'URL de redirection vers DocuSign pour signer
+   * Télécharge le PDF du contrat pour prévisualisation
    */
-  getSigningRedirect(token: string, returnUrl?: string): Observable<SigningRedirectResponse> {
-    let params = new HttpParams();
-    if (returnUrl) {
-      params = params.set('returnUrl', returnUrl);
-    }
+  downloadContractPdf(token: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/token/${token}/pdf`, {
+      responseType: 'blob'
+    });
+  }
 
-    return this.http.post<SigningRedirectResponse>(
-      `${this.apiUrl}/token/${token}/redirect`,
-      {},
-      { params }
-    );
+  /**
+   * Signe le contrat directement avec l'image de signature
+   */
+  signContract(token: string, signatureData: string, signerName: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/token/${token}/sign`, {
+      signatureData,
+      signerName
+    });
   }
 }

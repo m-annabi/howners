@@ -3,10 +3,8 @@ package com.howners.gestion.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,7 +18,6 @@ import java.util.List;
 @Slf4j
 public class StartupConfigValidator implements ApplicationListener<ApplicationReadyEvent> {
 
-    private final DocuSignProperties docuSignProperties;
     private final StorageProperties storageProperties;
     private final Environment environment;
 
@@ -31,8 +28,7 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
         List<String> errors = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
 
-        warnings.addAll(validateDocuSignConfig());  // DocuSign is optional
-        warnings.addAll(validateEmailConfig());     // Email is optional
+        warnings.addAll(validateEmailConfig());
         errors.addAll(validateStorageConfig());
 
         if (!warnings.isEmpty()) {
@@ -46,38 +42,6 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
         }
 
         log.info("✅ Required configuration validated successfully");
-    }
-
-    private List<String> validateDocuSignConfig() {
-        List<String> errors = new ArrayList<>();
-
-        if (isBlank(docuSignProperties.getIntegrationKey())) {
-            errors.add("DOCUSIGN_INTEGRATION_KEY is missing");
-        }
-
-        if (isBlank(docuSignProperties.getImpersonatedUserGuid())) {
-            errors.add("DOCUSIGN_USER_ID is missing");
-        }
-
-        if (isBlank(docuSignProperties.getAccountId())) {
-            errors.add("DOCUSIGN_ACCOUNT_ID is missing");
-        }
-
-        if (isBlank(docuSignProperties.getPrivateKey())) {
-            errors.add("DOCUSIGN_PRIVATE_KEY is missing");
-        } else {
-            // Valider le format de la clé privée
-            String privateKey = docuSignProperties.getPrivateKey().replace("\\n", "\n");
-            if (!privateKey.contains("BEGIN RSA PRIVATE KEY") && !privateKey.contains("BEGIN PRIVATE KEY")) {
-                errors.add("DOCUSIGN_PRIVATE_KEY format is invalid (must be PEM format)");
-            }
-        }
-
-        if (errors.isEmpty()) {
-            log.info("✅ DocuSign configuration is valid");
-        }
-
-        return errors;
     }
 
     private List<String> validateEmailConfig() {

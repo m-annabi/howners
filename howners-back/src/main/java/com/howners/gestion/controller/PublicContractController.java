@@ -2,13 +2,17 @@ package com.howners.gestion.controller;
 
 import com.howners.gestion.dto.contract.ContractPublicView;
 import com.howners.gestion.service.contract.ContractESignatureService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller public pour l'accès aux contrats via token (sans authentification)
+ * Controller public pour l'accès aux contrats via token (sans authentification).
+ * Permet au locataire de consulter et signer directement le contrat.
  */
 @RestController
 @RequestMapping("/api/public/contracts")
@@ -20,10 +24,6 @@ public class PublicContractController {
 
     /**
      * Récupère un contrat par son token d'accès
-     *
-     * GET /api/public/contracts/token/{token}
-     *
-     * Accessible sans authentification pour permettre aux locataires de voir leur contrat
      */
     @GetMapping("/token/{token}")
     public ResponseEntity<ContractPublicView> getContractByToken(@PathVariable String token) {
@@ -39,34 +39,70 @@ public class PublicContractController {
     }
 
     /**
-     * Obtient l'URL de redirection vers DocuSign pour signer
-     *
-     * POST /api/public/contracts/token/{token}/redirect
-     *
-     * Cette méthode est appelée quand le locataire clique sur "Signer le contrat"
-     * Elle retourne l'URL DocuSign où rediriger l'utilisateur
+     * Télécharge le PDF du contrat pour prévisualisation
      */
-    @PostMapping("/token/{token}/redirect")
-    public ResponseEntity<RedirectResponse> getSigningRedirect(
-            @PathVariable String token,
-            @RequestParam(required = false) String returnUrl) {
-        log.info("Public request to get signing redirect URL");
+    @GetMapping("/token/{token}/pdf")
+    public ResponseEntity<byte[]> downloadContractPdf(@PathVariable String token) {
+        log.info("Public request to download contract PDF by token");
 
         try {
-            ContractPublicView contract = esignatureService.getContractByToken(token);
-
-            // L'URL de signature est déjà dans documentUrl
-            String signingUrl = contract.documentUrl();
-
-            return ResponseEntity.ok(new RedirectResponse(signingUrl));
+            byte[] pdfBytes = esignatureService.downloadContractPdfByToken(token);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=contrat.pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfBytes);
         } catch (Exception e) {
-            log.error("Failed to get signing redirect", e);
+            log.error("Failed to download contract PDF by token", e);
             return ResponseEntity.badRequest().build();
         }
     }
 
     /**
-     * DTO pour la réponse de redirection
+     * Signe le contrat via le token public.
+     * Reçoit la signature dessinée (base64 PNG) et l'applique directement sur le PDF.
      */
-    public record RedirectResponse(String signingUrl) {}
+    @PostMapping("/token/{token}/sign")
+    public ResponseEntity<Void> signContract(
+            @PathVariable String token,
+            @RequestBody SignContractRequest request,
+            HttpServletRequest httpRequest) {
+        log.info("Public request to sign contract by token");
+
+        try {
+            String ipAddress = getClientIpAddress(httpRequest);
+            String userAgent = httpRequest.getHeader("User-Agent");
+
+            esignatureService.signContractByToken(
+                    token,
+                    request.signatureData(),
+                    request.signerName(),
+                    ipAddress,
+                    userAgent
+            );
+
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Failed to sign contract by token", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * DTO pour la requête de signature
+     */
+    public record SignContractRequest(String signatureData, String signerName) {}
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getHeader("X-Real-IP");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+        if (ipAddress != null && ipAddress.contains(",")) {
+            ipAddress = ipAddress.split(",")[0].trim();
+        }
+        return ipAddress;
+    }
 }

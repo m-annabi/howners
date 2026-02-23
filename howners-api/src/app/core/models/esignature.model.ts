@@ -23,11 +23,9 @@ export interface SignatureRequestResponse {
   contractId: string;
   contractNumber: string;
   provider: string;
-  providerEnvelopeId?: string;
   signerEmail: string;
   signerName: string;
   status: SignatureRequestStatus;
-  signingUrl?: string;
   sentAt?: string;
   viewedAt?: string;
   signedAt?: string;
@@ -52,14 +50,7 @@ export interface ContractPublicView {
   rentalEndDate?: string;
   monthlyRent: string;
   createdAt: string;
-  documentUrl: string;
-}
-
-/**
- * Réponse de redirection vers l'URL de signature
- */
-export interface SigningRedirectResponse {
-  signingUrl: string;
+  documentUrl?: string;
 }
 
 /**
