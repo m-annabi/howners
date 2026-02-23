@@ -2,6 +2,9 @@
 spring:
   jpa:
     show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
 
   liquibase:
     enabled: true
@@ -11,9 +14,21 @@ logging:
     root: WARN
     com.howners: INFO
     org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    liquibase: WARN
 
 server:
   error:
     include-message: never
     include-binding-errors: never
     include-stacktrace: never
+
+# Restrict actuator in production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

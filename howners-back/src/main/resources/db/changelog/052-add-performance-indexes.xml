@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="052-1" author="howners">
+        <comment>Add performance indexes on frequently queried columns</comment>
+
+        <!-- Contracts: lookup by rental -->
+        <createIndex indexName="idx_contracts_rental_id" tableName="contracts">
+            <column name="rental_id"/>
+        </createIndex>
+
+        <!-- Payments: lookup by payer and status -->
+        <createIndex indexName="idx_payments_payer_id" tableName="payments">
+            <column name="payer_id"/>
+        </createIndex>
+        <createIndex indexName="idx_payments_status" tableName="payments">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_payments_due_date" tableName="payments">
+            <column name="due_date"/>
+        </createIndex>
+
+        <!-- Audit logs: lookup by user, entity, and timestamp -->
+        <createIndex indexName="idx_audit_logs_user_id" tableName="audit_logs">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_logs_entity_type" tableName="audit_logs">
+            <column name="entity_type"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_logs_created_at" tableName="audit_logs">
+            <column name="created_at"/>
+        </createIndex>
+
+        <!-- Listings: lookup by owner -->
+        <createIndex indexName="idx_listings_owner_id" tableName="listings">
+            <column name="owner_id"/>
+        </createIndex>
+
+        <!-- Documents: lookup by uploader -->
+        <createIndex indexName="idx_documents_uploader_id" tableName="documents">
+            <column name="uploader_id"/>
+        </createIndex>
+
+        <!-- Rentals: lookup by tenant and property -->
+        <createIndex indexName="idx_rentals_tenant_id" tableName="rentals">
+            <column name="tenant_id"/>
+        </createIndex>
+        <createIndex indexName="idx_rentals_property_id" tableName="rentals">
+            <column name="property_id"/>
+        </createIndex>
+
+        <!-- User subscriptions: lookup by user and status -->
+        <createIndex indexName="idx_user_subscriptions_user_status" tableName="user_subscriptions">
+            <column name="user_id"/>
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Properties: lookup by owner and department -->
+        <createIndex indexName="idx_properties_owner_id" tableName="properties">
+            <column name="owner_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
