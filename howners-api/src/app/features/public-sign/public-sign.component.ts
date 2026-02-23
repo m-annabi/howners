@@ -1,35 +1,33 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { PublicContractService } from '../../core/services/public-contract.service';
 import { ContractPublicView } from '../../core/models/esignature.model';
 
-/**
- * Composant public pour la signature de contrat via token.
- * Accessible sans authentification.
- * Le locataire peut consulter le contrat et signer directement sur le PDF.
- */
 @Component({
   selector: 'app-public-sign',
   templateUrl: './public-sign.component.html',
   styleUrls: ['./public-sign.component.scss']
 })
-export class PublicSignComponent implements OnInit {
+export class PublicSignComponent implements OnInit, OnDestroy {
   contract: ContractPublicView | null = null;
   loading = true;
   error: string | null = null;
   token: string | null = null;
 
-  // Signature
   signing = false;
   signed = false;
-  signatureData: string = '';
-  signerName: string = '';
-  acceptTerms: boolean = false;
+  signatureData = '';
+  signerName = '';
+  acceptTerms = false;
 
-  // PDF preview
   pdfUrl: SafeResourceUrl | null = null;
   loadingPdf = false;
+
+  private pdfObjectUrl: string | null = null;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
@@ -38,7 +36,7 @@ export class PublicSignComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.token = params['token'];
 
       if (!this.token) {
@@ -49,6 +47,12 @@ export class PublicSignComponent implements OnInit {
 
       this.loadContract();
     });
+  }
+
+  ngOnDestroy(): void {
+    this.revokePdfUrl();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private loadContract(): void {
@@ -66,11 +70,7 @@ export class PublicSignComponent implements OnInit {
       },
       error: (err: any) => {
         this.loading = false;
-        if (err.status === 400 || err.status === 404) {
-          this.error = 'Le lien de signature est invalide ou a expiré. Veuillez contacter votre propriétaire.';
-        } else {
-          this.error = 'Une erreur est survenue lors du chargement du contrat. Veuillez réessayer plus tard.';
-        }
+        this.error = this.getErrorMessage(err);
       }
     });
   }
@@ -81,8 +81,9 @@ export class PublicSignComponent implements OnInit {
     this.loadingPdf = true;
     this.publicContractService.downloadContractPdf(this.token).subscribe({
       next: (blob: Blob) => {
-        const url = URL.createObjectURL(blob);
-        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        this.revokePdfUrl();
+        this.pdfObjectUrl = URL.createObjectURL(blob);
+        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl);
         this.loadingPdf = false;
       },
       error: () => {
@@ -96,10 +97,10 @@ export class PublicSignComponent implements OnInit {
   }
 
   canSign(): boolean {
-    return this.acceptTerms &&
-           this.signerName.trim().length > 0 &&
-           this.signatureData.length > 0 &&
-           !this.signing;
+    return this.acceptTerms
+        && this.signerName.trim().length > 0
+        && this.signatureData.length > 0
+        && !this.signing;
   }
 
   signContract(): void {
@@ -108,7 +109,6 @@ export class PublicSignComponent implements OnInit {
     this.signing = true;
     this.error = null;
 
-    // Extraire la partie base64 (enlever le préfixe data:image/png;base64,)
     let signatureBase64 = this.signatureData;
     if (signatureBase64.startsWith('data:')) {
       signatureBase64 = signatureBase64.split(',')[1];
@@ -119,9 +119,9 @@ export class PublicSignComponent implements OnInit {
         this.signing = false;
         this.signed = true;
       },
-      error: () => {
+      error: (err: any) => {
         this.signing = false;
-        this.error = 'Impossible de signer le contrat. Veuillez réessayer.';
+        this.error = this.getErrorMessage(err);
       }
     });
   }
@@ -134,5 +134,28 @@ export class PublicSignComponent implements OnInit {
       month: '2-digit',
       year: 'numeric'
     });
+  }
+
+  private revokePdfUrl(): void {
+    if (this.pdfObjectUrl) {
+      URL.revokeObjectURL(this.pdfObjectUrl);
+      this.pdfObjectUrl = null;
+    }
+  }
+
+  private getErrorMessage(err: any): string {
+    if (err.error?.message) {
+      return err.error.message;
+    }
+    switch (err.status) {
+      case 401:
+        return 'Le lien de signature est invalide. Veuillez contacter votre propriétaire.';
+      case 410:
+        return 'Le lien de signature a expiré. Veuillez demander un nouvel envoi à votre propriétaire.';
+      case 404:
+        return 'Contrat introuvable. Veuillez vérifier votre lien.';
+      default:
+        return 'Une erreur est survenue. Veuillez réessayer plus tard.';
+    }
   }
 }

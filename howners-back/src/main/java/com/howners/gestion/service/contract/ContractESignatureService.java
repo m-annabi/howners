@@ -22,6 +22,7 @@ import com.howners.gestion.security.ContractTokenProvider;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.email.EmailService;
 import com.howners.gestion.service.storage.StorageService;
+import com.howners.gestion.util.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,14 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Service principal pour la gestion des signatures électroniques de contrats.
- * Signature directe sur le PDF (sans provider externe).
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -64,28 +62,16 @@ public class ContractESignatureService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm");
 
-    /**
-     * Envoie un contrat pour signature électronique.
-     * Génère un token d'accès et envoie un email au locataire avec un lien de signature directe.
-     */
     @Transactional
     public SignatureRequestResponse sendContractForSignature(UUID contractId) {
         log.info("Sending contract {} for signature", contractId);
 
-        Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new ContractNotFoundException(
-                        "Contract not found: " + contractId, "CONTRACT_NOT_FOUND"));
-
-        if (contract.getStatus() != ContractStatus.DRAFT) {
-            throw new ContractInvalidStateException(
-                    "Contract must be in DRAFT status to be sent for signature. Current status: " + contract.getStatus(),
-                    "CONTRACT_INVALID_STATE");
-        }
+        Contract contract = findContractOrThrow(contractId);
+        assertContractInStatus(contract, ContractStatus.DRAFT);
 
         if (signatureRequestRepository.hasActiveSignatureRequest(contractId)) {
             throw new ContractInvalidStateException(
-                    "Contract already has an active signature request",
-                    "CONTRACT_HAS_ACTIVE_REQUEST");
+                    "Contract already has an active signature request", "CONTRACT_HAS_ACTIVE_REQUEST");
         }
 
         Rental rental = contract.getRental();
@@ -94,29 +80,15 @@ public class ContractESignatureService {
 
         if (tenant == null) {
             throw new ContractInvalidStateException(
-                    "Cannot send contract for signature: no tenant assigned to rental",
-                    "CONTRACT_NO_TENANT");
+                    "Cannot send contract for signature: no tenant assigned to rental", "CONTRACT_NO_TENANT");
         }
 
-        // Vérifier que le PDF existe
-        ContractVersion currentVersion = contractVersionRepository
-                .findByContractIdAndVersion(contract.getId(), contract.getCurrentVersion())
-                .orElseThrow(() -> new DocumentDownloadException(
-                        "Contract version not found: " + contract.getCurrentVersion(),
-                        "CONTRACT_VERSION_NOT_FOUND"));
+        assertContractPdfExists(contract);
 
-        if (currentVersion.getFileKey() == null || currentVersion.getFileKey().isEmpty()) {
-            throw new DocumentDownloadException(
-                    "Contract PDF file key is missing for version " + contract.getCurrentVersion(),
-                    "CONTRACT_FILE_KEY_MISSING");
-        }
-
-        // Générer le token d'accès
         String[] tokenPair = tokenProvider.generateAndHashToken();
         String rawToken = tokenPair[0];
         String hashedToken = tokenPair[1];
 
-        // Créer la demande de signature
         ContractSignatureRequest signatureRequest = ContractSignatureRequest.builder()
                 .contract(contract)
                 .provider("DIRECT")
@@ -130,7 +102,6 @@ public class ContractESignatureService {
         signatureRequest.setSentAt(LocalDateTime.now());
         signatureRequest = signatureRequestRepository.save(signatureRequest);
 
-        // Mettre à jour le statut du contrat
         contract.setStatus(ContractStatus.SENT);
         contract.setSentAt(LocalDateTime.now());
         contract.setSignatureProvider("DIRECT");
@@ -138,56 +109,15 @@ public class ContractESignatureService {
 
         log.info("Contract {} marked as SENT for direct signature", contractId);
 
-        // Envoyer l'email au locataire
-        String signingLink = frontendUrl + "/sign?token=" + rawToken;
-        String expirationDate = signatureRequest.getTokenExpiresAt().format(DATE_FORMATTER);
-
-        SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
-                .recipientEmail(tenant.getEmail())
-                .recipientName(getFullName(tenant))
-                .ownerName(getFullName(owner))
-                .propertyName(rental.getProperty().getName())
-                .propertyAddress(getPropertyAddress(rental))
-                .contractNumber(contract.getContractNumber())
-                .signingUrl(signingLink)
-                .expirationDate(expirationDate)
-                .build();
-
-        try {
-            emailService.sendSignatureRequestEmail(emailData);
-            log.info("Signature request email sent to {}", tenant.getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send signature email, but signature request was created successfully", e);
-        }
+        sendSignatureRequestEmailSafely(rawToken, signatureRequest, tenant, owner, rental, contract);
 
         return mapToResponse(signatureRequest);
     }
 
-    /**
-     * Récupère un contrat par son token d'accès (pour la vue publique)
-     */
     public ContractPublicView getContractByToken(String token) {
         log.info("Getting contract by access token");
 
-        ContractSignatureRequest signatureRequest = signatureRequestRepository
-                .findByAccessTokenWithDetails(token)
-                .orElseThrow(() -> new InvalidTokenException(
-                        "Invalid or expired token", "INVALID_TOKEN"));
-
-        if (!tokenProvider.validateToken(token, signatureRequest.getAccessToken())) {
-            throw new InvalidTokenException("Token validation failed", "TOKEN_VALIDATION_FAILED");
-        }
-
-        if (signatureRequest.isTokenExpired()) {
-            signatureRequest.setStatus(SignatureRequestStatus.EXPIRED);
-            signatureRequestRepository.save(signatureRequest);
-            throw new TokenExpiredException(
-                    "Token has expired on " + signatureRequest.getTokenExpiresAt(), "TOKEN_EXPIRED");
-        }
-
-        if (signatureRequest.getStatus() == SignatureRequestStatus.SIGNED) {
-            throw new ContractInvalidStateException("Contract has already been signed", "CONTRACT_ALREADY_SIGNED");
-        }
+        ContractSignatureRequest signatureRequest = validateAndGetSignatureRequest(token);
 
         Contract contract = signatureRequest.getContract();
         Rental rental = contract.getRental();
@@ -198,8 +128,8 @@ public class ContractESignatureService {
                 .status(contract.getStatus())
                 .propertyName(rental.getProperty().getName())
                 .propertyAddress(getPropertyAddress(rental))
-                .ownerName(getFullName(rental.getProperty().getOwner()))
-                .tenantName(getFullName(rental.getTenant()))
+                .ownerName(UserDisplayUtils.getFullName(rental.getProperty().getOwner()))
+                .tenantName(UserDisplayUtils.getFullName(rental.getTenant()))
                 .rentalStartDate(rental.getStartDate())
                 .rentalEndDate(rental.getEndDate())
                 .monthlyRent(formatAmount(rental.getMonthlyRent()))
@@ -208,33 +138,12 @@ public class ContractESignatureService {
                 .build();
     }
 
-    /**
-     * Signe un contrat via le token public.
-     * Reçoit l'image de la signature, l'applique sur le PDF, et stocke le résultat.
-     */
     @Transactional
-    public void signContractByToken(String token, String signatureDataBase64, String signerName, String ipAddress, String userAgent) {
+    public void signContractByToken(String token, String signatureDataBase64, String signerName,
+                                     String ipAddress, String userAgent) {
         log.info("Signing contract by token for signer: {}", signerName);
 
-        ContractSignatureRequest signatureRequest = signatureRequestRepository
-                .findByAccessTokenWithDetails(token)
-                .orElseThrow(() -> new InvalidTokenException("Invalid or expired token", "INVALID_TOKEN"));
-
-        if (!tokenProvider.validateToken(token, signatureRequest.getAccessToken())) {
-            throw new InvalidTokenException("Token validation failed", "TOKEN_VALIDATION_FAILED");
-        }
-
-        if (signatureRequest.isTokenExpired()) {
-            signatureRequest.setStatus(SignatureRequestStatus.EXPIRED);
-            signatureRequestRepository.save(signatureRequest);
-            throw new TokenExpiredException(
-                    "Token has expired on " + signatureRequest.getTokenExpiresAt(), "TOKEN_EXPIRED");
-        }
-
-        if (signatureRequest.getStatus() == SignatureRequestStatus.SIGNED) {
-            throw new ContractInvalidStateException("Contract has already been signed", "CONTRACT_ALREADY_SIGNED");
-        }
-
+        ContractSignatureRequest signatureRequest = validateAndGetSignatureRequest(token);
         Contract contract = signatureRequest.getContract();
 
         // Télécharger le PDF original
@@ -250,14 +159,14 @@ public class ContractESignatureService {
             throw new DocumentDownloadException("Failed to download contract PDF", "DOCUMENT_DOWNLOAD_FAILED", e);
         }
 
-        // Décoder l'image de signature et l'appliquer sur le PDF
+        // Appliquer la signature sur le PDF
         byte[] signatureImageBytes = Base64.getDecoder().decode(signatureDataBase64);
         byte[] signedPdfBytes;
         try {
             signedPdfBytes = pdfService.applySignatureToPdf(originalPdf, signatureImageBytes, signerName);
         } catch (Exception e) {
             log.error("Failed to apply signature to PDF", e);
-            throw new RuntimeException("Failed to apply signature to PDF", e);
+            throw new ESignatureException("Failed to apply signature to PDF", "SIGNATURE_APPLICATION_FAILED", e);
         }
 
         // Stocker le PDF signé
@@ -276,13 +185,11 @@ public class ContractESignatureService {
                 .build();
         contractVersionRepository.save(signedVersion);
 
-        // Mettre à jour le contrat
         contract.setCurrentVersion(signedVersion.getVersion());
         contract.setStatus(ContractStatus.SIGNED);
         contract.setSignedAt(LocalDateTime.now());
         contractRepository.save(contract);
 
-        // Mettre à jour la demande de signature
         signatureRequest.setStatus(SignatureRequestStatus.SIGNED);
         signatureRequest.setSignedAt(LocalDateTime.now());
         signatureRequest.setIpAddress(ipAddress);
@@ -295,8 +202,8 @@ public class ContractESignatureService {
 
         SignatureCompletedEmailData emailData = SignatureCompletedEmailData.builder()
                 .recipientEmail(owner.getEmail())
-                .recipientName(getFullName(owner))
-                .tenantName(getFullName(rental.getTenant()))
+                .recipientName(UserDisplayUtils.getFullName(owner))
+                .tenantName(UserDisplayUtils.getFullName(rental.getTenant()))
                 .propertyName(rental.getProperty().getName())
                 .contractNumber(contract.getContractNumber())
                 .signedDate(signatureRequest.getSignedAt().format(DATETIME_FORMATTER))
@@ -312,9 +219,6 @@ public class ContractESignatureService {
         log.info("Contract {} signed successfully by {}", contract.getContractNumber(), signerName);
     }
 
-    /**
-     * Renvoie une demande de signature
-     */
     @Transactional
     public void resendSignatureRequest(UUID signatureRequestId) {
         log.info("Resending signature request: {}", signatureRequestId);
@@ -333,9 +237,8 @@ public class ContractESignatureService {
 
         String[] tokenPair = tokenProvider.generateAndHashToken();
         String rawToken = tokenPair[0];
-        String hashedToken = tokenPair[1];
 
-        signatureRequest.setAccessToken(hashedToken);
+        signatureRequest.setAccessToken(tokenPair[1]);
         signatureRequest.setTokenExpiresAt(LocalDateTime.now().plusDays(tokenExpirationDays));
         signatureRequest.setResendCount(signatureRequest.getResendCount() + 1);
         signatureRequest.setLastResentAt(LocalDateTime.now());
@@ -345,19 +248,8 @@ public class ContractESignatureService {
         User tenant = rental.getTenant();
         User owner = rental.getProperty().getOwner();
 
-        String signingLink = frontendUrl + "/sign?token=" + rawToken;
-        String expirationDate = signatureRequest.getTokenExpiresAt().format(DATE_FORMATTER);
-
-        SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
-                .recipientEmail(tenant.getEmail())
-                .recipientName(getFullName(tenant))
-                .ownerName(getFullName(owner))
-                .propertyName(rental.getProperty().getName())
-                .propertyAddress(getPropertyAddress(rental))
-                .contractNumber(contract.getContractNumber())
-                .signingUrl(signingLink)
-                .expirationDate(expirationDate)
-                .build();
+        SignatureRequestEmailData emailData = buildSignatureRequestEmailData(
+                rawToken, signatureRequest, tenant, owner, rental, contract);
 
         emailService.sendSignatureRequestEmail(emailData);
         signatureRequestRepository.save(signatureRequest);
@@ -365,9 +257,6 @@ public class ContractESignatureService {
         log.info("Signature request resent successfully");
     }
 
-    /**
-     * Annule une demande de signature
-     */
     @Transactional
     public void cancelSignatureRequest(UUID signatureRequestId) {
         log.info("Cancelling signature request: {}", signatureRequestId);
@@ -390,9 +279,6 @@ public class ContractESignatureService {
         log.info("Signature request cancelled successfully");
     }
 
-    /**
-     * Envoi automatique de rappels pour les signatures en attente (> 3 jours, max 3 rappels)
-     */
     @Scheduled(cron = "0 0 9 * * *")
     @Transactional
     public void sendAutomaticReminders() {
@@ -405,8 +291,8 @@ public class ContractESignatureService {
         int remindersSent = 0;
         for (ContractSignatureRequest request : requests) {
             try {
-                if (request.getLastReminderAt() != null &&
-                        request.getLastReminderAt().isAfter(LocalDateTime.now().minusDays(3))) {
+                if (request.getLastReminderAt() != null
+                        && request.getLastReminderAt().isAfter(LocalDateTime.now().minusDays(3))) {
                     continue;
                 }
 
@@ -417,24 +303,12 @@ public class ContractESignatureService {
 
                 String[] tokenPair = tokenProvider.generateAndHashToken();
                 String rawToken = tokenPair[0];
-                String hashedToken = tokenPair[1];
 
-                request.setAccessToken(hashedToken);
+                request.setAccessToken(tokenPair[1]);
                 request.setTokenExpiresAt(LocalDateTime.now().plusDays(tokenExpirationDays));
 
-                String signingLink = frontendUrl + "/sign?token=" + rawToken;
-                String expirationDate = request.getTokenExpiresAt().format(DATE_FORMATTER);
-
-                SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
-                        .recipientEmail(tenant.getEmail())
-                        .recipientName(getFullName(tenant))
-                        .ownerName(getFullName(owner))
-                        .propertyName(rental.getProperty().getName())
-                        .propertyAddress(getPropertyAddress(rental))
-                        .contractNumber(contract.getContractNumber())
-                        .signingUrl(signingLink)
-                        .expirationDate(expirationDate)
-                        .build();
+                SignatureRequestEmailData emailData = buildSignatureRequestEmailData(
+                        rawToken, request, tenant, owner, rental, contract);
 
                 emailService.sendSignatureRequestEmail(emailData);
 
@@ -454,9 +328,6 @@ public class ContractESignatureService {
                 remindersSent, requests.size());
     }
 
-    /**
-     * Récupère le tableau de bord de suivi des signatures pour le propriétaire courant
-     */
     public SignatureTrackingDashboard getSignatureTrackingDashboard() {
         UUID currentUserId = AuthService.getCurrentUserId();
 
@@ -474,7 +345,7 @@ public class ContractESignatureService {
                 case SIGNED -> signed = count;
                 case DECLINED -> declined = count;
                 case EXPIRED -> expired = count;
-                default -> {}
+                default -> { }
             }
         }
 
@@ -484,27 +355,15 @@ public class ContractESignatureService {
                 .toList();
 
         return new SignatureTrackingDashboard(
-                allRequests.size(),
-                pending, sent, viewed, signed, declined, expired,
-                recent
-        );
+                allRequests.size(), pending, sent, viewed, signed, declined, expired, recent);
     }
 
-    /**
-     * Envoie un contrat pour signature à plusieurs signataires
-     */
     @Transactional
     public List<SignatureRequestResponse> sendContractForMultiSignature(UUID contractId, List<SignerInfo> signers) {
         log.info("Sending contract {} for multi-signature with {} signers", contractId, signers.size());
 
-        Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new ContractNotFoundException(
-                        "Contract not found: " + contractId, "CONTRACT_NOT_FOUND"));
-
-        if (contract.getStatus() != ContractStatus.DRAFT) {
-            throw new ContractInvalidStateException(
-                    "Contract must be in DRAFT status for multi-signature", "CONTRACT_INVALID_STATE");
-        }
+        Contract contract = findContractOrThrow(contractId);
+        assertContractInStatus(contract, ContractStatus.DRAFT);
 
         if (signatureRequestRepository.hasActiveSignatureRequest(contractId)) {
             throw new ContractInvalidStateException(
@@ -512,7 +371,7 @@ public class ContractESignatureService {
         }
 
         Rental rental = contract.getRental();
-        List<SignatureRequestResponse> responses = new java.util.ArrayList<>();
+        List<SignatureRequestResponse> responses = new ArrayList<>();
 
         for (SignerInfo signerInfo : signers) {
             User signer = userRepository.findByEmail(signerInfo.email())
@@ -521,14 +380,13 @@ public class ContractESignatureService {
 
             String[] tokenPair = tokenProvider.generateAndHashToken();
             String rawToken = tokenPair[0];
-            String hashedToken = tokenPair[1];
 
             ContractSignatureRequest signatureRequest = ContractSignatureRequest.builder()
                     .contract(contract)
                     .provider("DIRECT")
                     .signer(signer)
                     .signerEmail(signerInfo.email())
-                    .accessToken(hashedToken)
+                    .accessToken(tokenPair[1])
                     .tokenExpiresAt(LocalDateTime.now().plusDays(tokenExpirationDays))
                     .status(SignatureRequestStatus.SENT)
                     .signerOrder(signerInfo.order())
@@ -538,25 +396,9 @@ public class ContractESignatureService {
             signatureRequest = signatureRequestRepository.save(signatureRequest);
 
             if (signerInfo.order() == 1) {
-                String signingLink = frontendUrl + "/sign?token=" + rawToken;
                 User owner = rental.getProperty().getOwner();
-
-                SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
-                        .recipientEmail(signerInfo.email())
-                        .recipientName(signerInfo.name())
-                        .ownerName(getFullName(owner))
-                        .propertyName(rental.getProperty().getName())
-                        .propertyAddress(getPropertyAddress(rental))
-                        .contractNumber(contract.getContractNumber())
-                        .signingUrl(signingLink)
-                        .expirationDate(signatureRequest.getTokenExpiresAt().format(DATE_FORMATTER))
-                        .build();
-
-                try {
-                    emailService.sendSignatureRequestEmail(emailData);
-                } catch (Exception e) {
-                    log.error("Failed to send signature email to {}", signerInfo.email(), e);
-                }
+                sendSignatureRequestEmailSafely(rawToken, signatureRequest,
+                        signer, owner, rental, contract);
             }
 
             responses.add(mapToResponse(signatureRequest));
@@ -570,9 +412,6 @@ public class ContractESignatureService {
         return responses;
     }
 
-    /**
-     * Récupère le statut de la signature d'un contrat
-     */
     @Transactional(readOnly = true)
     public SignatureRequestResponse getSignatureStatus(UUID contractId) {
         ContractSignatureRequest request = signatureRequestRepository
@@ -583,9 +422,6 @@ public class ContractESignatureService {
         return mapToResponse(request);
     }
 
-    /**
-     * Télécharge le PDF du contrat associé au token (pour prévisualisation publique)
-     */
     public byte[] downloadContractPdfByToken(String token) {
         ContractSignatureRequest signatureRequest = signatureRequestRepository
                 .findByAccessTokenWithDetails(token)
@@ -610,6 +446,92 @@ public class ContractESignatureService {
 
     // === Private helpers ===
 
+    private Contract findContractOrThrow(UUID contractId) {
+        return contractRepository.findById(contractId)
+                .orElseThrow(() -> new ContractNotFoundException(
+                        "Contract not found: " + contractId, "CONTRACT_NOT_FOUND"));
+    }
+
+    private void assertContractInStatus(Contract contract, ContractStatus expectedStatus) {
+        if (contract.getStatus() != expectedStatus) {
+            throw new ContractInvalidStateException(
+                    "Contract must be in " + expectedStatus + " status. Current: " + contract.getStatus(),
+                    "CONTRACT_INVALID_STATE");
+        }
+    }
+
+    private void assertContractPdfExists(Contract contract) {
+        ContractVersion currentVersion = contractVersionRepository
+                .findByContractIdAndVersion(contract.getId(), contract.getCurrentVersion())
+                .orElseThrow(() -> new DocumentDownloadException(
+                        "Contract version not found: " + contract.getCurrentVersion(),
+                        "CONTRACT_VERSION_NOT_FOUND"));
+
+        if (currentVersion.getFileKey() == null || currentVersion.getFileKey().isEmpty()) {
+            throw new DocumentDownloadException(
+                    "Contract PDF file key is missing for version " + contract.getCurrentVersion(),
+                    "CONTRACT_FILE_KEY_MISSING");
+        }
+    }
+
+    /**
+     * Valide un token et retourne la demande de signature associée.
+     * Vérifie le hash BCrypt, l'expiration, et que le contrat n'est pas déjà signé.
+     */
+    private ContractSignatureRequest validateAndGetSignatureRequest(String token) {
+        ContractSignatureRequest signatureRequest = signatureRequestRepository
+                .findByAccessTokenWithDetails(token)
+                .orElseThrow(() -> new InvalidTokenException("Invalid or expired token", "INVALID_TOKEN"));
+
+        if (!tokenProvider.validateToken(token, signatureRequest.getAccessToken())) {
+            throw new InvalidTokenException("Token validation failed", "TOKEN_VALIDATION_FAILED");
+        }
+
+        if (signatureRequest.isTokenExpired()) {
+            signatureRequest.setStatus(SignatureRequestStatus.EXPIRED);
+            signatureRequestRepository.save(signatureRequest);
+            throw new TokenExpiredException(
+                    "Token has expired on " + signatureRequest.getTokenExpiresAt(), "TOKEN_EXPIRED");
+        }
+
+        if (signatureRequest.getStatus() == SignatureRequestStatus.SIGNED) {
+            throw new ContractInvalidStateException("Contract has already been signed", "CONTRACT_ALREADY_SIGNED");
+        }
+
+        return signatureRequest;
+    }
+
+    private SignatureRequestEmailData buildSignatureRequestEmailData(
+            String rawToken, ContractSignatureRequest signatureRequest,
+            User tenant, User owner, Rental rental, Contract contract) {
+        String signingLink = frontendUrl + "/sign?token=" + rawToken;
+        String expirationDate = signatureRequest.getTokenExpiresAt().format(DATE_FORMATTER);
+
+        return SignatureRequestEmailData.builder()
+                .recipientEmail(tenant.getEmail())
+                .recipientName(UserDisplayUtils.getFullName(tenant))
+                .ownerName(UserDisplayUtils.getFullName(owner))
+                .propertyName(rental.getProperty().getName())
+                .propertyAddress(getPropertyAddress(rental))
+                .contractNumber(contract.getContractNumber())
+                .signingUrl(signingLink)
+                .expirationDate(expirationDate)
+                .build();
+    }
+
+    private void sendSignatureRequestEmailSafely(
+            String rawToken, ContractSignatureRequest signatureRequest,
+            User tenant, User owner, Rental rental, Contract contract) {
+        try {
+            SignatureRequestEmailData emailData = buildSignatureRequestEmailData(
+                    rawToken, signatureRequest, tenant, owner, rental, contract);
+            emailService.sendSignatureRequestEmail(emailData);
+            log.info("Signature request email sent to {}", tenant.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send signature email, but signature request was created successfully", e);
+        }
+    }
+
     private SignatureRequestResponse mapToResponse(ContractSignatureRequest request) {
         return SignatureRequestResponse.builder()
                 .id(request.getId())
@@ -617,7 +539,7 @@ public class ContractESignatureService {
                 .contractNumber(request.getContract().getContractNumber())
                 .provider(request.getProvider())
                 .signerEmail(request.getSignerEmail())
-                .signerName(getFullName(request.getSigner()))
+                .signerName(UserDisplayUtils.getFullName(request.getSigner()))
                 .status(request.getStatus())
                 .sentAt(request.getSentAt())
                 .viewedAt(request.getViewedAt())
@@ -630,10 +552,6 @@ public class ContractESignatureService {
                 .lastReminderAt(request.getLastReminderAt())
                 .signerOrder(request.getSignerOrder())
                 .build();
-    }
-
-    private String getFullName(User user) {
-        return user.getFirstName() + " " + user.getLastName();
     }
 
     private String getPropertyAddress(Rental rental) {

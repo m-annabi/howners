@@ -23,6 +23,7 @@ import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.service.storage.StorageService;
+import com.howners.gestion.util.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -398,7 +399,7 @@ public class ContractService {
                 contract.getContractNumber(),
                 contract.getRental().getId(),
                 contract.getRental().getProperty().getName(),
-                getFullName(contract.getRental().getTenant()),
+                UserDisplayUtils.getFullName(contract.getRental().getTenant()),
                 contract.getStatus(),
                 contract.getCurrentVersion(),
                 documentUrl,  // URL présignée générée à la volée
@@ -414,10 +415,4 @@ public class ContractService {
         return user != null && user.getRole() == Role.ADMIN;
     }
 
-    private String getFullName(User user) {
-        if (user == null) return "";
-        String firstName = user.getFirstName() != null ? user.getFirstName() : "";
-        String lastName = user.getLastName() != null ? user.getLastName() : "";
-        return (firstName + " " + lastName).trim();
-    }
 }

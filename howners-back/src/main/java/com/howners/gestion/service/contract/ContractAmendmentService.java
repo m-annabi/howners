@@ -20,6 +20,7 @@ import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.audit.AuditService;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.storage.StorageService;
+import com.howners.gestion.util.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,8 @@ public class ContractAmendmentService {
     private final PdfService pdfService;
     private final StorageService storageService;
     private final AuditService auditService;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     @Transactional(readOnly = true)
     public List<AmendmentResponse> findByContractId(UUID contractId) {
@@ -88,8 +91,7 @@ public class ContractAmendmentService {
                 .createdBy(currentUser)
                 .build();
 
-        // Generate PDF
-        String html = buildAmendmentHtml(amendment, contract, currentUser);
+        String html = buildAmendmentHtml(amendment, contract);
         byte[] pdfBytes = pdfService.generatePdf(html, "Avenant n°" + nextNumber);
 
         String fileKey = storageService.uploadFile(pdfBytes,
@@ -127,7 +129,6 @@ public class ContractAmendmentService {
         amendment.setStatus(AmendmentStatus.SIGNED);
         amendment.setSignedAt(LocalDateTime.now());
 
-        // Update rental rent if changed
         if (amendment.getNewRent() != null && amendment.getNewRent().compareTo(BigDecimal.ZERO) > 0) {
             var rental = amendment.getContract().getRental();
             rental.setMonthlyRent(amendment.getNewRent());
@@ -153,16 +154,15 @@ public class ContractAmendmentService {
         return storageService.downloadFile(amendment.getDocument().getFileKey());
     }
 
-    private String buildAmendmentHtml(ContractAmendment amendment, Contract contract, User createdBy) {
-        String ownerName = contract.getRental().getProperty().getOwner().getFullName();
-        String tenantName = contract.getRental().getTenant() != null
-                ? contract.getRental().getTenant().getFullName() : "N/A";
-        String propertyName = contract.getRental().getProperty().getName();
+    private String buildAmendmentHtml(ContractAmendment amendment, Contract contract) {
+        String ownerName = escapeHtml(UserDisplayUtils.getFullName(contract.getRental().getProperty().getOwner()));
+        String tenantName = escapeHtml(UserDisplayUtils.getFullName(contract.getRental().getTenant()));
+        String propertyName = escapeHtml(contract.getRental().getProperty().getName());
 
         StringBuilder html = new StringBuilder();
         html.append("<div style='font-family: Arial, sans-serif; padding: 40px;'>");
         html.append("<h1 style='text-align: center;'>AVENANT N°").append(amendment.getAmendmentNumber()).append("</h1>");
-        html.append("<h2 style='text-align: center;'>au contrat ").append(contract.getContractNumber()).append("</h2>");
+        html.append("<h2 style='text-align: center;'>au contrat ").append(escapeHtml(contract.getContractNumber())).append("</h2>");
         html.append("<hr/>");
 
         html.append("<p><strong>Entre :</strong></p>");
@@ -172,17 +172,17 @@ public class ContractAmendmentService {
         html.append("<hr/>");
 
         html.append("<h3>Objet de l'avenant</h3>");
-        html.append("<p>").append(amendment.getReason()).append("</p>");
+        html.append("<p>").append(escapeHtml(amendment.getReason())).append("</p>");
 
         if (amendment.getPreviousRent() != null && amendment.getNewRent() != null) {
             html.append("<h3>Modification du loyer</h3>");
-            html.append("<p>Ancien loyer : <strong>").append(amendment.getPreviousRent()).append(" EUR</strong></p>");
-            html.append("<p>Nouveau loyer : <strong>").append(amendment.getNewRent()).append(" EUR</strong></p>");
+            html.append("<p>Ancien loyer : <strong>").append(formatAmount(amendment.getPreviousRent())).append("</strong></p>");
+            html.append("<p>Nouveau loyer : <strong>").append(formatAmount(amendment.getNewRent())).append("</strong></p>");
         }
 
         html.append("<p><strong>Date d'effet :</strong> ").append(amendment.getEffectiveDate()).append("</p>");
         html.append("<p><strong>Date de rédaction :</strong> ")
-                .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                .append(LocalDateTime.now().format(DATE_FORMATTER))
                 .append("</p>");
 
         html.append("<div style='margin-top: 60px;'>");
@@ -194,5 +194,18 @@ public class ContractAmendmentService {
         html.append("</div>");
 
         return html.toString();
+    }
+
+    private static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;");
+    }
+
+    private static String formatAmount(BigDecimal amount) {
+        if (amount == null) return "0,00 €";
+        return String.format("%,.2f €", amount);
     }
 }
