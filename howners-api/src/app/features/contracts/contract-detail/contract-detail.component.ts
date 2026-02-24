@@ -71,13 +71,13 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     private esignatureService: EsignatureService,
     private authService: AuthService,
     private notificationService: NotificationService
-  ) {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUserId = user?.id || null;
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
+    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      this.currentUserId = user?.id || null;
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadContract(id);
