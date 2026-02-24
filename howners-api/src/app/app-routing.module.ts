@@ -49,7 +49,7 @@ const routes: Routes = [
     path: 'payments',
     loadChildren: () => import('./features/payments/payments.module').then(m => m.PaymentsModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['OWNER', 'ADMIN'] }
+    data: { roles: ['OWNER', 'TENANT', 'ADMIN'] }
   },
   {
     path: 'invoices',

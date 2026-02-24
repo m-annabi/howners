@@ -113,11 +113,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
         title: 'GESTION',
         items: [
           { label: 'Biens', icon: 'bi-building', route: '/properties', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Locations', icon: 'bi-key', route: '/rentals', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
+          { label: 'Locations', icon: 'bi-key', route: '/rentals', roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT'] },
           { label: 'Contrats', icon: 'bi-file-earmark-text', route: '/contracts', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
           { label: 'États des lieux', icon: 'bi-clipboard-check', route: '/inventory', roles: ['OWNER', 'ADMIN'] },
         ],
-        roles: ['OWNER', 'ADMIN', 'CONCIERGE']
+        roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT']
       },
       {
         title: 'ANNONCES',
@@ -134,7 +134,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       {
         title: 'FINANCES',
         items: [
-          { label: 'Paiements', icon: 'bi-credit-card', route: '/payments', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Paiements', icon: 'bi-credit-card', route: '/payments', roles: ['OWNER', 'ADMIN', 'TENANT'] },
           { label: 'Factures', icon: 'bi-receipt', route: '/invoices', roles: ['OWNER', 'ADMIN', 'TENANT'] },
           { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts', roles: ['OWNER', 'ADMIN', 'TENANT'] },
           { label: 'Dépenses', icon: 'bi-wallet2', route: '/expenses', roles: ['OWNER', 'ADMIN'] },

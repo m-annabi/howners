@@ -5,7 +5,7 @@
 </app-page-header>
 
 <ng-template #headerActions>
-  <button class="hw-btn hw-btn--primary" (click)="navigateToCreate()">
+  <button *ngIf="!isTenant" class="hw-btn hw-btn--primary" (click)="navigateToCreate()">
     <i class="bi bi-plus-lg"></i> Nouvelle location
   </button>
 </ng-template>
@@ -38,9 +38,19 @@
   <span>{{ error }}</span>
 </div>
 
-<!-- Empty -->
+<!-- Empty — TENANT -->
 <app-empty-state
-  *ngIf="!loading && !error && rentals.length === 0"
+  *ngIf="!loading && !error && rentals.length === 0 && isTenant"
+  icon="bi-key"
+  title="Aucune location active"
+  message="Vous n'avez pas encore de location active. Consultez vos candidatures pour suivre l'avancement."
+  actionLabel="Mes candidatures"
+  actionRoute="/applications">
+</app-empty-state>
+
+<!-- Empty — OWNER -->
+<app-empty-state
+  *ngIf="!loading && !error && rentals.length === 0 && !isTenant"
   icon="bi-key"
   title="Aucune location"
   message="Créez votre première location pour commencer la gestion."
@@ -87,7 +97,7 @@
       </div>
     </div>
 
-    <div class="rental-card__actions">
+    <div *ngIf="!isTenant" class="rental-card__actions">
       <button (click)="editRental(rental.id, $event)" class="hw-btn hw-btn--secondary hw-btn--sm">
         <i class="bi bi-pencil"></i> Modifier
       </button>

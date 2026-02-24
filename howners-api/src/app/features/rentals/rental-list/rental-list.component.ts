@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { RentalService } from '../rental.service';
 import { Rental, RENTAL_TYPE_LABELS, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS, RentalStatus } from '../../../core/models/rental.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-rental-list',
@@ -26,10 +27,15 @@ export class RentalListComponent implements OnInit {
     label: RENTAL_STATUS_LABELS[RentalStatus[key as keyof typeof RentalStatus]]
   }));
 
+  get isTenant(): boolean {
+    return this.authService.hasRole('TENANT');
+  }
+
   constructor(
     private rentalService: RentalService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
