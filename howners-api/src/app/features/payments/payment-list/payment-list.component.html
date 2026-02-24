@@ -5,7 +5,7 @@
 </app-page-header>
 
 <ng-template #headerActions>
-  <button class="hw-btn hw-btn--primary" (click)="createPayment()">
+  <button *ngIf="!isTenant" class="hw-btn hw-btn--primary" (click)="createPayment()">
     <i class="bi bi-plus-lg"></i> Nouveau Paiement
   </button>
 </ng-template>
@@ -40,9 +40,17 @@
   <span>{{ error }}</span>
 </div>
 
-<!-- Empty -->
+<!-- Empty — TENANT -->
 <app-empty-state
-  *ngIf="!loading && !error && payments.length === 0"
+  *ngIf="!loading && !error && payments.length === 0 && isTenant"
+  icon="bi-credit-card"
+  title="Aucun paiement en cours"
+  message="Vous n'avez pas encore de paiement à effectuer.">
+</app-empty-state>
+
+<!-- Empty — OWNER -->
+<app-empty-state
+  *ngIf="!loading && !error && payments.length === 0 && !isTenant"
   icon="bi-credit-card"
   title="Aucun paiement"
   message="Créez votre premier paiement pour commencer le suivi."

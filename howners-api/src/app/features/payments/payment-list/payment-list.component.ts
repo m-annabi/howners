@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { PaymentService } from '../../../core/services/payment.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import {
   Payment,
   PaymentStatus,
@@ -34,10 +35,15 @@ export class PaymentListComponent implements OnInit {
     ...Object.values(PaymentStatus).map(s => ({ value: s, label: PAYMENT_STATUS_LABELS[s] }))
   ];
 
+  get isTenant(): boolean {
+    return this.authService.hasRole('TENANT');
+  }
+
   constructor(
     private paymentService: PaymentService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {

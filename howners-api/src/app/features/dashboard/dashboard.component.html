@@ -15,6 +15,22 @@
   <!-- Stats Cards — TENANT -->
   <div *ngIf="!loading && !error && stats && isTenant" class="dashboard__stats">
     <app-stats-card
+      *ngIf="stats.activeRentals > 0"
+      label="Ma location"
+      [value]="stats.activeRentals"
+      icon="bi-key"
+      color="success"
+      routerLink="/rentals">
+    </app-stats-card>
+    <app-stats-card
+      *ngIf="stats.activeRentals > 0"
+      label="Loyer mensuel"
+      [value]="(stats.monthlyRevenue || 0) + ' ' + (stats.currency || 'EUR')"
+      icon="bi-cash-stack"
+      color="warning"
+      routerLink="/payments">
+    </app-stats-card>
+    <app-stats-card
       label="Candidatures"
       [value]="stats.tenantInfo?.totalApplications || 0"
       icon="bi-send"
@@ -102,6 +118,46 @@
     </div>
   </div>
 
+  <!-- Ma location — TENANT -->
+  <div *ngIf="!loading && !error && stats && isTenant && stats.activeRentals > 0" class="dashboard__section">
+    <h3 class="dashboard__section-title">
+      <i class="bi bi-house-door"></i>
+      Ma location
+    </h3>
+    <div class="dashboard__activity-list">
+      <a class="dashboard__activity-item hw-card hw-card--clickable" routerLink="/rentals">
+        <div class="hw-icon-circle hw-icon-circle--success">
+          <i class="bi bi-key"></i>
+        </div>
+        <div class="dashboard__activity-content">
+          <span class="dashboard__activity-label">Location active</span>
+          <span class="dashboard__activity-value">Voir ma location</span>
+        </div>
+        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
+      </a>
+      <a class="dashboard__activity-item hw-card hw-card--clickable" routerLink="/payments">
+        <div class="hw-icon-circle hw-icon-circle--warning">
+          <i class="bi bi-credit-card"></i>
+        </div>
+        <div class="dashboard__activity-content">
+          <span class="dashboard__activity-label">Paiements</span>
+          <span class="dashboard__activity-value">Gérer mes paiements</span>
+        </div>
+        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
+      </a>
+      <a class="dashboard__activity-item hw-card hw-card--clickable" routerLink="/receipts">
+        <div class="hw-icon-circle hw-icon-circle--info">
+          <i class="bi bi-file-earmark-check"></i>
+        </div>
+        <div class="dashboard__activity-content">
+          <span class="dashboard__activity-label">Quittances</span>
+          <span class="dashboard__activity-value">Mes quittances de loyer</span>
+        </div>
+        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
+      </a>
+    </div>
+  </div>
+
   <!-- Recent Activity — OWNER / ADMIN -->
   <div *ngIf="!loading && !error && stats && !isTenant && hasActivity" class="dashboard__section">
     <h3 class="dashboard__section-title">
@@ -154,6 +210,24 @@
     </h3>
     <!-- Quick Actions — TENANT -->
     <div *ngIf="isTenant" class="dashboard__actions-grid">
+      <a routerLink="/rentals" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--success">
+          <i class="bi bi-key"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Ma location</span>
+          <span class="dashboard__action-desc">Voir ma location</span>
+        </div>
+      </a>
+      <a routerLink="/payments" class="dashboard__action-card hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--warning">
+          <i class="bi bi-credit-card"></i>
+        </div>
+        <div>
+          <span class="dashboard__action-title">Paiements</span>
+          <span class="dashboard__action-desc">Gérer mes paiements</span>
+        </div>
+      </a>
       <a routerLink="/listings" class="dashboard__action-card hw-card hw-card--clickable">
         <div class="hw-icon-circle hw-icon-circle--primary">
           <i class="bi bi-search"></i>

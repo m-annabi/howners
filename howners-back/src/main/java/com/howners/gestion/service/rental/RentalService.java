@@ -54,7 +54,18 @@ public class RentalService {
         UUID currentUserId = AuthService.getCurrentUserId();
         log.debug("Finding all rentals for user {}", currentUserId);
 
-        List<Rental> rentals = rentalRepository.findByOwnerId(currentUserId);
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
+
+        List<Rental> rentals;
+        if (currentUser.getRole() == Role.ADMIN) {
+            rentals = rentalRepository.findAll();
+        } else if (currentUser.getRole() == Role.TENANT) {
+            rentals = rentalRepository.findByTenantId(currentUserId);
+        } else {
+            rentals = rentalRepository.findByOwnerId(currentUserId);
+        }
+
         return rentals.stream()
                 .map(RentalResponse::from)
                 .collect(Collectors.toList());
