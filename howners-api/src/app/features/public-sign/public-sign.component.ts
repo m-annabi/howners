@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicContractService } from '../../core/services/public-contract.service';
 import { ContractPublicView, SigningRedirectResponse } from '../../core/models/esignature.model';
+import { SignaturePadComponent } from '../../shared/components/signature-pad/signature-pad.component';
 
 /**
  * Composant public pour la signature de contrat via token
@@ -13,11 +14,15 @@ import { ContractPublicView, SigningRedirectResponse } from '../../core/models/e
   styleUrls: ['./public-sign.component.scss']
 })
 export class PublicSignComponent implements OnInit {
+  @ViewChild(SignaturePadComponent) signaturePad?: SignaturePadComponent;
+
   contract: ContractPublicView | null = null;
   loading = true;
   error: string | null = null;
   token: string | null = null;
   signing = false;
+  signed = false;
+  signatureData: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -90,6 +95,45 @@ export class PublicSignComponent implements OnInit {
         this.error = 'Impossible d\'ouvrir la page de signature. Veuillez réessayer.';
       }
     });
+  }
+
+  /**
+   * Signe le contrat via le canvas HTML5.
+   */
+  signWithCanvas(): void {
+    if (!this.token || this.signing) return;
+    if (!this.signatureData) {
+      this.error = 'Veuillez apposer votre signature avant de valider.';
+      return;
+    }
+
+    this.signing = true;
+    this.error = null;
+
+    this.publicContractService.signWithCanvas(this.token, this.signatureData).subscribe({
+      next: () => {
+        this.signing = false;
+        this.signed = true;
+      },
+      error: (err: any) => {
+        console.error('Erreur lors de la signature canvas:', err);
+        this.signing = false;
+        this.error = err?.error?.message
+          || 'Impossible de finaliser la signature. Veuillez réessayer.';
+      }
+    });
+  }
+
+  onSignatureChange(dataUrl: string): void {
+    this.signatureData = dataUrl;
+    if (this.error && dataUrl) {
+      this.error = null;
+    }
+  }
+
+  clearSignature(): void {
+    this.signaturePad?.clear();
+    this.signatureData = '';
   }
 
   /**

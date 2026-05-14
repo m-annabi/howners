@@ -1,7 +1,10 @@
 package com.howners.gestion.controller;
 
+import com.howners.gestion.dto.contract.CanvasSignRequest;
 import com.howners.gestion.dto.contract.ContractPublicView;
 import com.howners.gestion.service.contract.ContractESignatureService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +66,40 @@ public class PublicContractController {
             log.error("Failed to get signing redirect", e);
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    /**
+     * Signe un contrat via le canvas HTML5 (fallback quand DocuSign indisponible
+     * ou quand le provider de la demande est INTERNAL).
+     *
+     * POST /api/public/contracts/token/{token}/sign-canvas
+     */
+    @PostMapping("/token/{token}/sign-canvas")
+    public ResponseEntity<Void> signWithCanvas(
+            @PathVariable String token,
+            @Valid @RequestBody CanvasSignRequest request,
+            HttpServletRequest httpRequest) {
+        log.info("Public canvas signing request received");
+
+        String ipAddress = getClientIpAddress(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+
+        esignatureService.signContractWithCanvas(token, request.signatureData(), ipAddress, userAgent);
+        return ResponseEntity.noContent().build();
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getHeader("X-Real-IP");
+        }
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+        if (ipAddress != null && ipAddress.contains(",")) {
+            ipAddress = ipAddress.split(",")[0].trim();
+        }
+        return ipAddress;
     }
 
     /**

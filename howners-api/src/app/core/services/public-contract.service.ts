@@ -37,4 +37,15 @@ export class PublicContractService {
       { params }
     );
   }
+
+  /**
+   * Signe un contrat via canvas HTML5 (fallback quand DocuSign indisponible
+   * ou quand le provider de la demande est INTERNAL).
+   */
+  signWithCanvas(token: string, signatureData: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.apiUrl}/token/${token}/sign-canvas`,
+      { signatureData }
+    );
+  }
 }

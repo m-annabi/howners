@@ -257,6 +257,8 @@ public class ContractESignatureService {
                 .monthlyRent(formatAmount(rental.getMonthlyRent()))
                 .createdAt(contract.getCreatedAt())
                 .documentUrl(signatureRequest.getSigningUrl())
+                .signatureProvider(signatureRequest.getProvider())
+                .canSignWithCanvas(canSignWithCanvas(signatureRequest))
                 .build();
     }
 
@@ -283,6 +285,97 @@ public class ContractESignatureService {
                 .orElseThrow(() -> new InvalidTokenException(
                         "Invalid or expired token",
                         "INVALID_TOKEN"));
+    }
+
+    /**
+     * Détermine si la signature canvas (HTML5) est utilisable pour cette demande.
+     * Vrai si le provider est INTERNAL, ou si aucune URL externe n'est disponible
+     * (fallback défensif quand DocuSign n'est pas configuré).
+     */
+    private boolean canSignWithCanvas(ContractSignatureRequest signatureRequest) {
+        String provider = signatureRequest.getProvider();
+        String signingUrl = signatureRequest.getSigningUrl();
+        boolean providerIsInternal = provider != null && "INTERNAL".equalsIgnoreCase(provider);
+        boolean urlMissing = signingUrl == null || signingUrl.isBlank();
+        return providerIsInternal || urlMissing;
+    }
+
+    /**
+     * Signe un contrat via le flow public tokenisé en utilisant une signature canvas (HTML5).
+     * Réservé aux demandes où canSignWithCanvas() == true.
+     */
+    @Transactional
+    public void signContractWithCanvas(String token, String signatureData, String ipAddress, String userAgent) {
+        log.info("Public canvas signing requested via token");
+
+        ContractSignatureRequest signatureRequest = resolveSignatureRequestByRawToken(token);
+
+        if (signatureRequest.isTokenExpired()) {
+            signatureRequest.setStatus(SignatureRequestStatus.EXPIRED);
+            signatureRequestRepository.save(signatureRequest);
+            throw new TokenExpiredException(
+                    "Token has expired on " + signatureRequest.getTokenExpiresAt(),
+                    "TOKEN_EXPIRED");
+        }
+
+        if (signatureRequest.getStatus() == SignatureRequestStatus.SIGNED) {
+            throw new ContractInvalidStateException(
+                    "Contract has already been signed",
+                    "CONTRACT_ALREADY_SIGNED");
+        }
+
+        if (signatureRequest.getStatus() == SignatureRequestStatus.DECLINED) {
+            throw new ContractInvalidStateException(
+                    "Contract signature was declined",
+                    "CONTRACT_DECLINED");
+        }
+
+        if (!canSignWithCanvas(signatureRequest)) {
+            throw new ContractInvalidStateException(
+                    "Canvas signing is not available for this request",
+                    "CANVAS_NOT_ALLOWED");
+        }
+
+        Contract contract = signatureRequest.getContract();
+
+        // Décoder et stocker l'image de signature
+        String base64Payload = signatureData;
+        int commaIdx = base64Payload.indexOf(',');
+        if (commaIdx >= 0) {
+            base64Payload = base64Payload.substring(commaIdx + 1);
+        }
+        byte[] signatureBytes;
+        try {
+            signatureBytes = java.util.Base64.getDecoder().decode(base64Payload);
+        } catch (IllegalArgumentException e) {
+            throw new ContractInvalidStateException(
+                    "Invalid signature image payload",
+                    "INVALID_SIGNATURE_DATA");
+        }
+
+        String fileName = String.format("signature_%s_%s.png",
+                contract.getContractNumber(),
+                signatureRequest.getSigner().getId());
+        String signatureKey = storageService.uploadFile(signatureBytes, fileName, "image/png");
+        log.info("Canvas signature uploaded for contract {}: {}", contract.getContractNumber(), signatureKey);
+
+        // Mettre à jour la demande
+        LocalDateTime now = LocalDateTime.now();
+        signatureRequest.setStatus(SignatureRequestStatus.SIGNED);
+        signatureRequest.setSignedAt(now);
+        signatureRequest.setIpAddress(ipAddress);
+        signatureRequest.setUserAgent(userAgent);
+        signatureRequest.setSigningUrl(storageService.generatePresignedUrl(signatureKey));
+        signatureRequestRepository.save(signatureRequest);
+
+        // Mettre à jour le contrat
+        contract.setStatus(ContractStatus.SIGNED);
+        contract.setSignedAt(now);
+        contractRepository.save(contract);
+
+        log.info("Contract {} signed via canvas by {}",
+                contract.getContractNumber(),
+                signatureRequest.getSignerEmail());
     }
 
     /**
