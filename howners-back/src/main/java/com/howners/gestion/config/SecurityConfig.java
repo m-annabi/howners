@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/subscriptions/plans").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/affiliates", "/api/affiliates/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -104,6 +105,7 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/ws/**", configuration);
         return source;
     }
 }
