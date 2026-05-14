@@ -217,18 +217,7 @@ public class ContractESignatureService {
     public ContractPublicView getContractByToken(String token) {
         log.info("Getting contract by access token");
 
-        ContractSignatureRequest signatureRequest = signatureRequestRepository
-                .findByAccessTokenWithDetails(token)
-                .orElseThrow(() -> new InvalidTokenException(
-                        "Invalid or expired token",
-                        "INVALID_TOKEN"));
-
-        // Valider le token
-        if (!tokenProvider.validateToken(token, signatureRequest.getAccessToken())) {
-            throw new InvalidTokenException(
-                    "Token validation failed",
-                    "TOKEN_VALIDATION_FAILED");
-        }
+        ContractSignatureRequest signatureRequest = resolveSignatureRequestByRawToken(token);
 
         // Vérifier l'expiration
         if (signatureRequest.isTokenExpired()) {
@@ -269,6 +258,31 @@ public class ContractESignatureService {
                 .createdAt(contract.getCreatedAt())
                 .documentUrl(signatureRequest.getSigningUrl())
                 .build();
+    }
+
+    /**
+     * Résout une demande de signature à partir d'un raw token reçu dans une URL publique.
+     * Itère les demandes actives et compare via BCrypt.matches contre l'accessToken hashé.
+     * Inclut EXPIRED pour que les checks d'expiration en aval retournent le bon code d'erreur.
+     */
+    private ContractSignatureRequest resolveSignatureRequestByRawToken(String rawToken) {
+        if (rawToken == null || rawToken.isBlank()) {
+            throw new InvalidTokenException("Token is missing", "INVALID_TOKEN");
+        }
+        List<SignatureRequestStatus> lookupStatuses = List.of(
+                SignatureRequestStatus.PENDING,
+                SignatureRequestStatus.SENT,
+                SignatureRequestStatus.VIEWED,
+                SignatureRequestStatus.SIGNED,
+                SignatureRequestStatus.DECLINED,
+                SignatureRequestStatus.EXPIRED
+        );
+        return signatureRequestRepository.findActiveWithDetails(lookupStatuses).stream()
+                .filter(req -> tokenProvider.validateToken(rawToken, req.getAccessToken()))
+                .findFirst()
+                .orElseThrow(() -> new InvalidTokenException(
+                        "Invalid or expired token",
+                        "INVALID_TOKEN"));
     }
 
     /**
