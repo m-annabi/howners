@@ -97,30 +97,77 @@
             </div>
           </div>
 
-          <!-- Important Notice -->
-          <div class="alert alert-info d-flex align-items-start" role="alert">
-            <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+          <!-- Confirmation après signature canvas -->
+          <div *ngIf="signed" class="alert alert-success d-flex align-items-start" role="alert">
+            <i class="bi bi-check-circle-fill me-2 mt-1"></i>
             <div>
-              <strong>Important :</strong> En cliquant sur "Signer le contrat", vous serez redirigé vers une plateforme
-              de signature électronique sécurisée (DocuSign). Vous pourrez y consulter le document complet et apposer
-              votre signature de manière légalement valide.
+              <strong>Contrat signé.</strong> Merci, votre signature a été enregistrée.
+              Vous pouvez fermer cette page.
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="d-grid gap-2">
-            <button
-              class="btn btn-primary btn-lg"
-              (click)="signContract()"
-              [disabled]="signing">
-              <i class="bi bi-pen me-2"></i>
-              <span *ngIf="!signing">Signer le contrat</span>
-              <span *ngIf="signing">
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                Redirection en cours...
-              </span>
-            </button>
-          </div>
+          <!-- Mode DocuSign -->
+          <ng-container *ngIf="!signed && !contract.canSignWithCanvas">
+            <div class="alert alert-info d-flex align-items-start" role="alert">
+              <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+              <div>
+                <strong>Important :</strong> En cliquant sur "Signer le contrat", vous serez redirigé vers une plateforme
+                de signature électronique sécurisée (DocuSign). Vous pourrez y consulter le document complet et apposer
+                votre signature de manière légalement valide.
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button
+                class="btn btn-primary btn-lg"
+                (click)="signContract()"
+                [disabled]="signing">
+                <i class="bi bi-pen me-2"></i>
+                <span *ngIf="!signing">Signer le contrat</span>
+                <span *ngIf="signing">
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Redirection en cours...
+                </span>
+              </button>
+            </div>
+          </ng-container>
+
+          <!-- Mode canvas (fallback) -->
+          <ng-container *ngIf="!signed && contract.canSignWithCanvas">
+            <div class="alert alert-info d-flex align-items-start" role="alert">
+              <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+              <div>
+                <strong>Signature manuscrite :</strong> dessinez votre signature dans la zone ci-dessous
+                avec la souris ou votre doigt, puis cliquez sur "Valider".
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <app-signature-pad (signatureChange)="onSignatureChange($event)"></app-signature-pad>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="clearSignature()"
+                [disabled]="signing">
+                <i class="bi bi-eraser me-1"></i> Effacer
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary btn-lg flex-grow-1"
+                (click)="signWithCanvas()"
+                [disabled]="signing || !signatureData">
+                <i class="bi bi-check2-circle me-2"></i>
+                <span *ngIf="!signing">Valider ma signature</span>
+                <span *ngIf="signing">
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Enregistrement…
+                </span>
+              </button>
+            </div>
+          </ng-container>
 
           <!-- Footer Info -->
           <div class="text-center mt-4 text-muted small">

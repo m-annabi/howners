@@ -53,6 +53,8 @@ export interface ContractPublicView {
   monthlyRent: string;
   createdAt: string;
   documentUrl: string;
+  signatureProvider?: string;
+  canSignWithCanvas?: boolean;
 }
 
 /**

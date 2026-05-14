@@ -125,6 +125,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Rechercher', icon: 'bi-search', route: '/listings' },
           { label: 'Mes annonces', icon: 'bi-megaphone', route: '/listings/my', roles: ['OWNER', 'ADMIN'] },
           { label: 'Trouver locataires', icon: 'bi-person-lines-fill', route: '/tenant-discovery', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Invitations envoyées', icon: 'bi-send', route: '/tenant-discovery/sent-invitations', roles: ['OWNER', 'ADMIN'] },
           { label: 'Candidatures', icon: 'bi-people', route: '/applications' },
           { label: 'Mon profil recherche', icon: 'bi-person-badge', route: '/search-profile', roles: ['TENANT'] },
           { label: 'Invitations', icon: 'bi-envelope-open', route: '/search-profile/invitations', roles: ['TENANT'] },
