@@ -12,7 +12,7 @@
   left: 0;
   bottom: 0;
   z-index: 1030;
-  background: white;
+  background: var(--hw-primary-800);
   transition: transform 0.25s ease;
 
   @media (max-width: 991px) {
