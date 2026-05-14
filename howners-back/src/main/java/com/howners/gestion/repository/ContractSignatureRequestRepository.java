@@ -62,6 +62,11 @@ public interface ContractSignatureRequestRepository extends JpaRepository<Contra
 
     /**
      * Trouve une demande de signature par token avec toutes ses relations
+     *
+     * NOTE: accessToken stocke un hash BCrypt — l'égalité directe ne peut jamais matcher
+     * un token brut. Cette méthode reste utile pour des lookups internes par hash exact ;
+     * pour résoudre un raw token, utiliser {@link #findActiveWithDetails(List)} et matcher
+     * via BCryptPasswordEncoder dans le service.
      */
     @Query("SELECT csr FROM ContractSignatureRequest csr " +
            "LEFT JOIN FETCH csr.contract c " +
@@ -72,6 +77,22 @@ public interface ContractSignatureRequestRepository extends JpaRepository<Contra
            "LEFT JOIN FETCH csr.signer s " +
            "WHERE csr.accessToken = :token")
     Optional<ContractSignatureRequest> findByAccessTokenWithDetails(@Param("token") String token);
+
+    /**
+     * Retourne toutes les demandes de signature dans les statuts donnés, avec toutes
+     * leurs relations chargées. Utilisé pour résoudre un raw token : le service itère
+     * et applique BCryptPasswordEncoder.matches sur chaque accessToken hashé.
+     */
+    @Query("SELECT csr FROM ContractSignatureRequest csr " +
+           "LEFT JOIN FETCH csr.contract c " +
+           "LEFT JOIN FETCH c.rental r " +
+           "LEFT JOIN FETCH r.property p " +
+           "LEFT JOIN FETCH r.tenant t " +
+           "LEFT JOIN FETCH p.owner o " +
+           "LEFT JOIN FETCH csr.signer s " +
+           "WHERE csr.status IN (:statuses) " +
+           "ORDER BY csr.createdAt DESC")
+    List<ContractSignatureRequest> findActiveWithDetails(@Param("statuses") List<SignatureRequestStatus> statuses);
 
     /**
      * Compte les demandes de signature par statut pour un contrat donné
