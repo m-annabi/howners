@@ -75,9 +75,11 @@
     margin-bottom: var(--hw-space-2);
 
     h3 {
-      font-size: var(--hw-fs-md);
+      font-family: var(--hw-font-display);
+      font-size: 1.1rem;
       font-weight: var(--hw-fw-semibold);
-      color: var(--hw-gray-900);
+      letter-spacing: -0.01em;
+      color: var(--hw-primary-800);
       flex: 1;
       min-width: 0;
       overflow: hidden;

@@ -8,120 +8,127 @@
 }
 
 .contract-title {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #667eea;
+  margin-bottom: var(--hw-space-5);
+  padding-bottom: var(--hw-space-4);
+  border-bottom: 1px solid var(--hw-gray-200);
 
   h4 {
     margin: 0;
-    color: #667eea;
-    font-weight: 600;
+    font-family: var(--hw-font-display);
+    color: var(--hw-primary-800);
+    font-weight: var(--hw-fw-semibold);
+    letter-spacing: -0.01em;
   }
 }
 
 .contract-preview {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  border: 1px solid #e0e0e0;
+  background: var(--hw-gray-50);
+  border-radius: var(--hw-radius-md);
+  padding: var(--hw-space-5);
+  margin-bottom: var(--hw-space-6);
+  border: var(--hw-border);
 
   h6 {
-    color: #333;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    font-family: var(--hw-font-display);
+    color: var(--hw-primary-800);
+    font-weight: var(--hw-fw-semibold);
+    margin-bottom: var(--hw-space-3);
   }
 
   .contract-content {
     max-height: 300px;
     overflow-y: auto;
-    background: white;
-    padding: 1rem;
-    border-radius: 4px;
+    background: var(--hw-surface);
+    padding: var(--hw-space-4);
+    border-radius: var(--hw-radius-sm);
+    border: var(--hw-border);
     font-size: 0.9rem;
-    line-height: 1.6;
+    line-height: var(--hw-lh-normal);
+    color: var(--hw-gray-800);
     white-space: pre-wrap;
   }
 }
 
 .signer-info {
-  margin-bottom: 2rem;
+  margin-bottom: var(--hw-space-6);
 
   h6 {
-    color: #333;
-    font-weight: 600;
-    margin-bottom: 1rem;
+    font-family: var(--hw-font-display);
+    color: var(--hw-primary-800);
+    font-weight: var(--hw-fw-semibold);
+    margin-bottom: var(--hw-space-3);
   }
 
   .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: var(--hw-space-4);
 
     label {
-      font-weight: 500;
-      color: #555;
-      margin-bottom: 0.5rem;
+      font-weight: var(--hw-fw-medium);
+      color: var(--hw-gray-700);
+      margin-bottom: var(--hw-space-2);
+      font-size: var(--hw-fs-sm);
     }
 
     .form-control {
-      border-radius: 4px;
-      border: 1px solid #ddd;
+      border-radius: var(--hw-radius-md);
+      border: 1px solid var(--hw-gray-300);
+      color: var(--hw-gray-900);
 
       &:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: var(--hw-primary-500);
+        box-shadow: 0 0 0 3px var(--hw-primary-50);
       }
     }
   }
 }
 
 .signature-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--hw-space-6);
 }
 
 .terms-section {
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
+  background: var(--hw-accent-50);
+  border: 1px solid var(--hw-accent-200);
+  border-radius: var(--hw-radius-md);
+  padding: var(--hw-space-5);
+  margin-bottom: var(--hw-space-4);
 
   .form-check {
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--hw-space-3);
 
     .form-check-input {
-      width: 20px;
-      height: 20px;
-      margin-top: 0.1rem;
+      width: 18px;
+      height: 18px;
+      margin-top: 0.15rem;
       cursor: pointer;
     }
 
     .form-check-label {
       cursor: pointer;
-      color: #333;
-      margin-left: 0.5rem;
+      color: var(--hw-gray-800);
+      margin-left: var(--hw-space-2);
     }
   }
 
   small {
     display: block;
-    margin-top: 0.5rem;
+    margin-top: var(--hw-space-2);
+    color: var(--hw-gray-600);
   }
 }
 
 .modal-footer {
   .btn {
-    padding: 0.5rem 1.5rem;
-    font-weight: 600;
+    padding: 0.55rem 1.5rem;
+    font-weight: var(--hw-fw-medium);
 
-    i {
-      margin-right: 0.5rem;
-    }
+    i { margin-right: var(--hw-space-2); }
   }
 
   .btn-success {
     &:disabled {
-      background-color: #6c757d;
-      border-color: #6c757d;
+      background-color: var(--hw-gray-400);
+      border-color: var(--hw-gray-400);
       opacity: 0.65;
       cursor: not-allowed;
     }

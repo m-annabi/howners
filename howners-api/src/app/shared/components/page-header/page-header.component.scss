@@ -48,17 +48,20 @@
 
   &__text {
     h1 {
-      font-size: var(--hw-fs-2xl);
-      font-weight: var(--hw-fw-bold);
-      color: var(--hw-gray-900);
-      line-height: var(--hw-lh-tight);
+      font-family: var(--hw-font-display);
+      font-size: 1.75rem;
+      font-weight: var(--hw-fw-semibold);
+      letter-spacing: -0.015em;
+      color: var(--hw-primary-800);
+      line-height: 1.2;
     }
   }
 
   &__subtitle {
-    margin-top: var(--hw-space-1);
-    font-size: var(--hw-fs-base);
-    color: var(--hw-gray-500);
+    margin-top: var(--hw-space-2);
+    font-size: var(--hw-fs-md);
+    color: var(--hw-gray-600);
+    max-width: 60ch;
   }
 
   &__actions {

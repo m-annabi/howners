@@ -1,41 +1,60 @@
 // ==========================================================================
-// Howners Design Tokens
+// Howners Design Tokens — Trust immobilier
+// Bleu nuit + or chaud + crème. Atmosphère institutionnelle, rassurante.
 // ==========================================================================
 
 :root {
-  // Primary - Bleu profond (confiance, professionnalisme)
-  --hw-primary-50: #EEF2FF;
-  --hw-primary-100: #DBE4FF;
-  --hw-primary-200: #BAC8FF;
-  --hw-primary-500: #4263EB;
-  --hw-primary-600: #3B5BDB;
-  --hw-primary-700: #364FC7;
-  --hw-primary-800: #2B3EA0;
+  // Primary - Bleu nuit (confiance, sérieux, institutionnel)
+  --hw-primary-50:  #F0F4F9;
+  --hw-primary-100: #DCE5EE;
+  --hw-primary-200: #B5C5D8;
+  --hw-primary-300: #8AA4BE;
+  --hw-primary-400: #557B9C;
+  --hw-primary-500: #2C5478;
+  --hw-primary-600: #1E3A5F;  // brand
+  --hw-primary-700: #15283F;
+  --hw-primary-800: #0E1B2C;
+  --hw-primary-900: #08111C;
 
-  // Neutral - Gris chauds
-  --hw-gray-50: #F8F9FA;
-  --hw-gray-100: #F1F3F5;
-  --hw-gray-200: #E9ECEF;
-  --hw-gray-300: #DEE2E6;
-  --hw-gray-400: #CED4DA;
-  --hw-gray-500: #ADB5BD;
-  --hw-gray-600: #868E96;
-  --hw-gray-700: #495057;
-  --hw-gray-800: #343A40;
-  --hw-gray-900: #212529;
+  // Accent - Or chaud (luxe, mise en valeur ponctuelle)
+  --hw-accent-50:  #FBF7EB;
+  --hw-accent-100: #F5EBCB;
+  --hw-accent-200: #E8D49A;
+  --hw-accent-300: #DBBE76;
+  --hw-accent-400: #D2B26B;
+  --hw-accent-500: #C9A961;  // brand
+  --hw-accent-600: #B69248;
+  --hw-accent-700: #8E6F30;
 
-  // Semantic
-  --hw-success: #2B8A3E;
-  --hw-success-light: #EBFBEE;
-  --hw-warning: #E67700;
-  --hw-warning-light: #FFF4E6;
-  --hw-danger: #C92A2A;
-  --hw-danger-light: #FFF5F5;
-  --hw-info: #1971C2;
-  --hw-info-light: #E7F5FF;
+  // Neutral - Gris chauds (légèrement teintés sable)
+  --hw-gray-50:  #FAF7F2;  // crème claire (≈ bg-soft)
+  --hw-gray-100: #F1EDE5;
+  --hw-gray-200: #E5DFD3;
+  --hw-gray-300: #D2CBBC;
+  --hw-gray-400: #ADA694;
+  --hw-gray-500: #807A6B;
+  --hw-gray-600: #5F5A4E;
+  --hw-gray-700: #3F3C35;
+  --hw-gray-800: #2A2825;
+  --hw-gray-900: #1A1A1A;
+
+  // Cream backdrop (utilisé pour la zone de contenu)
+  --hw-bg-soft: #F7F4EE;
+  --hw-surface: #FFFFFF;
+
+  // Semantic — ton désaturé pour cohérence institutionnelle
+  --hw-success: #2E6B45;
+  --hw-success-light: #EAF3EC;
+  --hw-warning: #B0791E;
+  --hw-warning-light: #FBF1DD;
+  --hw-danger: #A6332E;
+  --hw-danger-light: #F8E8E6;
+  --hw-info: #245F8F;
+  --hw-info-light: #E3EDF5;
 
   // Typography
   --hw-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --hw-font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   --hw-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --hw-fs-xs: 0.75rem;
   --hw-fs-sm: 0.8125rem;
@@ -45,12 +64,13 @@
   --hw-fs-xl: 1.25rem;
   --hw-fs-2xl: 1.5rem;
   --hw-fs-3xl: 1.875rem;
+  --hw-fs-4xl: 2.25rem;
   --hw-fw-normal: 400;
   --hw-fw-medium: 500;
   --hw-fw-semibold: 600;
   --hw-fw-bold: 700;
-  --hw-lh-tight: 1.25;
-  --hw-lh-normal: 1.5;
+  --hw-lh-tight: 1.2;
+  --hw-lh-normal: 1.55;
 
   // Spacing (base 4px)
   --hw-space-1: 0.25rem;
@@ -65,17 +85,18 @@
 
   // Borders & Radius
   --hw-radius-sm: 4px;
-  --hw-radius-md: 6px;
+  --hw-radius-md: 6px;   // standard Trust
   --hw-radius-lg: 8px;
   --hw-radius-xl: 12px;
   --hw-radius-full: 9999px;
   --hw-border: 1px solid var(--hw-gray-200);
+  --hw-border-strong: 1px solid var(--hw-gray-300);
 
-  // Shadows
-  --hw-shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
-  --hw-shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  --hw-shadow-md: 0 4px 6px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
-  --hw-shadow-lg: 0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.04);
+  // Shadows — subtiles, basses, ton neutre froid
+  --hw-shadow-xs: 0 1px 2px rgba(30, 58, 95, 0.05);
+  --hw-shadow-sm: 0 1px 3px rgba(30, 58, 95, 0.08), 0 1px 2px rgba(30, 58, 95, 0.04);
+  --hw-shadow-md: 0 4px 8px rgba(30, 58, 95, 0.07), 0 2px 4px rgba(30, 58, 95, 0.04);
+  --hw-shadow-lg: 0 10px 18px rgba(30, 58, 95, 0.09), 0 4px 6px rgba(30, 58, 95, 0.05);
 
   // Layout
   --hw-sidebar-width: 260px;

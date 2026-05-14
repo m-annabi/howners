@@ -14,12 +14,16 @@
     display: flex;
     align-items: center;
     gap: var(--hw-space-2);
-    font-size: var(--hw-fs-lg);
+    font-family: var(--hw-font-display);
+    font-size: var(--hw-fs-xl);
     font-weight: var(--hw-fw-semibold);
-    color: var(--hw-gray-800);
+    letter-spacing: -0.01em;
+    color: var(--hw-primary-800);
     margin-bottom: var(--hw-space-4);
+    padding-bottom: var(--hw-space-3);
+    border-bottom: 1px solid var(--hw-gray-200);
 
-    i { color: var(--hw-gray-500); }
+    i { color: var(--hw-accent-600); font-size: 1.1rem; }
   }
 
   &__activity-list {

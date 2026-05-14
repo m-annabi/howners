@@ -16,16 +16,21 @@
   }
 
   &__value {
-    font-size: var(--hw-fs-2xl);
-    font-weight: var(--hw-fw-bold);
-    color: var(--hw-gray-900);
-    line-height: var(--hw-lh-tight);
+    font-family: var(--hw-font-display);
+    font-size: 1.875rem;
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-primary-800);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
   }
 
   &__label {
-    font-size: var(--hw-fs-sm);
+    font-size: var(--hw-fs-xs);
     color: var(--hw-gray-500);
-    margin-top: 2px;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: var(--hw-fw-medium);
   }
 
   &__trend {
