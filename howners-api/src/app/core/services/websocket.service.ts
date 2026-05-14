@@ -1,0 +1,73 @@
+import { Injectable, OnDestroy } from '@angular/core';
+import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
+import * as SockJS from 'sockjs-client';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { Message } from '../models/message.model';
+
+export type WsConnectionState = 'disconnected' | 'connecting' | 'connected';
+
+@Injectable({ providedIn: 'root' })
+export class WebSocketService implements OnDestroy {
+
+  private client!: Client;
+  private messageSubscription?: StompSubscription;
+
+  private connectionState$ = new BehaviorSubject<WsConnectionState>('disconnected');
+  private incomingMessages$ = new Subject<Message>();
+
+  get connected$(): Observable<WsConnectionState> {
+    return this.connectionState$.asObservable();
+  }
+
+  get messages$(): Observable<Message> {
+    return this.incomingMessages$.asObservable();
+  }
+
+  connect(token: string): void {
+    if (this.client?.active) return;
+
+    this.connectionState$.next('connecting');
+
+    this.client = new Client({
+      webSocketFactory: () => new SockJS(`${environment.wsUrl}/ws`),
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      reconnectDelay: 5000,
+      onConnect: () => {
+        this.connectionState$.next('connected');
+        this.subscribeToMessages();
+      },
+      onDisconnect: () => {
+        this.connectionState$.next('disconnected');
+      },
+      onStompError: (frame) => {
+        console.error('WebSocket STOMP error', frame);
+        this.connectionState$.next('disconnected');
+      }
+    });
+
+    this.client.activate();
+  }
+
+  disconnect(): void {
+    this.messageSubscription?.unsubscribe();
+    this.client?.deactivate();
+    this.connectionState$.next('disconnected');
+  }
+
+  private subscribeToMessages(): void {
+    this.messageSubscription = this.client.subscribe('/user/queue/messages', (frame: IMessage) => {
+      try {
+        const message: Message = JSON.parse(frame.body);
+        this.incomingMessages$.next(message);
+      } catch {
+        console.error('Failed to parse incoming WebSocket message');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.disconnect();
+  }
+}

@@ -33,7 +33,12 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "@stomp/stompjs",
+              "sockjs-client",
+              "quill"
+            ]
           },
           "configurations": {
             "production": {

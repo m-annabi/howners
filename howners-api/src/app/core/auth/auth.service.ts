@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest, RegisterRequest, User } from '../models/user.model';
 import { StorageService } from '../services/storage.service';
+import { WebSocketService } from '../services/websocket.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +21,8 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private storageService: StorageService,
-    private router: Router
+    private router: Router,
+    private webSocketService: WebSocketService
   ) {
     this.loadUserFromStorage();
   }
@@ -40,6 +42,7 @@ export class AuthService {
   }
 
   logout(): void {
+    this.webSocketService.disconnect();
     this.storageService.removeItem('access_token');
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
@@ -69,6 +72,7 @@ export class AuthService {
     this.storageService.setItem('access_token', response.accessToken);
     this.currentUserSubject.next(response.user);
     this.isAuthenticatedSubject.next(true);
+    this.webSocketService.connect(response.accessToken);
   }
 
   private loadUserFromStorage(): void {
@@ -76,7 +80,10 @@ export class AuthService {
     if (token) {
       this.isAuthenticatedSubject.next(true);
       this.getCurrentUser().subscribe({
-        next: user => this.currentUserSubject.next(user),
+        next: user => {
+          this.currentUserSubject.next(user);
+          this.webSocketService.connect(token);
+        },
         error: () => this.logout()
       });
     } else {
