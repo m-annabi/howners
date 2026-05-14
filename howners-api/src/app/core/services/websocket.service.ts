@@ -1,8 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
+import { Client, IFrame, IMessage, StompSubscription } from '@stomp/stompjs';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Message } from '../models/message.model';
 
@@ -31,7 +29,7 @@ export class WebSocketService implements OnDestroy {
     this.connectionState$.next('connecting');
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(`${environment.wsUrl}/ws`),
+      brokerURL: `${environment.wsUrl.replace('http', 'ws')}/ws`,
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
@@ -41,7 +39,7 @@ export class WebSocketService implements OnDestroy {
       onDisconnect: () => {
         this.connectionState$.next('disconnected');
       },
-      onStompError: (frame) => {
+      onStompError: (frame: IFrame) => {
         console.error('WebSocket STOMP error', frame);
         this.connectionState$.next('disconnected');
       }
