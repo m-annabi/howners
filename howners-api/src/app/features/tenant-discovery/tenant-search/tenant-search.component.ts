@@ -89,8 +89,33 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
 
   /** Client-side narrowing using the chip — server search already applies filterPropertyType when set. */
   get displayedResults(): TenantSearchResult[] {
-    if (this.activeTypeChip === 'all') return this.results;
-    return this.results.filter(r => r.profile.desiredPropertyType === this.activeTypeChip);
+    let list = this.activeTypeChip === 'all'
+      ? this.results
+      : this.results.filter(r => r.profile.desiredPropertyType === this.activeTypeChip);
+
+    if (this.sortBy === 'profitability') {
+      list = list.slice().sort((a, b) =>
+        this.estimatedRevenue(b) - this.estimatedRevenue(a));
+    }
+    return list;
+  }
+
+  /**
+   * Revenu mensuel estimé pondéré par la fiabilité (et la compatibilité si une
+   * annonce de référence est sélectionnée). Sert au tri "Rentabilité estimée".
+   */
+  estimatedRevenue(result: TenantSearchResult): number {
+    const budget = result.profile.budgetMax || result.profile.budgetMin || 0;
+    if (budget <= 0) return 0;
+
+    const listing = this.filterListingId
+      ? this.myListings.find(l => l.id === this.filterListingId)
+      : null;
+    const target = listing?.pricePerMonth ? Math.min(budget, listing.pricePerMonth) : budget;
+
+    const reliability = result.tenantScore?.score != null ? result.tenantScore.score / 100 : 0.5;
+    const compat = result.compatibilityScore != null ? result.compatibilityScore / 100 : 1;
+    return Math.round(target * reliability * compat);
   }
 
   onTypeChipChange(key: string): void {

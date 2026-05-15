@@ -70,6 +70,7 @@
       </label>
       <select class="form-select form-select-sm" [(ngModel)]="sortBy" (change)="search()">
         <option value="">Plus récents</option>
+        <option value="profitability">Rentabilité estimée ↓</option>
         <option value="score">Meilleur score</option>
         <option value="relevance" [disabled]="!filterListingId">Compatibilité</option>
       </select>
@@ -159,6 +160,7 @@
           <th class="tenant-table__col-budget">Budget</th>
           <th class="tenant-table__col-surface">Surface</th>
           <th class="tenant-table__col-score">Score</th>
+          <th class="tenant-table__col-revenue">Revenu estimé</th>
           <th *ngIf="filterListingId" class="tenant-table__col-compat">Compatibilité</th>
           <th class="tenant-table__col-actions"></th>
         </tr>
@@ -210,6 +212,11 @@
               {{ result.tenantScore.score }}/100
             </span>
             <span *ngIf="!result.tenantScore" class="tenant-table__muted">—</span>
+          </td>
+
+          <td class="tenant-table__col-revenue">
+            <div class="tenant-table__revenue">{{ estimatedRevenue(result) | number:'1.0-0' }} €</div>
+            <div class="tenant-table__muted">/mois pondéré</div>
           </td>
 
           <td *ngIf="filterListingId" class="tenant-table__col-compat">

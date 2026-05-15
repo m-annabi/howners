@@ -18,14 +18,27 @@
     (filterChange)="onFilterChange($event)">
   </app-quick-filters>
 
-  <div class="property-list__search">
-    <i class="bi bi-search"></i>
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      (input)="filterProperties()"
-      placeholder="Rechercher par nom, ville ou code postal..."
-      class="form-control">
+  <div class="property-list__row">
+    <div class="property-list__search">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="filterProperties()"
+        placeholder="Rechercher par nom, ville ou code postal..."
+        class="form-control form-control-sm">
+    </div>
+    <div class="property-list__sort">
+      <label class="property-list__sort-label">
+        <i class="bi bi-sort-down"></i> Tri
+      </label>
+      <select class="form-select form-select-sm" [(ngModel)]="sortBy" (change)="onSortChange()">
+        <option value="default">Plus récents</option>
+        <option value="yield_desc">Rentabilité ↓</option>
+        <option value="yield_asc">Rentabilité ↑</option>
+        <option value="rent_desc">Loyer ↓</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -66,7 +79,8 @@
         <th class="property-table__col-city">Localisation</th>
         <th class="property-table__col-type">Type</th>
         <th class="property-table__col-surface">Surface</th>
-        <th class="property-table__col-rooms">Pièces</th>
+        <th class="property-table__col-rent">Loyer</th>
+        <th class="property-table__col-yield">Rentabilité</th>
         <th class="property-table__col-actions"></th>
       </tr>
     </thead>
@@ -102,9 +116,24 @@
           <span *ngIf="!property.surfaceArea" class="property-table__empty">—</span>
         </td>
 
-        <td class="property-table__col-rooms">
-          <span *ngIf="property.bedrooms">{{ property.bedrooms }} ch.</span>
-          <span *ngIf="!property.bedrooms" class="property-table__empty">—</span>
+        <td class="property-table__col-rent">
+          <ng-container *ngIf="property.currentMonthlyRent">
+            <span class="property-table__rent">{{ property.currentMonthlyRent | number:'1.0-0' }} €</span>
+            <span class="property-table__unit">/mois</span>
+          </ng-container>
+          <span *ngIf="!property.currentMonthlyRent" class="badge bg-light">Vacant</span>
+        </td>
+
+        <td class="property-table__col-yield">
+          <ng-container *ngIf="property.grossYieldPercent != null">
+            <span class="property-table__yield"
+                  [class.property-table__yield--good]="property.grossYieldPercent >= 5"
+                  [class.property-table__yield--ok]="property.grossYieldPercent >= 3 && property.grossYieldPercent < 5"
+                  [class.property-table__yield--low]="property.grossYieldPercent < 3">
+              {{ property.grossYieldPercent | number:'1.2-2' }} %
+            </span>
+          </ng-container>
+          <span *ngIf="property.grossYieldPercent == null" class="property-table__empty">—</span>
         </td>
 
         <td class="property-table__col-actions" (click)="$event.stopPropagation()">

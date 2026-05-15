@@ -191,8 +191,15 @@
     > div { display: inline-block; vertical-align: middle; }
   }
   &__col-actions { width: 1%; padding-right: 1rem !important; text-align: right; white-space: nowrap; }
-  &__col-budget, &__col-surface, &__col-score { width: 1%; white-space: nowrap; }
+  &__col-budget, &__col-surface, &__col-score, &__col-revenue { width: 1%; white-space: nowrap; }
   &__col-compat { width: 160px; }
+
+  &__revenue {
+    font-family: var(--hw-font-display);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-accent-700);
+    letter-spacing: -0.005em;
+  }
 
   &__avatar {
     flex-shrink: 0;
