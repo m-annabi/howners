@@ -17,6 +17,7 @@ export class ListingService {
     priceMin?: number; priceMax?: number; propertyType?: string;
     minSurface?: number; minBedrooms?: number; furnished?: boolean;
     availableFrom?: string; sortBy?: string;
+    nearLat?: number; nearLng?: number; radiusKm?: number;
   }): Observable<Listing[]> {
     let params = new HttpParams();
     if (filters?.search) params = params.set('search', filters.search);
@@ -31,6 +32,9 @@ export class ListingService {
     if (filters?.furnished != null) params = params.set('furnished', filters.furnished.toString());
     if (filters?.availableFrom) params = params.set('availableFrom', filters.availableFrom);
     if (filters?.sortBy) params = params.set('sortBy', filters.sortBy);
+    if (filters?.nearLat != null) params = params.set('nearLat', filters.nearLat.toString());
+    if (filters?.nearLng != null) params = params.set('nearLng', filters.nearLng.toString());
+    if (filters?.radiusKm != null) params = params.set('radiusKm', filters.radiusKm.toString());
     return this.http.get<Listing[]>(this.apiUrl, { params });
   }
 
