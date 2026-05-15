@@ -28,3 +28,6 @@
 
 <app-toast></app-toast>
 <app-confirm-dialog></app-confirm-dialog>
+
+<!-- Engagement NPS prompt — fires only for authenticated users with > 14 days of usage -->
+<app-nps-prompt *ngIf="isAuthenticated"></app-nps-prompt>

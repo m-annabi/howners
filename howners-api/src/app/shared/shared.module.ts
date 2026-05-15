@@ -26,6 +26,7 @@ import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dial
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { TopbarComponent } from './components/topbar/topbar.component';
 import { QuickFiltersComponent } from './components/quick-filters/quick-filters.component';
+import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component';
 
 @NgModule({
   declarations: [
@@ -50,7 +51,8 @@ import { QuickFiltersComponent } from './components/quick-filters/quick-filters.
     ConfirmDialogComponent,
     SidebarComponent,
     TopbarComponent,
-    QuickFiltersComponent
+    QuickFiltersComponent,
+    NpsPromptComponent
   ],
   imports: [
     CommonModule,
@@ -81,7 +83,8 @@ import { QuickFiltersComponent } from './components/quick-filters/quick-filters.
     ConfirmDialogComponent,
     SidebarComponent,
     TopbarComponent,
-    QuickFiltersComponent
+    QuickFiltersComponent,
+    NpsPromptComponent
   ]
 })
 export class SharedModule { }
