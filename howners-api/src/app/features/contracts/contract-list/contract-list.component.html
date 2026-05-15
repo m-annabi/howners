@@ -5,10 +5,28 @@
 </app-page-header>
 
 <ng-template #headerActions>
-  <button class="hw-btn hw-btn--primary" (click)="createContract()">
+  <button class="hw-btn hw-btn--primary"
+          [disabled]="usage && !usage.canCreateContract"
+          (click)="createContract()">
     <i class="bi bi-plus-lg"></i> Nouveau Contrat
   </button>
 </ng-template>
+
+<!-- Quota banner -->
+<div *ngIf="usage" class="quota-banner" [attr.data-tone]="quotaTone">
+  <div class="quota-banner__head">
+    <span class="quota-banner__plan">
+      <i class="bi bi-stars"></i> {{ usage.planName }}
+    </span>
+    <span class="quota-banner__label">{{ quotaLabel }}</span>
+    <a *ngIf="quotaTone !== 'ok'" routerLink="/billing/pricing" class="quota-banner__cta">
+      Mettre à niveau <i class="bi bi-arrow-right"></i>
+    </a>
+  </div>
+  <div *ngIf="usage.maxContractsPerMonth >= 0" class="quota-banner__bar">
+    <div class="quota-banner__fill" [style.width.%]="quotaPercent"></div>
+  </div>
+</div>
 
 <!-- Toolbar: filter chips + search -->
 <div *ngIf="!loading && contracts.length > 0" class="contract-list__toolbar">

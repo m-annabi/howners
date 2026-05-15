@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ContractService } from '../../../core/services/contract.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { SubscriptionService } from '../../../core/services/subscription.service';
 import {
   Contract,
   ContractStatus,
   CONTRACT_STATUS_LABELS,
   CONTRACT_STATUS_COLORS
 } from '../../../core/models/contract.model';
+import { UsageLimits } from '../../../core/models/subscription.model';
 import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
 
 @Component({
@@ -27,12 +29,42 @@ export class ContractListComponent implements OnInit {
   contractStatusLabels = CONTRACT_STATUS_LABELS;
   contractStatusColors = CONTRACT_STATUS_COLORS;
 
+  usage: UsageLimits | null = null;
+
   constructor(
     private contractService: ContractService,
+    private subscriptionService: SubscriptionService,
     private router: Router,
     private route: ActivatedRoute,
     private notificationService: NotificationService
   ) {}
+
+  get quotaLabel(): string {
+    if (!this.usage) return '';
+    if (this.usage.maxContractsPerMonth < 0) {
+      return `${this.usage.currentContractsThisMonth} contrats ce mois · illimité`;
+    }
+    return `${this.usage.currentContractsThisMonth} / ${this.usage.maxContractsPerMonth} contrats ce mois`;
+  }
+
+  get quotaPercent(): number {
+    if (!this.usage || this.usage.maxContractsPerMonth <= 0) return 0;
+    return Math.min(100, (this.usage.currentContractsThisMonth / this.usage.maxContractsPerMonth) * 100);
+  }
+
+  get quotaTone(): 'ok' | 'warning' | 'danger' {
+    const pct = this.quotaPercent;
+    if (pct >= 100) return 'danger';
+    if (pct >= 80) return 'warning';
+    return 'ok';
+  }
+
+  loadUsage(): void {
+    this.subscriptionService.getUsageLimits().subscribe({
+      next: (u) => this.usage = u,
+      error: () => {}
+    });
+  }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
@@ -42,6 +74,7 @@ export class ContractListComponent implements OnInit {
       else if (Object.values(ContractStatus).includes(f)) this.selectedStatus = f;
     });
     this.loadContracts();
+    this.loadUsage();
   }
 
   get filters(): QuickFilter[] {
@@ -147,6 +180,11 @@ export class ContractListComponent implements OnInit {
   }
 
   createContract(): void {
+    if (this.usage && !this.usage.canCreateContract) {
+      this.notificationService.error('Quota de contrats mensuels atteint. Mettez à niveau votre abonnement.');
+      this.router.navigate(['/billing/pricing']);
+      return;
+    }
     this.router.navigate(['/contracts/new']);
   }
 
