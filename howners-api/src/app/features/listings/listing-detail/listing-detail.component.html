@@ -106,6 +106,15 @@
               </button>
             </div>
 
+            <!-- Share — visible à tout le monde (public ou connecté) -->
+            <hr>
+            <button class="btn btn-outline-secondary w-100"
+                    (click)="shareListing()"
+                    [class.active]="shareSuccess">
+              <i class="bi" [ngClass]="shareSuccess ? 'bi-check2' : 'bi-share'"></i>
+              {{ shareSuccess ? 'Lien copié !' : 'Partager cette annonce' }}
+            </button>
+
             <!-- Actions proprietaire : modifier / candidatures (visibles uniquement pour le proprio de cette annonce) -->
             <hr *ngIf="isOwner">
             <div class="d-grid gap-2" *ngIf="isOwner">
