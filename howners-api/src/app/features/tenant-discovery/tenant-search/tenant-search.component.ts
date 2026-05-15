@@ -7,6 +7,7 @@ import { Listing } from '../../../core/models/listing.model';
 import { PropertyType, PROPERTY_TYPE_LABELS } from '../../../core/models/property.model';
 import { RISK_LEVEL_COLORS } from '../../../core/models/tenant-score.model';
 import { Department, getDepartmentsByCountry, getDepartmentLabel } from '../../../core/data/geo-reference';
+import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
 
 @Component({
   selector: 'app-tenant-search',
@@ -18,9 +19,9 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
   results: TenantSearchResult[] = [];
   myListings: Listing[] = [];
   loading = false;
-  showFilters = true;
+  showMoreFilters = false;
 
-  // Filters
+  // Primary filters
   filterCity = '';
   filterDepartment = '';
   filterPostalCode = '';
@@ -30,6 +31,9 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
   filterListingId = '';
   sortBy = '';
 
+  // Quick-filter chip by property type
+  activeTypeChip: string = 'all';
+
   departments: Department[] = [];
   getDepartmentLabel = getDepartmentLabel;
   propertyTypes = Object.values(PropertyType);
@@ -37,7 +41,7 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
   riskLevelColors = RISK_LEVEL_COLORS;
 
   // Invitation
-  invitingProfileId: string | null = null;
+  invitingProfile: TenantSearchResult | null = null;
   inviteMessage = '';
   inviteListingId = '';
   inviteSuccess = '';
@@ -60,8 +64,37 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
       next: (listings) => {
         this.myListings = listings.filter(l => l.status === 'PUBLISHED');
       },
-      error: () => {} // silent — listings dropdown stays empty
+      error: () => {}
     });
+  }
+
+  get typeFilterChips(): QuickFilter[] {
+    const counts = new Map<string, number>();
+    counts.set('all', this.results.length);
+    for (const r of this.results) {
+      const t = r.profile.desiredPropertyType || '__unspec';
+      counts.set(t, (counts.get(t) || 0) + 1);
+    }
+    const list: QuickFilter[] = [
+      { key: 'all', label: 'Tous', count: counts.get('all') || 0 }
+    ];
+    for (const t of this.propertyTypes) {
+      const c = counts.get(t) || 0;
+      if (c > 0) {
+        list.push({ key: t, label: this.propertyTypeLabels[t], count: c });
+      }
+    }
+    return list;
+  }
+
+  /** Client-side narrowing using the chip — server search already applies filterPropertyType when set. */
+  get displayedResults(): TenantSearchResult[] {
+    if (this.activeTypeChip === 'all') return this.results;
+    return this.results.filter(r => r.profile.desiredPropertyType === this.activeTypeChip);
+  }
+
+  onTypeChipChange(key: string): void {
+    this.activeTypeChip = key;
   }
 
   search(): void {
@@ -85,6 +118,10 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
     });
   }
 
+  toggleMoreFilters(): void {
+    this.showMoreFilters = !this.showMoreFilters;
+  }
+
   clearFilters(): void {
     this.filterCity = '';
     this.filterDepartment = '';
@@ -94,28 +131,33 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
     this.filterPropertyType = '';
     this.filterListingId = '';
     this.sortBy = '';
+    this.activeTypeChip = 'all';
     this.search();
   }
 
   get hasActiveFilters(): boolean {
     return !!(this.filterCity || this.filterDepartment || this.filterPostalCode
       || this.filterBudgetMin != null || this.filterBudgetMax != null
-      || this.filterPropertyType || this.filterListingId);
+      || this.filterPropertyType || this.filterListingId
+      || this.activeTypeChip !== 'all');
   }
 
-  openInviteModal(profileId: string): void {
-    this.invitingProfileId = profileId;
+  openInviteModal(result: TenantSearchResult, event: Event): void {
+    event.stopPropagation();
+    this.invitingProfile = result;
     this.inviteMessage = '';
     this.inviteListingId = this.filterListingId || (this.myListings.length > 0 ? this.myListings[0].id : '');
     this.inviteSuccess = '';
     this.inviteError = '';
   }
 
-  cancelInvite(): void {
-    this.invitingProfileId = null;
+  closeInviteModal(): void {
+    this.invitingProfile = null;
+    this.inviteError = '';
   }
 
-  sendInvitation(tenantId: string): void {
+  sendInvitation(): void {
+    if (!this.invitingProfile) return;
     if (!this.inviteListingId) {
       this.inviteError = 'Veuillez sélectionner une annonce.';
       return;
@@ -123,13 +165,13 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
     this.inviteError = '';
     this.invitationService.invite({
       listingId: this.inviteListingId,
-      tenantId: tenantId,
+      tenantId: this.invitingProfile.profile.tenantId,
       message: this.inviteMessage || undefined
     }).subscribe({
       next: () => {
-        this.inviteSuccess = 'Invitation envoyée !';
-        this.invitingProfileId = null;
-        this.successTimeout = setTimeout(() => this.inviteSuccess = '', 3000);
+        this.inviteSuccess = 'Invitation envoyée à ' + (this.invitingProfile?.profile.tenantName || '');
+        this.invitingProfile = null;
+        this.successTimeout = setTimeout(() => this.inviteSuccess = '', 3500);
       },
       error: (err) => {
         this.inviteError = err.error?.message || 'Erreur lors de l\'envoi de l\'invitation.';
