@@ -1,5 +1,7 @@
-# Environment variables
+# Environment variables — never commit (use .env.example as a template instead)
 .env
+**/.env
+!**/.env.example
 
 # IDE
 .vscode/
