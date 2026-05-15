@@ -63,6 +63,8 @@ export interface Property {
   hasElevator?: boolean;
   isFurnished?: boolean;
   propertyCondition?: PropertyCondition;
+  currentMonthlyRent?: number;
+  grossYieldPercent?: number;
   primaryPhotoUrl?: string;
   createdAt: string;
   updatedAt: string;
