@@ -66,6 +66,9 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
            "AND (:minBedrooms IS NULL OR l.property.bedrooms >= :minBedrooms) " +
            "AND (:furnished IS NULL OR l.property.isFurnished = :furnished) " +
            "AND (:availableFrom IS NULL OR l.availableFrom IS NULL OR l.availableFrom <= :availableFrom) " +
+           "AND (:latMin IS NULL OR (l.property.latitude IS NOT NULL " +
+           "      AND l.property.latitude BETWEEN :latMin AND :latMax " +
+           "      AND l.property.longitude BETWEEN :lngMin AND :lngMax)) " +
            "ORDER BY l.publishedAt DESC")
     List<Listing> searchPublishedAdvanced(
             @Param("search") String search,
@@ -78,5 +81,9 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
             @Param("minSurface") BigDecimal minSurface,
             @Param("minBedrooms") Integer minBedrooms,
             @Param("furnished") Boolean furnished,
-            @Param("availableFrom") LocalDate availableFrom);
+            @Param("availableFrom") LocalDate availableFrom,
+            @Param("latMin") BigDecimal latMin,
+            @Param("latMax") BigDecimal latMax,
+            @Param("lngMin") BigDecimal lngMin,
+            @Param("lngMax") BigDecimal lngMax);
 }

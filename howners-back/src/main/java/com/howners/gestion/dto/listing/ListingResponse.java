@@ -17,6 +17,8 @@ public record ListingResponse(
         String propertyPostalCode,
         String propertyDepartment,
         String propertyCountry,
+        BigDecimal propertyLatitude,
+        BigDecimal propertyLongitude,
         String ownerName,
         String title,
         String description,
@@ -34,32 +36,7 @@ public record ListingResponse(
         LocalDateTime createdAt
 ) {
     public static ListingResponse from(Listing l) {
-        List<ListingPhotoResponse> photos = List.of();
-
-        return new ListingResponse(
-                l.getId(),
-                l.getProperty().getId(),
-                l.getProperty().getName(),
-                l.getProperty().getCity(),
-                l.getProperty().getPostalCode(),
-                l.getProperty().getDepartment(),
-                l.getProperty().getCountry(),
-                l.getProperty().getOwner().getFullName(),
-                l.getTitle(),
-                l.getDescription(),
-                l.getPricePerNight(),
-                l.getPricePerMonth(),
-                l.getCurrency(),
-                l.getMinStay(),
-                l.getMaxStay(),
-                l.getStatus(),
-                l.getAmenities(),
-                l.getRequirements(),
-                l.getAvailableFrom(),
-                photos,
-                l.getPublishedAt(),
-                l.getCreatedAt()
-        );
+        return from(l, List.of());
     }
 
     public static ListingResponse from(Listing l, List<ListingPhotoResponse> resolvedPhotos) {
@@ -71,6 +48,8 @@ public record ListingResponse(
                 l.getProperty().getPostalCode(),
                 l.getProperty().getDepartment(),
                 l.getProperty().getCountry(),
+                l.getProperty().getLatitude(),
+                l.getProperty().getLongitude(),
                 l.getProperty().getOwner().getFullName(),
                 l.getTitle(),
                 l.getDescription(),

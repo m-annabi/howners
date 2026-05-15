@@ -39,12 +39,17 @@ public class ListingController {
             @RequestParam(required = false) Integer minBedrooms,
             @RequestParam(required = false) Boolean furnished,
             @RequestParam(required = false) LocalDate availableFrom,
-            @RequestParam(required = false) String sortBy) {
-        log.info("Searching listings - search: {}, city: {}, department: {}, postalCode: {}", search, city, department, postalCode);
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) BigDecimal nearLat,
+            @RequestParam(required = false) BigDecimal nearLng,
+            @RequestParam(required = false) BigDecimal radiusKm) {
+        log.info("Searching listings - search: {}, city: {}, near: {},{} r={}km",
+                search, city, nearLat, nearLng, radiusKm);
         List<ListingResponse> listings = listingService.searchPublishedAdvanced(
                 search, city, department, postalCode,
                 priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished,
-                availableFrom, sortBy);
+                availableFrom, sortBy,
+                nearLat, nearLng, radiusKm);
         return ResponseEntity.ok(listings);
     }
 
