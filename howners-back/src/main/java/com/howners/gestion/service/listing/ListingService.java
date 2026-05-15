@@ -74,7 +74,25 @@ public class ListingService {
             String search, String city, String department, String postalCode,
             BigDecimal priceMin, BigDecimal priceMax, PropertyType propertyType,
             BigDecimal minSurface, Integer minBedrooms, Boolean furnished,
-            LocalDate availableFrom, String sortBy) {
+            LocalDate availableFrom, String sortBy,
+            BigDecimal nearLat, BigDecimal nearLng, BigDecimal radiusKm) {
+
+        // Bounding box for radius search. Conservative (square containing the circle);
+        // an exact haversine pass below refines to the actual disk.
+        boolean hasRadius = nearLat != null && nearLng != null && radiusKm != null
+                && radiusKm.signum() > 0;
+
+        BigDecimal latMin = null, latMax = null, lngMin = null, lngMax = null;
+        if (hasRadius) {
+            double r = radiusKm.doubleValue();
+            double lat = nearLat.doubleValue();
+            double latDelta = r / 111.0;
+            double lngDelta = r / (111.0 * Math.max(0.01, Math.cos(Math.toRadians(lat))));
+            latMin = BigDecimal.valueOf(lat - latDelta);
+            latMax = BigDecimal.valueOf(lat + latDelta);
+            lngMin = BigDecimal.valueOf(nearLng.doubleValue() - lngDelta);
+            lngMax = BigDecimal.valueOf(nearLng.doubleValue() + lngDelta);
+        }
 
         boolean hasAny = (search != null && !search.isBlank())
                 || (city != null && !city.isBlank())
@@ -83,7 +101,8 @@ public class ListingService {
                 || priceMin != null || priceMax != null
                 || propertyType != null || minSurface != null
                 || minBedrooms != null || furnished != null
-                || availableFrom != null;
+                || availableFrom != null
+                || hasRadius;
 
         List<Listing> listings;
         if (!hasAny) {
@@ -94,8 +113,23 @@ public class ListingService {
                     (city != null && !city.isBlank()) ? city : "",
                     (department != null && !department.isBlank()) ? department : "",
                     (postalCode != null && !postalCode.isBlank()) ? postalCode : "",
-                    priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished, availableFrom
+                    priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished, availableFrom,
+                    latMin, latMax, lngMin, lngMax
             );
+        }
+
+        if (hasRadius) {
+            final double lat = nearLat.doubleValue();
+            final double lng = nearLng.doubleValue();
+            final double rKm = radiusKm.doubleValue();
+            listings = listings.stream()
+                    .filter(l -> {
+                        BigDecimal pLat = l.getProperty().getLatitude();
+                        BigDecimal pLng = l.getProperty().getLongitude();
+                        if (pLat == null || pLng == null) return false;
+                        return haversineKm(lat, lng, pLat.doubleValue(), pLng.doubleValue()) <= rKm;
+                    })
+                    .toList();
         }
 
         List<ListingResponse> results = listings.stream().map(this::toResponseWithPhotos).toList();
@@ -108,9 +142,32 @@ public class ListingService {
             results = results.stream()
                     .sorted(Comparator.comparing(ListingResponse::pricePerMonth, Comparator.nullsLast(Comparator.reverseOrder())))
                     .toList();
+        } else if ("distance_asc".equals(sortBy) && hasRadius) {
+            final double lat = nearLat.doubleValue();
+            final double lng = nearLng.doubleValue();
+            results = results.stream()
+                    .sorted(Comparator.comparingDouble(r -> distanceForResponse(r, lat, lng)))
+                    .toList();
         }
 
         return results;
+    }
+
+    private static double haversineKm(double lat1, double lng1, double lat2, double lng2) {
+        double R = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                  * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    private double distanceForResponse(ListingResponse r, double lat, double lng) {
+        BigDecimal pLat = r.propertyLatitude();
+        BigDecimal pLng = r.propertyLongitude();
+        if (pLat == null || pLng == null) return Double.POSITIVE_INFINITY;
+        return haversineKm(lat, lng, pLat.doubleValue(), pLng.doubleValue());
     }
 
     @Transactional(readOnly = true)
