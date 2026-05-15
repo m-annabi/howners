@@ -5,8 +5,8 @@
 </app-page-header>
 
 <ng-template #headerActions>
+  <!-- Not disabled at saturation: the click opens the upgrade modal in createContract(). -->
   <button class="hw-btn hw-btn--primary"
-          [disabled]="usage && !usage.canCreateContract"
           (click)="createContract()">
     <i class="bi bi-plus-lg"></i> Nouveau Contrat
   </button>

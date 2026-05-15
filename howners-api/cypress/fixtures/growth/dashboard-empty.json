@@ -1,0 +1,10 @@
+{
+  "totalProperties": 0,
+  "activeRentals": 0,
+  "pendingRentals": 0,
+  "terminatedRentals": 0,
+  "monthlyRevenue": 0,
+  "currency": "EUR",
+  "recentActivity": { "latestProperty": null, "latestRental": null },
+  "tenantInfo": null
+}

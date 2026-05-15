@@ -1,0 +1,48 @@
+[
+  {
+    "profile": {
+      "id": "tp-1",
+      "tenantId": "u-jean",
+      "tenantName": "Jean Locataire",
+      "desiredCity": "Boulogne-Billancourt",
+      "desiredDepartment": "92",
+      "budgetMin": 900,
+      "budgetMax": 1400,
+      "desiredPropertyType": "APARTMENT",
+      "minSurface": 35,
+      "minBedrooms": 1,
+      "description": "Développeur junior en CDI depuis 1 an. Calme, non-fumeur."
+    },
+    "tenantScore": { "score": 95, "riskLevel": "LOW" }
+  },
+  {
+    "profile": {
+      "id": "tp-2",
+      "tenantId": "u-ines",
+      "tenantName": "Inès Bernard",
+      "desiredCity": "Paris",
+      "desiredDepartment": "75",
+      "budgetMin": 1800,
+      "budgetMax": 2500,
+      "desiredPropertyType": "APARTMENT",
+      "minSurface": 45,
+      "description": "Cadre dirigeante, retour de Singapour."
+    },
+    "tenantScore": { "score": 92, "riskLevel": "LOW" }
+  },
+  {
+    "profile": {
+      "id": "tp-3",
+      "tenantId": "u-lucas",
+      "tenantName": "Lucas Petit",
+      "desiredCity": "Suresnes",
+      "desiredDepartment": "92",
+      "budgetMin": 550,
+      "budgetMax": 800,
+      "desiredPropertyType": "STUDIO",
+      "minSurface": 18,
+      "description": "Étudiant en M2 Finance à Dauphine."
+    },
+    "tenantScore": { "score": 59, "riskLevel": "MEDIUM" }
+  }
+]
