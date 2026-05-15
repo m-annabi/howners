@@ -25,6 +25,7 @@ import { DataTableComponent } from './components/data-table/data-table.component
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { TopbarComponent } from './components/topbar/topbar.component';
+import { QuickFiltersComponent } from './components/quick-filters/quick-filters.component';
 
 @NgModule({
   declarations: [
@@ -48,7 +49,8 @@ import { TopbarComponent } from './components/topbar/topbar.component';
     DataTableComponent,
     ConfirmDialogComponent,
     SidebarComponent,
-    TopbarComponent
+    TopbarComponent,
+    QuickFiltersComponent
   ],
   imports: [
     CommonModule,
@@ -78,7 +80,8 @@ import { TopbarComponent } from './components/topbar/topbar.component';
     DataTableComponent,
     ConfirmDialogComponent,
     SidebarComponent,
-    TopbarComponent
+    TopbarComponent,
+    QuickFiltersComponent
   ]
 })
 export class SharedModule { }
