@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="062-fix-expense-categories" author="olivier">
+        <update tableName="expenses">
+            <column name="category" value="CONDO_FEES"/>
+            <where>category = 'CHARGES_COPROPRIETE'</where>
+        </update>
+        <update tableName="expenses">
+            <column name="category" value="TAX"/>
+            <where>category = 'TAXE_FONCIERE'</where>
+        </update>
+        <update tableName="expenses">
+            <column name="category" value="MAINTENANCE"/>
+            <where>category = 'ENTRETIEN'</where>
+        </update>
+        <update tableName="expenses">
+            <column name="category" value="REPAIR"/>
+            <where>category = 'TRAVAUX'</where>
+        </update>
+        <update tableName="expenses">
+            <column name="category" value="INSURANCE"/>
+            <where>category = 'ASSURANCE'</where>
+        </update>
+    </changeSet>
+
+    <changeSet id="062-fix-payment-statuses" author="olivier">
+        <update tableName="payments">
+            <column name="status" value="PAID"/>
+            <where>status = 'COMPLETED'</where>
+        </update>
+    </changeSet>
+
+    <changeSet id="062-fix-invoice-statuses" author="olivier">
+        <update tableName="invoices">
+            <column name="status" value="ISSUED"/>
+            <where>status = 'SENT'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

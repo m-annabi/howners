@@ -65,5 +65,6 @@
     <include file="db/changelog/059-create-nps-responses.xml"/>
     <include file="db/changelog/060-add-stripe-connect-fields.xml"/>
     <include file="db/changelog/061-create-affiliate-partners.xml"/>
+    <include file="db/changelog/062-fix-expense-categories.xml"/>
 
 </databaseChangeLog>
