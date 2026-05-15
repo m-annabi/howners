@@ -4,6 +4,8 @@ import { Observable, from, of, throwError } from 'rxjs';
 import { catchError, switchMap, map } from 'rxjs/operators';
 
 export interface ReverseGeocodeResult {
+  latitude: number;
+  longitude: number;
   city: string;
   postalCode: string;
   country: string;
@@ -38,7 +40,9 @@ export class GeolocationService {
         maximumAge: 60_000
       });
     })).pipe(
-      switchMap(pos => this.reverseGeocode(pos.coords.latitude, pos.coords.longitude)),
+      switchMap(pos => this.reverseGeocode(pos.coords.latitude, pos.coords.longitude).pipe(
+        map(r => ({ ...r, latitude: pos.coords.latitude, longitude: pos.coords.longitude }))
+      )),
       catchError(err => {
         if (err?.code === 1) return throwError(() => new Error('Autorisation refusée. Activez la géolocalisation pour ce site.'));
         if (err?.code === 2) return throwError(() => new Error('Position indisponible.'));
@@ -58,9 +62,9 @@ export class GeolocationService {
         const country = (a.country_code || '').toUpperCase();
         const state = a.state || a.region;
         const countyCode = a.county || a['ISO3166-2-lvl4'];
-        return { city, postalCode, country, state, countyCode, raw: resp };
+        return { latitude: lat, longitude: lon, city, postalCode, country, state, countyCode, raw: resp };
       }),
-      catchError(() => of({ city: '', postalCode: '', country: '' } as ReverseGeocodeResult))
+      catchError(() => of({ latitude: lat, longitude: lon, city: '', postalCode: '', country: '' } as ReverseGeocodeResult))
     );
   }
 }

@@ -27,7 +27,7 @@
       <div class="filter-bar__location-input">
         <input
           type="text"
-          class="form-control"
+          class="form-control form-control-sm"
           placeholder="Ville ou code postal"
           [(ngModel)]="filterCity"
           (keyup.enter)="search()">
@@ -35,15 +35,13 @@
           type="button"
           class="filter-bar__locate"
           [class.is-loading]="geolocating"
+          [class.is-active]="userLat != null"
           (click)="locateMe()"
           title="Détecter ma position">
           <i class="bi" [ngClass]="geolocating ? 'bi-arrow-clockwise' : 'bi-crosshair'"></i>
           <span class="filter-bar__locate-label">Près de moi</span>
         </button>
       </div>
-      <small *ngIf="detectedLocationLabel" class="filter-bar__location-hint">
-        {{ detectedLocationLabel }}
-      </small>
     </div>
 
     <div class="filter-bar__field">
@@ -53,8 +51,8 @@
       <div class="filter-bar__unit-input">
         <input
           type="number"
-          class="form-control"
-          placeholder="Aucun"
+          class="form-control form-control-sm"
+          placeholder="—"
           min="0"
           step="50"
           [(ngModel)]="filterPriceMax"
@@ -70,8 +68,8 @@
       <div class="filter-bar__unit-input">
         <input
           type="number"
-          class="form-control"
-          placeholder="Aucune"
+          class="form-control form-control-sm"
+          placeholder="—"
           min="0"
           step="5"
           [(ngModel)]="filterMinSurface"
@@ -84,7 +82,7 @@
       <label class="filter-bar__label">
         <i class="bi bi-house"></i> Type
       </label>
-      <select class="form-select" [(ngModel)]="filterPropertyType" (change)="search()">
+      <select class="form-select form-select-sm" [(ngModel)]="filterPropertyType" (change)="search()">
         <option value="">Tous</option>
         <option *ngFor="let type of propertyTypes" [value]="type">
           {{ propertyTypeLabels[type] }}
@@ -96,15 +94,16 @@
       <label class="filter-bar__label">
         <i class="bi bi-sort-down"></i> Tri
       </label>
-      <select class="form-select" [(ngModel)]="sortBy" (change)="search()">
+      <select class="form-select form-select-sm" [(ngModel)]="sortBy" (change)="search()">
         <option value="">Plus récents</option>
         <option value="price_asc">Prix ↑</option>
         <option value="price_desc">Prix ↓</option>
+        <option *ngIf="userLat != null" value="distance_asc">Distance ↑</option>
       </select>
     </div>
 
     <div class="filter-bar__actions">
-      <button class="btn btn-outline-secondary"
+      <button class="btn btn-outline-secondary btn-sm"
               (click)="toggleMoreFilters()"
               [class.active]="showMoreFilters">
         <i class="bi bi-sliders"></i>
@@ -113,11 +112,31 @@
               class="filter-bar__more-dot"></span>
       </button>
       <button *ngIf="hasActiveFilters"
-              class="btn btn-link"
+              class="btn btn-link btn-sm"
               (click)="clearFilters()">
         Effacer
       </button>
     </div>
+  </div>
+
+  <!-- Radius pill — visible only when geolocation is active -->
+  <div *ngIf="userLat != null" class="radius-pill">
+    <i class="bi bi-broadcast-pin"></i>
+    <span class="radius-pill__label">{{ detectedLocationLabel || 'Autour de ma position' }}</span>
+    <div class="radius-pill__slider">
+      <input
+        type="range"
+        min="1"
+        max="50"
+        step="1"
+        [(ngModel)]="radiusKm"
+        (change)="onRadiusChange()"
+        class="form-range">
+      <span class="radius-pill__value">{{ radiusKm }} km</span>
+    </div>
+    <button type="button" class="radius-pill__close" (click)="clearGeolocation()" title="Désactiver">
+      <i class="bi bi-x-lg"></i>
+    </button>
   </div>
 
   <!-- Secondary filters (toggle) -->
