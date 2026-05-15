@@ -32,8 +32,15 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:25MB}
+      file-size-threshold: 1MB    # spill to disk above 1 MB, less heap pressure
+
+# Howners-specific upload guards. The owner-document quota is enforced in
+# DocumentService.assertOwnerWithinQuota — see #45 in SECURITY-ROTATION.md.
+howners:
+  upload:
+    max-documents-per-owner: ${MAX_DOCS_PER_OWNER:500}
 
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}

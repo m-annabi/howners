@@ -42,6 +42,9 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final StorageService storageService;
 
+    @org.springframework.beans.factory.annotation.Value("${howners.upload.max-documents-per-owner:500}")
+    private long maxDocumentsPerOwner;
+
     /**
      * Upload un document
      */
@@ -66,6 +69,15 @@ public class DocumentService {
         // Valider la taille (max 10MB)
         if (file.getSize() > 10 * 1024 * 1024) {
             throw new RuntimeException("File size exceeds 10MB limit");
+        }
+
+        // Quota par utilisateur (anti-saturation S3). Le multipart cap par requête
+        // est dans application.yml ; ici on borne le total d'objets stockés.
+        long owned = documentRepository.countByUploaderId(currentUserId);
+        if (owned >= maxDocumentsPerOwner) {
+            throw new RuntimeException(
+                "Limite de " + maxDocumentsPerOwner +
+                " documents atteinte. Archivez ou supprimez d'anciens documents avant d'en ajouter de nouveaux.");
         }
 
         // Récupérer les entités associées si fournies

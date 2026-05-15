@@ -20,6 +20,8 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
     List<Document> findByUploaderId(UUID uploaderId);
 
+    long countByUploaderId(UUID uploaderId);
+
     List<Document> findByDocumentType(DocumentType documentType);
 
     List<Document> findByRentalIdAndDocumentType(UUID rentalId, DocumentType documentType);
