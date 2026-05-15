@@ -34,14 +34,11 @@ public class ContractESignatureController {
     public ResponseEntity<SignatureRequestResponse> sendForSignature(
             @PathVariable UUID contractId) {
         log.info("Request to send contract {} for signature", contractId);
-
-        try {
-            SignatureRequestResponse response = esignatureService.sendContractForSignature(contractId);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Failed to send contract for signature", e);
-            return ResponseEntity.badRequest().build();
-        }
+        // Typed exceptions (ESignatureProviderException, ContractNotFoundException,
+        // ContractInvalidStateException…) are handled by GlobalExceptionHandler with
+        // structured payloads. Generic catch-all here used to swallow the cause.
+        SignatureRequestResponse response = esignatureService.sendContractForSignature(contractId);
+        return ResponseEntity.ok(response);
     }
 
     /**

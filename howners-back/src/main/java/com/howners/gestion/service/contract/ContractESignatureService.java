@@ -155,6 +155,13 @@ public class ContractESignatureService {
 
         ESignatureResponse esignResponse = provider.createSignatureRequest(esignRequest);
 
+        // Pour le provider interne (canvas), pas d'URL externe → on construit
+        // l'URL publique de signature tokenisée avec le raw token.
+        String signingUrl = esignResponse.signingUrl();
+        if (signingUrl == null || signingUrl.isBlank()) {
+            signingUrl = frontendUrl + "/sign?token=" + rawToken;
+        }
+
         // 5. Créer l'entité ContractSignatureRequest
         ContractSignatureRequest signatureRequest = ContractSignatureRequest.builder()
                 .contract(contract)
@@ -165,7 +172,7 @@ public class ContractESignatureService {
                 .accessToken(hashedToken)
                 .tokenExpiresAt(LocalDateTime.now().plusDays(DEFAULT_TOKEN_EXPIRATION_DAYS))
                 .status(SignatureRequestStatus.PENDING)
-                .signingUrl(esignResponse.signingUrl())
+                .signingUrl(signingUrl)
                 .build();
 
         // 6. Sauvegarder la demande de signature
