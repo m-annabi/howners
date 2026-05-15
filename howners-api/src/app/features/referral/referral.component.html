@@ -1,0 +1,84 @@
+<app-page-header
+  title="Parrainez Howners"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Parrainage'}]">
+</app-page-header>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<div *ngIf="!loading && summary" class="referral">
+
+  <!-- Hero card -->
+  <section class="referral-hero hw-card">
+    <div class="referral-hero__copy">
+      <span class="referral-hero__pill"><i class="bi bi-stars"></i> Programme parrainage</span>
+      <h2>Faites profiter Howners à vos contacts.</h2>
+      <p>Plus vous parrainez, plus votre patrimoine devient une force d'attraction. Partagez votre lien — chaque inscription via votre code apparaît ici.</p>
+    </div>
+
+    <div class="referral-hero__code">
+      <span class="referral-hero__code-label">Votre code</span>
+      <code class="referral-hero__code-value">{{ summary.code }}</code>
+      <div class="referral-hero__actions">
+        <button type="button" class="btn btn-primary" (click)="share()">
+          <i class="bi bi-send"></i> Partager
+        </button>
+        <button type="button" class="btn btn-outline-secondary"
+                (click)="copyLink()"
+                [class.active]="copied">
+          <i class="bi" [ngClass]="copied ? 'bi-check2' : 'bi-link-45deg'"></i>
+          {{ copied ? 'Lien copié !' : 'Copier le lien' }}
+        </button>
+      </div>
+      <small class="referral-hero__url">{{ summary.shareUrl }}</small>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="referral-stats">
+    <article class="hw-card">
+      <span class="referral-stat__label">Invitations en attente</span>
+      <span class="referral-stat__value">{{ summary.pendingCount }}</span>
+    </article>
+    <article class="hw-card">
+      <span class="referral-stat__label">Inscriptions converties</span>
+      <span class="referral-stat__value referral-stat__value--success">{{ summary.convertedCount }}</span>
+    </article>
+  </div>
+
+  <!-- Referees list -->
+  <section class="referral-list">
+    <h3>Vos invités</h3>
+
+    <div *ngIf="summary.referees.length === 0" class="referral-empty hw-card">
+      <i class="bi bi-people"></i>
+      <p>Personne pour le moment. Partagez votre lien pour démarrer.</p>
+    </div>
+
+    <div *ngIf="summary.referees.length > 0" class="hw-card" style="padding: 0; overflow: hidden;">
+      <table class="referral-table">
+        <thead>
+          <tr>
+            <th>Invité</th>
+            <th>Statut</th>
+            <th>Inscrit le</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of summary.referees">
+            <td>{{ r.name }}</td>
+            <td>
+              <span class="badge"
+                    [ngClass]="r.status === 'CONVERTED' ? 'bg-success' : 'bg-secondary'">
+                {{ r.status === 'CONVERTED' ? 'Converti' : 'En attente' }}
+              </span>
+            </td>
+            <td>{{ r.createdAt | date:'dd/MM/yyyy' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>

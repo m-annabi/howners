@@ -58,6 +58,9 @@ public class User {
     @Column(name = "is_anonymized")
     private Boolean isAnonymized = false;
 
+    @Column(name = "referral_code", unique = true, length = 20)
+    private String referralCode;
+
     public String getFullName() {
         return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");
     }

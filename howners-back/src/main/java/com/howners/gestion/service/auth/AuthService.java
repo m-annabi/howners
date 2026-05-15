@@ -37,6 +37,7 @@ public class AuthService {
     private final com.howners.gestion.service.audit.AuditService auditService;
     private final com.howners.gestion.service.subscription.SubscriptionService subscriptionService;
     private final EmailService emailService;
+    private final com.howners.gestion.service.referral.ReferralService referralService;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
@@ -66,6 +67,14 @@ public class AuthService {
 
         // Auto-assigner le plan FREE
         subscriptionService.assignFreePlan(user.getId());
+
+        // Generate a referral code for this user and, if signup came via a ref link, link it.
+        try {
+            referralService.ensureReferralCode(user.getId());
+            referralService.recordReferral(request.referralCode(), user);
+        } catch (Exception e) {
+            // Never block registration on referral side-effects.
+        }
 
         // Welcome email pour les bailleurs (les tenants reçoivent un email distinct
         // au moment où un owner les ajoute à une location).
