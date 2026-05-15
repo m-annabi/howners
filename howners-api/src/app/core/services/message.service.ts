@@ -1,9 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { Message, Conversation, CreateMessageRequest } from '../models/message.model';
 import { WebSocketService } from './websocket.service';
+import { InAppNotificationService } from './in-app-notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class MessageService implements OnDestroy {
@@ -16,10 +18,16 @@ export class MessageService implements OnDestroy {
 
   constructor(
     private http: HttpClient,
-    private webSocketService: WebSocketService
+    private webSocketService: WebSocketService,
+    private inAppNotificationService: InAppNotificationService,
+    private router: Router
   ) {
-    this.wsSub = this.webSocketService.messages$.subscribe(() => {
-      this.unreadCountSubject.next(this.unreadCountSubject.value + 1);
+    this.wsSub = this.webSocketService.messages$.subscribe((msg: Message) => {
+      const onConversation = this.router.url === `/messages/${msg.senderId}`;
+      if (!onConversation) {
+        this.unreadCountSubject.next(this.unreadCountSubject.value + 1);
+        this.inAppNotificationService.add('message', msg.senderName, msg.body, `/messages/${msg.senderId}`);
+      }
     });
   }
 
