@@ -135,6 +135,43 @@
     </div>
   </section>
 
+  <!-- Top tenants teaser — OWNER / ADMIN with no empty state -->
+  <section *ngIf="!isTenant && !showOnboarding && topTenants.length > 0" class="top-tenants">
+    <header class="top-tenants__head">
+      <h3>
+        <i class="bi bi-stars"></i>
+        Locataires à fort potentiel
+      </h3>
+      <a (click)="goToTenantDiscovery()" class="top-tenants__all">
+        Tous les profils <i class="bi bi-arrow-right"></i>
+      </a>
+    </header>
+    <div class="top-tenants__grid">
+      <article *ngFor="let result of topTenants"
+               class="top-tenant"
+               (click)="goToTenantDiscovery()">
+        <div class="top-tenant__avatar">
+          {{ (result.profile.tenantName || '?').charAt(0) }}
+        </div>
+        <div class="top-tenant__body">
+          <div class="top-tenant__name">{{ result.profile.tenantName }}</div>
+          <div class="top-tenant__meta">
+            <span *ngIf="result.profile.desiredCity">
+              <i class="bi bi-geo-alt"></i> {{ result.profile.desiredCity }}
+            </span>
+            <span *ngIf="result.profile.budgetMax">
+              · {{ result.profile.budgetMax }}€ max
+            </span>
+          </div>
+        </div>
+        <div *ngIf="result.tenantScore" class="top-tenant__score"
+             [attr.data-risk]="result.tenantScore.riskLevel">
+          {{ result.tenantScore.score }}
+        </div>
+      </article>
+    </div>
+  </section>
+
   <!-- Stats Cards — TENANT -->
   <div *ngIf="!loading && !error && stats && isTenant" class="dashboard__stats">
     <app-stats-card

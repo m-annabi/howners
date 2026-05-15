@@ -7,11 +7,13 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { ContractService } from '../../core/services/contract.service';
 import { ApplicationService } from '../../core/services/application.service';
+import { TenantDiscoveryService } from '../../core/services/tenant-discovery.service';
 import { User } from '../../core/models/user.model';
 import { DashboardStats } from '../../core/models/dashboard.model';
 import { PaymentStatus } from '../../core/models/payment.model';
 import { ContractStatus } from '../../core/models/contract.model';
 import { ApplicationStatus } from '../../core/models/application.model';
+import { TenantSearchResult } from '../../core/models/tenant-search-result.model';
 
 interface ActionItems {
   latePayments: number;
@@ -33,6 +35,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   error: string | null = null;
 
   actionItems: ActionItems | null = null;
+  topTenants: TenantSearchResult[] = [];
 
   get isTenant(): boolean {
     return this.currentUser?.role === 'TENANT';
@@ -74,6 +77,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private paymentService: PaymentService,
     private contractService: ContractService,
     private applicationService: ApplicationService,
+    private tenantDiscoveryService: TenantDiscoveryService,
     private router: Router
   ) {}
 
@@ -83,8 +87,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.loadStats();
       if (user && user.role !== 'TENANT') {
         this.loadActionItems();
+        this.loadTopTenants();
       }
     });
+  }
+
+  loadTopTenants(): void {
+    this.tenantDiscoveryService.searchTenants({ sortBy: 'score' }).subscribe({
+      next: (results) => this.topTenants = (results || []).slice(0, 3),
+      error: () => {}
+    });
+  }
+
+  goToTenantDiscovery(): void {
+    this.router.navigate(['/tenant-discovery']);
   }
 
   ngOnDestroy(): void {
