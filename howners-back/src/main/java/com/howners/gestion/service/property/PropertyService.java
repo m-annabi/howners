@@ -39,14 +39,26 @@ public class PropertyService {
 
         List<Property> properties = propertyRepository.findByOwnerId(currentUserId);
         return properties.stream()
-                .map(PropertyResponse::from)
+                .map(p -> PropertyResponse.from(p, activeMonthlyRent(p.getId())))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public PropertyResponse findById(UUID propertyId) {
         Property property = findPropertyByIdAndCheckOwnership(propertyId);
-        return PropertyResponse.from(property);
+        return PropertyResponse.from(property, activeMonthlyRent(property.getId()));
+    }
+
+    /**
+     * Returns the monthly rent of the currently active rental for the property,
+     * or null if the property has no ACTIVE rental.
+     */
+    private java.math.BigDecimal activeMonthlyRent(UUID propertyId) {
+        return rentalRepository.findByPropertyId(propertyId).stream()
+                .filter(r -> r.getStatus() == RentalStatus.ACTIVE)
+                .map(com.howners.gestion.domain.rental.Rental::getMonthlyRent)
+                .findFirst()
+                .orElse(null);
     }
 
     @Transactional

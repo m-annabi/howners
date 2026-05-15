@@ -58,5 +58,6 @@
     <include file="db/changelog/052-add-application-id-to-rentals.xml"/>
     <include file="db/changelog/053-add-property-coordinates.xml"/>
     <include file="db/changelog/054-seed-tenant-profiles.xml"/>
+    <include file="db/changelog/055-seed-property-prices-and-rentals.xml"/>
 
 </databaseChangeLog>
