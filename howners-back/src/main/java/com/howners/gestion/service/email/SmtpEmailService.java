@@ -5,6 +5,7 @@ import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
 import com.howners.gestion.dto.email.SignatureRequestEmailData;
+import com.howners.gestion.dto.email.WeeklyDigestEmailData;
 import com.howners.gestion.dto.email.WelcomeOwnerEmailData;
 import com.howners.gestion.dto.email.WelcomeTenantEmailData;
 import jakarta.mail.MessagingException;
@@ -258,6 +259,31 @@ public class SmtpEmailService implements EmailService {
             log.info("Application rejected email sent successfully to: {}", data.recipientEmail());
         } catch (Exception e) {
             log.error("Failed to send application rejected email to: {}", data.recipientEmail(), e);
+        }
+    }
+
+    @Override
+    public void sendWeeklyDigestEmail(WeeklyDigestEmailData data) {
+        log.info("Sending weekly digest to: {}", data.recipientEmail());
+        try {
+            Context context = new Context();
+            context.setVariable("ownerName", data.ownerName());
+            context.setVariable("latePayments", data.latePayments());
+            context.setVariable("expiringContracts", data.expiringContracts());
+            context.setVariable("awaitingSignatures", data.awaitingSignatures());
+            context.setVariable("pendingApplications", data.pendingApplications());
+            context.setVariable("dashboardUrl", data.dashboardUrl());
+
+            String htmlContent = templateEngine.process("email/weekly-digest", context);
+
+            sendHtmlEmail(
+                    data.recipientEmail(),
+                    "À traiter cette semaine sur Howners",
+                    htmlContent
+            );
+            log.info("Weekly digest sent to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            log.error("Failed to send weekly digest to {}: {}", data.recipientEmail(), e.getMessage());
         }
     }
 

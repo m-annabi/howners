@@ -5,6 +5,7 @@ import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
 import com.howners.gestion.dto.email.SignatureRequestEmailData;
+import com.howners.gestion.dto.email.WeeklyDigestEmailData;
 import com.howners.gestion.dto.email.WelcomeOwnerEmailData;
 import com.howners.gestion.dto.email.WelcomeTenantEmailData;
 
@@ -52,4 +53,9 @@ public interface EmailService {
      * Envoie un email au candidat quand sa candidature est refusée
      */
     void sendApplicationRejectedEmail(ApplicationReviewedEmailData data);
+
+    /**
+     * Envoie le digest hebdomadaire "À traiter" au bailleur.
+     */
+    void sendWeeklyDigestEmail(WeeklyDigestEmailData data);
 }
