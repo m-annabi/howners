@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="058a-add-referral-code-to-users" author="howners">
+        <comment>Each user gets a short unique referral code at signup, surfaced in /referral.</comment>
+        <addColumn tableName="users">
+            <column name="referral_code" type="VARCHAR(20)"/>
+        </addColumn>
+        <createIndex tableName="users" indexName="uk_users_referral_code" unique="true">
+            <column name="referral_code"/>
+        </createIndex>
+        <rollback>
+            <dropIndex tableName="users" indexName="uk_users_referral_code"/>
+            <dropColumn tableName="users" columnName="referral_code"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="058b-create-referrals-table" author="howners">
+        <createTable tableName="referrals">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="referrer_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_referrals_referrer" references="users(id)"/>
+            </column>
+            <column name="referee_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_referrals_referee" references="users(id)" unique="true"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="converted_at" type="TIMESTAMP"/>
+        </createTable>
+        <createIndex tableName="referrals" indexName="idx_referrals_referrer">
+            <column name="referrer_id"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="referrals"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

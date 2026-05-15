@@ -121,6 +121,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'referral',
+    loadChildren: () => import('./features/referral/referral.module').then(m => m.ReferralModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'sign',
     loadChildren: () => import('./features/public-sign/public-sign.module').then(m => m.PublicSignModule)
     // Pas d'AuthGuard - route publique

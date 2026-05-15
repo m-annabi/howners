@@ -155,6 +155,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Notes', icon: 'bi-star', route: '/ratings' },
         ],
         roles: ['OWNER', 'CONCIERGE', 'ADMIN']
+      },
+      {
+        title: 'CROISSANCE',
+        items: [
+          { label: 'Parrainage', icon: 'bi-stars', route: '/referral' },
+        ],
+        roles: ['OWNER', 'ADMIN']
       }
     ];
   }
