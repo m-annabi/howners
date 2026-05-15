@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest, RegisterRequest, User } from '../models/user.model';
 import { StorageService } from '../services/storage.service';
 import { WebSocketService } from '../services/websocket.service';
+import { MessageService } from '../services/message.service';
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +23,8 @@ export class AuthService {
     private http: HttpClient,
     private storageService: StorageService,
     private router: Router,
-    private webSocketService: WebSocketService
+    private webSocketService: WebSocketService,
+    private messageService: MessageService
   ) {
     this.loadUserFromStorage();
   }
@@ -73,6 +75,7 @@ export class AuthService {
     this.currentUserSubject.next(response.user);
     this.isAuthenticatedSubject.next(true);
     this.webSocketService.connect(response.accessToken);
+    this.messageService.refreshUnreadCount();
   }
 
   private loadUserFromStorage(): void {
@@ -83,6 +86,7 @@ export class AuthService {
         next: user => {
           this.currentUserSubject.next(user);
           this.webSocketService.connect(token);
+          this.messageService.refreshUnreadCount();
         },
         error: () => this.logout()
       });

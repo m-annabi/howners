@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MessageService } from '../../../core/services/message.service';
 
@@ -15,7 +16,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   canViewFinances = false;
   isAdmin = false;
   unreadCount = 0;
-  private unreadInterval: any;
+  private subs: Subscription[] = [];
 
   constructor(
     private authService: AuthService,
@@ -24,44 +25,45 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.authService.isAuthenticated$.subscribe(
-      isAuth => {
+    this.subs.push(
+      this.authService.isAuthenticated$.subscribe(isAuth => {
         this.isAuthenticated = isAuth;
-        if (isAuth) {
-          this.loadUnreadCount();
-          this.unreadInterval = setInterval(() => this.loadUnreadCount(), 30000);
-        } else {
-          this.unreadCount = 0;
-          if (this.unreadInterval) {
-            clearInterval(this.unreadInterval);
-          }
-        }
-      }
+        if (!isAuth) this.unreadCount = 0;
+      })
     );
 
-    this.authService.currentUser$.subscribe(
-      user => {
+    this.subs.push(
+      this.authService.currentUser$.subscribe(user => {
         if (user) {
           this.userName = `${user.firstName} ${user.lastName}`;
           this.canViewRatings = ['OWNER', 'CONCIERGE', 'ADMIN'].includes(user.role);
           this.canViewFinances = ['OWNER', 'ADMIN'].includes(user.role);
           this.isAdmin = user.role === 'ADMIN';
         }
-      }
+      })
+    );
+
+    this.subs.push(
+      this.messageService.unreadCount$.subscribe(count => {
+        this.unreadCount = count;
+      })
+    );
+
+    // Remettre à zéro quand on navigue vers /messages
+    this.subs.push(
+      this.router.events.pipe(
+        filter(e => e instanceof NavigationEnd)
+      ).subscribe((e: any) => {
+        const url: string = e.urlAfterRedirects || e.url;
+        if (url.startsWith('/messages')) {
+          this.messageService.resetUnreadCount();
+        }
+      })
     );
   }
 
   ngOnDestroy(): void {
-    if (this.unreadInterval) {
-      clearInterval(this.unreadInterval);
-    }
-  }
-
-  private loadUnreadCount(): void {
-    this.messageService.getUnreadCount().subscribe({
-      next: (res) => this.unreadCount = res.count,
-      error: () => {}
-    });
+    this.subs.forEach(s => s.unsubscribe());
   }
 
   logout(): void {

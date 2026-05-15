@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MessageService } from '../../../core/services/message.service';
 import { User } from '../../../core/models/user.model';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-topbar',
@@ -17,7 +17,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
   unreadCount = 0;
   dropdownOpen = false;
   private subs: Subscription[] = [];
-  private unreadInterval: any;
 
   constructor(
     private authService: AuthService,
@@ -32,13 +31,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
       })
     );
 
-    this.loadUnreadCount();
-    this.unreadInterval = setInterval(() => this.loadUnreadCount(), 30000);
+    this.subs.push(
+      this.messageService.unreadCount$.subscribe(count => {
+        this.unreadCount = count;
+      })
+    );
+
+    this.subs.push(
+      this.router.events.pipe(
+        filter(e => e instanceof NavigationEnd)
+      ).subscribe((e: any) => {
+        const url: string = e.urlAfterRedirects || e.url;
+        if (url.startsWith('/messages')) {
+          this.messageService.resetUnreadCount();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());
-    if (this.unreadInterval) clearInterval(this.unreadInterval);
   }
 
   get userName(): string {
@@ -67,12 +79,5 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.closeDropdown();
     this.authService.logout();
     this.router.navigate(['/auth/login']);
-  }
-
-  private loadUnreadCount(): void {
-    this.messageService.getUnreadCount().subscribe({
-      next: (res) => this.unreadCount = res.count,
-      error: () => {}
-    });
   }
 }

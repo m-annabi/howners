@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { MessageService } from '../../../core/services/message.service';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { User } from '../../../core/models/user.model';
 import { Subscription, filter } from 'rxjs';
@@ -36,6 +37,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private subscriptionService: SubscriptionService,
+    private messageService: MessageService,
     private router: Router
   ) {}
 
@@ -46,6 +48,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.buildSections();
         if (user) {
           this.loadPlan();
+        }
+      })
+    );
+
+    this.subs.push(
+      this.messageService.unreadCount$.subscribe(count => {
+        const messagesSection = this.sections.find(s => s.title === 'COMMUNICATION');
+        if (messagesSection) {
+          const item = messagesSection.items.find(i => i.route === '/messages');
+          if (item) item.badge = count > 0 ? count : undefined;
         }
       })
     );
