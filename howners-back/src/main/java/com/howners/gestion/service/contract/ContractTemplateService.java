@@ -93,12 +93,16 @@ public class ContractTemplateService {
         variables.put("property.address.country", property.getCountry() != null ? property.getCountry() : "");
         variables.put("property.address.full", getFullAddress(property));
         variables.put("property.surface", property.getSurfaceArea() != null ? property.getSurfaceArea().toString() : "");
-        variables.put("property.rooms", "");  // Not available in Property entity
+        variables.put("property.rooms", computeRoomCount(property));
         variables.put("property.bedrooms", property.getBedrooms() != null ? property.getBedrooms().toString() : "");
 
         // Variables location
         variables.put("rental.startDate", formatDate(rental.getStartDate()));
         variables.put("rental.endDate", rental.getEndDate() != null ? formatDate(rental.getEndDate()) : "Indéterminée");
+        // Clause complète, à utiliser dans une phrase à la place de "le {{rental.endDate}}"
+        variables.put("rental.endDateClause", rental.getEndDate() != null
+                ? "le " + formatDate(rental.getEndDate())
+                : "à l'échéance convenue, par renouvellement tacite annuel");
         variables.put("rental.monthlyRent", formatAmount(rental.getMonthlyRent()));
         variables.put("rental.depositAmount", rental.getDepositAmount() != null ? formatAmount(rental.getDepositAmount()) : "0");
         variables.put("rental.type", rental.getRentalType().name());
@@ -206,6 +210,19 @@ public class ContractTemplateService {
 
     private String formatAmount(BigDecimal amount) {
         return amount != null ? String.format("%.2f €", amount) : "0.00 €";
+    }
+
+    /**
+     * Property has no "rooms" field — we derive a pragmatic count from bedrooms.
+     * Convention française: pièces = chambres + 1 (le séjour), studio = 1 pièce.
+     */
+    private String computeRoomCount(Property property) {
+        if (property.getPropertyType() == com.howners.gestion.domain.property.PropertyType.STUDIO) {
+            return "1";
+        }
+        Integer beds = property.getBedrooms();
+        if (beds == null) return "";
+        return String.valueOf(Math.max(1, beds) + 1);
     }
 
     /**
