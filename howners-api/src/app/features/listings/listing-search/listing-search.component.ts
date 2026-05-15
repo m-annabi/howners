@@ -3,28 +3,35 @@ import { ListingService } from '../../../core/services/listing.service';
 import { Listing, LISTING_STATUS_LABELS } from '../../../core/models/listing.model';
 import { PropertyType, PROPERTY_TYPE_LABELS } from '../../../core/models/property.model';
 import { COUNTRIES, Department, getDepartmentsByCountry, getDepartmentLabel } from '../../../core/data/geo-reference';
+import { GeolocationService } from '../../../core/services/geolocation.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-listing-search',
-  templateUrl: './listing-search.component.html'
+  templateUrl: './listing-search.component.html',
+  styleUrls: ['./listing-search.component.scss']
 })
 export class ListingSearchComponent implements OnInit {
   listings: Listing[] = [];
   searchQuery = '';
   loading = false;
-  showFilters = false;
+  showMoreFilters = false;
+  geolocating = false;
+  detectedLocationLabel: string | null = null;
 
-  // Location filters
+  // Primary location
   filterCity = '';
-  filterDepartment = '';
   filterPostalCode = '';
   filterCountry = '';
+  filterDepartment = '';
 
-  // Advanced filters
+  // Primary price/surface/type
   filterPriceMin: number | null = null;
   filterPriceMax: number | null = null;
-  filterPropertyType = '';
   filterMinSurface: number | null = null;
+  filterPropertyType = '';
+
+  // Secondary
   filterMinBedrooms: number | null = null;
   filterFurnished: string = '';
   filterAvailableFrom = '';
@@ -35,10 +42,13 @@ export class ListingSearchComponent implements OnInit {
   getDepartmentLabel = getDepartmentLabel;
   propertyTypes = Object.values(PropertyType);
   propertyTypeLabels = PROPERTY_TYPE_LABELS;
-
   statusLabels = LISTING_STATUS_LABELS;
 
-  constructor(private listingService: ListingService) {}
+  constructor(
+    private listingService: ListingService,
+    private geolocationService: GeolocationService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.updateDepartments();
@@ -71,8 +81,39 @@ export class ListingSearchComponent implements OnInit {
     });
   }
 
-  toggleFilters(): void {
-    this.showFilters = !this.showFilters;
+  toggleMoreFilters(): void {
+    this.showMoreFilters = !this.showMoreFilters;
+  }
+
+  /**
+   * Détecte la position de l'utilisateur via navigator.geolocation,
+   * convertit en adresse et pré-remplit le filtre code postal (+ ville comme indication).
+   */
+  locateMe(): void {
+    if (this.geolocating) return;
+    this.geolocating = true;
+    this.detectedLocationLabel = null;
+
+    this.geolocationService.detectUserLocation().subscribe({
+      next: (result) => {
+        this.geolocating = false;
+        if (result.postalCode) {
+          this.filterPostalCode = result.postalCode;
+        } else if (result.city) {
+          this.filterCity = result.city;
+        }
+        const labelParts = [result.city, result.postalCode].filter(Boolean);
+        this.detectedLocationLabel = labelParts.length > 0
+          ? `Position détectée : ${labelParts.join(' · ')}`
+          : 'Position détectée';
+        this.notificationService.success(this.detectedLocationLabel);
+        this.search();
+      },
+      error: (err) => {
+        this.geolocating = false;
+        this.notificationService.error(err?.message || 'Impossible de récupérer votre position.');
+      }
+    });
   }
 
   onCountryFilterChange(): void {
@@ -93,6 +134,7 @@ export class ListingSearchComponent implements OnInit {
     this.filterFurnished = '';
     this.filterAvailableFrom = '';
     this.sortBy = '';
+    this.detectedLocationLabel = null;
     this.updateDepartments();
     this.search();
   }
@@ -109,7 +151,6 @@ export class ListingSearchComponent implements OnInit {
     if (this.filterCountry) {
       this.filteredDepartments = getDepartmentsByCountry(this.filterCountry);
     } else {
-      // Show all departments when no country filter
       this.filteredDepartments = getDepartmentsByCountry('FR');
     }
   }
