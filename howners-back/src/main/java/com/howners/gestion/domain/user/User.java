@@ -61,6 +61,12 @@ public class User {
     @Column(name = "referral_code", unique = true, length = 20)
     private String referralCode;
 
+    @Column(name = "stripe_connect_account_id", length = 255)
+    private String stripeConnectAccountId;
+
+    @Column(name = "stripe_connect_status", length = 40)
+    private String stripeConnectStatus;
+
     public String getFullName() {
         return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");
     }
