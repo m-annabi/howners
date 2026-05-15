@@ -5,6 +5,7 @@ import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
 import com.howners.gestion.dto.email.SignatureRequestEmailData;
+import com.howners.gestion.dto.email.WelcomeOwnerEmailData;
 import com.howners.gestion.dto.email.WelcomeTenantEmailData;
 
 /**
@@ -31,6 +32,11 @@ public interface EmailService {
      * Envoie un email de bienvenue au nouveau locataire avec ses identifiants
      */
     void sendWelcomeTenantEmail(WelcomeTenantEmailData data);
+
+    /**
+     * Envoie un email de bienvenue à un nouveau bailleur après inscription
+     */
+    void sendWelcomeOwnerEmail(WelcomeOwnerEmailData data);
 
     /**
      * Envoie un email de notification au locataire quand sa quittance de loyer est générée

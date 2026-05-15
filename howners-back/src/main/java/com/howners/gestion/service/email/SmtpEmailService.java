@@ -5,6 +5,7 @@ import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
 import com.howners.gestion.dto.email.SignatureRequestEmailData;
+import com.howners.gestion.dto.email.WelcomeOwnerEmailData;
 import com.howners.gestion.dto.email.WelcomeTenantEmailData;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -146,6 +147,32 @@ public class SmtpEmailService implements EmailService {
         } catch (Exception e) {
             log.error("Failed to send welcome tenant email to: {}", data.recipientEmail(), e);
             throw new RuntimeException("Failed to send welcome tenant email", e);
+        }
+    }
+
+    @Override
+    public void sendWelcomeOwnerEmail(WelcomeOwnerEmailData data) {
+        log.info("Sending welcome owner email to: {}", data.recipientEmail());
+
+        try {
+            Context context = new Context();
+            context.setVariable("recipientName", data.recipientName());
+            context.setVariable("dashboardUrl", data.dashboardUrl());
+            context.setVariable("addPropertyUrl", data.addPropertyUrl());
+            context.setVariable("pricingUrl", data.pricingUrl());
+
+            String htmlContent = templateEngine.process("email/welcome-owner", context);
+
+            sendHtmlEmail(
+                    data.recipientEmail(),
+                    "Bienvenue sur Howners — démarrez en 3 minutes",
+                    htmlContent
+            );
+
+            log.info("Welcome owner email sent successfully to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            // Don't fail registration on email failure — log and move on.
+            log.error("Failed to send welcome owner email to {}: {}", data.recipientEmail(), e.getMessage());
         }
     }
 
