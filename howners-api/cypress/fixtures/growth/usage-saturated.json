@@ -1,0 +1,14 @@
+{
+  "planName": "Gratuit",
+  "currentProperties": 2,
+  "maxProperties": 2,
+  "currentContractsThisMonth": 3,
+  "maxContractsPerMonth": 3,
+  "canCreateProperty": false,
+  "canCreateContract": false,
+  "canCreateRental": true,
+  "canCreateListing": true,
+  "hasESignature": false,
+  "hasTenantScoring": false,
+  "hasDocumentEncryption": false
+}
