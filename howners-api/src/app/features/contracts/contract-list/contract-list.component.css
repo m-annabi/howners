@@ -116,3 +116,78 @@
   border-color: rgba(166, 51, 46, 0.18);
   color: var(--hw-danger);
 }
+
+/* Quota banner */
+.quota-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: var(--hw-space-3);
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-left: 3px solid var(--hw-accent-500);
+  border-radius: var(--hw-radius-md);
+}
+
+.quota-banner[data-tone="warning"] { border-left-color: var(--hw-warning); }
+.quota-banner[data-tone="danger"] { border-left-color: var(--hw-danger); background: var(--hw-danger-light); }
+
+.quota-banner__head {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  flex-wrap: wrap;
+}
+
+.quota-banner__plan {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  background: var(--hw-primary-50);
+  color: var(--hw-primary-700);
+  border-radius: var(--hw-radius-full);
+  font-size: var(--hw-fs-xs);
+  font-weight: var(--hw-fw-semibold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.quota-banner__plan i { color: var(--hw-accent-600); font-size: 0.8rem; }
+
+.quota-banner__label {
+  font-family: var(--hw-font-display);
+  font-weight: var(--hw-fw-semibold);
+  color: var(--hw-primary-800);
+  letter-spacing: -0.005em;
+}
+
+.quota-banner__cta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--hw-primary-700);
+  font-size: var(--hw-fs-sm);
+  font-weight: var(--hw-fw-medium);
+  text-decoration: none;
+}
+
+.quota-banner__cta:hover { color: var(--hw-primary-800); text-decoration: underline; }
+
+.quota-banner__bar {
+  height: 4px;
+  background: var(--hw-gray-100);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.quota-banner__fill {
+  height: 100%;
+  background: var(--hw-accent-500);
+  transition: width 0.25s ease;
+}
+
+.quota-banner[data-tone="warning"] .quota-banner__fill { background: var(--hw-warning); }
+.quota-banner[data-tone="danger"] .quota-banner__fill { background: var(--hw-danger); }
