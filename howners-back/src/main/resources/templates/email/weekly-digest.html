@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Votre semaine sur Howners</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; line-height: 1.55; color: #1A1A1A; background: #F7F4EE; margin: 0; }
+        .container { max-width: 600px; margin: 24px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(30,58,95,0.08); }
+        .header { background: #1E3A5F; color: #fff; padding: 32px 28px; }
+        .header h1 { margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 22px; }
+        .accent { height: 3px; background: #C9A961; }
+        .body { padding: 28px; }
+        .greeting { font-family: 'Fraunces', Georgia, serif; font-size: 18px; color: #1E3A5F; margin: 0 0 16px; }
+        .item { display: flex; gap: 12px; padding: 12px 14px; background: #F7F4EE; border-left: 3px solid #C9A961; border-radius: 6px; margin-bottom: 8px; }
+        .item--danger { border-left-color: #A6332E; background: #F8E8E6; }
+        .item--warning { border-left-color: #B0791E; background: #FBF1DD; }
+        .item--info { border-left-color: #245F8F; background: #E3EDF5; }
+        .item__count { flex-shrink: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #1E3A5F; min-width: 32px; }
+        .item__body { flex: 1; }
+        .item__body strong { color: #1E3A5F; }
+        .cta { display: inline-block; padding: 12px 24px; background: #1E3A5F; color: #fff !important; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 16px 0; }
+        .empty { padding: 16px; text-align: center; color: #5F5A4E; font-style: italic; }
+        .footer { background: #08111C; color: rgba(255,255,255,0.6); padding: 18px 28px; text-align: center; font-size: 13px; }
+        .footer a { color: #C9A961; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header"><h1>Votre semaine en un coup d'œil</h1></div>
+    <div class="accent"></div>
+    <div class="body">
+        <p class="greeting">Bonjour <span th:text="${ownerName}">Pierre</span>,</p>
+        <p>Voici ce qui demande votre attention cette semaine.</p>
+
+        <div th:if="${latePayments > 0}" class="item item--danger">
+            <span class="item__count" th:text="${latePayments}">0</span>
+            <div class="item__body">
+                <strong>Paiements en retard</strong><br>
+                Relancez vos locataires ou marquez les paiements reçus.
+            </div>
+        </div>
+
+        <div th:if="${expiringContracts > 0}" class="item item--warning">
+            <span class="item__count" th:text="${expiringContracts}">0</span>
+            <div class="item__body">
+                <strong>Baux qui expirent dans 30 jours</strong><br>
+                Préparez le renouvellement ou la sortie.
+            </div>
+        </div>
+
+        <div th:if="${awaitingSignatures > 0}" class="item item--info">
+            <span class="item__count" th:text="${awaitingSignatures}">0</span>
+            <div class="item__body">
+                <strong>Contrats en attente de signature</strong><br>
+                Vos locataires n'ont pas encore signé.
+            </div>
+        </div>
+
+        <div th:if="${pendingApplications > 0}" class="item">
+            <span class="item__count" th:text="${pendingApplications}">0</span>
+            <div class="item__body">
+                <strong>Candidatures à examiner</strong><br>
+                Acceptez ou refusez les dossiers reçus.
+            </div>
+        </div>
+
+        <p>
+            <a th:href="${dashboardUrl}" class="cta">Ouvrir le tableau de bord →</a>
+        </p>
+
+        <p style="margin-top: 28px; color: #6B7280; font-size: 13px;">
+            Vous recevez ce digest car votre compte Howners contient des items qui requièrent votre attention. Pour vous désabonner, modifiez vos préférences dans Profil → Notifications.
+        </p>
+    </div>
+    <div class="footer">
+        <p style="margin: 0;">© 2026 Howners — <a th:href="${dashboardUrl}">votre tableau de bord</a></p>
+    </div>
+</div>
+</body>
+</html>
