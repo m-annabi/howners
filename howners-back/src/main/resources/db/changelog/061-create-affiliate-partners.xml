@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="061-create-affiliate-partners" author="howners">
+        <comment>
+            Catalogue de partenaires d'affiliation (assurance bailleur, diagnostic
+            obligatoire, banques, etc.). Une ligne par offre commerciale. Les
+            propriétaires les voient sur leur dashboard ou la page de propriété
+            adéquate ; Howners touche une commission via affiliate_url.
+        </comment>
+
+        <createTable tableName="affiliate_partners">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="slug" type="VARCHAR(60)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(120)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tagline" type="VARCHAR(200)"/>
+            <column name="description" type="TEXT"/>
+            <column name="affiliate_url" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commission_rate" type="NUMERIC(5,2)"/>
+            <column name="logo_url" type="VARCHAR(500)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_order" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createIndex tableName="affiliate_partners" indexName="idx_affiliates_category_active">
+            <column name="category"/>
+            <column name="is_active"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="affiliate_partners"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
