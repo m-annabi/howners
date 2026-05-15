@@ -43,10 +43,12 @@ spring:
     properties:
       mail:
         smtp:
-          auth: true
+          # Default true for prod SMTP servers. Override SMTP_AUTH=false / SMTP_STARTTLS=false
+          # locally if you point SMTP_HOST at MailHog (localhost:1025).
+          auth: ${SMTP_AUTH:true}
           starttls:
-            enable: true
-            required: true
+            enable: ${SMTP_STARTTLS:true}
+            required: ${SMTP_STARTTLS:true}
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
