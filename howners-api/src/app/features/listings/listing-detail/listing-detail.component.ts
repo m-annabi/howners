@@ -103,4 +103,36 @@ export class ListingDetailComponent implements OnInit, OnDestroy {
       });
     }
   }
+
+  // ---- Share -----------------------------------------------------------
+
+  shareSuccess = false;
+
+  async shareListing(): Promise<void> {
+    if (!this.listing) return;
+    const url = `${window.location.origin}/listings/${this.listing.id}`;
+    const title = this.listing.title || 'Annonce Howners';
+    const text = `${title} — ${this.listing.propertyCity || ''} · ${this.listing.pricePerMonth || ''} €/mois`;
+
+    // Web Share API (mobile + Safari/Chrome modernes)
+    const nav = navigator as any;
+    if (nav.share) {
+      try {
+        await nav.share({ title, text, url });
+        return;
+      } catch (e) {
+        // user cancelled; fall through to copy
+      }
+    }
+
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      this.shareSuccess = true;
+      setTimeout(() => this.shareSuccess = false, 2500);
+    } catch {
+      // last-resort: open mailto
+      window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text + '\n\n' + url)}`;
+    }
+  }
 }
