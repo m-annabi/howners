@@ -4,7 +4,11 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  {
+    path: '',
+    loadChildren: () => import('./features/landing/landing.module').then(m => m.LandingModule),
+    pathMatch: 'full'
+  },
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
