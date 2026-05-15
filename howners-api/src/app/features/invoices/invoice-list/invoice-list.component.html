@@ -3,25 +3,23 @@
   [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Factures'}]">
 </app-page-header>
 
-<!-- Filters -->
+<!-- Toolbar: filter chips + search -->
 <div *ngIf="!loading && invoices.length > 0" class="invoice-list__toolbar">
+  <app-quick-filters
+    [filters]="filters"
+    [activeKey]="selectedStatus"
+    (filterChange)="onFilterChange($event)">
+  </app-quick-filters>
+
   <div class="invoice-list__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
       class="form-control"
-      placeholder="Rechercher par numéro, propriété ou locataire..."
+      placeholder="Rechercher par numéro, bien ou locataire..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
   </div>
-  <select
-    class="form-select invoice-list__filter"
-    [(ngModel)]="selectedStatus"
-    (ngModelChange)="onStatusChange()">
-    <option *ngFor="let status of statuses" [value]="status.value">
-      {{ status.label }}
-    </option>
-  </select>
 </div>
 
 <!-- Loading -->
@@ -46,53 +44,58 @@
   *ngIf="!loading && !error && filteredInvoices.length === 0 && invoices.length > 0"
   icon="bi-search"
   title="Aucun résultat"
-  message="Essayez avec d'autres termes de recherche.">
+  message="Essayez d'autres termes ou changez de filtre.">
 </app-empty-state>
 
-<!-- Table -->
-<div *ngIf="!loading && !error && filteredInvoices.length > 0" class="hw-card">
-  <div class="hw-table-responsive">
-    <table class="hw-table">
-      <thead>
-        <tr>
-          <th>Numéro</th>
-          <th>Propriété</th>
-          <th>Locataire</th>
-          <th>Type</th>
-          <th>Montant</th>
-          <th>Émission</th>
-          <th>Échéance</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let invoice of filteredInvoices" class="hw-table__row--clickable" (click)="viewInvoice(invoice)">
-          <td>
-            <span class="hw-text-medium">{{ invoice.invoiceNumber }}</span>
-          </td>
-          <td>{{ invoice.propertyName }}</td>
-          <td>{{ invoice.tenantName }}</td>
-          <td>
-            <span class="hw-badge hw-badge--neutral">{{ typeLabels[invoice.invoiceType] }}</span>
-          </td>
-          <td>
-            <span class="hw-text-medium">{{ invoice.amount | number:'1.2-2' }} {{ invoice.currency }}</span>
-          </td>
-          <td>{{ invoice.issueDate | date:'dd/MM/yyyy' }}</td>
-          <td>{{ invoice.dueDate | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <app-status-badge [status]="invoice.status" type="invoice"></app-status-badge>
-          </td>
-          <td>
-            <button
-              class="hw-btn hw-btn--ghost hw-btn--sm"
-              (click)="downloadPdf(invoice, $event)">
-              <i class="bi bi-download"></i> PDF
+<!-- Dense table -->
+<div *ngIf="!loading && !error && filteredInvoices.length > 0" class="hw-card invoice-table-wrap">
+  <table class="invoice-table">
+    <thead>
+      <tr>
+        <th>Numéro</th>
+        <th>Bien</th>
+        <th>Locataire</th>
+        <th class="invoice-table__col-type">Type</th>
+        <th class="invoice-table__col-amount">Montant</th>
+        <th class="invoice-table__col-date">Émission</th>
+        <th class="invoice-table__col-date">Échéance</th>
+        <th class="invoice-table__col-status">Statut</th>
+        <th class="invoice-table__col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let invoice of filteredInvoices"
+          class="invoice-row"
+          (click)="viewInvoice(invoice)">
+        <td><div class="invoice-table__number">{{ invoice.invoiceNumber }}</div></td>
+        <td>{{ invoice.propertyName }}</td>
+        <td>{{ invoice.tenantName }}</td>
+        <td class="invoice-table__col-type">
+          <span class="badge bg-light">{{ typeLabels[invoice.invoiceType] }}</span>
+        </td>
+        <td class="invoice-table__col-amount">
+          <div class="invoice-table__amount">{{ invoice.amount | number:'1.2-2' }} {{ invoice.currency }}</div>
+        </td>
+        <td>{{ invoice.issueDate | date:'dd/MM/yyyy' }}</td>
+        <td>{{ invoice.dueDate | date:'dd/MM/yyyy' }}</td>
+        <td class="invoice-table__col-status">
+          <app-status-badge [status]="invoice.status" type="invoice"></app-status-badge>
+        </td>
+        <td class="invoice-table__col-actions" (click)="$event.stopPropagation()">
+          <div class="row-actions">
+            <button class="row-actions__btn"
+                    (click)="downloadPdf(invoice, $event)"
+                    title="Télécharger PDF">
+              <i class="bi bi-download"></i>
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <button class="row-actions__btn"
+                    (click)="viewInvoice(invoice); $event.stopPropagation()"
+                    title="Voir">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

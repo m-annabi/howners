@@ -22,25 +22,23 @@
   </div>
 </div>
 
-<!-- Filters -->
+<!-- Toolbar: filter chips + search -->
 <div *ngIf="!loading && expenses.length > 0" class="expense-list__toolbar">
+  <app-quick-filters
+    [filters]="filters"
+    [activeKey]="selectedCategory"
+    (filterChange)="onFilterChange($event)">
+  </app-quick-filters>
+
   <div class="expense-list__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
       class="form-control"
-      placeholder="Rechercher par propriété ou description..."
+      placeholder="Rechercher par bien ou description..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
   </div>
-  <select
-    class="form-select expense-list__filter"
-    [(ngModel)]="selectedCategory"
-    (ngModelChange)="onCategoryChange()">
-    <option *ngFor="let cat of categories" [value]="cat.value">
-      {{ cat.label }}
-    </option>
-  </select>
 </div>
 
 <!-- Loading -->
@@ -67,44 +65,45 @@
   *ngIf="!loading && !error && filteredExpenses.length === 0 && expenses.length > 0"
   icon="bi-search"
   title="Aucun résultat"
-  message="Essayez avec d'autres termes de recherche.">
+  message="Essayez d'autres termes ou changez de filtre.">
 </app-empty-state>
 
-<!-- Table -->
-<div *ngIf="!loading && !error && filteredExpenses.length > 0" class="hw-card">
-  <div class="hw-table-responsive">
-    <table class="hw-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Catégorie</th>
-          <th>Description</th>
-          <th>Propriété</th>
-          <th>Montant</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let expense of filteredExpenses" class="hw-table__row--clickable" (click)="viewExpense(expense)">
-          <td>{{ expense.expenseDate | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <span class="hw-badge hw-badge--neutral">{{ categoryLabels[expense.category] }}</span>
-          </td>
-          <td>{{ expense.description || '-' }}</td>
-          <td>{{ expense.propertyName || '-' }}</td>
-          <td>
-            <span class="hw-text-medium">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</span>
-          </td>
-          <td>
-            <button
-              class="hw-btn hw-btn--ghost hw-btn--sm"
-              style="color: var(--hw-danger)"
-              (click)="deleteExpense(expense, $event)">
-              <i class="bi bi-trash"></i> Supprimer
+<!-- Dense table -->
+<div *ngIf="!loading && !error && filteredExpenses.length > 0" class="hw-card expense-table-wrap">
+  <table class="expense-table">
+    <thead>
+      <tr>
+        <th class="expense-table__col-date">Date</th>
+        <th class="expense-table__col-cat">Catégorie</th>
+        <th>Description</th>
+        <th>Bien</th>
+        <th class="expense-table__col-amount">Montant</th>
+        <th class="expense-table__col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let expense of filteredExpenses"
+          class="expense-row"
+          (click)="viewExpense(expense)">
+        <td class="expense-table__col-date">{{ expense.expenseDate | date:'dd/MM/yyyy' }}</td>
+        <td class="expense-table__col-cat">
+          <span class="badge bg-light">{{ categoryLabels[expense.category] }}</span>
+        </td>
+        <td>{{ expense.description || '—' }}</td>
+        <td>{{ expense.propertyName || '—' }}</td>
+        <td class="expense-table__col-amount">
+          <div class="expense-table__amount">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</div>
+        </td>
+        <td class="expense-table__col-actions" (click)="$event.stopPropagation()">
+          <div class="row-actions">
+            <button class="row-actions__btn row-actions__btn--danger"
+                    (click)="deleteExpense(expense, $event)"
+                    title="Supprimer">
+              <i class="bi bi-trash"></i>
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

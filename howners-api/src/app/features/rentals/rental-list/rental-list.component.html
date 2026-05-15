@@ -10,8 +10,14 @@
   </button>
 </ng-template>
 
-<!-- Filters -->
+<!-- Toolbar: filter chips + search -->
 <div *ngIf="!loading && rentals.length > 0" class="rental-list__toolbar">
+  <app-quick-filters
+    [filters]="filters"
+    [activeKey]="filterStatus"
+    (filterChange)="onFilterChange($event)">
+  </app-quick-filters>
+
   <div class="rental-list__search">
     <i class="bi bi-search"></i>
     <input
@@ -21,12 +27,6 @@
       placeholder="Rechercher par bien ou locataire..."
       class="form-control">
   </div>
-  <select [(ngModel)]="filterStatus" (change)="applyFilters()" class="form-select rental-list__filter">
-    <option value="all">Tous les statuts</option>
-    <option *ngFor="let status of statuses" [value]="status.value">
-      {{ status.label }}
-    </option>
-  </select>
 </div>
 
 <!-- Loading -->
@@ -63,47 +63,74 @@
   *ngIf="!loading && !error && filteredRentals.length === 0 && rentals.length > 0"
   icon="bi-search"
   title="Aucun résultat"
-  message="Essayez avec d'autres termes de recherche.">
+  message="Essayez d'autres termes ou changez de filtre.">
 </app-empty-state>
 
-<!-- Grid -->
-<div *ngIf="!loading && !error && filteredRentals.length > 0" class="rental-list__grid">
-  <div
-    *ngFor="let rental of filteredRentals"
-    class="rental-card hw-card hw-card--clickable"
-    (click)="viewRental(rental.id)">
+<!-- Dense table -->
+<div *ngIf="!loading && !error && filteredRentals.length > 0" class="hw-card rental-table-wrap">
+  <table class="rental-table">
+    <thead>
+      <tr>
+        <th class="rental-table__col-property">Bien</th>
+        <th class="rental-table__col-tenant">Locataire</th>
+        <th class="rental-table__col-period">Période</th>
+        <th class="rental-table__col-rent">Loyer</th>
+        <th class="rental-table__col-status">Statut</th>
+        <th *ngIf="!isTenant" class="rental-table__col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let rental of filteredRentals"
+          class="rental-row"
+          (click)="viewRental(rental.id)">
 
-    <div class="rental-card__header">
-      <div class="rental-card__title-row">
-        <h3>{{ rental.propertyName }}</h3>
-        <app-status-badge [status]="rental.status" type="rental"></app-status-badge>
-      </div>
-      <span class="hw-badge hw-badge--neutral">{{ rentalTypeLabels[rental.rentalType] }}</span>
-    </div>
+        <td class="rental-table__col-property">
+          <div class="rental-table__property">{{ rental.propertyName }}</div>
+          <div class="rental-table__property-type">{{ rentalTypeLabels[rental.rentalType] }}</div>
+        </td>
 
-    <div class="rental-card__body">
-      <div class="rental-card__row">
-        <i class="bi bi-person"></i>
-        <span>{{ rental.tenantName || 'Locataire non assigné' }}</span>
-      </div>
-      <div class="rental-card__row">
-        <i class="bi bi-calendar-event"></i>
-        <span>{{ rental.startDate | date:'dd/MM/yyyy' }}
-          <span *ngIf="rental.endDate"> - {{ rental.endDate | date:'dd/MM/yyyy' }}</span>
-        </span>
-      </div>
-      <div class="rental-card__amount">
-        {{ rental.monthlyRent | number:'1.2-2' }} {{ rental.currency }}<span class="hw-text-muted">/mois</span>
-      </div>
-    </div>
+        <td class="rental-table__col-tenant">
+          <ng-container *ngIf="rental.tenantName">
+            <div>{{ rental.tenantName }}</div>
+            <div *ngIf="rental.tenantEmail" class="rental-table__muted">{{ rental.tenantEmail }}</div>
+          </ng-container>
+          <span *ngIf="!rental.tenantName" class="rental-table__muted">Non assigné</span>
+        </td>
 
-    <div *ngIf="!isTenant" class="rental-card__actions">
-      <button (click)="editRental(rental.id, $event)" class="hw-btn hw-btn--secondary hw-btn--sm">
-        <i class="bi bi-pencil"></i> Modifier
-      </button>
-      <button (click)="deleteRental(rental.id, $event)" class="hw-btn hw-btn--ghost hw-btn--sm" style="color: var(--hw-danger)">
-        <i class="bi bi-trash"></i>
-      </button>
-    </div>
-  </div>
+        <td class="rental-table__col-period">
+          <div>{{ rental.startDate | date:'dd/MM/yyyy' }}</div>
+          <div *ngIf="rental.endDate" class="rental-table__muted">→ {{ rental.endDate | date:'dd/MM/yyyy' }}</div>
+        </td>
+
+        <td class="rental-table__col-rent">
+          <div class="rental-table__amount">{{ rental.monthlyRent | number:'1.2-2' }} {{ rental.currency }}</div>
+          <div class="rental-table__muted">/mois</div>
+        </td>
+
+        <td class="rental-table__col-status">
+          <app-status-badge [status]="rental.status" type="rental"></app-status-badge>
+        </td>
+
+        <td *ngIf="!isTenant" class="rental-table__col-actions" (click)="$event.stopPropagation()">
+          <div class="row-actions">
+            <button class="row-actions__btn"
+                    (click)="viewPayments(rental.id, $event)"
+                    title="Voir les paiements">
+              <i class="bi bi-credit-card"></i>
+            </button>
+            <button class="row-actions__btn"
+                    (click)="editRental(rental.id, $event)"
+                    title="Modifier">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="row-actions__btn row-actions__btn--danger"
+                    (click)="deleteRental(rental.id, $event)"
+                    title="Supprimer">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>
