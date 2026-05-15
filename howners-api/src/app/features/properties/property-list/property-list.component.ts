@@ -21,6 +21,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   error: string | null = null;
   searchTerm = '';
   activeFilter: string = 'all';
+  sortBy: 'default' | 'yield_desc' | 'yield_asc' | 'rent_desc' = 'default';
 
   propertyTypeLabels = PROPERTY_TYPE_LABELS;
 
@@ -142,7 +143,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
 
   applyFilters(): void {
     const term = this.searchTerm.trim().toLowerCase();
-    this.filteredProperties = this.properties.filter(p => {
+    let list = this.properties.filter(p => {
       const matchType = this.activeFilter === 'all' || p.propertyType === this.activeFilter;
       const matchSearch = !term ||
         p.name.toLowerCase().includes(term) ||
@@ -150,6 +151,25 @@ export class PropertyListComponent implements OnInit, OnDestroy {
         p.address.postalCode.includes(term);
       return matchType && matchSearch;
     });
+
+    // Sort
+    if (this.sortBy === 'yield_desc' || this.sortBy === 'yield_asc') {
+      const sign = this.sortBy === 'yield_desc' ? -1 : 1;
+      list = list.slice().sort((a, b) => {
+        const ya = a.grossYieldPercent ?? -Infinity;
+        const yb = b.grossYieldPercent ?? -Infinity;
+        return sign * (ya - yb);
+      });
+    } else if (this.sortBy === 'rent_desc') {
+      list = list.slice().sort((a, b) =>
+        (b.currentMonthlyRent ?? -1) - (a.currentMonthlyRent ?? -1));
+    }
+
+    this.filteredProperties = list;
+  }
+
+  onSortChange(): void {
+    this.applyFilters();
   }
 
   filterProperties(): void {
