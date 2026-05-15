@@ -47,6 +47,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Owner has no property yet → show onboarding panel. */
+  get showOnboarding(): boolean {
+    return !this.isTenant
+        && !this.loading
+        && !!this.stats
+        && (this.stats.totalProperties || 0) === 0;
+  }
+
+  /** Bool helpers for the onboarding checklist steps. */
+  get onboardingStepProperty(): boolean {
+    return !!this.stats && (this.stats.totalProperties || 0) > 0;
+  }
+  get onboardingStepRental(): boolean {
+    return !!this.stats && (this.stats.activeRentals || 0) > 0;
+  }
+  get onboardingStepContract(): boolean {
+    // Approximate: if there's at least one active rental, there's likely a contract.
+    // Real signal would need a contractCount on DashboardStats — keep light for now.
+    return this.onboardingStepRental;
+  }
+
   constructor(
     private authService: AuthService,
     private dashboardService: DashboardService,
