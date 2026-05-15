@@ -74,6 +74,51 @@
   message="Essayez d'autres termes ou changez de filtre.">
 </app-empty-state>
 
+<!-- Upgrade modal — quota atteint -->
+<div *ngIf="showUpgradeModal" class="upgrade-modal" (click)="closeUpgradeModal()">
+  <div class="upgrade-modal__dialog" (click)="$event.stopPropagation()">
+    <button type="button" class="upgrade-modal__close" (click)="closeUpgradeModal()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+
+    <div class="upgrade-modal__icon"><i class="bi bi-stars"></i></div>
+
+    <h3 class="upgrade-modal__title">Vous avez atteint votre quota mensuel</h3>
+    <p class="upgrade-modal__sub">
+      Vous avez utilisé <strong>{{ usage?.currentContractsThisMonth }} / {{ usage?.maxContractsPerMonth }}</strong> contrats ce mois sur le plan
+      <strong>{{ usage?.planName }}</strong>. Passez au plan Pro pour générer des contrats sans limite, plus la signature électronique DocuSign et le scoring locataire détaillé.
+    </p>
+
+    <div class="upgrade-modal__compare">
+      <div class="upgrade-modal__col">
+        <span class="upgrade-modal__col-label">{{ usage?.planName }} (actuel)</span>
+        <ul>
+          <li><i class="bi bi-check2 text-muted"></i> {{ usage?.maxProperties }} biens</li>
+          <li><i class="bi bi-check2 text-muted"></i> {{ usage?.maxContractsPerMonth }} contrats/mois</li>
+          <li class="upgrade-modal__missing"><i class="bi bi-x"></i> Signature électronique</li>
+          <li class="upgrade-modal__missing"><i class="bi bi-x"></i> Scoring locataire</li>
+        </ul>
+      </div>
+      <div class="upgrade-modal__col upgrade-modal__col--featured">
+        <span class="upgrade-modal__col-label">Pro · 19,90 €/mois</span>
+        <ul>
+          <li><i class="bi bi-check2"></i> 10 biens</li>
+          <li><i class="bi bi-check2"></i> <strong>Contrats illimités</strong></li>
+          <li><i class="bi bi-check2"></i> <strong>Signature DocuSign</strong></li>
+          <li><i class="bi bi-check2"></i> <strong>Scoring locataire complet</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="upgrade-modal__actions">
+      <button class="btn btn-link" (click)="closeUpgradeModal()">Plus tard</button>
+      <button class="btn btn-primary btn-lg" (click)="goToPricing()">
+        Voir les plans <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Dense table -->
 <div *ngIf="!loading && !error && filteredContracts.length > 0" class="hw-card contract-table-wrap">
   <table class="contract-table">

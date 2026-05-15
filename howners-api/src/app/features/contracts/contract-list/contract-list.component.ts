@@ -30,6 +30,7 @@ export class ContractListComponent implements OnInit {
   contractStatusColors = CONTRACT_STATUS_COLORS;
 
   usage: UsageLimits | null = null;
+  showUpgradeModal = false;
 
   constructor(
     private contractService: ContractService,
@@ -181,11 +182,19 @@ export class ContractListComponent implements OnInit {
 
   createContract(): void {
     if (this.usage && !this.usage.canCreateContract) {
-      this.notificationService.error('Quota de contrats mensuels atteint. Mettez à niveau votre abonnement.');
-      this.router.navigate(['/billing/pricing']);
+      this.showUpgradeModal = true;
       return;
     }
     this.router.navigate(['/contracts/new']);
+  }
+
+  closeUpgradeModal(): void {
+    this.showUpgradeModal = false;
+  }
+
+  goToPricing(): void {
+    this.showUpgradeModal = false;
+    this.router.navigate(['/billing/pricing']);
   }
 
   deleteContract(contract: Contract, event: Event): void {
