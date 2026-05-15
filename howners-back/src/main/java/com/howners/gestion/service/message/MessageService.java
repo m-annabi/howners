@@ -69,8 +69,9 @@ public class MessageService {
         log.info("Message sent from {} to {}", currentUserId, request.recipientId());
 
         MessageResponse response = MessageResponse.from(message);
+        // Principal.getName() = email (voir UserPrincipal.getUsername())
         messagingTemplate.convertAndSendToUser(
-                request.recipientId().toString(),
+                recipient.getEmail(),
                 "/queue/messages",
                 response
         );
