@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { TenantDiscoveryService, TenantDiscoveryFilters } from '../../../core/services/tenant-discovery.service';
 import { InvitationService } from '../../../core/services/invitation.service';
+import { MessageService } from '../../../core/services/message.service';
 import { ListingService } from '../../../core/services/listing.service';
 import { TenantSearchResult } from '../../../core/models/tenant-search-result.model';
 import { Listing } from '../../../core/models/listing.model';
@@ -50,7 +52,9 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
   constructor(
     private discoveryService: TenantDiscoveryService,
     private invitationService: InvitationService,
-    private listingService: ListingService
+    private listingService: ListingService,
+    private messageService: MessageService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -182,24 +186,20 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
   }
 
   sendInvitation(): void {
-    if (!this.invitingProfile) return;
-    if (!this.inviteListingId) {
-      this.inviteError = 'Veuillez sélectionner une annonce.';
-      return;
-    }
+    if (!this.invitingProfile || !this.inviteMessage.trim()) return;
     this.inviteError = '';
-    this.invitationService.invite({
-      listingId: this.inviteListingId,
-      tenantId: this.invitingProfile.profile.tenantId,
-      message: this.inviteMessage || undefined
+    const tenantId = this.invitingProfile.profile.tenantId;
+    this.messageService.send({
+      recipientId: tenantId,
+      body: this.inviteMessage.trim(),
+      ...(this.inviteListingId ? { listingId: this.inviteListingId } : {})
     }).subscribe({
       next: () => {
-        this.inviteSuccess = 'Invitation envoyée à ' + (this.invitingProfile?.profile.tenantName || '');
         this.invitingProfile = null;
-        this.successTimeout = setTimeout(() => this.inviteSuccess = '', 3500);
+        this.router.navigate(['/messages', tenantId]);
       },
       error: (err) => {
-        this.inviteError = err.error?.message || 'Erreur lors de l\'envoi de l\'invitation.';
+        this.inviteError = err.error?.message || 'Erreur lors de l\'envoi du message.';
       }
     });
   }

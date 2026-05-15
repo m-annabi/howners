@@ -260,9 +260,9 @@
   <div class="invite-modal__dialog" (click)="$event.stopPropagation()">
     <header class="invite-modal__header">
       <div>
-        <h3 class="invite-modal__title">Inviter {{ invitingProfile.profile.tenantName }}</h3>
+        <h3 class="invite-modal__title">Message à {{ invitingProfile.profile.tenantName }}</h3>
         <p class="invite-modal__subtitle">
-          Le locataire recevra une notification et pourra candidater à votre annonce.
+          Votre message ouvrira une conversation dans la messagerie.
         </p>
       </div>
       <button type="button" class="invite-modal__close" (click)="closeInviteModal()">
@@ -282,10 +282,10 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Message <span class="text-muted">(optionnel)</span></label>
-        <textarea class="form-control" rows="3"
+        <label class="form-label">Message</label>
+        <textarea class="form-control" rows="4"
                   [(ngModel)]="inviteMessage"
-                  placeholder="Un mot personnalisé augmente les chances de réponse…"></textarea>
+                  placeholder="Bonjour, votre profil m'intéresse pour mon bien…"></textarea>
       </div>
 
       <div *ngIf="inviteError" class="alert alert-danger py-2 mb-3">
@@ -295,8 +295,8 @@
 
     <footer class="invite-modal__footer">
       <button class="btn btn-secondary" (click)="closeInviteModal()">Annuler</button>
-      <button class="btn btn-primary" (click)="sendInvitation()">
-        <i class="bi bi-send me-2"></i> Envoyer l'invitation
+      <button class="btn btn-primary" (click)="sendInvitation()" [disabled]="!inviteMessage.trim()">
+        <i class="bi bi-send me-2"></i> Envoyer et ouvrir la conversation
       </button>
     </footer>
   </div>
