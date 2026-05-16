@@ -121,6 +121,7 @@
     <!-- ════ WIDGET GRID ════ -->
     <div *ngIf="!loading && !error && !showOnboarding"
          cdkDropList
+         cdkDropListOrientation="mixed"
          (cdkDropListDropped)="onDrop($event)"
          class="widget-grid"
          [class.widget-grid--editing]="editMode">
