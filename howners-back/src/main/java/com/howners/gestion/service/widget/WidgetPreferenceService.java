@@ -46,11 +46,22 @@ public class WidgetPreferenceService {
                     new WidgetConfigDto("expense-categories", true, 2, null)
             );
             default -> List.of(
-                    new WidgetConfigDto("overview", true, 0, List.of("properties", "rentals", "revenue", "pending")),
-                    new WidgetConfigDto("action-items", true, 1, null),
-                    new WidgetConfigDto("top-tenants", true, 2, null),
-                    new WidgetConfigDto("recent-activity", true, 3, null),
-                    new WidgetConfigDto("quick-actions", true, 4, List.of("properties", "rentals", "contracts", "payments", "listings", "invoices"))
+                    new WidgetConfigDto("stat-properties",     true,  0, null),
+                    new WidgetConfigDto("stat-rentals",        true,  1, null),
+                    new WidgetConfigDto("stat-revenue",        true,  2, null),
+                    new WidgetConfigDto("stat-pending",        true,  3, null),
+                    new WidgetConfigDto("action-items",        true,  4, null),
+                    new WidgetConfigDto("recent-activity",     true,  5, null),
+                    new WidgetConfigDto("top-tenants",         true,  6, null),
+                    new WidgetConfigDto("shortcut-properties", true,  7, null),
+                    new WidgetConfigDto("shortcut-rentals",    true,  8, null),
+                    new WidgetConfigDto("shortcut-contracts",  true,  9, null),
+                    new WidgetConfigDto("shortcut-payments",   true, 10, null),
+                    new WidgetConfigDto("shortcut-listings",   true, 11, null),
+                    new WidgetConfigDto("shortcut-invoices",   true, 12, null),
+                    new WidgetConfigDto("shortcut-expenses",   true, 13, null),
+                    new WidgetConfigDto("shortcut-messages",   true, 14, null),
+                    new WidgetConfigDto("shortcut-financial",  true, 15, null)
             );
         };
     }

@@ -48,17 +48,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   readonly ALL_WIDGET_DEFS: WidgetDef[] = ALL_WIDGET_DEFS;
 
-  readonly QUICK_ACTIONS = [
-    { label: 'Mes Biens',  route: '/properties',       icon: 'bi-building',          color: 'primary' },
-    { label: 'Locations',  route: '/rentals',           icon: 'bi-key',               color: 'success' },
-    { label: 'Contrats',   route: '/contracts',         icon: 'bi-file-earmark-text', color: 'info' },
-    { label: 'Paiements',  route: '/payments',          icon: 'bi-credit-card',       color: 'warning' },
-    { label: 'Annonces',   route: '/listings',          icon: 'bi-megaphone',         color: 'neutral' },
-    { label: 'Factures',   route: '/invoices',          icon: 'bi-receipt',           color: 'danger' },
-    { label: 'Dépenses',   route: '/expenses',          icon: 'bi-wallet2',           color: 'warning' },
-    { label: 'Messages',   route: '/messages',          icon: 'bi-chat-dots',         color: 'neutral' },
-    { label: 'Finances',   route: '/financial',         icon: 'bi-graph-up',          color: 'success' },
-  ];
 
   // ── Computed ───────────────────────────────────────────────────────────
 
