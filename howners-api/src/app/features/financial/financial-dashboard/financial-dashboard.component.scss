@@ -304,12 +304,16 @@
   i { font-size: 1.25rem; }
 }
 
-// Drag natif
-.widget-cell[draggable="true"] { cursor: grab; }
-
-.widget-drag-over {
-  outline: 2px dashed var(--hw-primary-400);
-  outline-offset: 3px;
+// SortableJS
+.widget-sortable-ghost {
+  opacity: 0.2;
+  border: 2px dashed var(--hw-primary-400) !important;
   border-radius: var(--hw-radius-md);
-  background: var(--hw-primary-50);
+  background: var(--hw-primary-50) !important;
+  box-shadow: none !important;
+}
+
+.widget-sortable-chosen {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18) !important;
+  opacity: 0.92;
 }

@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { moveItemInArray } from '@angular/cdk/drag-drop';
+import Sortable from 'sortablejs';
 import { FinancialDashboardService } from '../../../core/services/financial-dashboard.service';
 import { WidgetPreferenceService } from '../../../core/services/widget-preference.service';
 import { FinancialDashboard } from '../../../core/models/financial-dashboard.model';
@@ -14,6 +14,7 @@ import { WidgetConfig, WidgetDef, FINANCIAL_WIDGET_DEFS } from '../../../core/mo
 })
 export class FinancialDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private sortable?: Sortable;
 
   dashboard: FinancialDashboard | null = null;
   loading = false;
@@ -25,10 +26,15 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
   editWidgets: WidgetConfig[] = [];
   editMode = false;
   addPanelOpen = false;
-  draggingIndex: number | null = null;
-  dragOverIndex: number | null = null;
 
   readonly ALL_WIDGET_DEFS: WidgetDef[] = FINANCIAL_WIDGET_DEFS;
+
+  private _gridEl?: ElementRef<HTMLElement>;
+
+  @ViewChild('widgetGrid', { static: false })
+  set gridEl(el: ElementRef<HTMLElement> | undefined) {
+    this._gridEl = el;
+  }
 
   get inactiveWidgetDefs(): WidgetDef[] {
     const activeIds = this.displayWidgets.map(w => w.id);
@@ -49,9 +55,7 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
     return def?.size === 'sm' ? 'widget-sm' : 'widget-lg';
   }
 
-  getWidgetDef(id: string): WidgetDef | undefined {
-    return FINANCIAL_WIDGET_DEFS.find(d => d.id === id);
-  }
+  trackById(_: number, cfg: WidgetConfig): string { return cfg.id; }
 
   enterEditMode(): void {
     this.editWidgets = this.widgetConfigs.map(w => ({ ...w }));
@@ -59,11 +63,13 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
       .filter(w => w.visible)
       .sort((a, b) => a.order - b.order);
     this.editMode = true;
+    setTimeout(() => this.initSortable());
   }
 
   cancelEdit(): void {
     this.editMode = false;
     this.addPanelOpen = false;
+    this.destroySortable();
     this.refreshDisplayWidgets();
   }
 
@@ -77,6 +83,7 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$)).subscribe();
     this.editMode = false;
     this.addPanelOpen = false;
+    this.destroySortable();
   }
 
   removeWidget(id: string): void {
@@ -86,6 +93,7 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
       this.displayWidgets = this.editWidgets
         .filter(w => w.visible)
         .sort((a, b) => a.order - b.order);
+      setTimeout(() => this.initSortable());
     }
   }
 
@@ -102,33 +110,33 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
       .filter(w => w.visible)
       .sort((a, b) => a.order - b.order);
     this.addPanelOpen = false;
+    setTimeout(() => this.initSortable());
   }
 
-  onDragStart(index: number): void {
-    this.draggingIndex = index;
+  private initSortable(): void {
+    this.destroySortable();
+    if (!this._gridEl) return;
+    this.sortable = Sortable.create(this._gridEl.nativeElement, {
+      animation: 150,
+      ghostClass: 'widget-sortable-ghost',
+      chosenClass: 'widget-sortable-chosen',
+      filter: '.widget-remove',
+      preventOnFilter: true,
+      onEnd: (evt: Sortable.SortableEvent) => {
+        const prev = evt.oldIndex!;
+        const next = evt.newIndex!;
+        if (prev !== next) {
+          const moved = this.displayWidgets.splice(prev, 1)[0];
+          this.displayWidgets.splice(next, 0, moved);
+          this.displayWidgets.forEach((w, i) => w.order = i);
+        }
+      }
+    });
   }
 
-  onDragOver(index: number, event: DragEvent): void {
-    event.preventDefault();
-    this.dragOverIndex = index;
-  }
-
-  onDragLeave(): void {
-    this.dragOverIndex = null;
-  }
-
-  onDragEnd(): void {
-    this.draggingIndex = null;
-    this.dragOverIndex = null;
-  }
-
-  onDrop(index: number): void {
-    if (this.draggingIndex !== null && this.draggingIndex !== index) {
-      moveItemInArray(this.displayWidgets, this.draggingIndex, index);
-      this.displayWidgets.forEach((w, i) => w.order = i);
-    }
-    this.draggingIndex = null;
-    this.dragOverIndex = null;
+  private destroySortable(): void {
+    this.sortable?.destroy();
+    this.sortable = undefined;
   }
 
   private refreshDisplayWidgets(): void {
@@ -206,6 +214,7 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroySortable();
     this.destroy$.next();
     this.destroy$.complete();
   }

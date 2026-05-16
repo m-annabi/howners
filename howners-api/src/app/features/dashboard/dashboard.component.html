@@ -120,18 +120,13 @@
 
     <!-- ════ WIDGET GRID ════ -->
     <div *ngIf="!loading && !error && !showOnboarding"
+         #widgetGrid
          class="widget-grid"
          [class.widget-grid--editing]="editMode">
 
-      <div *ngFor="let cfg of displayWidgets; let i = index"
+      <div *ngFor="let cfg of displayWidgets; trackBy: trackById"
            class="widget-cell"
-           [ngClass]="[getWidgetSizeClass(cfg.id), dragOverIndex === i && draggingIndex !== i ? 'widget-drag-over' : '']"
-           [attr.draggable]="editMode ? 'true' : null"
-           (dragstart)="onDragStart(i)"
-           (dragover)="onDragOver(i, $event)"
-           (dragleave)="onDragLeave()"
-           (dragend)="onDragEnd()"
-           (drop)="onDrop(i)">
+           [ngClass]="getWidgetSizeClass(cfg.id)">
 
         <!-- Edit mode: mask + remove button -->
         <ng-container *ngIf="editMode">

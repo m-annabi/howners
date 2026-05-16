@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { moveItemInArray } from '@angular/cdk/drag-drop';
+import Sortable from 'sortablejs';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { PaymentService } from '../../core/services/payment.service';
@@ -32,6 +32,8 @@ interface ActionItems {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private userSub!: Subscription;
+  private sortable?: Sortable;
+
   currentUser: User | null = null;
   stats: DashboardStats | null = null;
   loading = true;
@@ -39,17 +41,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   actionItems: ActionItems | null = null;
   topTenants: TenantSearchResult[] = [];
 
-  // Widget grid state
   widgetConfigs: WidgetConfig[] = [];
   displayWidgets: WidgetConfig[] = [];
   editWidgets: WidgetConfig[] = [];
   editMode = false;
   addPanelOpen = false;
-  draggingIndex: number | null = null;
-  dragOverIndex: number | null = null;
 
   readonly ALL_WIDGET_DEFS: WidgetDef[] = ALL_WIDGET_DEFS;
 
+  private _gridEl?: ElementRef<HTMLElement>;
+
+  @ViewChild('widgetGrid', { static: false })
+  set gridEl(el: ElementRef<HTMLElement> | undefined) {
+    this._gridEl = el;
+  }
 
   // ── Computed ───────────────────────────────────────────────────────────
 
@@ -111,6 +116,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return ALL_WIDGET_DEFS.find(d => d.id === id);
   }
 
+  trackById(_: number, cfg: WidgetConfig): string { return cfg.id; }
+
   // ── Edit mode ──────────────────────────────────────────────────────────
 
   enterEditMode(): void {
@@ -119,17 +126,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .filter(w => w.visible)
       .sort((a, b) => a.order - b.order);
     this.editMode = true;
+    setTimeout(() => this.initSortable());
   }
 
   cancelEdit(): void {
     this.editMode = false;
     this.addPanelOpen = false;
+    this.destroySortable();
     this.refreshDisplayWidgets();
   }
 
   saveEdit(): void {
     this.displayWidgets.forEach((w, i) => w.order = i);
-    // Merge hidden widgets back (preserve their order at the end)
     const hiddenWidgets = this.editWidgets.filter(w => !w.visible);
     const maxOrder = this.displayWidgets.length;
     hiddenWidgets.forEach((w, i) => w.order = maxOrder + i);
@@ -137,6 +145,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.widgetPreferenceService.savePreferences('dashboard', this.widgetConfigs).subscribe();
     this.editMode = false;
     this.addPanelOpen = false;
+    this.destroySortable();
   }
 
   removeWidget(id: string): void {
@@ -146,6 +155,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.displayWidgets = this.editWidgets
         .filter(w => w.visible)
         .sort((a, b) => a.order - b.order);
+      setTimeout(() => this.initSortable());
     }
   }
 
@@ -162,33 +172,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .filter(w => w.visible)
       .sort((a, b) => a.order - b.order);
     this.addPanelOpen = false;
+    setTimeout(() => this.initSortable());
   }
 
-  onDragStart(index: number): void {
-    this.draggingIndex = index;
+  private initSortable(): void {
+    this.destroySortable();
+    if (!this._gridEl) return;
+    this.sortable = Sortable.create(this._gridEl.nativeElement, {
+      animation: 150,
+      ghostClass: 'widget-sortable-ghost',
+      chosenClass: 'widget-sortable-chosen',
+      filter: '.widget-remove',
+      preventOnFilter: true,
+      onEnd: (evt: Sortable.SortableEvent) => {
+        const prev = evt.oldIndex!;
+        const next = evt.newIndex!;
+        if (prev !== next) {
+          const moved = this.displayWidgets.splice(prev, 1)[0];
+          this.displayWidgets.splice(next, 0, moved);
+          this.displayWidgets.forEach((w, i) => w.order = i);
+        }
+      }
+    });
   }
 
-  onDragOver(index: number, event: DragEvent): void {
-    event.preventDefault();
-    this.dragOverIndex = index;
-  }
-
-  onDragLeave(): void {
-    this.dragOverIndex = null;
-  }
-
-  onDragEnd(): void {
-    this.draggingIndex = null;
-    this.dragOverIndex = null;
-  }
-
-  onDrop(index: number): void {
-    if (this.draggingIndex !== null && this.draggingIndex !== index) {
-      moveItemInArray(this.displayWidgets, this.draggingIndex, index);
-      this.displayWidgets.forEach((w, i) => w.order = i);
-    }
-    this.draggingIndex = null;
-    this.dragOverIndex = null;
+  private destroySortable(): void {
+    this.sortable?.destroy();
+    this.sortable = undefined;
   }
 
   private refreshDisplayWidgets(): void {
@@ -203,7 +213,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (hasUnknown || configs.length === 0) {
       return ALL_WIDGET_DEFS.map((d, i) => ({ id: d.id, visible: true, order: i }));
     }
-    // Add new widget defs not yet in saved configs
     const savedIds = configs.map(c => c.id);
     const newDefs = ALL_WIDGET_DEFS.filter(d => !savedIds.includes(d.id));
     const maxOrder = Math.max(...configs.map(c => c.order), -1);
@@ -245,7 +254,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void { this.userSub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.destroySortable();
+    this.userSub?.unsubscribe();
+  }
 
   loadStats(): void {
     this.loading = true;
