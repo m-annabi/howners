@@ -1,505 +1,393 @@
 <div class="dashboard">
-  <app-page-header title="Tableau de bord"
-    [subtitle]="currentUser ? 'Bienvenue, ' + currentUser.firstName : ''">
-  </app-page-header>
 
-  <!-- Loading -->
-  <app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
+  <!-- ─── OWNER / ADMIN ─────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!isTenant">
 
-  <!-- Error -->
-  <div *ngIf="error" class="hw-alert hw-alert--danger">
-    <i class="bi bi-exclamation-triangle-fill"></i>
-    <span>{{ error }}</span>
-  </div>
+    <!-- En-tête -->
+    <div class="dashboard__header">
+      <app-page-header
+        title="Tableau de bord"
+        [subtitle]="currentUser ? 'Bienvenue, ' + currentUser.firstName : ''">
+      </app-page-header>
 
-  <!-- Onboarding — OWNER / ADMIN sans bien -->
-  <section *ngIf="showOnboarding" class="onboarding">
-    <header class="onboarding__header">
-      <div>
+      <div class="dashboard__header-actions">
+        <ng-container *ngIf="!editMode">
+          <button class="dash-btn dash-btn--outline" (click)="enterEditMode()">
+            <i class="bi bi-pencil-square"></i>
+            <span>Modifier</span>
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="editMode">
+          <!-- + Ajouter widget -->
+          <div class="widget-add-wrapper">
+            <button class="dash-btn dash-btn--outline" (click)="addPanelOpen = !addPanelOpen">
+              <i class="bi bi-plus-lg"></i>
+              <span>Ajouter</span>
+            </button>
+
+            <div *ngIf="addPanelOpen" class="widget-catalog">
+              <p *ngIf="catalogGroups.length === 0" class="widget-catalog__empty">
+                Tous les widgets sont affichés
+              </p>
+              <ng-container *ngFor="let group of catalogGroups">
+                <p class="widget-catalog__cat">{{ group.category }}</p>
+                <div class="widget-catalog__items">
+                  <button *ngFor="let def of group.defs"
+                          type="button"
+                          class="widget-catalog__item"
+                          (click)="addWidget(def.id)">
+                    <i class="bi" [ngClass]="def.icon"></i>
+                    <span>{{ def.label }}</span>
+                  </button>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+
+          <button class="dash-btn dash-btn--outline" (click)="cancelEdit()">
+            <i class="bi bi-x-lg"></i>
+            <span>Annuler</span>
+          </button>
+          <button class="dash-btn dash-btn--primary" (click)="saveEdit()">
+            <i class="bi bi-check-lg"></i>
+            <span>Enregistrer</span>
+          </button>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
+
+    <!-- Error -->
+    <div *ngIf="error" class="hw-alert hw-alert--danger">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Onboarding -->
+    <section *ngIf="showOnboarding" class="onboarding">
+      <header class="onboarding__header">
         <h3 class="onboarding__title">
           <i class="bi bi-rocket-takeoff"></i>
           Trois minutes pour démarrer
         </h3>
         <p class="onboarding__sub">Suivez ces étapes pour passer du compte vide au premier contrat signé.</p>
+      </header>
+      <ol class="onboarding__steps">
+        <li class="onboarding-step" [class.onboarding-step--done]="onboardingStepProperty">
+          <span class="onboarding-step__num">
+            <i *ngIf="onboardingStepProperty" class="bi bi-check-lg"></i>
+            <span *ngIf="!onboardingStepProperty">1</span>
+          </span>
+          <div class="onboarding-step__body">
+            <h4>Ajouter votre premier bien</h4>
+            <p>Nom, surface, adresse, prix d'achat (optionnel). 30 secondes.</p>
+          </div>
+          <button *ngIf="!onboardingStepProperty" class="btn btn-primary btn-sm" (click)="navigateTo('/properties/new')">
+            Ajouter <i class="bi bi-arrow-right"></i>
+          </button>
+        </li>
+        <li class="onboarding-step" [class.onboarding-step--done]="onboardingStepRental">
+          <span class="onboarding-step__num">
+            <i *ngIf="onboardingStepRental" class="bi bi-check-lg"></i>
+            <span *ngIf="!onboardingStepRental">2</span>
+          </span>
+          <div class="onboarding-step__body">
+            <h4>Créer une location et inviter le locataire</h4>
+            <p>Si vous avez déjà un locataire, ajoutez-le. Sinon, publiez une annonce.</p>
+          </div>
+          <button *ngIf="onboardingStepProperty && !onboardingStepRental" class="btn btn-outline-primary btn-sm" (click)="navigateTo('/rentals/new')">
+            Créer <i class="bi bi-arrow-right"></i>
+          </button>
+        </li>
+        <li class="onboarding-step" [class.onboarding-step--done]="onboardingStepContract">
+          <span class="onboarding-step__num">
+            <i *ngIf="onboardingStepContract" class="bi bi-check-lg"></i>
+            <span *ngIf="!onboardingStepContract">3</span>
+          </span>
+          <div class="onboarding-step__body">
+            <h4>Générer et envoyer le bail</h4>
+            <p>Template auto-rempli, signature électronique, quittance mensuelle automatique.</p>
+          </div>
+          <button *ngIf="onboardingStepRental && !onboardingStepContract" class="btn btn-outline-primary btn-sm" (click)="navigateTo('/contracts/new')">
+            Générer <i class="bi bi-arrow-right"></i>
+          </button>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ════ WIDGET GRID ════ -->
+    <div *ngIf="!loading && !error && !showOnboarding"
+         #widgetGrid
+         class="widget-grid"
+         [class.widget-grid--editing]="editMode">
+
+      <div *ngFor="let cfg of displayWidgets; trackBy: trackById"
+           class="widget-cell"
+           [ngClass]="getWidgetSizeClass(cfg.id)">
+
+        <!-- Edit mode: mask + remove button -->
+        <ng-container *ngIf="editMode">
+          <div class="widget-mask"></div>
+          <button class="widget-remove" type="button" (click)="removeWidget(cfg.id)">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </ng-container>
+
+        <!-- Content (frozen in edit mode) -->
+        <div [class.widget-frozen]="editMode">
+          <ng-container [ngSwitch]="cfg.id">
+
+            <!-- ── Stat cards (sm) ── -->
+            <app-stats-card *ngSwitchCase="'stat-properties'"
+              label="Biens"
+              [value]="stats?.totalProperties ?? 0"
+              icon="bi-building" color="primary" routerLink="/properties">
+            </app-stats-card>
+
+            <app-stats-card *ngSwitchCase="'stat-rentals'"
+              label="Locations actives"
+              [value]="stats?.activeRentals ?? 0"
+              icon="bi-key" color="success" routerLink="/rentals">
+            </app-stats-card>
+
+            <app-stats-card *ngSwitchCase="'stat-revenue'"
+              label="Revenus mensuels"
+              [value]="(stats?.monthlyRevenue || 0) + ' ' + (stats?.currency || 'EUR')"
+              icon="bi-cash-stack" color="warning" routerLink="/financial">
+            </app-stats-card>
+
+            <app-stats-card *ngSwitchCase="'stat-pending'"
+              label="En attente"
+              [value]="stats?.pendingRentals ?? 0"
+              icon="bi-clock-history" color="danger" routerLink="/rentals">
+            </app-stats-card>
+
+            <!-- ── À traiter (lg) ── -->
+            <div *ngSwitchCase="'action-items'" class="widget-section">
+              <div class="widget-section__header">
+                <i class="bi bi-bell-fill"></i>
+                <span>À traiter</span>
+              </div>
+              <div class="widget-section__body">
+                <div *ngIf="hasActionItems; else noActions" class="action-items__grid">
+                  <button *ngIf="actionItems!.latePayments > 0" type="button"
+                          class="action-item action-item--danger" (click)="goToLatePayments()">
+                    <span class="action-item__count">{{ actionItems!.latePayments }}</span>
+                    <span class="action-item__label">paiement{{ actionItems!.latePayments > 1 ? 's' : '' }} en retard</span>
+                    <i class="bi bi-chevron-right action-item__chev"></i>
+                  </button>
+                  <button *ngIf="actionItems!.expiringContracts > 0" type="button"
+                          class="action-item action-item--warning" (click)="goToExpiringContracts()">
+                    <span class="action-item__count">{{ actionItems!.expiringContracts }}</span>
+                    <span class="action-item__label">contrat{{ actionItems!.expiringContracts > 1 ? 's' : '' }} expire{{ actionItems!.expiringContracts > 1 ? 'nt' : '' }} dans 30 j</span>
+                    <i class="bi bi-chevron-right action-item__chev"></i>
+                  </button>
+                  <button *ngIf="actionItems!.awaitingSignatures > 0" type="button"
+                          class="action-item action-item--info" (click)="goToAwaitingSignatures()">
+                    <span class="action-item__count">{{ actionItems!.awaitingSignatures }}</span>
+                    <span class="action-item__label">signature{{ actionItems!.awaitingSignatures > 1 ? 's' : '' }} en attente</span>
+                    <i class="bi bi-chevron-right action-item__chev"></i>
+                  </button>
+                  <button *ngIf="actionItems!.pendingApplications > 0" type="button"
+                          class="action-item action-item--accent" (click)="goToPendingApplications()">
+                    <span class="action-item__count">{{ actionItems!.pendingApplications }}</span>
+                    <span class="action-item__label">candidature{{ actionItems!.pendingApplications > 1 ? 's' : '' }} à examiner</span>
+                    <i class="bi bi-chevron-right action-item__chev"></i>
+                  </button>
+                </div>
+                <ng-template #noActions>
+                  <div class="widget-empty">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Tout est à jour — aucune action urgente</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- ── Activité récente (lg) ── -->
+            <div *ngSwitchCase="'recent-activity'" class="widget-section">
+              <div class="widget-section__header">
+                <i class="bi bi-activity"></i>
+                <span>Activité récente</span>
+              </div>
+              <div class="widget-section__body">
+                <ng-container *ngIf="hasActivity; else noActivity">
+                  <div *ngIf="stats && stats.pendingRentals > 0" class="hw-alert hw-alert--warning" style="margin-bottom:var(--hw-space-3)">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>{{ stats.pendingRentals }} location{{ stats.pendingRentals > 1 ? 's' : '' }} en attente de validation</span>
+                    <a routerLink="/rentals" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Voir</a>
+                  </div>
+                  <div class="activity-list">
+                    <a *ngIf="stats?.recentActivity?.latestProperty as prop"
+                       class="activity-item hw-card hw-card--clickable"
+                       [routerLink]="'/properties/' + prop.id">
+                      <div class="hw-icon-circle hw-icon-circle--primary"><i class="bi bi-building"></i></div>
+                      <div class="activity-item__content">
+                        <span class="activity-item__label">Dernier bien ajouté</span>
+                        <span class="activity-item__value">{{ prop.name }}</span>
+                      </div>
+                      <i class="bi bi-chevron-right" style="color:var(--hw-gray-400)"></i>
+                    </a>
+                    <a *ngIf="stats?.recentActivity?.latestRental as rental"
+                       class="activity-item hw-card hw-card--clickable"
+                       [routerLink]="'/rentals/' + rental.id">
+                      <div class="hw-icon-circle hw-icon-circle--success"><i class="bi bi-key"></i></div>
+                      <div class="activity-item__content">
+                        <span class="activity-item__label">Dernière location</span>
+                        <span class="activity-item__value">{{ rental.propertyName }}</span>
+                      </div>
+                      <i class="bi bi-chevron-right" style="color:var(--hw-gray-400)"></i>
+                    </a>
+                  </div>
+                </ng-container>
+                <ng-template #noActivity>
+                  <div class="widget-empty">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Aucune activité récente</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- ── Locataires potentiels (lg) ── -->
+            <div *ngSwitchCase="'top-tenants'" class="widget-section">
+              <div class="widget-section__header">
+                <i class="bi bi-stars"></i>
+                <span>Locataires à fort potentiel</span>
+                <a (click)="goToTenantDiscovery()" class="widget-section__header-link">
+                  Tous les profils <i class="bi bi-arrow-right"></i>
+                </a>
+              </div>
+              <div class="widget-section__body">
+                <div *ngIf="topTenants.length > 0; else noTenants" class="top-tenants__grid">
+                  <article *ngFor="let result of topTenants" class="top-tenant" (click)="goToTenantDiscovery()">
+                    <div class="top-tenant__avatar">{{ (result.profile.tenantName || '?').charAt(0) }}</div>
+                    <div class="top-tenant__body">
+                      <div class="top-tenant__name">{{ result.profile.tenantName }}</div>
+                      <div class="top-tenant__meta">
+                        <span *ngIf="result.profile.desiredCity"><i class="bi bi-geo-alt"></i> {{ result.profile.desiredCity }}</span>
+                        <span *ngIf="result.profile.budgetMax"> · {{ result.profile.budgetMax }}€ max</span>
+                      </div>
+                    </div>
+                    <div *ngIf="result.tenantScore" class="top-tenant__score" [attr.data-risk]="result.tenantScore.riskLevel">
+                      {{ result.tenantScore.score }}
+                    </div>
+                  </article>
+                </div>
+                <ng-template #noTenants>
+                  <div class="widget-empty">
+                    <i class="bi bi-people"></i>
+                    <span>Aucun profil locataire trouvé</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- ── Raccourcis individuels (sm, *ngSwitchDefault) ── -->
+            <ng-container *ngSwitchDefault>
+              <ng-container *ngIf="getWidgetDef(cfg.id) as def">
+                <a [routerLink]="def.route" class="shortcut-widget hw-card hw-card--clickable">
+                  <div class="hw-icon-circle" [ngClass]="'hw-icon-circle--' + def.color">
+                    <i class="bi" [ngClass]="def.icon"></i>
+                  </div>
+                  <span class="shortcut-widget__label">{{ def.label }}</span>
+                </a>
+              </ng-container>
+            </ng-container>
+
+          </ng-container>
+        </div>
       </div>
-    </header>
 
-    <ol class="onboarding__steps">
-      <li class="onboarding-step" [class.onboarding-step--done]="onboardingStepProperty">
-        <span class="onboarding-step__num">
-          <i *ngIf="onboardingStepProperty" class="bi bi-check-lg"></i>
-          <span *ngIf="!onboardingStepProperty">1</span>
-        </span>
-        <div class="onboarding-step__body">
-          <h4>Ajouter votre premier bien</h4>
-          <p>Nom, surface, adresse, prix d'achat (optionnel). 30 secondes.</p>
-        </div>
-        <button class="btn btn-primary btn-sm"
-                *ngIf="!onboardingStepProperty"
-                (click)="navigateTo('/properties/new')">
-          Ajouter <i class="bi bi-arrow-right"></i>
-        </button>
-      </li>
-
-      <li class="onboarding-step" [class.onboarding-step--done]="onboardingStepRental">
-        <span class="onboarding-step__num">
-          <i *ngIf="onboardingStepRental" class="bi bi-check-lg"></i>
-          <span *ngIf="!onboardingStepRental">2</span>
-        </span>
-        <div class="onboarding-step__body">
-          <h4>Créer une location et inviter le locataire</h4>
-          <p>Si vous avez déjà un locataire, ajoutez-le. Sinon, publiez une annonce et laissez Howners vous proposer des candidats.</p>
-        </div>
-        <button class="btn btn-outline-primary btn-sm"
-                *ngIf="onboardingStepProperty && !onboardingStepRental"
-                (click)="navigateTo('/rentals/new')">
-          Créer <i class="bi bi-arrow-right"></i>
-        </button>
-      </li>
-
-      <li class="onboarding-step" [class.onboarding-step--done]="onboardingStepContract">
-        <span class="onboarding-step__num">
-          <i *ngIf="onboardingStepContract" class="bi bi-check-lg"></i>
-          <span *ngIf="!onboardingStepContract">3</span>
-        </span>
-        <div class="onboarding-step__body">
-          <h4>Générer et envoyer le bail</h4>
-          <p>Template auto-rempli, signature électronique tokenisée, quittance mensuelle automatique.</p>
-        </div>
-        <button class="btn btn-outline-primary btn-sm"
-                *ngIf="onboardingStepRental && !onboardingStepContract"
-                (click)="navigateTo('/contracts/new')">
-          Générer <i class="bi bi-arrow-right"></i>
-        </button>
-      </li>
-    </ol>
-  </section>
-
-  <!-- À traiter — OWNER / ADMIN -->
-  <section *ngIf="!isTenant && hasActionItems" class="action-items">
-    <header class="action-items__header">
-      <h3>
-        <i class="bi bi-bell-fill"></i>
-        À traiter
-      </h3>
-    </header>
-
-    <div class="action-items__grid">
-      <button
-        *ngIf="actionItems!.latePayments > 0"
-        type="button"
-        class="action-item action-item--danger"
-        (click)="goToLatePayments()">
-        <span class="action-item__count">{{ actionItems!.latePayments }}</span>
-        <span class="action-item__label">
-          paiement{{ actionItems!.latePayments > 1 ? 's' : '' }} en retard
-        </span>
-        <i class="bi bi-chevron-right action-item__chev"></i>
-      </button>
-
-      <button
-        *ngIf="actionItems!.expiringContracts > 0"
-        type="button"
-        class="action-item action-item--warning"
-        (click)="goToExpiringContracts()">
-        <span class="action-item__count">{{ actionItems!.expiringContracts }}</span>
-        <span class="action-item__label">
-          contrat{{ actionItems!.expiringContracts > 1 ? 's' : '' }} expire{{ actionItems!.expiringContracts > 1 ? 'nt' : '' }} dans 30 j
-        </span>
-        <i class="bi bi-chevron-right action-item__chev"></i>
-      </button>
-
-      <button
-        *ngIf="actionItems!.awaitingSignatures > 0"
-        type="button"
-        class="action-item action-item--info"
-        (click)="goToAwaitingSignatures()">
-        <span class="action-item__count">{{ actionItems!.awaitingSignatures }}</span>
-        <span class="action-item__label">
-          signature{{ actionItems!.awaitingSignatures > 1 ? 's' : '' }} en attente
-        </span>
-        <i class="bi bi-chevron-right action-item__chev"></i>
-      </button>
-
-      <button
-        *ngIf="actionItems!.pendingApplications > 0"
-        type="button"
-        class="action-item action-item--accent"
-        (click)="goToPendingApplications()">
-        <span class="action-item__count">{{ actionItems!.pendingApplications }}</span>
-        <span class="action-item__label">
-          candidature{{ actionItems!.pendingApplications > 1 ? 's' : '' }} à examiner
-        </span>
-        <i class="bi bi-chevron-right action-item__chev"></i>
-      </button>
     </div>
-  </section>
+  </ng-container>
 
-  <!-- Top tenants teaser — OWNER / ADMIN with no empty state -->
-  <section *ngIf="!isTenant && !showOnboarding && topTenants.length > 0" class="top-tenants">
-    <header class="top-tenants__head">
-      <h3>
-        <i class="bi bi-stars"></i>
-        Locataires à fort potentiel
-      </h3>
-      <a (click)="goToTenantDiscovery()" class="top-tenants__all">
-        Tous les profils <i class="bi bi-arrow-right"></i>
-      </a>
-    </header>
-    <div class="top-tenants__grid">
-      <article *ngFor="let result of topTenants"
-               class="top-tenant"
-               (click)="goToTenantDiscovery()">
-        <div class="top-tenant__avatar">
-          {{ (result.profile.tenantName || '?').charAt(0) }}
+  <!-- ─── TENANT ────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="isTenant">
+    <app-page-header
+      title="Tableau de bord"
+      [subtitle]="currentUser ? 'Bienvenue, ' + currentUser.firstName : ''">
+    </app-page-header>
+
+    <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+    <div *ngIf="error" class="hw-alert hw-alert--danger">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ error }}</span>
+    </div>
+
+    <ng-container *ngIf="!loading && !error && stats">
+
+      <!-- KPIs locataire -->
+      <div class="widget-grid" style="margin-bottom:var(--hw-space-6)">
+        <app-stats-card *ngIf="stats.activeRentals > 0"
+          label="Location active" [value]="stats.activeRentals"
+          icon="bi-key" color="success" routerLink="/rentals" class="widget-sm">
+        </app-stats-card>
+        <app-stats-card *ngIf="stats.activeRentals > 0"
+          label="Loyer mensuel" [value]="(stats.monthlyRevenue || 0) + ' ' + (stats.currency || 'EUR')"
+          icon="bi-cash-stack" color="warning" routerLink="/payments" class="widget-sm">
+        </app-stats-card>
+        <app-stats-card
+          label="Messages non lus" [value]="stats.tenantInfo?.unreadMessages || 0"
+          icon="bi-chat-dots" color="danger" routerLink="/messages" class="widget-sm">
+        </app-stats-card>
+      </div>
+
+      <!-- Alertes -->
+      <div *ngIf="hasTenantAlerts" class="tenant-alerts">
+        <div *ngIf="stats.tenantInfo?.pendingInvitations" class="hw-alert hw-alert--success">
+          <i class="bi bi-envelope-open-fill"></i>
+          <span>{{ stats.tenantInfo?.pendingInvitations }} invitation{{ (stats.tenantInfo?.pendingInvitations || 0) > 1 ? 's' : '' }} en attente</span>
+          <a routerLink="/search-profile/invitations" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Voir</a>
         </div>
-        <div class="top-tenant__body">
-          <div class="top-tenant__name">{{ result.profile.tenantName }}</div>
-          <div class="top-tenant__meta">
-            <span *ngIf="result.profile.desiredCity">
-              <i class="bi bi-geo-alt"></i> {{ result.profile.desiredCity }}
-            </span>
-            <span *ngIf="result.profile.budgetMax">
-              · {{ result.profile.budgetMax }}€ max
-            </span>
+        <div *ngIf="stats.tenantInfo?.pendingApplications" class="hw-alert hw-alert--info">
+          <i class="bi bi-hourglass-split"></i>
+          <span>{{ stats.tenantInfo?.pendingApplications }} candidature{{ (stats.tenantInfo?.pendingApplications || 0) > 1 ? 's' : '' }} en cours</span>
+          <a routerLink="/applications" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Voir</a>
+        </div>
+        <div *ngIf="!stats.tenantInfo?.searchProfileActive" class="hw-alert hw-alert--warning">
+          <i class="bi bi-eye-slash-fill"></i>
+          <span>Votre profil est inactif — les propriétaires ne peuvent pas vous trouver</span>
+          <a routerLink="/search-profile" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Activer</a>
+        </div>
+      </div>
+
+      <!-- Raccourcis locataire -->
+      <div class="widget-section" style="margin-top:var(--hw-space-4)">
+        <div class="widget-section__header">
+          <i class="bi bi-lightning-fill"></i>
+          <span>Raccourcis</span>
+        </div>
+        <div class="widget-section__body">
+          <div class="shortcuts-grid">
+            <a routerLink="/rentals" class="shortcut-card hw-card hw-card--clickable">
+              <div class="hw-icon-circle hw-icon-circle--success"><i class="bi bi-key"></i></div>
+              <span class="shortcut-card__label">Ma location</span>
+            </a>
+            <a routerLink="/payments" class="shortcut-card hw-card hw-card--clickable">
+              <div class="hw-icon-circle hw-icon-circle--warning"><i class="bi bi-credit-card"></i></div>
+              <span class="shortcut-card__label">Paiements</span>
+            </a>
+            <a routerLink="/messages" class="shortcut-card hw-card hw-card--clickable">
+              <div class="hw-icon-circle hw-icon-circle--neutral"><i class="bi bi-chat-dots"></i></div>
+              <span class="shortcut-card__label">Messages</span>
+            </a>
+            <a routerLink="/listings" class="shortcut-card hw-card hw-card--clickable">
+              <div class="hw-icon-circle hw-icon-circle--primary"><i class="bi bi-search"></i></div>
+              <span class="shortcut-card__label">Rechercher</span>
+            </a>
+            <a routerLink="/profile" class="shortcut-card hw-card hw-card--clickable">
+              <div class="hw-icon-circle hw-icon-circle--info"><i class="bi bi-person"></i></div>
+              <span class="shortcut-card__label">Mon profil</span>
+            </a>
           </div>
         </div>
-        <div *ngIf="result.tenantScore" class="top-tenant__score"
-             [attr.data-risk]="result.tenantScore.riskLevel">
-          {{ result.tenantScore.score }}
-        </div>
-      </article>
-    </div>
-  </section>
+      </div>
 
-  <!-- Stats Cards — TENANT -->
-  <div *ngIf="!loading && !error && stats && isTenant" class="dashboard__stats">
-    <app-stats-card
-      *ngIf="stats.activeRentals > 0"
-      label="Ma location"
-      [value]="stats.activeRentals"
-      icon="bi-key"
-      color="success"
-      routerLink="/rentals">
-    </app-stats-card>
-    <app-stats-card
-      *ngIf="stats.activeRentals > 0"
-      label="Loyer mensuel"
-      [value]="(stats.monthlyRevenue || 0) + ' ' + (stats.currency || 'EUR')"
-      icon="bi-cash-stack"
-      color="warning"
-      routerLink="/payments">
-    </app-stats-card>
-    <app-stats-card
-      label="Candidatures"
-      [value]="stats.tenantInfo?.totalApplications || 0"
-      icon="bi-send"
-      color="primary"
-      routerLink="/applications">
-    </app-stats-card>
-    <app-stats-card
-      label="Invitations"
-      [value]="stats.tenantInfo?.totalInvitations || 0"
-      icon="bi-envelope-open"
-      color="success"
-      routerLink="/search-profile/invitations">
-    </app-stats-card>
-    <app-stats-card
-      label="Profil recherche"
-      [value]="stats.tenantInfo?.searchProfileActive ? 'Actif' : 'Inactif'"
-      icon="bi-person-badge"
-      [color]="stats.tenantInfo?.searchProfileActive ? 'success' : 'warning'"
-      routerLink="/search-profile">
-    </app-stats-card>
-    <app-stats-card
-      label="Messages"
-      [value]="stats.tenantInfo?.unreadMessages || 0"
-      icon="bi-chat-dots"
-      color="danger"
-      routerLink="/messages">
-    </app-stats-card>
-  </div>
+    </ng-container>
+  </ng-container>
 
-  <!-- Stats Cards — OWNER / ADMIN -->
-  <div *ngIf="!loading && !error && stats && !isTenant" class="dashboard__stats">
-    <app-stats-card
-      label="Biens"
-      [value]="stats.totalProperties"
-      icon="bi-building"
-      color="primary"
-      routerLink="/properties">
-    </app-stats-card>
-    <app-stats-card
-      label="Locations actives"
-      [value]="stats.activeRentals"
-      icon="bi-key"
-      color="success"
-      routerLink="/rentals">
-    </app-stats-card>
-    <app-stats-card
-      label="Revenus mensuels"
-      [value]="(stats?.monthlyRevenue || 0) + ' ' + (stats?.currency || 'EUR')"
-      icon="bi-cash-stack"
-      color="warning"
-      routerLink="/financial">
-    </app-stats-card>
-    <app-stats-card
-      label="En attente"
-      [value]="stats.pendingRentals"
-      icon="bi-clock-history"
-      color="danger"
-      routerLink="/rentals">
-    </app-stats-card>
-  </div>
-
-  <!-- Tenant Alerts -->
-  <div *ngIf="!loading && !error && stats && isTenant && hasTenantAlerts" class="dashboard__section">
-    <h3 class="dashboard__section-title">
-      <i class="bi bi-bell"></i>
-      Notifications
-    </h3>
-
-    <div *ngIf="stats.tenantInfo?.pendingInvitations" class="hw-alert hw-alert--success" style="margin-bottom: var(--hw-space-4)">
-      <i class="bi bi-envelope-open-fill"></i>
-      <span>{{ stats.tenantInfo?.pendingInvitations }} invitation{{ (stats.tenantInfo?.pendingInvitations || 0) > 1 ? 's' : '' }} en attente</span>
-      <a routerLink="/search-profile/invitations" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Voir</a>
-    </div>
-
-    <div *ngIf="stats.tenantInfo?.pendingApplications" class="hw-alert hw-alert--info" style="margin-bottom: var(--hw-space-4)">
-      <i class="bi bi-hourglass-split"></i>
-      <span>{{ stats.tenantInfo?.pendingApplications }} candidature{{ (stats.tenantInfo?.pendingApplications || 0) > 1 ? 's' : '' }} en cours d'examen</span>
-      <a routerLink="/applications" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Voir</a>
-    </div>
-
-    <div *ngIf="!stats.tenantInfo?.searchProfileActive" class="hw-alert hw-alert--warning" style="margin-bottom: var(--hw-space-4)">
-      <i class="bi bi-eye-slash-fill"></i>
-      <span>Votre profil de recherche est inactif — les propriétaires ne peuvent pas vous trouver</span>
-      <a routerLink="/search-profile" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Activer</a>
-    </div>
-  </div>
-
-  <!-- Ma location — TENANT -->
-  <div *ngIf="!loading && !error && stats && isTenant && stats.activeRentals > 0" class="dashboard__section">
-    <h3 class="dashboard__section-title">
-      <i class="bi bi-house-door"></i>
-      Ma location
-    </h3>
-    <div class="dashboard__activity-list">
-      <a class="dashboard__activity-item hw-card hw-card--clickable" routerLink="/rentals">
-        <div class="hw-icon-circle hw-icon-circle--success">
-          <i class="bi bi-key"></i>
-        </div>
-        <div class="dashboard__activity-content">
-          <span class="dashboard__activity-label">Location active</span>
-          <span class="dashboard__activity-value">Voir ma location</span>
-        </div>
-        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
-      </a>
-      <a class="dashboard__activity-item hw-card hw-card--clickable" routerLink="/payments">
-        <div class="hw-icon-circle hw-icon-circle--warning">
-          <i class="bi bi-credit-card"></i>
-        </div>
-        <div class="dashboard__activity-content">
-          <span class="dashboard__activity-label">Paiements</span>
-          <span class="dashboard__activity-value">Gérer mes paiements</span>
-        </div>
-        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
-      </a>
-      <a class="dashboard__activity-item hw-card hw-card--clickable" routerLink="/receipts">
-        <div class="hw-icon-circle hw-icon-circle--info">
-          <i class="bi bi-file-earmark-check"></i>
-        </div>
-        <div class="dashboard__activity-content">
-          <span class="dashboard__activity-label">Quittances</span>
-          <span class="dashboard__activity-value">Mes quittances de loyer</span>
-        </div>
-        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
-      </a>
-    </div>
-  </div>
-
-  <!-- Recent Activity — OWNER / ADMIN -->
-  <div *ngIf="!loading && !error && stats && !isTenant && hasActivity" class="dashboard__section">
-    <h3 class="dashboard__section-title">
-      <i class="bi bi-activity"></i>
-      Activité récente
-    </h3>
-
-    <div *ngIf="stats.pendingRentals > 0" class="hw-alert hw-alert--warning" style="margin-bottom: var(--hw-space-4)">
-      <i class="bi bi-exclamation-triangle-fill"></i>
-      <span>{{ stats.pendingRentals }} location{{ stats.pendingRentals > 1 ? 's' : '' }} en attente de validation</span>
-      <a routerLink="/rentals" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto">Voir</a>
-    </div>
-
-    <div class="dashboard__activity-list">
-      <a *ngIf="stats?.recentActivity?.latestProperty as prop"
-         class="dashboard__activity-item hw-card hw-card--clickable"
-         [routerLink]="'/properties/' + prop.id">
-        <div class="hw-icon-circle hw-icon-circle--primary">
-          <i class="bi bi-building"></i>
-        </div>
-        <div class="dashboard__activity-content">
-          <span class="dashboard__activity-label">Dernier bien ajouté</span>
-          <span class="dashboard__activity-value">{{ prop.name }}</span>
-          <span class="hw-text-xs hw-text-muted">{{ prop.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
-        </div>
-        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
-      </a>
-
-      <a *ngIf="stats?.recentActivity?.latestRental as rental"
-         class="dashboard__activity-item hw-card hw-card--clickable"
-         [routerLink]="'/rentals/' + rental.id">
-        <div class="hw-icon-circle hw-icon-circle--success">
-          <i class="bi bi-key"></i>
-        </div>
-        <div class="dashboard__activity-content">
-          <span class="dashboard__activity-label">Dernière location créée</span>
-          <span class="dashboard__activity-value">{{ rental.propertyName }}</span>
-          <span class="hw-text-xs hw-text-muted">{{ rental.createdAt | date:'dd/MM/yyyy à HH:mm' }}</span>
-        </div>
-        <i class="bi bi-chevron-right" style="color: var(--hw-gray-400)"></i>
-      </a>
-    </div>
-  </div>
-
-  <!-- Quick Actions -->
-  <div *ngIf="!loading && !error" class="dashboard__section">
-    <h3 class="dashboard__section-title">
-      <i class="bi bi-lightning"></i>
-      Actions rapides
-    </h3>
-    <!-- Quick Actions — TENANT -->
-    <div *ngIf="isTenant" class="dashboard__actions-grid">
-      <a routerLink="/rentals" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--success">
-          <i class="bi bi-key"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Ma location</span>
-          <span class="dashboard__action-desc">Voir ma location</span>
-        </div>
-      </a>
-      <a routerLink="/payments" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--warning">
-          <i class="bi bi-credit-card"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Paiements</span>
-          <span class="dashboard__action-desc">Gérer mes paiements</span>
-        </div>
-      </a>
-      <a routerLink="/listings" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--primary">
-          <i class="bi bi-search"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Rechercher</span>
-          <span class="dashboard__action-desc">Trouver un logement</span>
-        </div>
-      </a>
-      <a routerLink="/applications" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--info">
-          <i class="bi bi-send"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Candidatures</span>
-          <span class="dashboard__action-desc">Suivre mes candidatures</span>
-        </div>
-      </a>
-      <a routerLink="/search-profile" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--success">
-          <i class="bi bi-person-badge"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Profil recherche</span>
-          <span class="dashboard__action-desc">Critères et visibilité</span>
-        </div>
-      </a>
-      <a routerLink="/search-profile/invitations" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--warning">
-          <i class="bi bi-envelope-open"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Invitations</span>
-          <span class="dashboard__action-desc">Propositions reçues</span>
-        </div>
-      </a>
-      <a routerLink="/messages" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--neutral">
-          <i class="bi bi-chat-dots"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Messages</span>
-          <span class="dashboard__action-desc">Mes conversations</span>
-        </div>
-      </a>
-      <a routerLink="/receipts" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--danger">
-          <i class="bi bi-file-earmark-check"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Quittances</span>
-          <span class="dashboard__action-desc">Mes quittances de loyer</span>
-        </div>
-      </a>
-    </div>
-
-    <!-- Quick Actions — OWNER / ADMIN -->
-    <div *ngIf="!isTenant" class="dashboard__actions-grid">
-      <a routerLink="/properties" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--primary">
-          <i class="bi bi-building"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Mes Biens</span>
-          <span class="dashboard__action-desc">Gérer mes propriétés</span>
-        </div>
-      </a>
-      <a routerLink="/rentals" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--success">
-          <i class="bi bi-key"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Locations</span>
-          <span class="dashboard__action-desc">Gérer mes locations</span>
-        </div>
-      </a>
-      <a routerLink="/contracts" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--info">
-          <i class="bi bi-file-earmark-text"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Contrats</span>
-          <span class="dashboard__action-desc">Créer et gérer</span>
-        </div>
-      </a>
-      <a routerLink="/payments" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--warning">
-          <i class="bi bi-credit-card"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Paiements</span>
-          <span class="dashboard__action-desc">Suivre les paiements</span>
-        </div>
-      </a>
-      <a routerLink="/listings" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--neutral">
-          <i class="bi bi-megaphone"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Annonces</span>
-          <span class="dashboard__action-desc">Publier et rechercher</span>
-        </div>
-      </a>
-      <a routerLink="/invoices" class="dashboard__action-card hw-card hw-card--clickable">
-        <div class="hw-icon-circle hw-icon-circle--danger">
-          <i class="bi bi-receipt"></i>
-        </div>
-        <div>
-          <span class="dashboard__action-title">Factures</span>
-          <span class="dashboard__action-desc">Gérer la facturation</span>
-        </div>
-      </a>
-    </div>
-  </div>
 </div>
