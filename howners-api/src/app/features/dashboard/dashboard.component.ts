@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AuthService } from '../../core/auth/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { PaymentService } from '../../core/services/payment.service';
@@ -15,7 +16,12 @@ import { PaymentStatus } from '../../core/models/payment.model';
 import { ContractStatus } from '../../core/models/contract.model';
 import { ApplicationStatus } from '../../core/models/application.model';
 import { TenantSearchResult } from '../../core/models/tenant-search-result.model';
-import { WidgetConfig, DASHBOARD_WIDGET_DEFS, WidgetDefinition } from '../../core/models/widget-config.model';
+import {
+  WidgetConfig, DASHBOARD_WIDGET_DEFS,
+  ShortcutDef, OverviewStatDef,
+  ALL_SHORTCUTS, ALL_OVERVIEW_STATS,
+  DEFAULT_SHORTCUT_IDS, DEFAULT_OVERVIEW_STAT_IDS
+} from '../../core/models/widget-config.model';
 
 interface ActionItems {
   latePayments: number;
@@ -38,10 +44,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   actionItems: ActionItems | null = null;
   topTenants: TenantSearchResult[] = [];
 
-  // Widget system
   widgetConfigs: WidgetConfig[] = [];
-  configuratorOpen = false;
-  readonly WIDGET_DEFS: WidgetDefinition[] = DASHBOARD_WIDGET_DEFS;
+  editMode = false;
+  editConfigs: WidgetConfig[] = [];
+
+  readonly ALL_SHORTCUTS: ShortcutDef[] = ALL_SHORTCUTS;
+  readonly ALL_OVERVIEW_STATS: OverviewStatDef[] = ALL_OVERVIEW_STATS;
 
   get isTenant(): boolean { return this.currentUser?.role === 'TENANT'; }
 
@@ -81,6 +89,102 @@ export class DashboardComponent implements OnInit, OnDestroy {
       !!this.stats.recentActivity?.latestRental
     );
   }
+
+  get visibleOverviewStats(): OverviewStatDef[] {
+    const ids = this.getVisibleItems('overview');
+    return ALL_OVERVIEW_STATS.filter(s => ids.includes(s.id));
+  }
+
+  get visibleShortcuts(): ShortcutDef[] {
+    const ids = this.getVisibleItems('quick-actions');
+    return ALL_SHORTCUTS.filter(s => ids.includes(s.id));
+  }
+
+  getVisibleItems(widgetId: string): string[] {
+    const cfg = this.widgetConfigs.find(w => w.id === widgetId);
+    if (!cfg?.items || cfg.items.length === 0) {
+      if (widgetId === 'quick-actions') return DEFAULT_SHORTCUT_IDS;
+      if (widgetId === 'overview') return DEFAULT_OVERVIEW_STAT_IDS;
+      return [];
+    }
+    return cfg.items;
+  }
+
+  getStatValue(statId: string): string | number {
+    if (!this.stats) return '-';
+    switch (statId) {
+      case 'properties': return this.stats.totalProperties ?? 0;
+      case 'rentals':    return this.stats.activeRentals ?? 0;
+      case 'revenue':    return `${this.stats.monthlyRevenue || 0} ${this.stats.currency || 'EUR'}`;
+      case 'pending':    return this.stats.pendingRentals ?? 0;
+      default:           return '-';
+    }
+  }
+
+  getWidgetLabel(id: string): string {
+    return DASHBOARD_WIDGET_DEFS.find(d => d.id === id)?.label ?? id;
+  }
+
+  getWidgetIcon(id: string): string {
+    return DASHBOARD_WIDGET_DEFS.find(d => d.id === id)?.icon ?? 'bi-grid';
+  }
+
+  // ── Edit mode ──────────────────────────────────────────────────────────
+
+  enterEditMode(): void {
+    this.editConfigs = this.widgetConfigs
+      .map(w => ({ ...w, items: w.items ? [...w.items] : undefined }))
+      .sort((a, b) => a.order - b.order);
+    this.editMode = true;
+  }
+
+  cancelEdit(): void {
+    this.editMode = false;
+    this.editConfigs = [];
+  }
+
+  saveEdit(): void {
+    this.editConfigs.forEach((w, i) => w.order = i);
+    this.widgetConfigs = this.editConfigs.map(w => ({ ...w }));
+    this.editMode = false;
+    this.editConfigs = [];
+    this.widgetPreferenceService.savePreferences('dashboard', this.widgetConfigs).subscribe();
+  }
+
+  toggleWidgetVisible(id: string): void {
+    const cfg = this.editConfigs.find(w => w.id === id);
+    if (cfg) cfg.visible = !cfg.visible;
+  }
+
+  isItemVisibleInEdit(widgetId: string, itemId: string): boolean {
+    const cfg = this.editConfigs.find(w => w.id === widgetId);
+    const items = cfg?.items;
+    if (!items || items.length === 0) {
+      if (widgetId === 'quick-actions') return DEFAULT_SHORTCUT_IDS.includes(itemId);
+      if (widgetId === 'overview') return DEFAULT_OVERVIEW_STAT_IDS.includes(itemId);
+      return false;
+    }
+    return items.includes(itemId);
+  }
+
+  toggleItem(widgetId: string, itemId: string): void {
+    const cfg = this.editConfigs.find(w => w.id === widgetId);
+    if (!cfg) return;
+    if (!cfg.items || cfg.items.length === 0) {
+      cfg.items = widgetId === 'quick-actions' ? [...DEFAULT_SHORTCUT_IDS]
+                : widgetId === 'overview'       ? [...DEFAULT_OVERVIEW_STAT_IDS]
+                : [];
+    }
+    const idx = cfg.items.indexOf(itemId);
+    if (idx >= 0) cfg.items.splice(idx, 1);
+    else cfg.items.push(itemId);
+  }
+
+  onWidgetDrop(event: CdkDragDrop<WidgetConfig[]>): void {
+    moveItemInArray(this.editConfigs, event.previousIndex, event.currentIndex);
+  }
+
+  // ── Lifecycle & data loading ──────────────────────────────────────────
 
   constructor(
     private authService: AuthService,
@@ -126,12 +230,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.widgetConfigs = DASHBOARD_WIDGET_DEFS.map((d, i) => ({ id: d.id, visible: true, order: i }));
       }
     });
-  }
-
-  onSaveWidgets(configs: WidgetConfig[]): void {
-    this.widgetConfigs = configs;
-    this.configuratorOpen = false;
-    this.widgetPreferenceService.savePreferences('dashboard', configs).subscribe();
   }
 
   loadTopTenants(): void {
