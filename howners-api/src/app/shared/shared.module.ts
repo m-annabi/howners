@@ -6,7 +6,6 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SignaturePadComponent } from './components/signature-pad/signature-pad.component';
 import { DocumentUploadComponent } from './components/document-upload/document-upload.component';
 import { DocumentListComponent } from './components/document-list/document-list.component';
-import { NavbarComponent } from './components/navbar/navbar.component';
 import { PropertyPhotoUploadComponent } from './components/property-photo-upload/property-photo-upload.component';
 import { PropertyPhotoGalleryComponent } from './components/property-photo-gallery/property-photo-gallery.component';
 import { ListingPhotoUploadComponent } from './components/listing-photo-upload/listing-photo-upload.component';
@@ -33,7 +32,6 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     SignaturePadComponent,
     DocumentUploadComponent,
     DocumentListComponent,
-    NavbarComponent,
     PropertyPhotoUploadComponent,
     PropertyPhotoGalleryComponent,
     ListingPhotoUploadComponent,
@@ -64,7 +62,6 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     SignaturePadComponent,
     DocumentUploadComponent,
     DocumentListComponent,
-    NavbarComponent,
     PropertyPhotoUploadComponent,
     PropertyPhotoGalleryComponent,
     ListingPhotoUploadComponent,
