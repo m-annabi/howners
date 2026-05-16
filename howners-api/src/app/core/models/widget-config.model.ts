@@ -42,8 +42,12 @@ export const ALL_WIDGET_DEFS: WidgetDef[] = [
   { id: 'shortcut-financial',  label: 'Finances',            icon: 'bi-graph-up',          category: 'Raccourcis',   size: 'sm', route: '/financial',  color: 'success' },
 ];
 
-export const FINANCIAL_WIDGET_DEFS: WidgetDefinition[] = [
-  { id: 'financial-kpis',     label: 'Indicateurs clés',       icon: 'bi-graph-up' },
-  { id: 'monthly-chart',      label: 'Évolution mensuelle',    icon: 'bi-bar-chart' },
-  { id: 'expense-categories', label: 'Dépenses par catégorie', icon: 'bi-pie-chart' },
+export const FINANCIAL_WIDGET_DEFS: WidgetDef[] = [
+  { id: 'kpi-revenue',        label: 'Revenus totaux',         icon: 'bi-arrow-down-circle',  category: 'Indicateurs', size: 'sm' },
+  { id: 'kpi-expenses',       label: 'Dépenses totales',       icon: 'bi-arrow-up-circle',    category: 'Indicateurs', size: 'sm' },
+  { id: 'kpi-net',            label: 'Revenu net',             icon: 'bi-graph-up-arrow',     category: 'Indicateurs', size: 'sm' },
+  { id: 'kpi-pending',        label: 'En attente',             icon: 'bi-clock-history',      category: 'Indicateurs', size: 'sm' },
+  { id: 'kpi-overdue',        label: 'En retard',              icon: 'bi-exclamation-circle', category: 'Indicateurs', size: 'sm' },
+  { id: 'monthly-chart',      label: 'Évolution mensuelle',    icon: 'bi-bar-chart',          category: 'Graphiques',  size: 'lg' },
+  { id: 'expense-categories', label: 'Dépenses par catégorie', icon: 'bi-pie-chart',          category: 'Graphiques',  size: 'lg' },
 ];
