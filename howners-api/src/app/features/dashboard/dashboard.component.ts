@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -16,12 +16,7 @@ import { PaymentStatus } from '../../core/models/payment.model';
 import { ContractStatus } from '../../core/models/contract.model';
 import { ApplicationStatus } from '../../core/models/application.model';
 import { TenantSearchResult } from '../../core/models/tenant-search-result.model';
-import {
-  WidgetConfig, DASHBOARD_WIDGET_DEFS,
-  ShortcutDef, OverviewStatDef,
-  ALL_SHORTCUTS, ALL_OVERVIEW_STATS,
-  DEFAULT_SHORTCUT_IDS, DEFAULT_OVERVIEW_STAT_IDS
-} from '../../core/models/widget-config.model';
+import { WidgetConfig, WidgetDef, ALL_WIDGET_DEFS } from '../../core/models/widget-config.model';
 
 interface ActionItems {
   latePayments: number;
@@ -44,18 +39,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   actionItems: ActionItems | null = null;
   topTenants: TenantSearchResult[] = [];
 
+  // Widget grid state
   widgetConfigs: WidgetConfig[] = [];
+  displayWidgets: WidgetConfig[] = [];
+  editWidgets: WidgetConfig[] = [];
   editMode = false;
-  editConfigs: WidgetConfig[] = [];
+  addPanelOpen = false;
 
-  readonly ALL_SHORTCUTS: ShortcutDef[] = ALL_SHORTCUTS;
-  readonly ALL_OVERVIEW_STATS: OverviewStatDef[] = ALL_OVERVIEW_STATS;
+  readonly ALL_WIDGET_DEFS: WidgetDef[] = ALL_WIDGET_DEFS;
+
+  readonly QUICK_ACTIONS = [
+    { label: 'Mes Biens',  route: '/properties',       icon: 'bi-building',          color: 'primary' },
+    { label: 'Locations',  route: '/rentals',           icon: 'bi-key',               color: 'success' },
+    { label: 'Contrats',   route: '/contracts',         icon: 'bi-file-earmark-text', color: 'info' },
+    { label: 'Paiements',  route: '/payments',          icon: 'bi-credit-card',       color: 'warning' },
+    { label: 'Annonces',   route: '/listings',          icon: 'bi-megaphone',         color: 'neutral' },
+    { label: 'Factures',   route: '/invoices',          icon: 'bi-receipt',           color: 'danger' },
+    { label: 'Dépenses',   route: '/expenses',          icon: 'bi-wallet2',           color: 'warning' },
+    { label: 'Messages',   route: '/messages',          icon: 'bi-chat-dots',         color: 'neutral' },
+    { label: 'Finances',   route: '/financial',         icon: 'bi-graph-up',          color: 'success' },
+  ];
+
+  // ── Computed ───────────────────────────────────────────────────────────
 
   get isTenant(): boolean { return this.currentUser?.role === 'TENANT'; }
-
-  get sortedVisibleWidgets(): WidgetConfig[] {
-    return this.widgetConfigs.filter(w => w.visible).sort((a, b) => a.order - b.order);
-  }
 
   get hasActionItems(): boolean {
     return !!this.actionItems && (
@@ -90,101 +97,117 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
   }
 
-  get visibleOverviewStats(): OverviewStatDef[] {
-    const ids = this.getVisibleItems('overview');
-    return ALL_OVERVIEW_STATS.filter(s => ids.includes(s.id));
+  get inactiveWidgetDefs(): WidgetDef[] {
+    const activeIds = this.displayWidgets.map(w => w.id);
+    return ALL_WIDGET_DEFS.filter(d => !activeIds.includes(d.id));
   }
 
-  get visibleShortcuts(): ShortcutDef[] {
-    const ids = this.getVisibleItems('quick-actions');
-    return ALL_SHORTCUTS.filter(s => ids.includes(s.id));
+  get catalogGroups(): { category: string; defs: WidgetDef[] }[] {
+    const inactive = this.inactiveWidgetDefs;
+    const categories = [...new Set(inactive.map(d => d.category))];
+    return categories.map(cat => ({
+      category: cat,
+      defs: inactive.filter(d => d.category === cat)
+    }));
   }
 
-  getVisibleItems(widgetId: string): string[] {
-    const cfg = this.widgetConfigs.find(w => w.id === widgetId);
-    if (!cfg?.items || cfg.items.length === 0) {
-      if (widgetId === 'quick-actions') return DEFAULT_SHORTCUT_IDS;
-      if (widgetId === 'overview') return DEFAULT_OVERVIEW_STAT_IDS;
-      return [];
-    }
-    return cfg.items;
+  getWidgetSizeClass(id: string): string {
+    const def = ALL_WIDGET_DEFS.find(d => d.id === id);
+    return def?.size === 'sm' ? 'widget-sm' : 'widget-lg';
   }
 
-  getStatValue(statId: string): string | number {
-    if (!this.stats) return '-';
-    switch (statId) {
-      case 'properties': return this.stats.totalProperties ?? 0;
-      case 'rentals':    return this.stats.activeRentals ?? 0;
-      case 'revenue':    return `${this.stats.monthlyRevenue || 0} ${this.stats.currency || 'EUR'}`;
-      case 'pending':    return this.stats.pendingRentals ?? 0;
-      default:           return '-';
-    }
-  }
-
-  getWidgetLabel(id: string): string {
-    return DASHBOARD_WIDGET_DEFS.find(d => d.id === id)?.label ?? id;
-  }
-
-  getWidgetIcon(id: string): string {
-    return DASHBOARD_WIDGET_DEFS.find(d => d.id === id)?.icon ?? 'bi-grid';
+  getWidgetDef(id: string): WidgetDef | undefined {
+    return ALL_WIDGET_DEFS.find(d => d.id === id);
   }
 
   // ── Edit mode ──────────────────────────────────────────────────────────
 
   enterEditMode(): void {
-    this.editConfigs = this.widgetConfigs
-      .map(w => ({ ...w, items: w.items ? [...w.items] : undefined }))
+    this.editWidgets = this.widgetConfigs.map(w => ({ ...w }));
+    this.displayWidgets = [...this.editWidgets]
+      .filter(w => w.visible)
       .sort((a, b) => a.order - b.order);
     this.editMode = true;
   }
 
   cancelEdit(): void {
     this.editMode = false;
-    this.editConfigs = [];
+    this.addPanelOpen = false;
+    this.refreshDisplayWidgets();
   }
 
   saveEdit(): void {
-    this.editConfigs.forEach((w, i) => w.order = i);
-    this.widgetConfigs = this.editConfigs.map(w => ({ ...w }));
-    this.editMode = false;
-    this.editConfigs = [];
+    this.displayWidgets.forEach((w, i) => w.order = i);
+    // Merge hidden widgets back (preserve their order at the end)
+    const hiddenWidgets = this.editWidgets.filter(w => !w.visible);
+    const maxOrder = this.displayWidgets.length;
+    hiddenWidgets.forEach((w, i) => w.order = maxOrder + i);
+    this.widgetConfigs = [...this.editWidgets];
     this.widgetPreferenceService.savePreferences('dashboard', this.widgetConfigs).subscribe();
+    this.editMode = false;
+    this.addPanelOpen = false;
   }
 
-  toggleWidgetVisible(id: string): void {
-    const cfg = this.editConfigs.find(w => w.id === id);
-    if (cfg) cfg.visible = !cfg.visible;
-  }
-
-  isItemVisibleInEdit(widgetId: string, itemId: string): boolean {
-    const cfg = this.editConfigs.find(w => w.id === widgetId);
-    const items = cfg?.items;
-    if (!items || items.length === 0) {
-      if (widgetId === 'quick-actions') return DEFAULT_SHORTCUT_IDS.includes(itemId);
-      if (widgetId === 'overview') return DEFAULT_OVERVIEW_STAT_IDS.includes(itemId);
-      return false;
+  removeWidget(id: string): void {
+    const cfg = this.editWidgets.find(w => w.id === id);
+    if (cfg) {
+      cfg.visible = false;
+      this.displayWidgets = this.editWidgets
+        .filter(w => w.visible)
+        .sort((a, b) => a.order - b.order);
     }
-    return items.includes(itemId);
   }
 
-  toggleItem(widgetId: string, itemId: string): void {
-    const cfg = this.editConfigs.find(w => w.id === widgetId);
-    if (!cfg) return;
-    if (!cfg.items || cfg.items.length === 0) {
-      cfg.items = widgetId === 'quick-actions' ? [...DEFAULT_SHORTCUT_IDS]
-                : widgetId === 'overview'       ? [...DEFAULT_OVERVIEW_STAT_IDS]
-                : [];
+  addWidget(id: string): void {
+    let cfg = this.editWidgets.find(w => w.id === id);
+    if (cfg) {
+      cfg.visible = true;
+      cfg.order = this.displayWidgets.length;
+    } else {
+      cfg = { id, visible: true, order: this.displayWidgets.length };
+      this.editWidgets.push(cfg);
     }
-    const idx = cfg.items.indexOf(itemId);
-    if (idx >= 0) cfg.items.splice(idx, 1);
-    else cfg.items.push(itemId);
+    this.displayWidgets = this.editWidgets
+      .filter(w => w.visible)
+      .sort((a, b) => a.order - b.order);
+    this.addPanelOpen = false;
   }
 
-  onWidgetDrop(event: CdkDragDrop<WidgetConfig[]>): void {
-    moveItemInArray(this.editConfigs, event.previousIndex, event.currentIndex);
+  onDrop(event: CdkDragDrop<WidgetConfig[]>): void {
+    moveItemInArray(this.displayWidgets, event.previousIndex, event.currentIndex);
+    this.displayWidgets.forEach((w, i) => w.order = i);
   }
 
-  // ── Lifecycle & data loading ──────────────────────────────────────────
+  private refreshDisplayWidgets(): void {
+    this.displayWidgets = [...this.widgetConfigs]
+      .filter(w => w.visible)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  private normalizeConfigs(configs: WidgetConfig[]): WidgetConfig[] {
+    const knownIds = ALL_WIDGET_DEFS.map(d => d.id);
+    const hasUnknown = configs.some(c => !knownIds.includes(c.id));
+    if (hasUnknown || configs.length === 0) {
+      return ALL_WIDGET_DEFS.map((d, i) => ({ id: d.id, visible: true, order: i }));
+    }
+    // Add new widget defs not yet in saved configs
+    const savedIds = configs.map(c => c.id);
+    const newDefs = ALL_WIDGET_DEFS.filter(d => !savedIds.includes(d.id));
+    const maxOrder = Math.max(...configs.map(c => c.order), -1);
+    return [
+      ...configs,
+      ...newDefs.map((d, i) => ({ id: d.id, visible: false, order: maxOrder + 1 + i }))
+    ];
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    if (!(event.target as HTMLElement).closest('.widget-add-wrapper')) {
+      this.addPanelOpen = false;
+    }
+  }
+
+  // ── Lifecycle & data ───────────────────────────────────────────────────
 
   constructor(
     private authService: AuthService,
@@ -217,7 +240,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.dashboardService.getStats().subscribe({
       next: stats => { this.stats = stats; this.loading = false; },
       error: err => {
-        this.error = err.error?.message || 'Erreur lors du chargement des statistiques';
+        this.error = err.error?.message || 'Erreur lors du chargement';
         this.loading = false;
       }
     });
@@ -225,9 +248,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadWidgetPreferences(): void {
     this.widgetPreferenceService.getPreferences('dashboard').subscribe({
-      next: configs => { this.widgetConfigs = configs; },
+      next: configs => {
+        this.widgetConfigs = this.normalizeConfigs(configs);
+        this.refreshDisplayWidgets();
+      },
       error: () => {
-        this.widgetConfigs = DASHBOARD_WIDGET_DEFS.map((d, i) => ({ id: d.id, visible: true, order: i }));
+        this.widgetConfigs = ALL_WIDGET_DEFS.map((d, i) => ({ id: d.id, visible: true, order: i }));
+        this.refreshDisplayWidgets();
       }
     });
   }
