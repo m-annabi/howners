@@ -3,7 +3,7 @@
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
 
     <include file="db/changelog/001-create-users-table.xml"/>
     <include file="db/changelog/002-create-properties-table.xml"/>
@@ -66,5 +66,6 @@
     <include file="db/changelog/060-add-stripe-connect-fields.xml"/>
     <include file="db/changelog/061-create-affiliate-partners.xml"/>
     <include file="db/changelog/062-fix-expense-categories.xml"/>
+    <include file="db/changelog/063-fix-edl-types.xml"/>
 
 </databaseChangeLog>

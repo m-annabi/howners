@@ -3,7 +3,7 @@
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
 
     <changeSet id="015-add-missing-document-columns" author="claude">
         <comment>Add missing file_url and uploaded_at columns to documents table</comment>
