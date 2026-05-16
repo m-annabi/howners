@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { FinancialDashboardService } from '../../../core/services/financial-dashboard.service';
 import { WidgetPreferenceService } from '../../../core/services/widget-preference.service';
 import { FinancialDashboard } from '../../../core/models/financial-dashboard.model';
@@ -25,6 +25,8 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
   editWidgets: WidgetConfig[] = [];
   editMode = false;
   addPanelOpen = false;
+  draggingIndex: number | null = null;
+  dragOverIndex: number | null = null;
 
   readonly ALL_WIDGET_DEFS: WidgetDef[] = FINANCIAL_WIDGET_DEFS;
 
@@ -102,9 +104,31 @@ export class FinancialDashboardComponent implements OnInit, OnDestroy {
     this.addPanelOpen = false;
   }
 
-  onDrop(event: CdkDragDrop<WidgetConfig[]>): void {
-    moveItemInArray(this.displayWidgets, event.previousIndex, event.currentIndex);
-    this.displayWidgets.forEach((w, i) => w.order = i);
+  onDragStart(index: number): void {
+    this.draggingIndex = index;
+  }
+
+  onDragOver(index: number, event: DragEvent): void {
+    event.preventDefault();
+    this.dragOverIndex = index;
+  }
+
+  onDragLeave(): void {
+    this.dragOverIndex = null;
+  }
+
+  onDragEnd(): void {
+    this.draggingIndex = null;
+    this.dragOverIndex = null;
+  }
+
+  onDrop(index: number): void {
+    if (this.draggingIndex !== null && this.draggingIndex !== index) {
+      moveItemInArray(this.displayWidgets, this.draggingIndex, index);
+      this.displayWidgets.forEach((w, i) => w.order = i);
+    }
+    this.draggingIndex = null;
+    this.dragOverIndex = null;
   }
 
   private refreshDisplayWidgets(): void {

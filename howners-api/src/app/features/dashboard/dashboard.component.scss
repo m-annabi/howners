@@ -66,15 +66,12 @@
   &.widget-lg { grid-column: 1 / -1; }
 }
 
-// Drag placeholder (CDK)
-.widget-drag-placeholder {
+// Drop target highlight
+.widget-drag-over {
+  outline: 2px dashed var(--hw-primary-400);
+  outline-offset: 3px;
   border-radius: var(--hw-radius-md);
-  border: 2px dashed var(--hw-primary-300);
   background: var(--hw-primary-50);
-  min-height: 80px;
-
-  &.widget-sm { grid-column: span 1; }
-  &.widget-lg { grid-column: 1 / -1; }
 }
 
 // Edit mode mask — sits on top, serves as CDK drag handle
@@ -399,17 +396,6 @@
   .btn { flex-shrink:0; }
 }
 
-// ─── CDK drag styles ──────────────────────────────────────────────────────────
-.cdk-drag-preview {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  border-radius: var(--hw-radius-md);
-  opacity: 0.9;
-}
-
-.cdk-drop-list-dragging .widget-cell:not(.cdk-drag-placeholder) {
-  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
-}
-
-.widget-cell.cdk-drag-animating {
-  transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
-}
+// Dragging state
+.widget-cell[draggable="true"] { cursor: grab; }
+.widget-cell.widget-dragging { opacity: 0.4; }
