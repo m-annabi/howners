@@ -10,6 +10,40 @@
   <!-- Contrôles à droite -->
   <div class="topbar__right">
 
+    <!-- User -->
+    <button class="topbar__user" (click)="toggleDropdown()">
+      <div class="topbar__avatar">{{ userInitials }}</div>
+      <span class="topbar__username">{{ userFirstName }}</span>
+    </button>
+
+    <!-- Dropdown utilisateur -->
+    <div *ngIf="dropdownOpen" class="topbar__dropdown">
+      <div class="topbar__dropdown-header">
+        <div class="topbar__avatar topbar__avatar--lg">{{ userInitials }}</div>
+        <div class="topbar__dropdown-info">
+          <div class="topbar__dropdown-name">{{ userName }}</div>
+          <div class="topbar__dropdown-role">{{ userRoleLabel }}</div>
+        </div>
+      </div>
+      <div class="topbar__dropdown-divider"></div>
+      <a class="topbar__dropdown-item" routerLink="/profile">
+        <i class="bi bi-person"></i> Mon profil
+      </a>
+      <a class="topbar__dropdown-item" routerLink="/billing">
+        <i class="bi bi-gem"></i> Abonnement
+      </a>
+      <a class="topbar__dropdown-item" routerLink="/profile/rgpd">
+        <i class="bi bi-shield-check"></i> Confidentialité
+      </a>
+      <div class="topbar__dropdown-divider"></div>
+      <button class="topbar__dropdown-item topbar__dropdown-item--danger" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i> Déconnexion
+      </button>
+    </div>
+
+    <!-- Séparateur -->
+    <div class="topbar__sep"></div>
+
     <!-- Notifications -->
     <div class="topbar__notif-wrapper">
       <button class="topbar__icon-btn" (click)="toggleNotifPanel()" aria-label="Notifications">
@@ -57,39 +91,6 @@
       </div>
     </div>
 
-    <!-- Séparateur -->
-    <div class="topbar__sep"></div>
-
-    <!-- User -->
-    <button class="topbar__user" (click)="toggleDropdown()">
-      <div class="topbar__avatar">{{ userInitials }}</div>
-      <span class="topbar__username">{{ userFirstName }}</span>
-    </button>
-
-    <!-- Dropdown utilisateur -->
-    <div *ngIf="dropdownOpen" class="topbar__dropdown">
-      <div class="topbar__dropdown-header">
-        <div class="topbar__avatar topbar__avatar--lg">{{ userInitials }}</div>
-        <div class="topbar__dropdown-info">
-          <div class="topbar__dropdown-name">{{ userName }}</div>
-          <div class="topbar__dropdown-role">{{ userRoleLabel }}</div>
-        </div>
-      </div>
-      <div class="topbar__dropdown-divider"></div>
-      <a class="topbar__dropdown-item" routerLink="/profile">
-        <i class="bi bi-person"></i> Mon profil
-      </a>
-      <a class="topbar__dropdown-item" routerLink="/billing">
-        <i class="bi bi-gem"></i> Abonnement
-      </a>
-      <a class="topbar__dropdown-item" routerLink="/profile/rgpd">
-        <i class="bi bi-shield-check"></i> Confidentialité
-      </a>
-      <div class="topbar__dropdown-divider"></div>
-      <button class="topbar__dropdown-item topbar__dropdown-item--danger" (click)="logout()">
-        <i class="bi bi-box-arrow-right"></i> Déconnexion
-      </button>
-    </div>
   </div>
 </div>
 
