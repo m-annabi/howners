@@ -66,12 +66,19 @@
   &.widget-lg { grid-column: 1 / -1; }
 }
 
-// Drop target highlight
-.widget-drag-over {
-  outline: 2px dashed var(--hw-primary-400);
-  outline-offset: 3px;
+// SortableJS — placeholder à la position cible
+.widget-sortable-ghost {
+  opacity: 0.2;
+  border: 2px dashed var(--hw-primary-400) !important;
   border-radius: var(--hw-radius-md);
-  background: var(--hw-primary-50);
+  background: var(--hw-primary-50) !important;
+  box-shadow: none !important;
+}
+
+// SortableJS — élément saisi (légèrement surélevé)
+.widget-sortable-chosen {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18) !important;
+  opacity: 0.92;
 }
 
 // Edit mode mask — sits on top, serves as CDK drag handle
@@ -396,6 +403,3 @@
   .btn { flex-shrink:0; }
 }
 
-// Dragging state
-.widget-cell[draggable="true"] { cursor: grab; }
-.widget-cell.widget-dragging { opacity: 0.4; }
