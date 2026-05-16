@@ -65,6 +65,7 @@
   <!-- ════ WIDGET GRID ════ -->
   <div *ngIf="!loading && !error && dashboard"
        cdkDropList
+       cdkDropListOrientation="mixed"
        (cdkDropListDropped)="onDrop($event)"
        class="widget-grid"
        [class.widget-grid--editing]="editMode">
