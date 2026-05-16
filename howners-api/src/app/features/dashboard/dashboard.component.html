@@ -292,24 +292,17 @@
               </div>
             </div>
 
-            <!-- ── Raccourcis (lg) ── -->
-            <div *ngSwitchCase="'quick-actions'" class="widget-section">
-              <div class="widget-section__header">
-                <i class="bi bi-lightning-fill"></i>
-                <span>Raccourcis</span>
-              </div>
-              <div class="widget-section__body">
-                <div class="shortcuts-grid">
-                  <a *ngFor="let sc of QUICK_ACTIONS" [routerLink]="sc.route"
-                     class="shortcut-card hw-card hw-card--clickable">
-                    <div class="hw-icon-circle" [ngClass]="'hw-icon-circle--' + sc.color">
-                      <i class="bi" [ngClass]="sc.icon"></i>
-                    </div>
-                    <span class="shortcut-card__label">{{ sc.label }}</span>
-                  </a>
-                </div>
-              </div>
-            </div>
+            <!-- ── Raccourcis individuels (sm, *ngSwitchDefault) ── -->
+            <ng-container *ngSwitchDefault>
+              <ng-container *ngIf="getWidgetDef(cfg.id) as def">
+                <a [routerLink]="def.route" class="shortcut-widget hw-card hw-card--clickable">
+                  <div class="hw-icon-circle" [ngClass]="'hw-icon-circle--' + def.color">
+                    <i class="bi" [ngClass]="def.icon"></i>
+                  </div>
+                  <span class="shortcut-widget__label">{{ def.label }}</span>
+                </a>
+              </ng-container>
+            </ng-container>
 
           </ng-container>
         </div>
