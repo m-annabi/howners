@@ -64,9 +64,32 @@ export class TopbarComponent implements OnInit, OnDestroy {
     return `${this.currentUser.firstName} ${this.currentUser.lastName}`;
   }
 
+  get userFirstName(): string {
+    return this.currentUser?.firstName || 'Compte';
+  }
+
   get userInitials(): string {
     if (!this.currentUser) return 'U';
     return `${this.currentUser.firstName?.charAt(0) || ''}${this.currentUser.lastName?.charAt(0) || ''}`.toUpperCase();
+  }
+
+  get userRoleLabel(): string {
+    const labels: Record<string, string> = {
+      OWNER: 'Propriétaire',
+      TENANT: 'Locataire',
+      ADMIN: 'Administrateur',
+      CONCIERGE: 'Gestionnaire',
+    };
+    return this.currentUser?.role ? (labels[this.currentUser.role] || this.currentUser.role) : '';
+  }
+
+  timeAgo(date: Date): string {
+    const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+    if (diff < 60) return 'À l\'instant';
+    if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)}h`;
+    if (diff < 172800) return 'Hier';
+    return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   }
 
   onToggleSidebar(): void {

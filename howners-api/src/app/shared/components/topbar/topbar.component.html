@@ -1,31 +1,70 @@
 <div class="topbar">
+
   <!-- Hamburger (mobile) -->
-  <button class="topbar__toggle hw-btn hw-btn--ghost hw-btn--icon" (click)="onToggleSidebar()">
+  <button class="topbar__toggle" (click)="onToggleSidebar()" aria-label="Menu">
     <i class="bi bi-list"></i>
   </button>
 
-  <!-- Spacer -->
   <div class="topbar__spacer"></div>
 
-  <!-- Right side -->
+  <!-- Contrôles à droite -->
   <div class="topbar__right">
 
-    <!-- Cloche notifications -->
+    <!-- User -->
+    <button class="topbar__user" (click)="toggleDropdown()">
+      <div class="topbar__avatar">{{ userInitials }}</div>
+      <span class="topbar__username">{{ userFirstName }}</span>
+    </button>
+
+    <!-- Dropdown utilisateur -->
+    <div *ngIf="dropdownOpen" class="topbar__dropdown">
+      <div class="topbar__dropdown-header">
+        <div class="topbar__avatar topbar__avatar--lg">{{ userInitials }}</div>
+        <div class="topbar__dropdown-info">
+          <div class="topbar__dropdown-name">{{ userName }}</div>
+          <div class="topbar__dropdown-role">{{ userRoleLabel }}</div>
+        </div>
+      </div>
+      <div class="topbar__dropdown-divider"></div>
+      <a class="topbar__dropdown-item" routerLink="/profile">
+        <i class="bi bi-person"></i> Mon profil
+      </a>
+      <a class="topbar__dropdown-item" routerLink="/billing">
+        <i class="bi bi-gem"></i> Abonnement
+      </a>
+      <a class="topbar__dropdown-item" routerLink="/profile/rgpd">
+        <i class="bi bi-shield-check"></i> Confidentialité
+      </a>
+      <div class="topbar__dropdown-divider"></div>
+      <button class="topbar__dropdown-item topbar__dropdown-item--danger" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i> Déconnexion
+      </button>
+    </div>
+
+    <!-- Séparateur -->
+    <div class="topbar__sep"></div>
+
+    <!-- Notifications -->
     <div class="topbar__notif-wrapper">
-      <button class="topbar__icon-btn" title="Notifications" (click)="toggleNotifPanel()">
+      <button class="topbar__icon-btn" (click)="toggleNotifPanel()" aria-label="Notifications">
         <i class="bi bi-bell"></i>
-        <span *ngIf="(unreadCount$ | async)! > 0" class="topbar__badge">{{ unreadCount$ | async }}</span>
+        <span *ngIf="(unreadCount$ | async)! > 0" class="topbar__badge">
+          {{ (unreadCount$ | async)! > 99 ? '99+' : (unreadCount$ | async) }}
+        </span>
       </button>
 
-      <!-- Panneau notifications -->
       <div *ngIf="notifPanelOpen" class="topbar__notif-panel">
         <div class="topbar__notif-header">
-          <span class="topbar__notif-title">Notifications</span>
-          <button
-            *ngIf="(unreadCount$ | async)! > 0"
-            class="topbar__notif-read-all"
-            (click)="markAllAsRead()">
-            Tout marquer lu
+          <div class="topbar__notif-header-left">
+            <span class="topbar__notif-title">Notifications</span>
+            <span *ngIf="(unreadCount$ | async)! > 0" class="topbar__notif-count">
+              {{ unreadCount$ | async }}
+            </span>
+          </div>
+          <button *ngIf="(unreadCount$ | async)! > 0"
+                  class="topbar__notif-read-all"
+                  (click)="markAllAsRead()">
+            Tout lire
           </button>
         </div>
 
@@ -35,51 +74,26 @@
             <span>Aucune notification</span>
           </div>
 
-          <div
-            *ngFor="let n of notifications$ | async"
-            class="topbar__notif-item"
-            [class.topbar__notif-item--unread]="!n.isRead"
-            (click)="openNotification(n)">
+          <div *ngFor="let n of notifications$ | async"
+               class="topbar__notif-item"
+               [class.topbar__notif-item--unread]="!n.isRead"
+               (click)="openNotification(n)">
             <div class="topbar__notif-icon">
               <i [class]="'bi ' + n.icon"></i>
             </div>
             <div class="topbar__notif-content">
               <div class="topbar__notif-name">{{ n.title }}</div>
               <div class="topbar__notif-body">{{ n.body }}</div>
-              <div class="topbar__notif-time">{{ n.createdAt | date:'HH:mm' }}</div>
+              <div class="topbar__notif-time">{{ timeAgo(n.createdAt) }}</div>
             </div>
-            <span *ngIf="!n.isRead" class="topbar__notif-dot"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- User dropdown -->
-    <div class="topbar__user" (click)="toggleDropdown()">
-      <div class="topbar__avatar">{{ userInitials }}</div>
-      <span class="topbar__username">{{ userName }}</span>
-      <i class="bi bi-chevron-down topbar__chevron"></i>
-    </div>
-
-    <!-- Dropdown menu utilisateur -->
-    <div *ngIf="dropdownOpen" class="topbar__dropdown" (click)="closeDropdown()">
-      <a class="topbar__dropdown-item" routerLink="/profile">
-        <i class="bi bi-person"></i> Mon profil
-      </a>
-      <a class="topbar__dropdown-item" routerLink="/billing">
-        <i class="bi bi-credit-card-2-front"></i> Mon abonnement
-      </a>
-      <a class="topbar__dropdown-item" routerLink="/profile/rgpd">
-        <i class="bi bi-shield-check"></i> Confidentialité
-      </a>
-      <div class="topbar__dropdown-divider"></div>
-      <a class="topbar__dropdown-item topbar__dropdown-item--danger" (click)="logout()">
-        <i class="bi bi-box-arrow-right"></i> Déconnexion
-      </a>
-    </div>
   </div>
 </div>
 
-<!-- Backdrop ferme les panels ouverts -->
-<div *ngIf="notifPanelOpen || dropdownOpen" class="topbar__backdrop"
+<div *ngIf="notifPanelOpen || dropdownOpen"
+     class="topbar__backdrop"
      (click)="closeNotifPanel(); closeDropdown()"></div>

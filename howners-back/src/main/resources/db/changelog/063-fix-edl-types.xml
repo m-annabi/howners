@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="063-fix-edl-types" author="olivier">
+        <update tableName="etat_des_lieux">
+            <column name="type" value="ENTREE"/>
+            <where>type = 'ENTRY'</where>
+        </update>
+        <update tableName="etat_des_lieux">
+            <column name="type" value="SORTIE"/>
+            <where>type = 'EXIT'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>
