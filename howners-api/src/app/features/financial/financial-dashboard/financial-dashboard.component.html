@@ -1,134 +1,195 @@
-<!-- En-tête avec bouton personnaliser -->
-<div class="fin-dash__header">
-  <app-page-header
-    title="Tableau de bord financier"
-    [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Finances'}]">
-  </app-page-header>
-  <button class="fin-dash__customize-btn" (click)="configuratorOpen = true">
-    <i class="bi bi-sliders"></i>
-    <span>Personnaliser</span>
-  </button>
-</div>
+<div class="fin-dash">
 
-<!-- Configurateur de widgets -->
-<app-widget-configurator
-  *ngIf="configuratorOpen"
-  [definitions]="WIDGET_DEFS"
-  [configs]="widgetConfigs"
-  (save)="onSaveWidgets($event)"
-  (closePanel)="configuratorOpen = false">
-</app-widget-configurator>
+  <!-- En-tête -->
+  <div class="fin-dash__header">
+    <app-page-header
+      title="Tableau de bord financier"
+      [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Finances'}]">
+    </app-page-header>
 
-<!-- Loading -->
-<app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+    <div class="fin-dash__header-actions">
+      <ng-container *ngIf="!editMode">
+        <button class="dash-btn dash-btn--outline" (click)="enterEditMode()">
+          <i class="bi bi-pencil-square"></i>
+          <span>Modifier</span>
+        </button>
+      </ng-container>
 
-<!-- Error -->
-<div *ngIf="error" class="hw-alert hw-alert--danger">
-  <i class="bi bi-exclamation-triangle-fill"></i>
-  <span>{{ error }}</span>
-</div>
+      <ng-container *ngIf="editMode">
+        <div class="widget-add-wrapper">
+          <button class="dash-btn dash-btn--outline" (click)="addPanelOpen = !addPanelOpen">
+            <i class="bi bi-plus-lg"></i>
+            <span>Ajouter</span>
+          </button>
 
-<!-- Widgets dynamiques -->
-<ng-container *ngIf="!loading && !error && dashboard">
-  <ng-container *ngFor="let widget of sortedVisibleWidgets">
-    <ng-container [ngSwitch]="widget.id">
+          <div *ngIf="addPanelOpen" class="widget-catalog">
+            <p *ngIf="catalogGroups.length === 0" class="widget-catalog__empty">
+              Tous les widgets sont affichés
+            </p>
+            <ng-container *ngFor="let group of catalogGroups">
+              <p class="widget-catalog__cat">{{ group.category }}</p>
+              <div class="widget-catalog__items">
+                <button *ngFor="let def of group.defs"
+                        type="button"
+                        class="widget-catalog__item"
+                        (click)="addWidget(def.id)">
+                  <i class="bi" [ngClass]="def.icon"></i>
+                  <span>{{ def.label }}</span>
+                </button>
+              </div>
+            </ng-container>
+          </div>
+        </div>
 
-      <!-- Widget : Indicateurs clés -->
-      <section *ngSwitchCase="'financial-kpis'" class="fin-dash__widget">
-        <div class="fin-dash__stats">
-          <app-stats-card
+        <button class="dash-btn dash-btn--outline" (click)="cancelEdit()">
+          <i class="bi bi-x-lg"></i>
+          <span>Annuler</span>
+        </button>
+        <button class="dash-btn dash-btn--primary" (click)="saveEdit()">
+          <i class="bi bi-check-lg"></i>
+          <span>Enregistrer</span>
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
+
+  <!-- Error -->
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- ════ WIDGET GRID ════ -->
+  <div *ngIf="!loading && !error && dashboard"
+       cdkDropList
+       (cdkDropListDropped)="onDrop($event)"
+       class="widget-grid"
+       [class.widget-grid--editing]="editMode">
+
+    <div *ngFor="let cfg of displayWidgets"
+         cdkDrag
+         [cdkDragDisabled]="!editMode"
+         class="widget-cell"
+         [ngClass]="getWidgetSizeClass(cfg.id)">
+
+      <div *cdkDragPlaceholder class="widget-drag-placeholder" [ngClass]="getWidgetSizeClass(cfg.id)"></div>
+
+      <ng-container *ngIf="editMode">
+        <div class="widget-mask" cdkDragHandle></div>
+        <button class="widget-remove" type="button" (click)="removeWidget(cfg.id)">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </ng-container>
+
+      <div [class.widget-frozen]="editMode">
+        <ng-container [ngSwitch]="cfg.id">
+
+          <!-- ── KPIs individuels (sm) ── -->
+          <app-stats-card *ngSwitchCase="'kpi-revenue'"
             label="Revenus totaux"
-            [value]="(dashboard.totalRevenue | number:'1.2-2') + ' EUR'"
+            [value]="(dashboard!.totalRevenue | number:'1.2-2') + ' EUR'"
             icon="bi-arrow-down-circle" color="success">
           </app-stats-card>
-          <app-stats-card
+
+          <app-stats-card *ngSwitchCase="'kpi-expenses'"
             label="Dépenses totales"
-            [value]="(dashboard.totalExpenses | number:'1.2-2') + ' EUR'"
+            [value]="(dashboard!.totalExpenses | number:'1.2-2') + ' EUR'"
             icon="bi-arrow-up-circle" color="danger">
           </app-stats-card>
-          <app-stats-card
+
+          <app-stats-card *ngSwitchCase="'kpi-net'"
             label="Revenu net"
-            [value]="(dashboard.netIncome | number:'1.2-2') + ' EUR'"
+            [value]="(dashboard!.netIncome | number:'1.2-2') + ' EUR'"
             icon="bi-graph-up-arrow"
-            [color]="dashboard.netIncome >= 0 ? 'success' : 'danger'">
+            [color]="dashboard!.netIncome >= 0 ? 'success' : 'danger'">
           </app-stats-card>
-          <app-stats-card
+
+          <app-stats-card *ngSwitchCase="'kpi-pending'"
             label="En attente"
-            [value]="(dashboard.pendingPayments | number:'1.2-2') + ' EUR'"
+            [value]="(dashboard!.pendingPayments | number:'1.2-2') + ' EUR'"
             icon="bi-clock-history" color="warning">
           </app-stats-card>
-          <app-stats-card
+
+          <app-stats-card *ngSwitchCase="'kpi-overdue'"
             label="En retard"
-            [value]="(dashboard.overduePayments | number:'1.2-2') + ' EUR'"
+            [value]="(dashboard!.overduePayments | number:'1.2-2') + ' EUR'"
             icon="bi-exclamation-circle" color="danger">
           </app-stats-card>
-        </div>
-      </section>
 
-      <!-- Widget : Évolution mensuelle -->
-      <section *ngSwitchCase="'monthly-chart'" class="fin-dash__widget">
-        <div class="hw-card fin-dash__chart" *ngIf="dashboard.monthlyBreakdown.length > 0">
-          <div class="fin-dash__chart-header">
-            <h3 class="hw-section-title">Revenus vs Dépenses</h3>
-            <span class="hw-text-muted">12 derniers mois</span>
-          </div>
-          <div class="fin-dash__bars">
-            <div *ngFor="let month of dashboard.monthlyBreakdown" class="fin-dash__bar-group">
-              <div class="fin-dash__bar-cols">
-                <div class="fin-dash__bar fin-dash__bar--revenue"
-                     [style.height]="getBarHeight(month.revenue)"
-                     [title]="'Revenus: ' + (month.revenue | number:'1.0-0') + ' EUR'">
-                </div>
-                <div class="fin-dash__bar fin-dash__bar--expenses"
-                     [style.height]="getBarHeight(month.expenses)"
-                     [title]="'Dépenses: ' + (month.expenses | number:'1.0-0') + ' EUR'">
-                </div>
+          <!-- ── Évolution mensuelle (lg) ── -->
+          <div *ngSwitchCase="'monthly-chart'" class="hw-card fin-dash__chart">
+            <ng-container *ngIf="dashboard!.monthlyBreakdown.length > 0; else noChart">
+              <div class="fin-dash__chart-header">
+                <h3 class="hw-section-title">Revenus vs Dépenses</h3>
+                <span class="hw-text-muted">12 derniers mois</span>
               </div>
-              <span class="fin-dash__bar-label">{{ month.month | slice:5:7 }}/{{ month.month | slice:2:4 }}</span>
-            </div>
-          </div>
-          <div class="fin-dash__legend">
-            <span class="fin-dash__legend-item">
-              <span class="fin-dash__legend-dot fin-dash__legend-dot--revenue"></span> Revenus
-            </span>
-            <span class="fin-dash__legend-item">
-              <span class="fin-dash__legend-dot fin-dash__legend-dot--expenses"></span> Dépenses
-            </span>
-          </div>
-        </div>
-        <div *ngIf="dashboard.monthlyBreakdown.length === 0" class="fin-dash__widget-empty">
-          <i class="bi bi-bar-chart"></i>
-          <span>Aucune donnée mensuelle disponible</span>
-        </div>
-      </section>
-
-      <!-- Widget : Dépenses par catégorie -->
-      <section *ngSwitchCase="'expense-categories'" class="fin-dash__widget">
-        <div class="hw-card" *ngIf="dashboard.expensesByCategory.length > 0">
-          <h3 class="hw-section-title" style="margin-bottom: var(--hw-space-4)">Dépenses par catégorie</h3>
-          <div class="fin-dash__categories">
-            <div *ngFor="let cat of dashboard.expensesByCategory" class="fin-dash__category">
-              <div class="fin-dash__category-header">
-                <span class="fin-dash__category-name">{{ cat.category }}</span>
-                <span class="fin-dash__category-amount">{{ cat.amount | number:'1.2-2' }} EUR</span>
-              </div>
-              <div class="fin-dash__category-bar">
-                <div class="fin-dash__category-fill"
-                     [style.width.%]="dashboard.totalExpenses > 0 ? (cat.amount / dashboard.totalExpenses * 100) : 0">
+              <div class="fin-dash__bars">
+                <div *ngFor="let month of dashboard!.monthlyBreakdown" class="fin-dash__bar-group">
+                  <div class="fin-dash__bar-cols">
+                    <div class="fin-dash__bar fin-dash__bar--revenue"
+                         [style.height]="getBarHeight(month.revenue)"
+                         [title]="'Revenus: ' + (month.revenue | number:'1.0-0') + ' EUR'">
+                    </div>
+                    <div class="fin-dash__bar fin-dash__bar--expenses"
+                         [style.height]="getBarHeight(month.expenses)"
+                         [title]="'Dépenses: ' + (month.expenses | number:'1.0-0') + ' EUR'">
+                    </div>
+                  </div>
+                  <span class="fin-dash__bar-label">{{ month.month | slice:5:7 }}/{{ month.month | slice:2:4 }}</span>
                 </div>
               </div>
-              <span class="fin-dash__category-pct">
-                {{ dashboard.totalExpenses > 0 ? (cat.amount / dashboard.totalExpenses * 100 | number:'1.0-0') : 0 }}%
-              </span>
-            </div>
+              <div class="fin-dash__legend">
+                <span class="fin-dash__legend-item">
+                  <span class="fin-dash__legend-dot fin-dash__legend-dot--revenue"></span> Revenus
+                </span>
+                <span class="fin-dash__legend-item">
+                  <span class="fin-dash__legend-dot fin-dash__legend-dot--expenses"></span> Dépenses
+                </span>
+              </div>
+            </ng-container>
+            <ng-template #noChart>
+              <div class="widget-empty">
+                <i class="bi bi-bar-chart"></i>
+                <span>Aucune donnée mensuelle disponible</span>
+              </div>
+            </ng-template>
           </div>
-        </div>
-        <div *ngIf="dashboard.expensesByCategory.length === 0" class="fin-dash__widget-empty">
-          <i class="bi bi-pie-chart"></i>
-          <span>Aucune dépense enregistrée</span>
-        </div>
-      </section>
 
-    </ng-container>
-  </ng-container>
-</ng-container>
+          <!-- ── Dépenses par catégorie (lg) ── -->
+          <div *ngSwitchCase="'expense-categories'" class="hw-card">
+            <ng-container *ngIf="dashboard!.expensesByCategory.length > 0; else noCategories">
+              <h3 class="hw-section-title" style="margin-bottom: var(--hw-space-4)">Dépenses par catégorie</h3>
+              <div class="fin-dash__categories">
+                <div *ngFor="let cat of dashboard!.expensesByCategory" class="fin-dash__category">
+                  <div class="fin-dash__category-header">
+                    <span class="fin-dash__category-name">{{ cat.category }}</span>
+                    <span class="fin-dash__category-amount">{{ cat.amount | number:'1.2-2' }} EUR</span>
+                  </div>
+                  <div class="fin-dash__category-bar">
+                    <div class="fin-dash__category-fill"
+                         [style.width.%]="dashboard!.totalExpenses > 0 ? (cat.amount / dashboard!.totalExpenses * 100) : 0">
+                    </div>
+                  </div>
+                  <span class="fin-dash__category-pct">
+                    {{ dashboard!.totalExpenses > 0 ? (cat.amount / dashboard!.totalExpenses * 100 | number:'1.0-0') : 0 }}%
+                  </span>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #noCategories>
+              <div class="widget-empty">
+                <i class="bi bi-pie-chart"></i>
+                <span>Aucune dépense enregistrée</span>
+              </div>
+            </ng-template>
+          </div>
+
+        </ng-container>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -41,9 +41,13 @@ public class WidgetPreferenceService {
     private List<WidgetConfigDto> getDefaults(String page) {
         return switch (page) {
             case "financial" -> List.of(
-                    new WidgetConfigDto("financial-kpis", true, 0, null),
-                    new WidgetConfigDto("monthly-chart", true, 1, null),
-                    new WidgetConfigDto("expense-categories", true, 2, null)
+                    new WidgetConfigDto("kpi-revenue",        true, 0, null),
+                    new WidgetConfigDto("kpi-expenses",       true, 1, null),
+                    new WidgetConfigDto("kpi-net",            true, 2, null),
+                    new WidgetConfigDto("kpi-pending",        true, 3, null),
+                    new WidgetConfigDto("kpi-overdue",        true, 4, null),
+                    new WidgetConfigDto("monthly-chart",      true, 5, null),
+                    new WidgetConfigDto("expense-categories", true, 6, null)
             );
             default -> List.of(
                     new WidgetConfigDto("stat-properties",     true,  0, null),
