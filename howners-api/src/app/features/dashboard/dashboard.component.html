@@ -321,7 +321,7 @@
     <ng-container *ngIf="!loading && !error && stats">
 
       <!-- KPIs locataire -->
-      <div class="widget-grid" style="margin-bottom:var(--hw-space-6)">
+      <div class="widget-grid" style="margin-bottom:var(--hw-space-4)">
         <app-stats-card *ngIf="stats.activeRentals > 0"
           label="Location active" [value]="stats.activeRentals"
           icon="bi-key" color="success" routerLink="/rentals" class="widget-sm">
@@ -356,35 +356,27 @@
       </div>
 
       <!-- Raccourcis locataire -->
-      <div class="widget-section" style="margin-top:var(--hw-space-4)">
-        <div class="widget-section__header">
-          <i class="bi bi-lightning-fill"></i>
-          <span>Raccourcis</span>
-        </div>
-        <div class="widget-section__body">
-          <div class="shortcuts-grid">
-            <a routerLink="/rentals" class="shortcut-card hw-card hw-card--clickable">
-              <div class="hw-icon-circle hw-icon-circle--success"><i class="bi bi-key"></i></div>
-              <span class="shortcut-card__label">Ma location</span>
-            </a>
-            <a routerLink="/payments" class="shortcut-card hw-card hw-card--clickable">
-              <div class="hw-icon-circle hw-icon-circle--warning"><i class="bi bi-credit-card"></i></div>
-              <span class="shortcut-card__label">Paiements</span>
-            </a>
-            <a routerLink="/messages" class="shortcut-card hw-card hw-card--clickable">
-              <div class="hw-icon-circle hw-icon-circle--neutral"><i class="bi bi-chat-dots"></i></div>
-              <span class="shortcut-card__label">Messages</span>
-            </a>
-            <a routerLink="/listings" class="shortcut-card hw-card hw-card--clickable">
-              <div class="hw-icon-circle hw-icon-circle--primary"><i class="bi bi-search"></i></div>
-              <span class="shortcut-card__label">Rechercher</span>
-            </a>
-            <a routerLink="/profile" class="shortcut-card hw-card hw-card--clickable">
-              <div class="hw-icon-circle hw-icon-circle--info"><i class="bi bi-person"></i></div>
-              <span class="shortcut-card__label">Mon profil</span>
-            </a>
-          </div>
-        </div>
+      <div class="widget-grid" style="margin-top:var(--hw-space-4)">
+        <a routerLink="/rentals" class="shortcut-widget hw-card hw-card--clickable">
+          <div class="hw-icon-circle hw-icon-circle--success"><i class="bi bi-key"></i></div>
+          <span class="shortcut-widget__label">Ma location</span>
+        </a>
+        <a routerLink="/payments" class="shortcut-widget hw-card hw-card--clickable">
+          <div class="hw-icon-circle hw-icon-circle--warning"><i class="bi bi-credit-card"></i></div>
+          <span class="shortcut-widget__label">Paiements</span>
+        </a>
+        <a routerLink="/messages" class="shortcut-widget hw-card hw-card--clickable">
+          <div class="hw-icon-circle hw-icon-circle--neutral"><i class="bi bi-chat-dots"></i></div>
+          <span class="shortcut-widget__label">Messages</span>
+        </a>
+        <a routerLink="/listings" class="shortcut-widget hw-card hw-card--clickable">
+          <div class="hw-icon-circle hw-icon-circle--primary"><i class="bi bi-search"></i></div>
+          <span class="shortcut-widget__label">Rechercher</span>
+        </a>
+        <a routerLink="/profile" class="shortcut-widget hw-card hw-card--clickable">
+          <div class="hw-icon-circle hw-icon-circle--info"><i class="bi bi-person"></i></div>
+          <span class="shortcut-widget__label">Mon profil</span>
+        </a>
       </div>
 
     </ng-container>
