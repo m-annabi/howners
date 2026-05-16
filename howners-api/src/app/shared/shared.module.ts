@@ -14,6 +14,8 @@ import { NotificationComponent } from './components/notification/notification.co
 import { TemplateSelectorDialogComponent } from './components/template-selector-dialog/template-selector-dialog.component';
 import { TenantRatingSummaryComponent } from '../features/ratings/tenant-rating-summary/tenant-rating-summary.component';
 
+import { WidgetConfiguratorComponent } from './components/widget-configurator/widget-configurator.component';
+
 // New shared components
 import { PageHeaderComponent } from './components/page-header/page-header.component';
 import { EmptyStateComponent } from './components/empty-state/empty-state.component';
@@ -50,7 +52,8 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     SidebarComponent,
     TopbarComponent,
     QuickFiltersComponent,
-    NpsPromptComponent
+    NpsPromptComponent,
+    WidgetConfiguratorComponent
   ],
   imports: [
     CommonModule,
@@ -81,7 +84,8 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     SidebarComponent,
     TopbarComponent,
     QuickFiltersComponent,
-    NpsPromptComponent
+    NpsPromptComponent,
+    WidgetConfiguratorComponent
   ]
 })
 export class SharedModule { }
