@@ -78,10 +78,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   isActive(route: string): boolean {
-    if (route === '/dashboard') {
-      return this.currentRoute === '/dashboard';
-    }
-    return this.currentRoute.startsWith(route);
+    const exact = this.currentRoute === route;
+    const child = this.currentRoute.startsWith(route + '/');
+
+    if (!exact && !child) return false;
+    if (exact) return true;
+
+    // Partial match: active only if no other menu item is a more specific match
+    const allRoutes = this.sections.flatMap(s => s.items.map(i => i.route));
+    return !allRoutes.some(r =>
+      r !== route &&
+      r.length > route.length &&
+      (this.currentRoute === r || this.currentRoute.startsWith(r + '/'))
+    );
   }
 
   canViewSection(section: NavSection): boolean {
