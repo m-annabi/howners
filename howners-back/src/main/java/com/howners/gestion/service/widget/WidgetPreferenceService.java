@@ -41,16 +41,16 @@ public class WidgetPreferenceService {
     private List<WidgetConfigDto> getDefaults(String page) {
         return switch (page) {
             case "financial" -> List.of(
-                    new WidgetConfigDto("financial-kpis", true, 0),
-                    new WidgetConfigDto("monthly-chart", true, 1),
-                    new WidgetConfigDto("expense-categories", true, 2)
+                    new WidgetConfigDto("financial-kpis", true, 0, null),
+                    new WidgetConfigDto("monthly-chart", true, 1, null),
+                    new WidgetConfigDto("expense-categories", true, 2, null)
             );
             default -> List.of(
-                    new WidgetConfigDto("overview", true, 0),
-                    new WidgetConfigDto("action-items", true, 1),
-                    new WidgetConfigDto("top-tenants", true, 2),
-                    new WidgetConfigDto("recent-activity", true, 3),
-                    new WidgetConfigDto("quick-actions", true, 4)
+                    new WidgetConfigDto("overview", true, 0, List.of("properties", "rentals", "revenue", "pending")),
+                    new WidgetConfigDto("action-items", true, 1, null),
+                    new WidgetConfigDto("top-tenants", true, 2, null),
+                    new WidgetConfigDto("recent-activity", true, 3, null),
+                    new WidgetConfigDto("quick-actions", true, 4, List.of("properties", "rentals", "contracts", "payments", "listings", "invoices"))
             );
         };
     }
