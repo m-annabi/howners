@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReceiptService } from '../../../core/services/receipt.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Receipt } from '../../../core/models/receipt.model';
 
 @Component({
@@ -17,6 +18,7 @@ export class ReceiptListComponent implements OnInit {
 
   constructor(
     private receiptService: ReceiptService,
+    private notifications: NotificationService,
     private router: Router
   ) {}
 
@@ -74,6 +76,8 @@ export class ReceiptListComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error downloading PDF:', err);
+        this.notifications.error(
+          `Impossible de télécharger la quittance ${receipt.receiptNumber}. Réessayez ou contactez le support.`);
       }
     });
   }

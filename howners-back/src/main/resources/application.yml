@@ -36,12 +36,6 @@ spring:
       max-request-size: ${MAX_REQUEST_SIZE:25MB}
       file-size-threshold: 1MB    # spill to disk above 1 MB, less heap pressure
 
-# Howners-specific upload guards. The owner-document quota is enforced in
-# DocumentService.assertOwnerWithinQuota — see #45 in SECURITY-ROTATION.md.
-howners:
-  upload:
-    max-documents-per-owner: ${MAX_DOCS_PER_OWNER:500}
-
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}
@@ -134,7 +128,8 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
-# Management & Actuator (optionnel)
+# Management & Actuator
+# To plug Sentry/Datadog: see OBSERVABILITY.md
 management:
   endpoints:
     web:
@@ -143,3 +138,17 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    # Disable the mail health indicator — it performs a real SMTP handshake
+    # which fails on every probe when credentials aren't set, and is not a
+    # useful signal of overall app health.
+    mail:
+      enabled: false
+
+# Howners-specific upload guards. The per-owner document quota is enforced in
+# DocumentService.uploadDocument — see SECURITY-ROTATION.md for prod guidance.
+howners:
+  upload:
+    max-documents-per-owner: ${MAX_DOCS_PER_OWNER:500}

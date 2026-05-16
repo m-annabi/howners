@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { InvoiceService } from '../../../core/services/invoice.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import {
   Invoice,
   InvoiceStatus,
@@ -31,6 +32,7 @@ export class InvoiceListComponent implements OnInit {
 
   constructor(
     private invoiceService: InvoiceService,
+    private notifications: NotificationService,
     private router: Router
   ) {}
 
@@ -114,7 +116,10 @@ export class InvoiceListComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => {}
+      error: () => {
+        this.notifications.error(
+          `Impossible de télécharger la facture ${invoice.invoiceNumber}. Réessayez ou contactez le support.`);
+      }
     });
   }
 }
