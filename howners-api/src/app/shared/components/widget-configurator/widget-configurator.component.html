@@ -1,0 +1,47 @@
+<div class="wc-backdrop" (click)="onClose()"></div>
+
+<div class="wc-panel">
+  <div class="wc-header">
+    <div class="wc-header__left">
+      <i class="bi bi-sliders"></i>
+      <span>Personnaliser les widgets</span>
+    </div>
+    <button class="wc-close" (click)="onClose()" aria-label="Fermer">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <p class="wc-hint">Activez ou désactivez les widgets et faites glisser pour réordonner.</p>
+
+  <div class="wc-list" cdkDropList (cdkDropListDropped)="onDrop($event)">
+    <div *ngFor="let item of items" class="wc-item" cdkDrag>
+
+      <div class="wc-item__drag" cdkDragHandle aria-label="Déplacer">
+        <i class="bi bi-grip-vertical"></i>
+      </div>
+
+      <div class="wc-item__icon">
+        <i class="bi" [ngClass]="getDefinition(item.id)?.icon"></i>
+      </div>
+
+      <span class="wc-item__label">{{ getDefinition(item.id)?.label }}</span>
+
+      <label class="wc-toggle" [class.wc-toggle--on]="item.visible">
+        <input type="checkbox" [(ngModel)]="item.visible" hidden>
+        <span class="wc-toggle__track">
+          <span class="wc-toggle__thumb"></span>
+        </span>
+      </label>
+
+      <!-- Drag placeholder -->
+      <div class="wc-item__placeholder" *cdkDragPlaceholder></div>
+    </div>
+  </div>
+
+  <div class="wc-footer">
+    <button class="wc-btn wc-btn--primary" (click)="onSave()">
+      <i class="bi bi-check2"></i> Enregistrer
+    </button>
+    <button class="wc-btn wc-btn--ghost" (click)="onClose()">Annuler</button>
+  </div>
+</div>
