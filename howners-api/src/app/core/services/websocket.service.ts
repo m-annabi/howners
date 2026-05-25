@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, NgZone, OnDestroy } from '@angular/core';
 import { Client, IFrame, IMessage, StompSubscription } from '@stomp/stompjs';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -14,6 +14,8 @@ export class WebSocketService implements OnDestroy {
 
   private connectionState$ = new BehaviorSubject<WsConnectionState>('disconnected');
   private incomingMessages$ = new Subject<Message>();
+
+  constructor(private ngZone: NgZone) {}
 
   get connected$(): Observable<WsConnectionState> {
     return this.connectionState$.asObservable();
@@ -33,15 +35,19 @@ export class WebSocketService implements OnDestroy {
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
-        this.connectionState$.next('connected');
-        this.subscribeToMessages();
+        this.ngZone.run(() => {
+          this.connectionState$.next('connected');
+          this.subscribeToMessages();
+        });
       },
       onDisconnect: () => {
-        this.connectionState$.next('disconnected');
+        this.ngZone.run(() => this.connectionState$.next('disconnected'));
       },
       onStompError: (frame: IFrame) => {
-        console.error('WebSocket STOMP error', frame);
-        this.connectionState$.next('disconnected');
+        this.ngZone.run(() => {
+          console.error('WebSocket STOMP error', frame);
+          this.connectionState$.next('disconnected');
+        });
       }
     });
 
@@ -58,7 +64,7 @@ export class WebSocketService implements OnDestroy {
     this.messageSubscription = this.client.subscribe('/user/queue/messages', (frame: IMessage) => {
       try {
         const message: Message = JSON.parse(frame.body);
-        this.incomingMessages$.next(message);
+        this.ngZone.run(() => this.incomingMessages$.next(message));
       } catch {
         console.error('Failed to parse incoming WebSocket message');
       }

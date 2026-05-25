@@ -14,10 +14,13 @@ import { QuickFilter } from '../../../shared/components/quick-filters/quick-filt
 export class RentalListComponent implements OnInit {
   rentals: Rental[] = [];
   filteredRentals: Rental[] = [];
+  filters: QuickFilter[] = [];
   loading = true;
   error: string | null = null;
   searchTerm = '';
   filterStatus: string = 'all';
+  sortCol = '';
+  sortDir: 'asc' | 'desc' = 'desc';
 
   rentalTypeLabels = RENTAL_TYPE_LABELS;
   rentalStatusLabels = RENTAL_STATUS_LABELS;
@@ -45,7 +48,18 @@ export class RentalListComponent implements OnInit {
     this.loadRentals();
   }
 
-  get filters(): QuickFilter[] {
+  sortIcon(col: string): string {
+    if (this.sortCol !== col) return 'bi-arrow-down-up';
+    return this.sortDir === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down';
+  }
+
+  sortOn(col: string): void {
+    this.sortDir = this.sortCol === col && this.sortDir === 'desc' ? 'asc' : 'desc';
+    this.sortCol = col;
+    this.applyFilters();
+  }
+
+  private buildFilters(): void {
     const counts = new Map<string, number>();
     counts.set('all', this.rentals.length);
     for (const r of this.rentals) {
@@ -58,7 +72,7 @@ export class RentalListComponent implements OnInit {
       { key: RentalStatus.TERMINATED, label: 'Terminées', count: counts.get(RentalStatus.TERMINATED) || 0 },
       { key: RentalStatus.CANCELLED, label: 'Annulées', count: counts.get(RentalStatus.CANCELLED) || 0 }
     ];
-    return list.filter(f => f.key === 'all' || (f.count || 0) > 0);
+    this.filters = list.filter(f => f.key === 'all' || (f.count || 0) > 0);
   }
 
   loadRentals(): void {
@@ -68,6 +82,7 @@ export class RentalListComponent implements OnInit {
     this.rentalService.getRentals().subscribe({
       next: (rentals) => {
         this.rentals = rentals;
+        this.buildFilters();
         this.applyFilters();
         this.loading = false;
       },
@@ -97,6 +112,21 @@ export class RentalListComponent implements OnInit {
         (rental.tenantName && rental.tenantName.toLowerCase().includes(term)) ||
         (rental.tenantEmail && rental.tenantEmail.toLowerCase().includes(term))
       );
+    }
+
+    if (this.sortCol) {
+      filtered = filtered.slice().sort((a, b) => {
+        let diff = 0;
+        if (this.sortCol === 'date') diff = new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+        else if (this.sortCol === 'rent') diff = (a.monthlyRent ?? 0) - (b.monthlyRent ?? 0);
+        else if (this.sortCol === 'tenant') diff = (a.tenantName || '').localeCompare(b.tenantName || '');
+        else if (this.sortCol === 'property') diff = a.propertyName.localeCompare(b.propertyName);
+        else if (this.sortCol === 'status') diff = a.status.localeCompare(b.status);
+        return this.sortDir === 'asc' ? diff : -diff;
+      });
+    } else {
+      filtered = filtered.slice().sort((a, b) =>
+        new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
     }
 
     this.filteredRentals = filtered;

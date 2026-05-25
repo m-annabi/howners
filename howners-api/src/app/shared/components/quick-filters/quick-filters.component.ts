@@ -17,9 +17,9 @@ export class QuickFiltersComponent {
   @Input() activeKey = '';
   @Output() filterChange = new EventEmitter<string>();
 
+  trackFilter(_: number, f: QuickFilter): string { return f.key; }
+
   select(key: string): void {
-    if (key !== this.activeKey) {
-      this.filterChange.emit(key);
-    }
+    this.filterChange.emit(key);
   }
 }

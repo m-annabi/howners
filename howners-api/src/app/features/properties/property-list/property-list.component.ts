@@ -17,11 +17,13 @@ import { QuickFilter } from '../../../shared/components/quick-filters/quick-filt
 export class PropertyListComponent implements OnInit, OnDestroy {
   properties: Property[] = [];
   filteredProperties: Property[] = [];
+  filters: QuickFilter[] = [];
   loading = true;
   error: string | null = null;
   searchTerm = '';
   activeFilter: string = 'all';
-  sortBy: 'default' | 'yield_desc' | 'yield_asc' | 'rent_desc' = 'default';
+  sortCol = '';
+  sortDir: 'asc' | 'desc' = 'desc';
 
   propertyTypeLabels = PROPERTY_TYPE_LABELS;
 
@@ -58,7 +60,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     this.navigationSubscription?.unsubscribe();
   }
 
-  get filters(): QuickFilter[] {
+  private buildFilters(): void {
     const counts = new Map<string, number>();
     counts.set('all', this.properties.length);
     for (const p of this.properties) {
@@ -77,7 +79,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
         base.push({ key: t, label: this.propertyTypeLabels[t], count: c });
       }
     }
-    return base;
+    this.filters = base;
   }
 
   loadProperties(): void {
@@ -87,6 +89,7 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     this.propertyService.getProperties().subscribe({
       next: (properties) => {
         this.properties = properties;
+        this.buildFilters();
         this.applyFilters();
         this.loadPrimaryPhotos();
       },
@@ -152,23 +155,28 @@ export class PropertyListComponent implements OnInit, OnDestroy {
       return matchType && matchSearch;
     });
 
-    // Sort
-    if (this.sortBy === 'yield_desc' || this.sortBy === 'yield_asc') {
-      const sign = this.sortBy === 'yield_desc' ? -1 : 1;
+    if (this.sortCol) {
       list = list.slice().sort((a, b) => {
-        const ya = a.grossYieldPercent ?? -Infinity;
-        const yb = b.grossYieldPercent ?? -Infinity;
-        return sign * (ya - yb);
+        let diff = 0;
+        if (this.sortCol === 'name') diff = a.name.localeCompare(b.name);
+        else if (this.sortCol === 'city') diff = a.address.city.localeCompare(b.address.city);
+        else if (this.sortCol === 'rent') diff = (a.currentMonthlyRent ?? -1) - (b.currentMonthlyRent ?? -1);
+        else if (this.sortCol === 'yield') diff = (a.grossYieldPercent ?? -Infinity) - (b.grossYieldPercent ?? -Infinity);
+        return this.sortDir === 'asc' ? diff : -diff;
       });
-    } else if (this.sortBy === 'rent_desc') {
-      list = list.slice().sort((a, b) =>
-        (b.currentMonthlyRent ?? -1) - (a.currentMonthlyRent ?? -1));
     }
 
     this.filteredProperties = list;
   }
 
-  onSortChange(): void {
+  sortIcon(col: string): string {
+    if (this.sortCol !== col) return 'bi-arrow-down-up';
+    return this.sortDir === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down';
+  }
+
+  sortOn(col: string): void {
+    this.sortDir = this.sortCol === col && this.sortDir === 'desc' ? 'asc' : 'desc';
+    this.sortCol = col;
     this.applyFilters();
   }
 

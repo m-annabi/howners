@@ -5,6 +5,14 @@
   margin-bottom: var(--hw-space-4);
 }
 
+.contract-list__toolbar--hidden {
+  visibility: hidden;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+}
+
 .contract-list__search {
   position: relative;
   max-width: 420px;
@@ -46,6 +54,14 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+.contract-table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.contract-table thead th.sortable:hover { background: var(--hw-gray-100); }
+.contract-table thead th.sortable i { font-size: 0.65rem; margin-left: 3px; opacity: 0.3; }
+.contract-table thead th.sorted i { opacity: 1; color: var(--hw-primary-700); }
 
 .contract-table tbody td {
   padding: 0.75rem 1rem;

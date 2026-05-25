@@ -1,6 +1,6 @@
 <div class="quick-filters" role="tablist">
   <button
-    *ngFor="let f of filters"
+    *ngFor="let f of filters; trackBy: trackFilter"
     type="button"
     role="tab"
     class="quick-filter"
