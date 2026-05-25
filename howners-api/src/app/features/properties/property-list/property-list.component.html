@@ -11,7 +11,7 @@
 </ng-template>
 
 <!-- Toolbar: filter chips + search -->
-<div *ngIf="!loading && properties.length > 0" class="property-list__toolbar">
+<div class="property-list__toolbar" [class.property-list__toolbar--hidden]="loading || properties.length === 0">
   <app-quick-filters
     [filters]="filters"
     [activeKey]="activeFilter"
@@ -27,17 +27,6 @@
         (input)="filterProperties()"
         placeholder="Rechercher par nom, ville ou code postal..."
         class="form-control form-control-sm">
-    </div>
-    <div class="property-list__sort">
-      <label class="property-list__sort-label">
-        <i class="bi bi-sort-down"></i> Tri
-      </label>
-      <select class="form-select form-select-sm" [(ngModel)]="sortBy" (change)="onSortChange()">
-        <option value="default">Plus récents</option>
-        <option value="yield_desc">Rentabilité ↓</option>
-        <option value="yield_asc">Rentabilité ↑</option>
-        <option value="rent_desc">Loyer ↓</option>
-      </select>
     </div>
   </div>
 </div>
@@ -75,12 +64,12 @@
     <thead>
       <tr>
         <th class="property-table__col-thumb"></th>
-        <th class="property-table__col-name">Bien</th>
-        <th class="property-table__col-city">Localisation</th>
+        <th class="property-table__col-name sortable" [class.sorted]="sortCol==='name'" (click)="sortOn('name')">Bien <i class="bi" [ngClass]="sortIcon('name')"></i></th>
+        <th class="property-table__col-city sortable" [class.sorted]="sortCol==='city'" (click)="sortOn('city')">Localisation <i class="bi" [ngClass]="sortIcon('city')"></i></th>
         <th class="property-table__col-type">Type</th>
         <th class="property-table__col-surface">Surface</th>
-        <th class="property-table__col-rent">Loyer</th>
-        <th class="property-table__col-yield">Rentabilité</th>
+        <th class="property-table__col-rent sortable" [class.sorted]="sortCol==='rent'" (click)="sortOn('rent')">Loyer <i class="bi" [ngClass]="sortIcon('rent')"></i></th>
+        <th class="property-table__col-yield sortable" [class.sorted]="sortCol==='yield'" (click)="sortOn('yield')">Rentabilité <i class="bi" [ngClass]="sortIcon('yield')"></i></th>
         <th class="property-table__col-actions"></th>
       </tr>
     </thead>

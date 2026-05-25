@@ -20,10 +20,13 @@ import { QuickFilter } from '../../../shared/components/quick-filters/quick-filt
 export class ContractListComponent implements OnInit {
   contracts: Contract[] = [];
   filteredContracts: Contract[] = [];
+  filters: QuickFilter[] = [];
   loading = false;
   error: string | null = null;
   searchTerm = '';
   selectedStatus: string = 'ALL';
+  sortCol = '';
+  sortDir: 'asc' | 'desc' = 'desc';
 
   ContractStatus = ContractStatus;
   contractStatusLabels = CONTRACT_STATUS_LABELS;
@@ -78,15 +81,24 @@ export class ContractListComponent implements OnInit {
     this.loadUsage();
   }
 
-  get filters(): QuickFilter[] {
+  sortIcon(col: string): string {
+    if (this.sortCol !== col) return 'bi-arrow-down-up';
+    return this.sortDir === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down';
+  }
+
+  sortOn(col: string): void {
+    this.sortDir = this.sortCol === col && this.sortDir === 'desc' ? 'asc' : 'desc';
+    this.sortCol = col;
+    this.applyFilters();
+  }
+
+  private buildFilters(): void {
     const counts = new Map<string, number>();
     counts.set('ALL', this.contracts.length);
     for (const c of this.contracts) {
       counts.set(c.status, (counts.get(c.status) || 0) + 1);
     }
-
     const expiring = this.countExpiring();
-
     const list: QuickFilter[] = [
       { key: 'ALL', label: 'Tous', count: counts.get('ALL') || 0 },
       { key: ContractStatus.DRAFT, label: 'Brouillon', count: counts.get(ContractStatus.DRAFT) || 0 },
@@ -96,7 +108,7 @@ export class ContractListComponent implements OnInit {
       { key: 'EXPIRING', label: 'Expire ≤ 30 j', count: expiring, tone: 'danger' },
       { key: ContractStatus.TERMINATED, label: 'Terminés', count: counts.get(ContractStatus.TERMINATED) || 0 }
     ];
-    return list.filter(f => f.key === 'ALL' || (f.count || 0) > 0);
+    this.filters = list.filter(f => f.key === 'ALL' || (f.count || 0) > 0);
   }
 
   private countExpiring(): number {
@@ -119,6 +131,7 @@ export class ContractListComponent implements OnInit {
     this.contractService.getMyContracts().subscribe({
       next: (contracts) => {
         this.contracts = contracts;
+        this.buildFilters();
         this.applyFilters();
         this.loading = false;
       },
@@ -159,6 +172,20 @@ export class ContractListComponent implements OnInit {
         contract.rentalPropertyName.toLowerCase().includes(term) ||
         contract.tenantFullName.toLowerCase().includes(term)
       );
+    }
+
+    if (this.sortCol) {
+      filtered = filtered.slice().sort((a, b) => {
+        let diff = 0;
+        if (this.sortCol === 'date') diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        else if (this.sortCol === 'tenant') diff = (a.tenantFullName || '').localeCompare(b.tenantFullName || '');
+        else if (this.sortCol === 'property') diff = a.rentalPropertyName.localeCompare(b.rentalPropertyName);
+        else if (this.sortCol === 'status') diff = a.status.localeCompare(b.status);
+        return this.sortDir === 'asc' ? diff : -diff;
+      });
+    } else {
+      filtered = filtered.slice().sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
     this.filteredContracts = filtered;

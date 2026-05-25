@@ -29,7 +29,7 @@
 </div>
 
 <!-- Toolbar: filter chips + search -->
-<div *ngIf="!loading && contracts.length > 0" class="contract-list__toolbar">
+<div class="contract-list__toolbar" [class.contract-list__toolbar--hidden]="loading || contracts.length === 0">
   <app-quick-filters
     [filters]="filters"
     [activeKey]="selectedStatus"
@@ -125,11 +125,11 @@
     <thead>
       <tr>
         <th>N° de contrat</th>
-        <th>Bien</th>
-        <th>Locataire</th>
+        <th class="sortable" [class.sorted]="sortCol==='property'" (click)="sortOn('property')">Bien <i class="bi" [ngClass]="sortIcon('property')"></i></th>
+        <th class="sortable" [class.sorted]="sortCol==='tenant'" (click)="sortOn('tenant')">Locataire <i class="bi" [ngClass]="sortIcon('tenant')"></i></th>
         <th class="contract-table__col-version">Version</th>
-        <th>Créé le</th>
-        <th class="contract-table__col-status">Statut</th>
+        <th class="sortable" [class.sorted]="sortCol==='date'" (click)="sortOn('date')">Créé le <i class="bi" [ngClass]="sortIcon('date')"></i></th>
+        <th class="contract-table__col-status sortable" [class.sorted]="sortCol==='status'" (click)="sortOn('status')">Statut <i class="bi" [ngClass]="sortIcon('status')"></i></th>
         <th class="contract-table__col-actions"></th>
       </tr>
     </thead>

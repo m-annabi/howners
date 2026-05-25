@@ -1,19 +1,11 @@
-.rental-list__toolbar {
+.edl-list__toolbar {
   display: flex;
   flex-direction: column;
   gap: var(--hw-space-3);
   margin-bottom: var(--hw-space-4);
-
-  &--hidden {
-    visibility: hidden;
-    pointer-events: none;
-    height: 0;
-    overflow: hidden;
-    margin: 0;
-  }
 }
 
-.rental-list__search {
+.edl-list__search {
   position: relative;
   max-width: 420px;
 
@@ -23,17 +15,18 @@
     top: 50%;
     transform: translateY(-50%);
     color: var(--hw-gray-400);
+    pointer-events: none;
   }
 
   input { padding-left: var(--hw-space-10); }
 }
 
-.rental-table-wrap {
+.edl-table-wrap {
   padding: 0 !important;
   overflow: hidden;
 }
 
-.rental-table {
+.edl-table {
   width: 100%;
   margin: 0;
   border-collapse: collapse;
@@ -70,7 +63,6 @@
   }
 
   &__col-actions { width: 1%; padding-right: 1rem !important; text-align: right; white-space: nowrap; }
-  &__col-rent, &__col-status { width: 1%; white-space: nowrap; }
 
   &__property {
     font-weight: var(--hw-fw-semibold);
@@ -79,30 +71,32 @@
     letter-spacing: -0.005em;
   }
 
-  &__property-type,
   &__muted {
-    color: var(--hw-gray-500);
-    font-size: var(--hw-fs-xs);
-    margin-top: 2px;
-  }
-
-  &__amount {
-    font-family: var(--hw-font-display);
-    font-weight: var(--hw-fw-semibold);
-    color: var(--hw-primary-800);
-    letter-spacing: -0.005em;
+    color: var(--hw-gray-400);
   }
 }
 
-.rental-row {
+.edl-row {
   cursor: pointer;
   transition: background-color 0.12s ease;
 
   &:hover {
     background: var(--hw-gray-50);
-
     .row-actions { opacity: 1; }
   }
+}
+
+.hw-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2em 0.65em;
+  border-radius: var(--hw-radius-full);
+  font-size: var(--hw-fs-xs);
+  font-weight: var(--hw-fw-semibold);
+
+  &[data-tone='success'] { background: var(--hw-success-light); color: var(--hw-success); }
+  &[data-tone='warning'] { background: var(--hw-warning-light); color: var(--hw-warning); }
+  &[data-tone='neutral'] { background: var(--hw-gray-100); color: var(--hw-gray-600); }
 }
 
 .row-actions {
@@ -133,12 +127,6 @@
       background: var(--hw-surface);
       border-color: var(--hw-gray-300);
       color: var(--hw-primary-700);
-    }
-
-    &--danger:hover {
-      background: var(--hw-danger-light);
-      border-color: rgba(166, 51, 46, 0.18);
-      color: var(--hw-danger);
     }
   }
 }

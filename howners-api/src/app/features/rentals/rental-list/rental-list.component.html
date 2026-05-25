@@ -11,7 +11,7 @@
 </ng-template>
 
 <!-- Toolbar: filter chips + search -->
-<div *ngIf="!loading && rentals.length > 0" class="rental-list__toolbar">
+<div class="rental-list__toolbar" [class.rental-list__toolbar--hidden]="loading || rentals.length === 0">
   <app-quick-filters
     [filters]="filters"
     [activeKey]="filterStatus"
@@ -71,11 +71,11 @@
   <table class="rental-table">
     <thead>
       <tr>
-        <th class="rental-table__col-property">Bien</th>
-        <th class="rental-table__col-tenant">Locataire</th>
-        <th class="rental-table__col-period">Période</th>
-        <th class="rental-table__col-rent">Loyer</th>
-        <th class="rental-table__col-status">Statut</th>
+        <th class="rental-table__col-property sortable" [class.sorted]="sortCol==='property'" (click)="sortOn('property')">Bien <i class="bi" [ngClass]="sortIcon('property')"></i></th>
+        <th class="rental-table__col-tenant sortable" [class.sorted]="sortCol==='tenant'" (click)="sortOn('tenant')">Locataire <i class="bi" [ngClass]="sortIcon('tenant')"></i></th>
+        <th class="rental-table__col-period sortable" [class.sorted]="sortCol==='date'" (click)="sortOn('date')">Période <i class="bi" [ngClass]="sortIcon('date')"></i></th>
+        <th class="rental-table__col-rent sortable" [class.sorted]="sortCol==='rent'" (click)="sortOn('rent')">Loyer <i class="bi" [ngClass]="sortIcon('rent')"></i></th>
+        <th class="rental-table__col-status sortable" [class.sorted]="sortCol==='status'" (click)="sortOn('status')">Statut <i class="bi" [ngClass]="sortIcon('status')"></i></th>
         <th *ngIf="!isTenant" class="rental-table__col-actions"></th>
       </tr>
     </thead>

@@ -59,6 +59,10 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
     SIGNED: { label: 'Signé', icon: 'bi-pen-fill', color: 'success' },
     DISPUTED: { label: 'Contesté', icon: 'bi-exclamation-triangle-fill', color: 'danger' },
   },
+  edl: {
+    ENTREE: { label: 'Entrée', icon: 'bi-arrow-down-circle-fill', color: 'success' },
+    SORTIE: { label: 'Sortie', icon: 'bi-arrow-up-circle-fill', color: 'warning' },
+  },
   expense: {
     PENDING: { label: 'En attente', icon: 'bi-clock', color: 'warning' },
     APPROVED: { label: 'Approuvée', icon: 'bi-check-circle-fill', color: 'success' },
