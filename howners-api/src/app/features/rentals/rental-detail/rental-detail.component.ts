@@ -5,7 +5,7 @@ import { takeUntil } from 'rxjs/operators';
 import { RentalService } from '../rental.service';
 import { ContractService } from '../../../core/services/contract.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { Rental, RENTAL_TYPE_LABELS, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS } from '../../../core/models/rental.model';
+import { Rental, RentalStatus, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS } from '../../../core/models/rental.model';
 import { Contract } from '../../../core/models/contract.model';
 
 @Component({
@@ -24,7 +24,23 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
   creatingContract = false;
   showTemplateSelector = false;
 
-  rentalTypeLabels = RENTAL_TYPE_LABELS;
+  // Publish modal
+  showPublishModal = false;
+  publishTitle = '';
+  publishDescription = '';
+  publishAvailableFrom = '';
+  publishLoading = false;
+
+  // Exit tenant modal
+  showExitModal = false;
+  exitDate = '';
+  exitNotes = '';
+  exitLoading = false;
+
+  // Confirm exit
+  confirmExitLoading = false;
+
+  RentalStatus = RentalStatus;
   rentalStatusLabels = RENTAL_STATUS_LABELS;
   rentalStatusColors = RENTAL_STATUS_COLORS;
 
@@ -71,6 +87,71 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Publish modal
+  openPublishModal(): void {
+    this.publishTitle = '';
+    this.publishDescription = '';
+    this.publishAvailableFrom = '';
+    this.showPublishModal = true;
+  }
+
+  closePublishModal(): void {
+    this.showPublishModal = false;
+  }
+
+  submitPublish(): void {
+    if (!this.rental || !this.publishTitle.trim()) return;
+    this.publishLoading = true;
+    this.rentalService.publishRental(this.rental.id, {
+      title: this.publishTitle.trim(),
+      description: this.publishDescription || undefined,
+      availableFrom: this.publishAvailableFrom || undefined
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.publishLoading = false;
+        this.showPublishModal = false;
+        this.notificationService.success('Annonce publiée avec succès !');
+        this.loadRental(this.rental!.id);
+      },
+      error: (err) => {
+        this.publishLoading = false;
+        this.notificationService.error(err.error?.message || 'Erreur lors de la publication');
+      }
+    });
+  }
+
+  // Exit tenant modal
+  openExitModal(): void {
+    this.exitDate = '';
+    this.exitNotes = '';
+    this.showExitModal = true;
+  }
+
+  closeExitModal(): void {
+    this.showExitModal = false;
+  }
+
+  submitExitTenant(): void {
+    if (!this.rental || !this.exitDate) return;
+    this.exitLoading = true;
+    this.rentalService.exitTenant(this.rental.id, {
+      exitDate: this.exitDate,
+      notes: this.exitNotes || undefined
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.exitLoading = false;
+        this.showExitModal = false;
+        this.notificationService.success('Sortie du locataire enregistrée.');
+        this.loadRental(this.rental!.id);
+      },
+      error: (err) => {
+        this.exitLoading = false;
+        this.notificationService.error(err.error?.message || 'Erreur lors de la sortie du locataire');
+      }
+    });
+  }
+
+  // Contract
   openTemplateSelector(): void {
     if (!this.rental) return;
     this.showTemplateSelector = true;
@@ -82,20 +163,12 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
 
   createContractWithTemplate(templateId: string | null): void {
     if (!this.rental) return;
-
     this.showTemplateSelector = false;
     this.creatingContract = true;
-
-    const request = {
-      rentalId: this.rental.id,
-      templateId: templateId  // null = template par défaut, sinon ID du template sélectionné
-    };
-
-    this.contractService.createContract(request).pipe(takeUntil(this.destroy$)).subscribe({
+    this.contractService.createContract({ rentalId: this.rental.id, templateId }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (contract) => {
         this.creatingContract = false;
         this.notificationService.success('Contrat généré avec succès !');
-        // Rediriger vers le contrat
         this.router.navigate(['/contracts', contract.id]);
       },
       error: (err) => {
@@ -114,7 +187,6 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
   }
 
   getMainContract(): Contract | null {
-    // Retourner le contrat le plus récent
     return this.contracts.length > 0 ? this.contracts[0] : null;
   }
 
@@ -126,36 +198,33 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
 
   deleteRental(): void {
     if (!this.rental) return;
-
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette location ?')) {
-      return;
-    }
-
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette location ?')) return;
     this.rentalService.deleteRental(this.rental.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => this.router.navigate(['/rentals']),
+      error: (err) => this.notificationService.error(err.error?.message || 'Erreur lors de la suppression')
+    });
+  }
+
+  confirmExit(): void {
+    if (!this.rental || !confirm('Confirmer la sortie du locataire ?')) return;
+    this.confirmExitLoading = true;
+    this.rentalService.confirmExit(this.rental.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        this.router.navigate(['/rentals']);
+        this.confirmExitLoading = false;
+        this.notificationService.success('Sortie confirmée.');
+        this.loadRental(this.rental!.id);
       },
       error: (err) => {
-        this.notificationService.error(err.error?.message || 'Erreur lors de la suppression');
+        this.confirmExitLoading = false;
+        this.notificationService.error(err.error?.message || 'Erreur lors de la confirmation');
       }
     });
   }
 
-  viewPayments(): void {
-    this.router.navigate(['/payments']);
-  }
-
-  viewInvoices(): void {
-    this.router.navigate(['/invoices']);
-  }
-
-  viewStats(): void {
-    this.router.navigate(['/financial']);
-  }
-
-  goBack(): void {
-    this.router.navigate(['/rentals']);
-  }
+  viewPayments(): void { this.router.navigate(['/payments']); }
+  viewInvoices(): void { this.router.navigate(['/invoices']); }
+  viewStats(): void { this.router.navigate(['/financial']); }
+  goBack(): void { this.router.navigate(['/rentals']); }
 
   getStatusColor(status: string): string {
     return this.rentalStatusColors[status as keyof typeof RENTAL_STATUS_COLORS];

@@ -1,6 +1,5 @@
 package com.howners.gestion.dto.request;
 
-import com.howners.gestion.domain.rental.RentalType;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -11,23 +10,9 @@ public record CreateRentalRequest(
         @NotNull(message = "Property ID is required")
         UUID propertyId,
 
-        UUID tenantId,  // Peut être null si on crée le locataire en même temps
-
-        // Informations du locataire (si tenantId est null)
-        @Email
-        String tenantEmail,
-        String tenantFirstName,
-        String tenantLastName,
-        String tenantPhone,
-
-        @NotNull(message = "Rental type is required")
-        RentalType rentalType,
-
-        @NotNull(message = "Start date is required")
-        @FutureOrPresent(message = "Start date must be in the present or future")
         LocalDate startDate,
 
-        LocalDate endDate,  // Peut être null pour location longue durée
+        LocalDate endDate,
 
         @NotNull(message = "Monthly rent is required")
         @DecimalMin(value = "0.0", inclusive = false, message = "Monthly rent must be positive")
@@ -50,6 +35,9 @@ public record CreateRentalRequest(
     public CreateRentalRequest {
         if (currency == null || currency.isBlank()) {
             currency = "EUR";
+        }
+        if (endDate != null && startDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("End date must be after start date");
         }
     }
 }

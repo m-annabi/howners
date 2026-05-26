@@ -8,7 +8,6 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { PaymentService } from '../../core/services/payment.service';
 import { ContractService } from '../../core/services/contract.service';
 import { ApplicationService } from '../../core/services/application.service';
-import { TenantDiscoveryService } from '../../core/services/tenant-discovery.service';
 import { WidgetPreferenceService } from '../../core/services/widget-preference.service';
 import { OnboardingService, OnboardingStatus } from '../../core/services/onboarding.service';
 import { AnalyticsService, AnalyticsSummary } from '../../core/services/analytics.service';
@@ -18,7 +17,6 @@ import { DashboardStats } from '../../core/models/dashboard.model';
 import { PaymentStatus } from '../../core/models/payment.model';
 import { ContractStatus } from '../../core/models/contract.model';
 import { ApplicationStatus } from '../../core/models/application.model';
-import { TenantSearchResult } from '../../core/models/tenant-search-result.model';
 import { WidgetConfig, WidgetDef, ALL_WIDGET_DEFS } from '../../core/models/widget-config.model';
 
 interface ActionItems {
@@ -42,7 +40,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = true;
   error: string | null = null;
   actionItems: ActionItems | null = null;
-  topTenants: TenantSearchResult[] = [];
 
   showChecklist = false;
 
@@ -89,11 +86,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get onboardingStepContract(): boolean { return this.onboardingStepRental; }
 
   get hasTenantAlerts(): boolean {
-    return !!this.stats?.tenantInfo && (
-      this.stats.tenantInfo.pendingInvitations > 0 ||
-      this.stats.tenantInfo.pendingApplications > 0 ||
-      !this.stats.tenantInfo.searchProfileActive
-    );
+    return !!this.stats?.tenantInfo && this.stats.tenantInfo.pendingApplications > 0;
   }
 
   get hasActivity(): boolean {
@@ -248,7 +241,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private paymentService: PaymentService,
     private contractService: ContractService,
     private applicationService: ApplicationService,
-    private tenantDiscoveryService: TenantDiscoveryService,
     private widgetPreferenceService: WidgetPreferenceService,
     private analyticsServiceFe: AnalyticsService,
     private exportService: ExportService,
@@ -263,7 +255,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.showChecklist = true;
         this.loadWidgetPreferences();
         this.loadActionItems();
-        this.loadTopTenants();
         if (user.role === 'OWNER') {
           this.loadAnalytics();
         }
@@ -301,12 +292,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadTopTenants(): void {
-    this.tenantDiscoveryService.searchTenants({ sortBy: 'score' }).subscribe({
-      next: results => { this.topTenants = (results || []).slice(0, 3); },
-      error: () => {}
-    });
-  }
 
   loadActionItems(): void {
     const today = new Date();
@@ -376,5 +361,4 @@ export class DashboardComponent implements OnInit, OnDestroy {
   goToExpiringContracts(): void { this.router.navigate(['/contracts'], { queryParams: { filter: 'expiring' } }); }
   goToAwaitingSignatures(): void { this.router.navigate(['/contracts'], { queryParams: { filter: 'sent' } }); }
   goToPendingApplications(): void { this.router.navigate(['/applications'], { queryParams: { filter: 'pending' } }); }
-  goToTenantDiscovery(): void { this.router.navigate(['/tenant-discovery']); }
 }

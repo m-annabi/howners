@@ -82,5 +82,8 @@
     <include file="db/changelog/076-create-edl-comparaisons.xml"/>
     <include file="db/changelog/077-create-rgpd-requests.xml"/>
     <include file="db/changelog/078-fix-and-seed-irl-2024-2026.xml"/>
+    <include file="db/changelog/079-drop-discovery-rating-tables.xml"/>
+    <include file="db/changelog/080-rental-vacant-listed-listing-rental-fk.xml"/>
+    <include file="db/changelog/081-rental-status-exiting.xml"/>
 
 </databaseChangeLog>

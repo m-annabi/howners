@@ -6,7 +6,7 @@ import { ContractTemplateService } from '../../../core/services/contract-templat
 import { RentalService } from '../../rentals/rental.service';
 import { CreateContractRequest } from '../../../core/models/contract.model';
 import { Rental } from '../../../core/models/rental.model';
-import { ContractTemplate, RentalType, RENTAL_TYPE_LABELS } from '../../../core/models/contract-template.model';
+import { ContractTemplate } from '../../../core/models/contract-template.model';
 
 @Component({
   selector: 'app-contract-form',
@@ -84,9 +84,7 @@ export class ContractFormComponent implements OnInit {
       return this.templates;
     }
 
-    // Filtrer les templates selon le type de location
-    const rentalType = selectedRental.rentalType as RentalType;
-    return this.templates.filter(t => t.rentalType === rentalType);
+    return this.templates;
   }
 
   quickGenerate(): void {

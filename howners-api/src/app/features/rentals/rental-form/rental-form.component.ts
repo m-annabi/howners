@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { RentalService } from '../rental.service';
 import { PropertyService } from '../../properties/property.service';
-import { RentalType, RentalStatus, RENTAL_TYPE_LABELS, RENTAL_STATUS_LABELS } from '../../../core/models/rental.model';
+import { RentalStatus, RENTAL_STATUS_LABELS } from '../../../core/models/rental.model';
 import { Property } from '../../../core/models/property.model';
-import { User } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-rental-form',
@@ -19,15 +17,7 @@ export class RentalFormComponent implements OnInit {
   error: string | null = null;
   rentalId: string | null = null;
   isEditMode = false;
-
   properties: Property[] = [];
-  tenants: User[] = [];
-  createNewTenant = true;
-
-  rentalTypes = Object.keys(RentalType).map(key => ({
-    value: RentalType[key as keyof typeof RentalType],
-    label: RENTAL_TYPE_LABELS[RentalType[key as keyof typeof RentalType]]
-  }));
 
   rentalStatuses = Object.keys(RentalStatus).map(key => ({
     value: RentalStatus[key as keyof typeof RentalStatus],
@@ -43,59 +33,31 @@ export class RentalFormComponent implements OnInit {
   ) {
     this.rentalForm = this.fb.group({
       propertyId: ['', [Validators.required]],
-      rentalType: [RentalType.LONG_TERM, [Validators.required]],
-      status: [RentalStatus.PENDING],
-      startDate: ['', [Validators.required]],
+      startDate: [''],
       endDate: [''],
-      monthlyRent: [null, [Validators.required, Validators.min(0)]],
+      monthlyRent: [null, [Validators.required, Validators.min(0.01)]],
       currency: ['EUR'],
       depositAmount: [null, [Validators.min(0)]],
       charges: [null, [Validators.min(0)]],
       paymentDay: [1, [Validators.min(1), Validators.max(31)]],
       assuranceExpiration: [''],
-      // Existing tenant
-      tenantId: [''],
-      // New tenant info
-      tenantEmail: ['', [Validators.required, Validators.email]],
-      tenantFirstName: ['', [Validators.required]],
-      tenantLastName: ['', [Validators.required]],
-      tenantPhone: ['']
+      status: [null]
     });
   }
 
   ngOnInit(): void {
     this.rentalId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.rentalId;
-
     this.loadProperties();
-    this.loadTenants();
-
     if (this.isEditMode && this.rentalId) {
       this.loadRental(this.rentalId);
-      // En mode édition, on ne peut pas changer le locataire
-      this.createNewTenant = false;
     }
   }
 
   loadProperties(): void {
     this.propertyService.getProperties().subscribe({
-      next: (page) => {
-        this.properties = page.content;
-      },
-      error: (err) => {
-        this.error = 'Erreur lors du chargement des biens';
-      }
-    });
-  }
-
-  loadTenants(): void {
-    this.rentalService.getMyTenants().subscribe({
-      next: (tenants) => {
-        this.tenants = tenants;
-      },
-      error: (err) => {
-        // Non-blocking: tenants list is optional
-      }
+      next: (page) => { this.properties = page.content; },
+      error: () => { this.error = 'Erreur lors du chargement des biens'; }
     });
   }
 
@@ -105,8 +67,6 @@ export class RentalFormComponent implements OnInit {
       next: (rental) => {
         this.rentalForm.patchValue({
           propertyId: rental.propertyId,
-          rentalType: rental.rentalType,
-          status: rental.status,
           startDate: rental.startDate,
           endDate: rental.endDate,
           monthlyRent: rental.monthlyRent,
@@ -114,7 +74,8 @@ export class RentalFormComponent implements OnInit {
           depositAmount: rental.depositAmount,
           charges: rental.charges,
           paymentDay: rental.paymentDay,
-          assuranceExpiration: rental.assuranceExpiration
+          assuranceExpiration: rental.assuranceExpiration,
+          status: rental.status
         });
         this.loading = false;
       },
@@ -126,92 +87,38 @@ export class RentalFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.rentalForm.invalid) {
-      return;
-    }
-
+    if (this.rentalForm.invalid) return;
     this.loading = true;
     this.error = null;
 
-    const formValue = this.rentalForm.value;
-
+    const v = this.rentalForm.value;
     const request: any = {
-      propertyId: formValue.propertyId,
-      rentalType: formValue.rentalType,
-      startDate: formValue.startDate,
-      endDate: formValue.endDate || undefined,
-      monthlyRent: formValue.monthlyRent,
-      currency: formValue.currency || 'EUR',
-      depositAmount: formValue.depositAmount,
-      charges: formValue.charges,
-      paymentDay: formValue.paymentDay,
-      assuranceExpiration: formValue.assuranceExpiration || undefined
+      propertyId: v.propertyId,
+      startDate: v.startDate || undefined,
+      endDate: v.endDate || undefined,
+      monthlyRent: v.monthlyRent,
+      currency: v.currency || 'EUR',
+      depositAmount: v.depositAmount,
+      charges: v.charges,
+      paymentDay: v.paymentDay,
+      assuranceExpiration: v.assuranceExpiration || undefined
     };
 
     if (this.isEditMode) {
-      // Mode édition
-      request.status = formValue.status;
+      if (v.status) request.status = v.status;
       this.rentalService.updateRental(this.rentalId!, request).subscribe({
-        next: () => {
-          this.router.navigate(['/rentals']);
-        },
-        error: (err) => {
-          this.error = err.error?.message || 'Erreur lors de la mise à jour';
-          this.loading = false;
-        }
+        next: (rental) => this.router.navigate(['/rentals', rental.id]),
+        error: (err) => { this.error = err.error?.message || 'Erreur lors de la mise à jour'; this.loading = false; }
       });
     } else {
-      // Mode création
-      if (this.createNewTenant) {
-        // Créer un nouveau locataire
-        request.tenantEmail = formValue.tenantEmail;
-        request.tenantFirstName = formValue.tenantFirstName;
-        request.tenantLastName = formValue.tenantLastName;
-        request.tenantPhone = formValue.tenantPhone;
-      } else if (formValue.tenantId) {
-        // Locataire existant
-        request.tenantId = formValue.tenantId;
-      }
-
       this.rentalService.createRental(request).subscribe({
-        next: () => {
-          this.router.navigate(['/rentals']);
-        },
-        error: (err) => {
-          this.error = err.error?.message || 'Erreur lors de la création';
-          this.loading = false;
-        }
+        next: (rental) => this.router.navigate(['/rentals', rental.id]),
+        error: (err) => { this.error = err.error?.message || 'Erreur lors de la création'; this.loading = false; }
       });
     }
   }
 
   cancel(): void {
     this.router.navigate(['/rentals']);
-  }
-
-  toggleTenantMode(): void {
-    if (this.createNewTenant && !this.isEditMode) {
-      // Mode nouveau locataire : champs requis
-      this.rentalForm.get('tenantEmail')?.setValidators([Validators.required, Validators.email]);
-      this.rentalForm.get('tenantFirstName')?.setValidators([Validators.required]);
-      this.rentalForm.get('tenantLastName')?.setValidators([Validators.required]);
-      this.rentalForm.get('tenantId')?.clearValidators();
-      this.rentalForm.get('tenantId')?.setValue('');
-    } else {
-      // Mode locataire existant : select requis
-      this.rentalForm.get('tenantEmail')?.clearValidators();
-      this.rentalForm.get('tenantFirstName')?.clearValidators();
-      this.rentalForm.get('tenantLastName')?.clearValidators();
-      this.rentalForm.get('tenantEmail')?.setValue('');
-      this.rentalForm.get('tenantFirstName')?.setValue('');
-      this.rentalForm.get('tenantLastName')?.setValue('');
-      this.rentalForm.get('tenantPhone')?.setValue('');
-      this.rentalForm.get('tenantId')?.setValidators([Validators.required]);
-    }
-
-    this.rentalForm.get('tenantEmail')?.updateValueAndValidity();
-    this.rentalForm.get('tenantFirstName')?.updateValueAndValidity();
-    this.rentalForm.get('tenantLastName')?.updateValueAndValidity();
-    this.rentalForm.get('tenantId')?.updateValueAndValidity();
   }
 }

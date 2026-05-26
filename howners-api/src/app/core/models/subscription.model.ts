@@ -51,7 +51,6 @@ export interface UsageLimits {
   canCreateRental: boolean;
   canCreateListing: boolean;
   hasESignature: boolean;
-  hasTenantScoring: boolean;
   hasDocumentEncryption: boolean;
   hasMultiAccount: boolean;
 }

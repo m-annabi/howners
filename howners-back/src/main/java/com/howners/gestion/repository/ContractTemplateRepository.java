@@ -20,6 +20,8 @@ public interface ContractTemplateRepository extends JpaRepository<ContractTempla
 
     Optional<ContractTemplate> findByRentalTypeAndIsDefaultTrue(RentalType rentalType);
 
+    Optional<ContractTemplate> findFirstByIsDefaultTrueAndIsActiveTrue();
+
     List<ContractTemplate> findByCreatedById(UUID createdById);
 
     /**

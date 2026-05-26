@@ -4,8 +4,6 @@ import com.howners.gestion.domain.application.ApplicationStatus;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.rental.RentalStatus;
-import com.howners.gestion.domain.search.InvitationStatus;
-import com.howners.gestion.domain.search.TenantSearchProfile;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.response.DashboardStatsResponse;
@@ -33,8 +31,6 @@ public class DashboardService {
     private final RentalRepository rentalRepository;
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
-    private final TenantInvitationRepository tenantInvitationRepository;
-    private final TenantSearchProfileRepository tenantSearchProfileRepository;
     private final MessageRepository messageRepository;
 
     @Transactional(readOnly = true)
@@ -118,18 +114,6 @@ public class DashboardService {
                 .filter(a -> a.getStatus() == ApplicationStatus.SUBMITTED || a.getStatus() == ApplicationStatus.UNDER_REVIEW)
                 .count();
 
-        // Invitations
-        var invitations = tenantInvitationRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
-        long totalInvitations = invitations.size();
-        long pendingInvitations = invitations.stream()
-                .filter(i -> i.getStatus() == InvitationStatus.PENDING)
-                .count();
-
-        // Profil de recherche
-        boolean searchProfileActive = tenantSearchProfileRepository.findByTenantId(tenantId)
-                .map(TenantSearchProfile::getIsActive)
-                .orElse(false);
-
         // Messages non lus
         long unreadMessages = messageRepository.countUnreadByRecipientId(tenantId);
 
@@ -151,9 +135,7 @@ public class DashboardService {
         );
 
         DashboardStatsResponse.TenantInfo tenantInfo = new DashboardStatsResponse.TenantInfo(
-                totalApplications, pendingApplications,
-                pendingInvitations, totalInvitations,
-                searchProfileActive, unreadMessages
+                totalApplications, pendingApplications, unreadMessages
         );
 
         return DashboardStatsResponse.forTenant(

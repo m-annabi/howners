@@ -42,7 +42,6 @@ export interface ReviewApplicationRequest {
 }
 
 export interface CreateRentalFromApplicationRequest {
-  rentalType: string;
   startDate: string;
   endDate?: string;
   monthlyRent: number;

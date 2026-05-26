@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RentalService } from '../rental.service';
-import { Rental, RENTAL_TYPE_LABELS, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS, RentalStatus } from '../../../core/models/rental.model';
+import { Rental, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS, RentalStatus } from '../../../core/models/rental.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
@@ -22,7 +22,6 @@ export class RentalListComponent implements OnInit {
   sortCol = '';
   sortDir: 'asc' | 'desc' = 'desc';
 
-  rentalTypeLabels = RENTAL_TYPE_LABELS;
   rentalStatusLabels = RENTAL_STATUS_LABELS;
   rentalStatusColors = RENTAL_STATUS_COLORS;
 
@@ -67,10 +66,12 @@ export class RentalListComponent implements OnInit {
     }
     const list: QuickFilter[] = [
       { key: 'all', label: 'Toutes', count: counts.get('all') || 0 },
+      { key: RentalStatus.VACANT, label: 'Libres', count: counts.get(RentalStatus.VACANT) || 0 },
+      { key: RentalStatus.LISTED, label: 'En annonce', count: counts.get(RentalStatus.LISTED) || 0 },
       { key: RentalStatus.ACTIVE, label: 'Actives', count: counts.get(RentalStatus.ACTIVE) || 0, tone: 'success' },
+      { key: RentalStatus.EXITING, label: 'Sortie prog.', count: counts.get(RentalStatus.EXITING) || 0, tone: 'warning' },
       { key: RentalStatus.PENDING, label: 'En attente', count: counts.get(RentalStatus.PENDING) || 0, tone: 'warning' },
       { key: RentalStatus.TERMINATED, label: 'Terminées', count: counts.get(RentalStatus.TERMINATED) || 0 },
-      { key: RentalStatus.CANCELLED, label: 'Annulées', count: counts.get(RentalStatus.CANCELLED) || 0 }
     ];
     this.filters = list.filter(f => f.key === 'all' || (f.count || 0) > 0);
   }
@@ -117,7 +118,7 @@ export class RentalListComponent implements OnInit {
     if (this.sortCol) {
       filtered = filtered.slice().sort((a, b) => {
         let diff = 0;
-        if (this.sortCol === 'date') diff = new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+        if (this.sortCol === 'date') diff = new Date(a.startDate ?? 0).getTime() - new Date(b.startDate ?? 0).getTime();
         else if (this.sortCol === 'rent') diff = (a.monthlyRent ?? 0) - (b.monthlyRent ?? 0);
         else if (this.sortCol === 'tenant') diff = (a.tenantName || '').localeCompare(b.tenantName || '');
         else if (this.sortCol === 'property') diff = a.propertyName.localeCompare(b.propertyName);
@@ -126,7 +127,7 @@ export class RentalListComponent implements OnInit {
       });
     } else {
       filtered = filtered.slice().sort((a, b) =>
-        new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+        new Date(b.startDate ?? 0).getTime() - new Date(a.startDate ?? 0).getTime());
     }
 
     this.filteredRentals = filtered;

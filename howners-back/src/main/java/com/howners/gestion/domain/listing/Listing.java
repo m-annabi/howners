@@ -1,6 +1,7 @@
 package com.howners.gestion.domain.listing;
 
 import com.howners.gestion.domain.property.Property;
+import com.howners.gestion.domain.rental.Rental;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -74,6 +75,10 @@ public class Listing {
 
     @Column(name = "available_from")
     private LocalDate availableFrom;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rental_id")
+    private Rental rental;
 
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

@@ -30,6 +30,8 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
     List<Listing> findByPropertyId(UUID propertyId);
 
+    java.util.Optional<Listing> findByRentalId(UUID rentalId);
+
     @Query("SELECT l FROM Listing l WHERE l.status = 'PUBLISHED' AND " +
            "(LOWER(l.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(l.description) LIKE LOWER(CONCAT('%', :search, '%')) " +

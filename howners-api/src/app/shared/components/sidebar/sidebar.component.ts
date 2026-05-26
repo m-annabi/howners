@@ -145,11 +145,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         items: [
           { label: 'Rechercher', icon: 'bi-search', route: '/listings' },
           { label: 'Mes annonces', icon: 'bi-megaphone', route: '/listings/my', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Trouver locataires', icon: 'bi-person-lines-fill', route: '/tenant-discovery', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Invitations envoyées', icon: 'bi-send', route: '/tenant-discovery/sent-invitations', roles: ['OWNER', 'ADMIN'] },
           { label: 'Candidatures', icon: 'bi-people', route: '/applications' },
-          { label: 'Mon profil recherche', icon: 'bi-person-badge', route: '/search-profile', roles: ['TENANT'] },
-          { label: 'Invitations', icon: 'bi-envelope-open', route: '/search-profile/invitations', roles: ['TENANT'] },
         ],
         roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT']
       },
@@ -172,13 +168,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Messages', icon: 'bi-chat-dots', route: '/messages' },
         ]
       },
-      {
-        title: 'ÉVALUATIONS',
-        items: [
-          { label: 'Notes', icon: 'bi-star', route: '/ratings' },
-        ],
-        roles: ['OWNER', 'CONCIERGE', 'ADMIN']
-      },
+
       {
         title: 'CROISSANCE',
         items: [

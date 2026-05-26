@@ -1,13 +1,11 @@
-export enum RentalType {
-  SHORT_TERM = 'SHORT_TERM',
-  LONG_TERM = 'LONG_TERM'
-}
-
 export enum RentalStatus {
-  PENDING = 'PENDING',
-  ACTIVE = 'ACTIVE',
+  VACANT     = 'VACANT',
+  LISTED     = 'LISTED',
+  PENDING    = 'PENDING',
+  ACTIVE     = 'ACTIVE',
+  EXITING    = 'EXITING',
   TERMINATED = 'TERMINATED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED  = 'CANCELLED'
 }
 
 export interface Rental {
@@ -17,9 +15,8 @@ export interface Rental {
   tenantId?: string;
   tenantName?: string;
   tenantEmail?: string;
-  rentalType: RentalType;
   status: RentalStatus;
-  startDate: string;
+  startDate?: string;
   endDate?: string;
   monthlyRent: number;
   currency: string;
@@ -33,13 +30,7 @@ export interface Rental {
 
 export interface CreateRentalRequest {
   propertyId: string;
-  tenantId?: string;
-  tenantEmail?: string;
-  tenantFirstName?: string;
-  tenantLastName?: string;
-  tenantPhone?: string;
-  rentalType: RentalType;
-  startDate: string;
+  startDate?: string;
   endDate?: string;
   monthlyRent: number;
   currency?: string;
@@ -50,7 +41,6 @@ export interface CreateRentalRequest {
 }
 
 export interface UpdateRentalRequest {
-  rentalType?: RentalType;
   status?: RentalStatus;
   startDate?: string;
   endDate?: string;
@@ -62,21 +52,33 @@ export interface UpdateRentalRequest {
   assuranceExpiration?: string;
 }
 
-export const RENTAL_TYPE_LABELS: Record<RentalType, string> = {
-  [RentalType.SHORT_TERM]: 'Courte durée',
-  [RentalType.LONG_TERM]: 'Longue durée'
-};
+export interface PublishRentalRequest {
+  title: string;
+  description?: string;
+  availableFrom?: string;
+}
+
+export interface ExitTenantRequest {
+  exitDate: string;
+  notes?: string;
+}
 
 export const RENTAL_STATUS_LABELS: Record<RentalStatus, string> = {
-  [RentalStatus.PENDING]: 'En attente',
-  [RentalStatus.ACTIVE]: 'Active',
+  [RentalStatus.VACANT]:     'Libre',
+  [RentalStatus.LISTED]:     'En annonce',
+  [RentalStatus.PENDING]:    'Contrat en attente',
+  [RentalStatus.ACTIVE]:     'Active',
+  [RentalStatus.EXITING]:    'Sortie programmée',
   [RentalStatus.TERMINATED]: 'Terminée',
-  [RentalStatus.CANCELLED]: 'Annulée'
+  [RentalStatus.CANCELLED]:  'Annulée'
 };
 
 export const RENTAL_STATUS_COLORS: Record<RentalStatus, string> = {
-  [RentalStatus.PENDING]: '#FFA500',
-  [RentalStatus.ACTIVE]: '#4CAF50',
-  [RentalStatus.TERMINATED]: '#9E9E9E',
-  [RentalStatus.CANCELLED]: '#F44336'
+  [RentalStatus.VACANT]:     '#9E9E9E',
+  [RentalStatus.LISTED]:     '#2196F3',
+  [RentalStatus.PENDING]:    '#FFA500',
+  [RentalStatus.ACTIVE]:     '#4CAF50',
+  [RentalStatus.EXITING]:    '#FF7043',
+  [RentalStatus.TERMINATED]: '#607D8B',
+  [RentalStatus.CANCELLED]:  '#F44336'
 };

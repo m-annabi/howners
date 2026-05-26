@@ -30,7 +30,6 @@ export const ALL_WIDGET_DEFS: WidgetDef[] = [
   { id: 'stat-pending',        label: 'En attente',          icon: 'bi-clock-history',     category: 'Statistiques', size: 'sm' },
   { id: 'action-items',        label: 'À traiter',           icon: 'bi-bell',              category: 'Gestion',      size: 'lg' },
   { id: 'recent-activity',     label: 'Activité récente',    icon: 'bi-clock-history',     category: 'Gestion',      size: 'lg' },
-  { id: 'top-tenants',         label: 'Locataires potentiels', icon: 'bi-people',          category: 'Découverte',   size: 'lg' },
   { id: 'shortcut-properties', label: 'Mes Biens',           icon: 'bi-building',          category: 'Raccourcis',   size: 'sm', route: '/properties', color: 'primary' },
   { id: 'shortcut-rentals',    label: 'Locations',           icon: 'bi-key',               category: 'Raccourcis',   size: 'sm', route: '/rentals',    color: 'success' },
   { id: 'shortcut-contracts',  label: 'Contrats',            icon: 'bi-file-earmark-text', category: 'Raccourcis',   size: 'sm', route: '/contracts',  color: 'info'    },

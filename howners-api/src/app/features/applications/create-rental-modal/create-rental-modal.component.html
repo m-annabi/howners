@@ -39,16 +39,6 @@
         <form [formGroup]="rentalForm">
           <fieldset [disabled]="submitting">
           <div class="row g-3">
-            <!-- Rental type -->
-            <div class="col-md-6">
-              <label class="form-label">Type de location *</label>
-              <select class="form-select" formControlName="rentalType">
-                <option *ngFor="let type of rentalTypes" [value]="type">
-                  {{ rentalTypeLabels[type] }}
-                </option>
-              </select>
-            </div>
-
             <!-- Payment day -->
             <div class="col-md-6">
               <label class="form-label">Jour de paiement</label>

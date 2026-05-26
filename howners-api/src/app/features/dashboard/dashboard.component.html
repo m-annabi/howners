@@ -258,39 +258,6 @@
               </div>
             </div>
 
-            <!-- ── Locataires potentiels (lg) ── -->
-            <div *ngSwitchCase="'top-tenants'" class="widget-section">
-              <div class="widget-section__header">
-                <i class="bi bi-stars"></i>
-                <span>Locataires à fort potentiel</span>
-                <a (click)="goToTenantDiscovery()" class="widget-section__header-link">
-                  Tous les profils <i class="bi bi-arrow-right"></i>
-                </a>
-              </div>
-              <div class="widget-section__body">
-                <div *ngIf="topTenants.length > 0; else noTenants" class="top-tenants__grid">
-                  <article *ngFor="let result of topTenants" class="top-tenant" (click)="goToTenantDiscovery()">
-                    <div class="top-tenant__avatar">{{ (result.profile.tenantName || '?').charAt(0) }}</div>
-                    <div class="top-tenant__body">
-                      <div class="top-tenant__name">{{ result.profile.tenantName }}</div>
-                      <div class="top-tenant__meta">
-                        <span *ngIf="result.profile.desiredCity"><i class="bi bi-geo-alt"></i> {{ result.profile.desiredCity }}</span>
-                        <span *ngIf="result.profile.budgetMax"> · {{ result.profile.budgetMax }}€ max</span>
-                      </div>
-                    </div>
-                    <div *ngIf="result.tenantScore" class="top-tenant__score" [attr.data-risk]="result.tenantScore.riskLevel">
-                      {{ result.tenantScore.score }}
-                    </div>
-                  </article>
-                </div>
-                <ng-template #noTenants>
-                  <div class="widget-empty">
-                    <i class="bi bi-people"></i>
-                    <span>Aucun profil locataire trouvé</span>
-                  </div>
-                </ng-template>
-              </div>
-            </div>
 
             <!-- ── Raccourcis individuels (sm, *ngSwitchDefault) ── -->
             <ng-container *ngSwitchDefault>
@@ -398,20 +365,10 @@
 
       <!-- Alertes -->
       <div *ngIf="hasTenantAlerts" class="tenant-alerts">
-        <div *ngIf="stats.tenantInfo?.pendingInvitations" class="hw-alert hw-alert--success">
-          <i class="bi bi-envelope-open-fill"></i>
-          <span>{{ stats.tenantInfo?.pendingInvitations }} invitation{{ (stats.tenantInfo?.pendingInvitations || 0) > 1 ? 's' : '' }} en attente</span>
-          <a routerLink="/search-profile/invitations" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Voir</a>
-        </div>
         <div *ngIf="stats.tenantInfo?.pendingApplications" class="hw-alert hw-alert--info">
           <i class="bi bi-hourglass-split"></i>
           <span>{{ stats.tenantInfo?.pendingApplications }} candidature{{ (stats.tenantInfo?.pendingApplications || 0) > 1 ? 's' : '' }} en cours</span>
           <a routerLink="/applications" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Voir</a>
-        </div>
-        <div *ngIf="!stats.tenantInfo?.searchProfileActive" class="hw-alert hw-alert--warning">
-          <i class="bi bi-eye-slash-fill"></i>
-          <span>Votre profil est inactif — les propriétaires ne peuvent pas vous trouver</span>
-          <a routerLink="/search-profile" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Activer</a>
         </div>
       </div>
 

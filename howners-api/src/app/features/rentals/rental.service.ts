@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Rental, CreateRentalRequest, UpdateRentalRequest } from '../../core/models/rental.model';
-import { User } from '../../core/models/user.model';
+import { Rental, CreateRentalRequest, UpdateRentalRequest, PublishRentalRequest, ExitTenantRequest } from '../../core/models/rental.model';
 import { Page } from '../../core/models/page.model';
 
 @Injectable({
@@ -37,7 +36,15 @@ export class RentalService {
     return this.http.delete<void>(`${this.API_URL}/${id}`);
   }
 
-  getMyTenants(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.API_URL}/my-tenants`);
+  publishRental(id: string, request: PublishRentalRequest): Observable<any> {
+    return this.http.post<any>(`${this.API_URL}/${id}/publish`, request);
+  }
+
+  exitTenant(id: string, request: ExitTenantRequest): Observable<Rental> {
+    return this.http.post<Rental>(`${this.API_URL}/${id}/exit-tenant`, request);
+  }
+
+  confirmExit(id: string): Observable<Rental> {
+    return this.http.post<Rental>(`${this.API_URL}/${id}/confirm-exit`, {});
   }
 }
