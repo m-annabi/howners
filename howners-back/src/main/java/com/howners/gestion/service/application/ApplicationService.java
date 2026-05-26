@@ -164,6 +164,36 @@ public class ApplicationService {
         application = applicationRepository.save(application);
         log.info("Application {} reviewed: {}", id, request.status());
 
+        // Si acceptée et que l'annonce est liée à une location, lier le locataire
+        if (request.status() == ApplicationStatus.ACCEPTED) {
+            Listing listing = application.getListing();
+            if (listing.getRental() != null) {
+                Rental rental = listing.getRental();
+
+                if (rental.getStatus() == RentalStatus.EXITING) {
+                    // Ancien locataire encore présent : on enregistre le prochain sans toucher au tenant actuel
+                    rental.setApplication(application);
+                    rentalRepository.save(rental);
+                    log.info("Next tenant {} queued for rental {} (EXITING) from application {}",
+                            application.getApplicant().getId(), rental.getId(), id);
+                } else {
+                    // Cas normal : location LISTED ou VACANT
+                    rental.setTenant(application.getApplicant());
+                    rental.setApplication(application);
+                    rental.setStatus(RentalStatus.PENDING);
+                    if (application.getDesiredMoveIn() != null) {
+                        rental.setStartDate(application.getDesiredMoveIn());
+                    }
+                    rentalRepository.save(rental);
+                    log.info("Tenant {} linked to rental {} from application {}",
+                            application.getApplicant().getId(), rental.getId(), id);
+                }
+
+                listing.setStatus(ListingStatus.CLOSED);
+                listingRepository.save(listing);
+            }
+        }
+
         // Send notification email
         sendReviewNotificationEmail(application, reviewer);
 
@@ -196,7 +226,6 @@ public class ApplicationService {
                 .property(application.getListing().getProperty())
                 .tenant(application.getApplicant())
                 .application(application)
-                .rentalType(request.rentalType())
                 .status(RentalStatus.PENDING)
                 .startDate(request.startDate())
                 .endDate(request.endDate())

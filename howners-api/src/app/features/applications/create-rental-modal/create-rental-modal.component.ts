@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Application, CreateRentalFromApplicationRequest } from '../../../core/models/application.model';
-import { Rental, RentalType, RENTAL_TYPE_LABELS } from '../../../core/models/rental.model';
+import { Rental } from '../../../core/models/rental.model';
 import { ApplicationService } from '../../../core/services/application.service';
 
 @Component({
@@ -17,9 +17,6 @@ export class CreateRentalModalComponent implements OnInit {
   submitting = false;
   error: string | null = null;
 
-  rentalTypes = Object.values(RentalType);
-  rentalTypeLabels = RENTAL_TYPE_LABELS;
-
   constructor(
     private fb: FormBuilder,
     private applicationService: ApplicationService
@@ -27,7 +24,6 @@ export class CreateRentalModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.rentalForm = this.fb.group({
-      rentalType: [RentalType.LONG_TERM, Validators.required],
       startDate: [this.application.desiredMoveIn || '', Validators.required],
       endDate: [''],
       monthlyRent: [this.application.listingPricePerMonth || '', [Validators.required, Validators.min(0.01)]],
@@ -61,7 +57,6 @@ export class CreateRentalModalComponent implements OnInit {
 
     const formValue = this.rentalForm.value;
     const request: CreateRentalFromApplicationRequest = {
-      rentalType: formValue.rentalType,
       startDate: formValue.startDate,
       endDate: formValue.endDate || undefined,
       monthlyRent: formValue.monthlyRent,
@@ -77,8 +72,7 @@ export class CreateRentalModalComponent implements OnInit {
         this.onConfirm.emit(rental);
       },
       error: (err) => {
-        console.error('Error creating rental from application:', err);
-        this.error = err.error?.message || 'Erreur lors de la creation de la location';
+        this.error = err.error?.message || 'Erreur lors de la création de la location';
         this.submitting = false;
       }
     });

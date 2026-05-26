@@ -1,29 +1,33 @@
 package com.howners.gestion.service.rental;
 
 import com.howners.gestion.domain.audit.AuditAction;
+import com.howners.gestion.domain.listing.Listing;
+import com.howners.gestion.domain.listing.ListingStatus;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.rental.RentalStatus;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.dto.listing.ListingResponse;
 import com.howners.gestion.dto.request.CreateRentalRequest;
+import com.howners.gestion.dto.request.ExitTenantRequest;
+import com.howners.gestion.dto.request.PublishRentalRequest;
 import com.howners.gestion.dto.request.UpdateRentalRequest;
 import com.howners.gestion.dto.response.RentalResponse;
 import com.howners.gestion.dto.response.UserResponse;
-import com.howners.gestion.dto.email.WelcomeTenantEmailData;
+import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ContractRepository;
+import com.howners.gestion.repository.ListingRepository;
 import com.howners.gestion.repository.PaymentRepository;
 import com.howners.gestion.repository.PropertyRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
-import com.howners.gestion.service.email.EmailService;
+import com.howners.gestion.service.audit.AuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,20 +44,14 @@ public class RentalService {
     private final RentalRepository rentalRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
-    private final com.howners.gestion.service.audit.AuditService auditService;
+    private final AuditService auditService;
     private final ContractRepository contractRepository;
     private final PaymentRepository paymentRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
-
-    @Value("${app.frontend-url:http://localhost:4200}")
-    private String frontendUrl;
+    private final ListingRepository listingRepository;
 
     @Transactional(readOnly = true)
     public List<RentalResponse> findAllByCurrentUser() {
         UUID currentUserId = AuthService.getCurrentUserId();
-        log.debug("Finding all rentals for user {}", currentUserId);
-
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
 
@@ -66,9 +64,7 @@ public class RentalService {
             rentals = rentalRepository.findByOwnerId(currentUserId);
         }
 
-        return rentals.stream()
-                .map(RentalResponse::from)
-                .collect(Collectors.toList());
+        return rentals.stream().map(RentalResponse::from).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -81,8 +77,7 @@ public class RentalService {
 
     @Transactional(readOnly = true)
     public RentalResponse findById(UUID rentalId) {
-        Rental rental = findRentalByIdAndCheckAccess(rentalId);
-        return RentalResponse.from(rental);
+        return RentalResponse.from(findRentalByIdAndCheckAccess(rentalId));
     }
 
     @Transactional
@@ -90,7 +85,6 @@ public class RentalService {
         UUID currentUserId = AuthService.getCurrentUserId();
         log.info("Creating rental for property {} by user {}", request.propertyId(), currentUserId);
 
-        // Vérifier que la propriété existe et appartient à l'utilisateur
         Property property = propertyRepository.findById(request.propertyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Property", "id", request.propertyId().toString()));
 
@@ -98,28 +92,9 @@ public class RentalService {
             throw new BusinessException("You don't have permission to create a rental for this property");
         }
 
-        // Valider les dates
-        if (request.endDate() != null && request.endDate().isBefore(request.startDate())) {
-            throw new BusinessException("End date must be after start date");
-        }
-
-        // Gérer le locataire
-        User tenant = null;
-        if (request.tenantId() != null) {
-            // Locataire existant
-            tenant = userRepository.findById(request.tenantId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Tenant", "id", request.tenantId().toString()));
-        } else if (request.tenantEmail() != null) {
-            // Créer un nouveau locataire
-            tenant = createTenant(request, property);
-        }
-
-        // Créer la location
         Rental rental = Rental.builder()
                 .property(property)
-                .tenant(tenant)
-                .rentalType(request.rentalType())
-                .status(RentalStatus.PENDING)
+                .status(RentalStatus.VACANT)
                 .startDate(request.startDate())
                 .endDate(request.endDate())
                 .monthlyRent(request.monthlyRent())
@@ -141,81 +116,166 @@ public class RentalService {
         Rental rental = findRentalByIdAndCheckAccess(rentalId);
         log.info("Updating rental {}", rentalId);
 
-        // Valider les dates si modifiées
         LocalDate startDate = request.startDate() != null ? request.startDate() : rental.getStartDate();
         LocalDate endDate = request.endDate() != null ? request.endDate() : rental.getEndDate();
-        if (endDate != null && endDate.isBefore(startDate)) {
+        if (endDate != null && startDate != null && endDate.isBefore(startDate)) {
             throw new BusinessException("End date must be after start date");
         }
 
-        // Mettre à jour les champs
-        if (request.rentalType() != null) {
-            rental.setRentalType(request.rentalType());
-        }
-        if (request.status() != null) {
-            rental.setStatus(request.status());
-        }
-        if (request.startDate() != null) {
-            rental.setStartDate(request.startDate());
-        }
-        if (request.endDate() != null) {
-            rental.setEndDate(request.endDate());
-        }
-        if (request.monthlyRent() != null) {
-            rental.setMonthlyRent(request.monthlyRent());
-        }
-        if (request.currency() != null) {
-            rental.setCurrency(request.currency());
-        }
-        if (request.depositAmount() != null) {
-            rental.setDepositAmount(request.depositAmount());
-        }
-        if (request.charges() != null) {
-            rental.setCharges(request.charges());
-        }
-        if (request.paymentDay() != null) {
-            rental.setPaymentDay(request.paymentDay());
-        }
+        if (request.status() != null) rental.setStatus(request.status());
+        if (request.startDate() != null) rental.setStartDate(request.startDate());
+        if (request.endDate() != null) rental.setEndDate(request.endDate());
+        if (request.monthlyRent() != null) rental.setMonthlyRent(request.monthlyRent());
+        if (request.currency() != null) rental.setCurrency(request.currency());
+        if (request.depositAmount() != null) rental.setDepositAmount(request.depositAmount());
+        if (request.charges() != null) rental.setCharges(request.charges());
+        if (request.paymentDay() != null) rental.setPaymentDay(request.paymentDay());
 
         rental = rentalRepository.save(rental);
-        log.info("Rental {} updated successfully", rentalId);
-
         return RentalResponse.from(rental);
     }
 
     @Transactional
     public void delete(UUID rentalId) {
         Rental rental = findRentalByIdAndCheckAccess(rentalId);
-        log.info("Deleting rental {}", rentalId);
 
-        // Vérifier qu'il n'y a pas de contrats liés
         long contractCount = contractRepository.findByRentalId(rentalId).size();
         if (contractCount > 0) {
             throw new BusinessException(
-                String.format("Cannot delete rental. %d contract(s) are associated with this rental. Please delete contracts first.", contractCount)
-            );
+                String.format("Cannot delete rental. %d contract(s) are associated.", contractCount));
         }
 
-        // Vérifier qu'il n'y a pas de paiements en attente
         long pendingPayments = paymentRepository.findByRentalIdAndStatus(
                 rentalId, com.howners.gestion.domain.payment.PaymentStatus.PENDING).size();
         if (pendingPayments > 0) {
             throw new BusinessException(
-                String.format("Cannot delete rental. %d pending payment(s) exist. Please settle payments first.", pendingPayments)
-            );
+                String.format("Cannot delete rental. %d pending payment(s) exist.", pendingPayments));
         }
 
         rentalRepository.delete(rental);
-        log.info("Rental {} deleted successfully", rentalId);
+        log.info("Rental {} deleted", rentalId);
     }
 
-    private Rental findRentalByIdAndCheckAccess(UUID rentalId) {
+    @Transactional
+    public ListingResponse publish(UUID rentalId, PublishRentalRequest request) {
+        Rental rental = findRentalByIdAndCheckAccess(rentalId);
+
+        if (rental.getStatus() != RentalStatus.VACANT) {
+            throw new BadRequestException("Only a VACANT rental can be published as a listing");
+        }
+
+        // Si une annonce existe déjà pour cette location, on la republier
+        Listing listing = listingRepository.findByRentalId(rentalId).orElse(null);
+        if (listing == null) {
+            listing = Listing.builder()
+                    .property(rental.getProperty())
+                    .rental(rental)
+                    .title(request.title())
+                    .description(request.description())
+                    .pricePerMonth(rental.getMonthlyRent())
+                    .currency(rental.getCurrency())
+                    .availableFrom(request.availableFrom())
+                    .status(ListingStatus.PUBLISHED)
+                    .publishedAt(java.time.LocalDateTime.now())
+                    .build();
+        } else {
+            listing.setTitle(request.title());
+            listing.setDescription(request.description());
+            listing.setPricePerMonth(rental.getMonthlyRent());
+            listing.setAvailableFrom(request.availableFrom());
+            listing.setStatus(ListingStatus.PUBLISHED);
+            listing.setPublishedAt(java.time.LocalDateTime.now());
+        }
+        listing = listingRepository.save(listing);
+
+        rental.setStatus(RentalStatus.LISTED);
+        rentalRepository.save(rental);
+
+        log.info("Rental {} published as listing {}", rentalId, listing.getId());
+        auditService.logAction(AuditAction.UPDATE, "Rental", rentalId);
+        return ListingResponse.from(listing);
+    }
+
+    @Transactional
+    public RentalResponse exitTenant(UUID rentalId, ExitTenantRequest request) {
+        Rental rental = findRentalByIdAndCheckAccess(rentalId);
+
+        if (rental.getStatus() != RentalStatus.ACTIVE) {
+            throw new BadRequestException("Only an ACTIVE rental can have a tenant exit planned");
+        }
+        if (rental.getTenant() == null) {
+            throw new BadRequestException("No tenant assigned to this rental");
+        }
+
+        // Enregistrer la date de sortie et passer en EXITING
+        rental.setEndDate(request.exitDate());
+        rental.setStatus(RentalStatus.EXITING);
+
+        // Publier une annonce automatiquement avec disponibilité = date de sortie
+        Listing listing = listingRepository.findByRentalId(rentalId).orElse(null);
+        if (listing == null) {
+            listing = Listing.builder()
+                    .property(rental.getProperty())
+                    .rental(rental)
+                    .title(rental.getProperty().getName())
+                    .pricePerMonth(rental.getMonthlyRent())
+                    .currency(rental.getCurrency())
+                    .availableFrom(request.exitDate())
+                    .status(ListingStatus.PUBLISHED)
+                    .publishedAt(java.time.LocalDateTime.now())
+                    .build();
+        } else {
+            listing.setPricePerMonth(rental.getMonthlyRent());
+            listing.setAvailableFrom(request.exitDate());
+            listing.setStatus(ListingStatus.PUBLISHED);
+            listing.setPublishedAt(java.time.LocalDateTime.now());
+        }
+        listingRepository.save(listing);
+
+        rental = rentalRepository.save(rental);
+        log.info("Rental {} planned exit on {}, listing published", rentalId, request.exitDate());
+        auditService.logAction(AuditAction.UPDATE, "Rental", rentalId);
+        return RentalResponse.from(rental);
+    }
+
+    @Transactional
+    public RentalResponse confirmExit(UUID rentalId) {
+        Rental rental = findRentalByIdAndCheckAccess(rentalId);
+
+        if (rental.getStatus() != RentalStatus.EXITING) {
+            throw new BadRequestException("Only an EXITING rental can be confirmed");
+        }
+
+        // Le prochain locataire est stocké dans rental.application (candidature acceptée)
+        com.howners.gestion.domain.user.User nextTenant = null;
+        if (rental.getApplication() != null &&
+                rental.getApplication().getStatus() == com.howners.gestion.domain.application.ApplicationStatus.ACCEPTED) {
+            nextTenant = rental.getApplication().getApplicant();
+        }
+
+        rental.setTenant(nextTenant);
+        rental.setApplication(nextTenant != null ? rental.getApplication() : null);
+        rental.setStartDate(rental.getEndDate());
+        rental.setEndDate(null);
+
+        if (nextTenant != null) {
+            rental.setStatus(RentalStatus.ACTIVE);
+            log.info("Rental {} exit confirmed, new tenant {} activated", rentalId, nextTenant.getId());
+        } else {
+            rental.setStatus(RentalStatus.VACANT);
+            log.info("Rental {} exit confirmed, now vacant", rentalId);
+        }
+
+        rental = rentalRepository.save(rental);
+        auditService.logAction(AuditAction.UPDATE, "Rental", rentalId);
+        return RentalResponse.from(rental);
+    }
+
+    public Rental findRentalByIdAndCheckAccess(UUID rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", rentalId.toString()));
 
         UUID currentUserId = AuthService.getCurrentUserId();
-
-        // Le propriétaire du bien ou le locataire peut accéder à la location
         boolean isOwner = rental.getProperty().getOwner().getId().equals(currentUserId);
         boolean isTenant = rental.getTenant() != null && rental.getTenant().getId().equals(currentUserId);
 
@@ -224,53 +284,5 @@ public class RentalService {
         }
 
         return rental;
-    }
-
-    private User createTenant(CreateRentalRequest request, Property property) {
-        // Vérifier si l'email existe déjà
-        if (userRepository.existsByEmail(request.tenantEmail())) {
-            throw new BusinessException("A user with this email already exists");
-        }
-
-        log.info("Creating new tenant with email {}", request.tenantEmail());
-
-        // Générer un mot de passe temporaire
-        String tempPassword = UUID.randomUUID().toString().substring(0, 12);
-
-        User tenant = User.builder()
-                .email(request.tenantEmail())
-                .passwordHash(passwordEncoder.encode(tempPassword))
-                .firstName(request.tenantFirstName())
-                .lastName(request.tenantLastName())
-                .phone(request.tenantPhone())
-                .role(Role.TENANT)
-                .enabled(true)
-                .build();
-
-        tenant = userRepository.save(tenant);
-        log.info("Tenant created with id {}", tenant.getId());
-
-        // Envoyer un email de bienvenue au locataire avec ses identifiants
-        try {
-            String ownerName = property.getOwner().getFirstName() + " " + property.getOwner().getLastName();
-            String tenantName = request.tenantFirstName() + " " + request.tenantLastName();
-            String loginUrl = frontendUrl + "/login";
-
-            WelcomeTenantEmailData emailData = WelcomeTenantEmailData.builder()
-                    .recipientEmail(request.tenantEmail())
-                    .recipientName(tenantName)
-                    .ownerName(ownerName)
-                    .propertyName(property.getName())
-                    .tempPassword(tempPassword)
-                    .loginUrl(loginUrl)
-                    .build();
-
-            emailService.sendWelcomeTenantEmail(emailData);
-            log.info("Welcome email sent to tenant {}", request.tenantEmail());
-        } catch (Exception e) {
-            log.error("Failed to send welcome email to tenant {}, but tenant was created successfully", request.tenantEmail(), e);
-        }
-
-        return tenant;
     }
 }

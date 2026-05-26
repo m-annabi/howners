@@ -108,7 +108,6 @@ public class FeatureGateService {
                 true, // canCreateRental - always allowed
                 true, // canCreateListing - always allowed
                 hasFeature(userId, "e_signature"),
-                hasFeature(userId, "tenant_scoring"),
                 hasFeature(userId, "document_encryption")
         );
     }

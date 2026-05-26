@@ -43,12 +43,7 @@ const routes: Routes = [
     loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule),
     canActivate: [AuthGuard]
   },
-  {
-    path: 'ratings',
-    loadChildren: () => import('./features/ratings/ratings.module').then(m => m.RatingsModule),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['OWNER', 'CONCIERGE', 'ADMIN'] }
-  },
+
   {
     path: 'payments',
     loadChildren: () => import('./features/payments/payments.module').then(m => m.PaymentsModule),
@@ -88,18 +83,7 @@ const routes: Routes = [
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['ADMIN'] }
   },
-  {
-    path: 'search-profile',
-    loadChildren: () => import('./features/tenant-search/tenant-search.module').then(m => m.TenantSearchModule),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['TENANT', 'ADMIN'] }
-  },
-  {
-    path: 'tenant-discovery',
-    loadChildren: () => import('./features/tenant-discovery/tenant-discovery.module').then(m => m.TenantDiscoveryModule),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['OWNER', 'ADMIN'] }
-  },
+
   {
     path: 'listings',
     loadChildren: () => import('./features/listings/listings.module').then(m => m.ListingsModule)

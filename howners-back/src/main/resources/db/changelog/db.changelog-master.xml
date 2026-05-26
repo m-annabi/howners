@@ -68,5 +68,8 @@
     <include file="db/changelog/062-fix-expense-categories.xml"/>
     <include file="db/changelog/063-fix-edl-types.xml"/>
     <include file="db/changelog/064-create-user-widget-preferences.xml"/>
+    <include file="db/changelog/065-drop-discovery-rating-tables.xml"/>
+    <include file="db/changelog/066-rental-vacant-listed-listing-rental-fk.xml"/>
+    <include file="db/changelog/067-rental-status-exiting.xml"/>
 
 </databaseChangeLog>

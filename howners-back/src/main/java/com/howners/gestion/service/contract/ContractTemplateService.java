@@ -47,8 +47,12 @@ public class ContractTemplateService {
      * Récupère le template par défaut pour un type de location
      */
     public ContractTemplate getDefaultTemplate(RentalType rentalType) {
-        return contractTemplateRepository.findByRentalTypeAndIsDefaultTrue(rentalType)
-                .orElseThrow(() -> new ResourceNotFoundException("Default template for type " + rentalType, "rentalType", rentalType.toString()));
+        if (rentalType != null) {
+            Optional<ContractTemplate> typed = contractTemplateRepository.findByRentalTypeAndIsDefaultTrue(rentalType);
+            if (typed.isPresent()) return typed.get();
+        }
+        return contractTemplateRepository.findFirstByIsDefaultTrueAndIsActiveTrue()
+                .orElseThrow(() -> new ResourceNotFoundException("Default template", "rentalType", rentalType != null ? rentalType.toString() : "none"));
     }
 
     /**
@@ -105,7 +109,7 @@ public class ContractTemplateService {
                 : "à l'échéance convenue, par renouvellement tacite annuel");
         variables.put("rental.monthlyRent", formatAmount(rental.getMonthlyRent()));
         variables.put("rental.depositAmount", rental.getDepositAmount() != null ? formatAmount(rental.getDepositAmount()) : "0");
-        variables.put("rental.type", rental.getRentalType().name());
+        variables.put("rental.type", rental.getRentalType() != null ? rental.getRentalType().name() : "");
         variables.put("rental.status", rental.getStatus().name());
 
         // Variables date du jour

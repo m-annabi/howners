@@ -20,9 +20,6 @@ public record DashboardStatsResponse(
     public record TenantInfo(
             long totalApplications,
             long pendingApplications,
-            long pendingInvitations,
-            long totalInvitations,
-            boolean searchProfileActive,
             long unreadMessages
     ) {}
 

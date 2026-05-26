@@ -12,7 +12,6 @@ import { ListingPhotoUploadComponent } from './components/listing-photo-upload/l
 import { ToastComponent } from './components/toast/toast.component';
 import { NotificationComponent } from './components/notification/notification.component';
 import { TemplateSelectorDialogComponent } from './components/template-selector-dialog/template-selector-dialog.component';
-import { TenantRatingSummaryComponent } from '../features/ratings/tenant-rating-summary/tenant-rating-summary.component';
 
 import { WidgetConfiguratorComponent } from './components/widget-configurator/widget-configurator.component';
 
@@ -40,7 +39,6 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     ToastComponent,
     NotificationComponent,
     TemplateSelectorDialogComponent,
-    TenantRatingSummaryComponent,
     // New components
     PageHeaderComponent,
     EmptyStateComponent,
@@ -71,7 +69,6 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     ToastComponent,
     NotificationComponent,
     TemplateSelectorDialogComponent,
-    TenantRatingSummaryComponent,
     DragDropModule,
     // New components
     PageHeaderComponent,

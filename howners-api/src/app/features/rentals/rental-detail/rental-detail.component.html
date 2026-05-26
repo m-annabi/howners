@@ -21,7 +21,6 @@
           <div>
             <h1>{{ rental.propertyName }}</h1>
             <div class="badges">
-              <span class="type-badge">{{ rentalTypeLabels[rental.rentalType] }}</span>
               <span class="status-badge" [style.background-color]="getStatusColor(rental.status)">
                 {{ rentalStatusLabels[rental.status] }}
               </span>
@@ -29,8 +28,31 @@
           </div>
         </div>
 
+        <!-- Workflow progression -->
+        <div class="workflow-steps">
+          <div class="workflow-step" [class.active]="rental.status === RentalStatus.VACANT" [class.done]="rental.status !== RentalStatus.VACANT">
+            <span class="step-dot"></span><span class="step-label">Libre</span>
+          </div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-step" [class.active]="rental.status === RentalStatus.LISTED" [class.done]="rental.status === RentalStatus.PENDING || rental.status === RentalStatus.ACTIVE || rental.status === RentalStatus.EXITING || rental.status === RentalStatus.TERMINATED">
+            <span class="step-dot"></span><span class="step-label">En annonce</span>
+          </div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-step" [class.active]="rental.status === RentalStatus.PENDING" [class.done]="rental.status === RentalStatus.ACTIVE || rental.status === RentalStatus.EXITING || rental.status === RentalStatus.TERMINATED">
+            <span class="step-dot"></span><span class="step-label">En attente</span>
+          </div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-step" [class.active]="rental.status === RentalStatus.ACTIVE" [class.done]="rental.status === RentalStatus.EXITING || rental.status === RentalStatus.TERMINATED">
+            <span class="step-dot"></span><span class="step-label">Active</span>
+          </div>
+          <div class="workflow-arrow">→</div>
+          <div class="workflow-step" [class.active]="rental.status === RentalStatus.EXITING">
+            <span class="step-dot"></span><span class="step-label">Sortie prog.</span>
+          </div>
+        </div>
+
         <div class="detail-section">
-          <h2>👤 Locataire</h2>
+          <h2>Locataire</h2>
           <div *ngIf="rental.tenantName" class="tenant-info">
             <p class="tenant-name">{{ rental.tenantName }}</p>
             <p class="tenant-email">{{ rental.tenantEmail }}</p>
@@ -39,11 +61,11 @@
         </div>
 
         <div class="detail-section">
-          <h2>📅 Période</h2>
+          <h2>Période</h2>
           <div class="dates-grid">
             <div class="date-item">
               <span class="label">Date de début</span>
-              <span class="value">{{ rental.startDate | date:'dd/MM/yyyy' }}</span>
+              <span class="value">{{ rental.startDate ? (rental.startDate | date:'dd/MM/yyyy') : '—' }}</span>
             </div>
             <div class="date-item">
               <span class="label">Date de fin</span>
@@ -53,7 +75,7 @@
         </div>
 
         <div class="detail-section">
-          <h2>💰 Montants</h2>
+          <h2>Montants</h2>
           <div class="amounts-grid">
             <div class="amount-item">
               <span class="label">Loyer mensuel</span>
@@ -74,18 +96,12 @@
           </div>
         </div>
 
-        <!-- Section documents -->
         <div class="detail-section">
           <app-document-list [rentalId]="rental.id"></app-document-list>
         </div>
       </div>
 
       <div class="detail-sidebar">
-        <!-- Tenant Rating Summary -->
-        <app-tenant-rating-summary
-          *ngIf="rental.tenantId"
-          [tenantId]="rental.tenantId">
-        </app-tenant-rating-summary>
 
         <div class="sidebar-card">
           <h3>Informations</h3>
@@ -100,35 +116,56 @@
         </div>
 
         <div class="sidebar-card">
-          <h3>Actions rapides</h3>
+          <h3>Actions</h3>
 
-          <!-- Bouton Contrat -->
+          <!-- Publier en annonce (VACANT) -->
+          <button
+            *ngIf="rental.status === RentalStatus.VACANT"
+            class="action-btn action-btn--highlight"
+            (click)="openPublishModal()">
+            Publier en annonce
+          </button>
+
+          <!-- Programmer la sortie (ACTIVE) -->
+          <button
+            *ngIf="rental.status === RentalStatus.ACTIVE"
+            class="action-btn action-btn--danger"
+            (click)="openExitModal()">
+            Programmer la sortie
+          </button>
+
+          <!-- Confirmer la sortie (EXITING) -->
+          <button
+            *ngIf="rental.status === RentalStatus.EXITING"
+            class="action-btn action-btn--danger"
+            [disabled]="confirmExitLoading"
+            (click)="confirmExit()">
+            {{ confirmExitLoading ? 'Confirmation…' : 'Confirmer la sortie' }}
+          </button>
+
+          <!-- Contrat -->
           <div class="contract-actions">
             <button
               *ngIf="!hasContract() && !loadingContracts"
-              class="action-btn btn-primary"
+              class="action-btn"
               (click)="openTemplateSelector()"
               [disabled]="creatingContract">
-              <span *ngIf="!creatingContract">📝 Générer un contrat</span>
-              <span *ngIf="creatingContract">⏳ Génération...</span>
+              <span *ngIf="!creatingContract">Générer un contrat</span>
+              <span *ngIf="creatingContract">Génération...</span>
             </button>
-
             <button
               *ngIf="hasContract()"
               class="action-btn"
               (click)="viewContract(getMainContract()!.id)">
-              📄 Voir le contrat
+              Voir le contrat
             </button>
-
             <span *ngIf="loadingContracts" class="loading-text">Chargement...</span>
           </div>
 
-          <button class="action-btn" [routerLink]="['/inventory', 'new', rental.id]">
-            <i class="bi bi-clipboard-check"></i> Nouvel état des lieux
-          </button>
-          <button class="action-btn" (click)="viewPayments()">💳 Voir les paiements</button>
-          <button class="action-btn" (click)="viewInvoices()">🧾 Voir les factures</button>
-          <button class="action-btn" (click)="viewStats()">📊 Statistiques</button>
+          <button class="action-btn" [routerLink]="['/inventory', 'new', rental.id]">Nouvel état des lieux</button>
+          <button class="action-btn" (click)="viewPayments()">Voir les paiements</button>
+          <button class="action-btn" (click)="viewInvoices()">Voir les factures</button>
+          <button class="action-btn" (click)="viewStats()">Statistiques</button>
         </div>
       </div>
     </div>
@@ -139,7 +176,67 @@
 <app-template-selector-dialog
   *ngIf="showTemplateSelector && rental"
   [rentalId]="rental.id"
-  [rentalType]="rental.rentalType"
+  [rentalType]="null"
   (onConfirm)="createContractWithTemplate($event!)"
   (onCancel)="closeTemplateSelector()">
 </app-template-selector-dialog>
+
+<!-- Modal : Publier en annonce -->
+<div *ngIf="showPublishModal" class="modal-overlay" (click)="closePublishModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Publier en annonce</h2>
+      <button class="modal-close" (click)="closePublishModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Titre de l'annonce *</label>
+        <input type="text" [(ngModel)]="publishTitle" class="form-control" placeholder="Ex : Appartement T2 lumineux">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea [(ngModel)]="publishDescription" class="form-control" rows="3" placeholder="Décrivez le logement…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Disponible à partir du</label>
+        <input type="date" [(ngModel)]="publishAvailableFrom" class="form-control">
+        <small class="hint">Laisser vide si disponible immédiatement</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closePublishModal()">Annuler</button>
+      <button class="btn btn-primary" [disabled]="!publishTitle.trim() || publishLoading" (click)="submitPublish()">
+        {{ publishLoading ? 'Publication…' : 'Publier' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal : Programmer la sortie -->
+<div *ngIf="showExitModal" class="modal-overlay" (click)="closeExitModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Programmer la sortie</h2>
+      <button class="modal-close" (click)="closeExitModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-warning">
+        Le logement sera mis en annonce avec cette date de disponibilité. Le locataire actuel reste jusqu'à la date de sortie.
+      </p>
+      <div class="form-group">
+        <label>Date de sortie prévue *</label>
+        <input type="date" [(ngModel)]="exitDate" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea [(ngModel)]="exitNotes" class="form-control" rows="2" placeholder="Informations complémentaires…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeExitModal()">Annuler</button>
+      <button class="btn btn-danger" [disabled]="!exitDate || exitLoading" (click)="submitExitTenant()">
+        {{ exitLoading ? 'Enregistrement…' : 'Programmer la sortie' }}
+      </button>
+    </div>
+  </div>
+</div>

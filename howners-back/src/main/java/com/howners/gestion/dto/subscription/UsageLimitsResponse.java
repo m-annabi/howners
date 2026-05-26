@@ -11,6 +11,5 @@ public record UsageLimitsResponse(
         boolean canCreateRental,
         boolean canCreateListing,
         boolean hasESignature,
-        boolean hasTenantScoring,
         boolean hasDocumentEncryption
 ) {}

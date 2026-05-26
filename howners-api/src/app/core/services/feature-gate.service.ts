@@ -44,12 +44,6 @@ export class FeatureGateService {
     );
   }
 
-  hasTenantScoring(): Observable<boolean> {
-    return this.subscriptionService.getUsageLimits().pipe(
-      map(limits => limits.hasTenantScoring),
-      catchError(() => of(false))
-    );
-  }
 
   hasDocumentEncryption(): Observable<boolean> {
     return this.subscriptionService.getUsageLimits().pipe(

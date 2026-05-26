@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="066-rental-vacant-listed-listing-rental-fk" author="howners">
+
+        <!-- Lier une annonce à une location (nullable pour compatibilité existante) -->
+        <addColumn tableName="listings">
+            <column name="rental_id" type="UUID">
+                <constraints foreignKeyName="fk_listings_rental" references="rentals(id)" nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Rendre start_date nullable (pas connue à la création d'une location vacante) -->
+        <modifyDataType tableName="rentals" columnName="start_date" newDataType="DATE"/>
+        <dropNotNullConstraint tableName="rentals" columnName="start_date" columnDataType="DATE"/>
+
+        <!-- Migrer les locations PENDING sans locataire → VACANT -->
+        <update tableName="rentals">
+            <column name="status" value="VACANT"/>
+            <where>status = 'PENDING' AND tenant_id IS NULL</where>
+        </update>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,6 +1,9 @@
 package com.howners.gestion.controller;
 
+import com.howners.gestion.dto.listing.ListingResponse;
 import com.howners.gestion.dto.request.CreateRentalRequest;
+import com.howners.gestion.dto.request.ExitTenantRequest;
+import com.howners.gestion.dto.request.PublishRentalRequest;
 import com.howners.gestion.dto.request.UpdateRentalRequest;
 import com.howners.gestion.dto.response.RentalResponse;
 import com.howners.gestion.dto.response.UserResponse;
@@ -61,5 +64,27 @@ public class RentalController {
     public ResponseEntity<Void> deleteRental(@PathVariable UUID id) {
         rentalService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/publish")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<ListingResponse> publishRental(
+            @PathVariable UUID id,
+            @Valid @RequestBody PublishRentalRequest request) {
+        return ResponseEntity.ok(rentalService.publish(id, request));
+    }
+
+    @PostMapping("/{id}/exit-tenant")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<RentalResponse> exitTenant(
+            @PathVariable UUID id,
+            @Valid @RequestBody ExitTenantRequest request) {
+        return ResponseEntity.ok(rentalService.exitTenant(id, request));
+    }
+
+    @PostMapping("/{id}/confirm-exit")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<RentalResponse> confirmExit(@PathVariable UUID id) {
+        return ResponseEntity.ok(rentalService.confirmExit(id));
     }
 }
