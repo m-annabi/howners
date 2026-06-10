@@ -16,6 +16,7 @@ import com.howners.gestion.repository.PropertyRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.photo.ListingPhotoService;
+import com.howners.gestion.service.subscription.FeatureGateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class ListingService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final ListingPhotoService listingPhotoService;
+    private final FeatureGateService featureGateService;
 
     @Transactional(readOnly = true)
     public List<ListingResponse> searchPublished(String search) {
@@ -195,6 +197,7 @@ public class ListingService {
     @Transactional
     public ListingResponse create(CreateListingRequest request) {
         UUID currentUserId = AuthService.getCurrentUserId();
+        featureGateService.assertCanCreate(currentUserId, "LISTINGS");
 
         Property property = propertyRepository.findById(request.propertyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));

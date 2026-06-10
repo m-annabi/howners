@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrat arrivant a echeance</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #1A1A1A;
+            background-color: #F7F4EE;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 24px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(30, 58, 95, 0.08);
+        }
+        .header {
+            background: #1E3A5F;
+            color: #ffffff;
+            padding: 36px 28px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 8px;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 15px;
+        }
+        .accent-bar {
+            height: 3px;
+            background: #C9A961;
+        }
+        .body {
+            padding: 28px;
+        }
+        .greeting {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 20px;
+            color: #1E3A5F;
+            margin: 0 0 16px;
+        }
+        .lead {
+            color: #495057;
+            margin: 0 0 24px;
+        }
+        .contract-details {
+            background-color: #F7F4EE;
+            border-left: 3px solid #C9A961;
+            padding: 20px;
+            margin: 0 0 24px;
+            border-radius: 6px;
+        }
+        .contract-details h3 {
+            margin: 0 0 12px;
+            color: #1E3A5F;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .detail-item {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #1E3A5F;
+        }
+        .suggestions {
+            margin: 0 0 24px;
+            padding: 18px 20px;
+            background: #FBF7EB;
+            border: 1px solid #F5EBCB;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .suggestions h3 {
+            margin: 0 0 8px;
+            color: #8E6F30;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .suggestions ul {
+            margin: 8px 0 0;
+            padding-left: 20px;
+            color: #495057;
+        }
+        .suggestions li {
+            margin-bottom: 6px;
+        }
+        .cta {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #1E3A5F;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 8px 0 16px;
+        }
+        .footer {
+            background: #08111C;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 20px 28px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .footer a { color: #C9A961; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Echeance de contrat</h1>
+        <p>Un de vos contrats arrive bientot a terme</p>
+    </div>
+    <div class="accent-bar"></div>
+    <div class="body">
+        <p class="greeting">Bonjour <span th:text="${recipientName}">Pierre</span>,</p>
+        <p class="lead">
+            Le contrat <strong th:text="${contractNumber}">CONT-2026-001</strong> pour le bien
+            <strong th:text="${propertyName}">Appartement Centre-ville</strong> arrive a echeance
+            le <strong th:text="${expiryDate}">10/07/2026</strong>.
+        </p>
+
+        <div class="contract-details">
+            <h3>Informations du contrat</h3>
+            <div class="detail-item">
+                <span class="detail-label">Bien :</span>
+                <span th:text="${propertyName}">Appartement Centre-ville</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Locataire :</span>
+                <span th:text="${tenantName}">Jean Dupont</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">N&deg; de contrat :</span>
+                <span th:text="${contractNumber}">CONT-2026-001</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Date d'echeance :</span>
+                <span th:text="${expiryDate}">10/07/2026</span>
+            </div>
+        </div>
+
+        <div class="suggestions">
+            <h3>Actions recommandees</h3>
+            <ul>
+                <li><strong>Renouveler le bail</strong> : creez un nouveau contrat depuis votre espace pour prolonger la location.</li>
+                <li><strong>Renegocier les conditions</strong> : profitez de cette echeance pour reviser le loyer ou les charges si necessaire.</li>
+                <li><strong>Preparer la fin de bail</strong> : planifiez l'etat des lieux de sortie et la restitution du depot de garantie.</li>
+            </ul>
+        </div>
+
+        <p>
+            <a th:href="${contractViewUrl}" class="cta">Voir le contrat</a>
+        </p>
+
+        <p style="margin-top: 20px; color: #6B7280; font-size: 14px;">
+            Anticipez pour eviter toute interruption. Si vous avez des questions, repondez simplement a cet email.
+        </p>
+    </div>
+    <div class="footer">
+        <p style="margin: 0 0 4px;">&copy; 2026 Howners. Tous droits reserves.</p>
+        <p style="margin: 0;">Cet email vous a ete envoye car un de vos contrats arrive a echeance dans 30 jours.</p>
+    </div>
+</div>
+</body>
+</html>
