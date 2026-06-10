@@ -50,8 +50,8 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   loadRentals(): void {
     this.loadingRentals = true;
     this.rentalService.getRentals().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (rentals) => {
-        this.rentals = rentals;
+      next: (page) => {
+        this.rentals = page.content;
         this.loadingRentals = false;
       },
       error: () => {

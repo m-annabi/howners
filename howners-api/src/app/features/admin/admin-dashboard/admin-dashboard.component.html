@@ -1,0 +1,131 @@
+<div class="admin-dashboard">
+
+  <app-page-header
+    title="Administration"
+    subtitle="Vue d'ensemble de la plateforme">
+  </app-page-header>
+
+  <!-- Loading -->
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
+
+  <!-- Error -->
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && stats">
+
+    <!-- KPI cards row 1 : Utilisateurs -->
+    <h3 class="admin-section-title">
+      <i class="bi bi-people-fill"></i>
+      Utilisateurs
+    </h3>
+    <div class="admin-kpi-grid">
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--primary">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.totalUsers }}</span>
+          <span class="admin-kpi__label">Utilisateurs</span>
+        </div>
+      </div>
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--success">
+          <i class="bi bi-person-badge"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.totalOwners }}</span>
+          <span class="admin-kpi__label">Proprietaires</span>
+        </div>
+      </div>
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--info">
+          <i class="bi bi-person"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.totalTenants }}</span>
+          <span class="admin-kpi__label">Locataires</span>
+        </div>
+      </div>
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--accent">
+          <i class="bi bi-person-plus"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.newUsersThisMonth }}</span>
+          <span class="admin-kpi__label">Nouveaux ce mois</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI cards row 2 : Plateforme -->
+    <h3 class="admin-section-title">
+      <i class="bi bi-grid-fill"></i>
+      Plateforme
+    </h3>
+    <div class="admin-kpi-grid">
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--primary">
+          <i class="bi bi-building"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.totalProperties }}</span>
+          <span class="admin-kpi__label">Biens</span>
+        </div>
+      </div>
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--success">
+          <i class="bi bi-key"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.totalRentals }}</span>
+          <span class="admin-kpi__label">Locations</span>
+        </div>
+      </div>
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--info">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.totalContracts }}</span>
+          <span class="admin-kpi__label">Contrats</span>
+        </div>
+      </div>
+      <div class="admin-kpi">
+        <div class="admin-kpi__icon admin-kpi__icon--warning">
+          <i class="bi bi-cash-coin"></i>
+        </div>
+        <div class="admin-kpi__body">
+          <span class="admin-kpi__value">{{ stats.mrr | number:'1.2-2' }} EUR</span>
+          <span class="admin-kpi__label">MRR</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription distribution -->
+    <div class="admin-subscriptions" *ngIf="planEntries.length > 0">
+      <h3 class="admin-section-title">
+        <i class="bi bi-pie-chart-fill"></i>
+        Abonnements actifs
+      </h3>
+      <div class="admin-plan-list">
+        <div class="admin-plan" *ngFor="let entry of planEntries">
+          <div class="admin-plan__header">
+            <span class="admin-plan__name">{{ entry.plan }}</span>
+            <span class="admin-plan__count">{{ entry.count }}</span>
+          </div>
+          <div class="admin-plan__bar-track">
+            <div class="admin-plan__bar-fill"
+                 [style.width.%]="getPlanBarWidth(entry.count)"
+                 [style.background]="getPlanColor(entry.plan)">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

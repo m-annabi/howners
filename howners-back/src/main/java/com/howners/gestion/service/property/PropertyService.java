@@ -15,6 +15,8 @@ import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,15 @@ public class PropertyService {
         return properties.stream()
                 .map(p -> PropertyResponse.from(p, activeMonthlyRent(p.getId())))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PropertyResponse> findAllByCurrentUser(Pageable pageable) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        log.debug("Finding all properties (paginated) for user {}", currentUserId);
+
+        Page<Property> properties = propertyRepository.findByOwnerId(currentUserId, pageable);
+        return properties.map(p -> PropertyResponse.from(p, activeMonthlyRent(p.getId())));
     }
 
     @Transactional(readOnly = true)

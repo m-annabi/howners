@@ -66,9 +66,9 @@ export class TenantRatingFormComponent implements OnInit {
   loadRentals(): void {
     this.loadingRentals = true;
     this.rentalService.getRentals().subscribe({
-      next: (rentals) => {
+      next: (page) => {
         // Filter only rentals with tenants
-        this.rentals = rentals.filter(r => r.tenantId);
+        this.rentals = page.content.filter(r => r.tenantId);
         this.loadingRentals = false;
       },
       error: () => {

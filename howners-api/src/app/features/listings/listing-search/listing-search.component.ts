@@ -93,8 +93,8 @@ export class ListingSearchComponent implements OnInit {
     }
 
     this.listingService.searchListings(Object.keys(filters).length > 0 ? filters : undefined).subscribe({
-      next: (listings) => {
-        this.listings = listings;
+      next: (page) => {
+        this.listings = page.content;
         this.loading = false;
       },
       error: () => this.loading = false

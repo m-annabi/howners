@@ -50,8 +50,8 @@ export class TenantProfileDetailComponent implements OnInit, OnDestroy {
 
   loadMyListings(): void {
     this.listingService.getMyListings().subscribe({
-      next: (listings) => {
-        this.myListings = listings.filter(l => l.status === 'PUBLISHED');
+      next: (page) => {
+        this.myListings = page.content.filter(l => l.status === 'PUBLISHED');
         if (!this.inviteListingId && this.myListings.length > 0) {
           this.inviteListingId = this.selectedListingId || this.myListings[0].id;
         }

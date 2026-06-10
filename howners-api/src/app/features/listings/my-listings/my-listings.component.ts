@@ -24,8 +24,8 @@ export class MyListingsComponent implements OnInit {
     this.loading = true;
     this.error = null;
     this.listingService.getMyListings().subscribe({
-      next: (listings) => {
-        this.listings = listings;
+      next: (page) => {
+        this.listings = page.content;
         this.loading = false;
       },
       error: () => {

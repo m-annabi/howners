@@ -30,6 +30,12 @@ spring:
     default-schema: public
     drop-first: false
 
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -109,6 +115,13 @@ app:
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4201}
+
+# SpringDoc / Swagger
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 # Server Configuration
 server:

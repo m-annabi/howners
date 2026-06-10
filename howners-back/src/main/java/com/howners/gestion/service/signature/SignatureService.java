@@ -14,7 +14,9 @@ import com.howners.gestion.repository.ContractRepository;
 import com.howners.gestion.repository.DocumentRepository;
 import com.howners.gestion.repository.SignatureRepository;
 import com.howners.gestion.repository.UserRepository;
+import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.service.auth.AuthService;
+import com.howners.gestion.service.notification.NotificationService;
 import com.howners.gestion.service.storage.StorageService;
 import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.ConflictException;
@@ -42,6 +44,7 @@ public class SignatureService {
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final NotificationService notificationService;
 
     /**
      * Créer une signature pour un contrat
@@ -133,6 +136,20 @@ public class SignatureService {
         contractRepository.save(contract);
 
         log.info("Contract {} signed by user {}", contract.getContractNumber(), currentUser.getEmail());
+
+        // Notifier le propriétaire que le contrat a été signé
+        try {
+            UUID ownerId = contract.getRental().getProperty().getOwner().getId();
+            notificationService.create(
+                    ownerId,
+                    NotificationType.SIGNATURE_COMPLETED,
+                    "Contrat signé",
+                    "Le contrat " + contract.getContractNumber() + " a été signé par " + currentUser.getFullName() + ".",
+                    "/contracts/" + contract.getId()
+            );
+        } catch (Exception e) {
+            log.error("Échec de la création de notification pour la signature du contrat {}", contract.getId(), e);
+        }
 
         return SignatureResponse.from(signature);
     }

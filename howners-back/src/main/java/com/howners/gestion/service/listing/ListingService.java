@@ -19,6 +19,8 @@ import com.howners.gestion.service.photo.ListingPhotoService;
 import com.howners.gestion.service.subscription.FeatureGateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,6 +157,63 @@ public class ListingService {
         return results;
     }
 
+    @Transactional(readOnly = true)
+    public Page<ListingResponse> searchPublishedAdvanced(
+            String search, String city, String department, String postalCode,
+            BigDecimal priceMin, BigDecimal priceMax, PropertyType propertyType,
+            BigDecimal minSurface, Integer minBedrooms, Boolean furnished,
+            LocalDate availableFrom, String sortBy,
+            BigDecimal nearLat, BigDecimal nearLng, BigDecimal radiusKm,
+            Pageable pageable) {
+
+        // When geo-radius or custom sort is active, fall back to the non-paginated path
+        // because post-fetch filtering / re-sorting is incompatible with DB-level pagination.
+        boolean hasRadius = nearLat != null && nearLng != null && radiusKm != null
+                && radiusKm.signum() > 0;
+        boolean hasCustomSort = sortBy != null && !sortBy.isBlank();
+
+        if (hasRadius || hasCustomSort) {
+            List<ListingResponse> all = searchPublishedAdvanced(
+                    search, city, department, postalCode,
+                    priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished,
+                    availableFrom, sortBy, nearLat, nearLng, radiusKm);
+            int start = (int) pageable.getOffset();
+            int end = Math.min(start + pageable.getPageSize(), all.size());
+            List<ListingResponse> pageContent = start >= all.size()
+                    ? List.of()
+                    : all.subList(start, end);
+            return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, all.size());
+        }
+
+        BigDecimal latMin = null, latMax = null, lngMin = null, lngMax = null;
+
+        boolean hasAny = (search != null && !search.isBlank())
+                || (city != null && !city.isBlank())
+                || (department != null && !department.isBlank())
+                || (postalCode != null && !postalCode.isBlank())
+                || priceMin != null || priceMax != null
+                || propertyType != null || minSurface != null
+                || minBedrooms != null || furnished != null
+                || availableFrom != null;
+
+        Page<Listing> listings;
+        if (!hasAny) {
+            listings = listingRepository.findByStatusOrderByPublishedAtDesc(ListingStatus.PUBLISHED, pageable);
+        } else {
+            listings = listingRepository.searchPublishedAdvanced(
+                    (search != null && !search.isBlank()) ? search : "",
+                    (city != null && !city.isBlank()) ? city : "",
+                    (department != null && !department.isBlank()) ? department : "",
+                    (postalCode != null && !postalCode.isBlank()) ? postalCode : "",
+                    priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished, availableFrom,
+                    latMin, latMax, lngMin, lngMax,
+                    pageable
+            );
+        }
+
+        return listings.map(this::toResponseWithPhotos);
+    }
+
     private static double haversineKm(double lat1, double lng1, double lat2, double lng2) {
         double R = 6371.0;
         double dLat = Math.toRadians(lat2 - lat1);
@@ -192,6 +251,21 @@ public class ListingService {
             listings = listingRepository.findByOwnerId(currentUserId);
         }
         return listings.stream().map(this::toResponseWithPhotos).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ListingResponse> findMyListings(Pageable pageable) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Page<Listing> listings;
+        if (user.getRole() == Role.ADMIN) {
+            listings = listingRepository.findAll(pageable);
+        } else {
+            listings = listingRepository.findByOwnerId(currentUserId, pageable);
+        }
+        return listings.map(this::toResponseWithPhotos);
     }
 
     @Transactional
