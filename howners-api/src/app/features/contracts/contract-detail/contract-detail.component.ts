@@ -230,15 +230,8 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       userAgent: userAgent
     };
 
-    console.log('Creating signature with request:', {
-      contractId: request.contractId,
-      dataLength: signatureBase64.length,
-      userAgent: userAgent
-    });
-
     this.signatureService.createSignature(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (signature) => {
-        console.log('Signature created successfully:', signature);
+      next: () => {
         this.signing = false;
         this.showSignaturePad = false;
         this.notificationService.success('Contrat signé avec succès!');
@@ -257,7 +250,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   }
 
   onSignatureCleared(): void {
-    console.log('Signature cleared');
+    // Rien à faire : le pad gère son propre état
   }
 
   canSign(): boolean {
@@ -332,8 +325,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$),
       finalize(() => this.signing = false)
     ).subscribe({
-      next: (signature) => {
-        console.log('Signature created successfully:', signature);
+      next: () => {
         this.showSignDialog = false;
         this.notificationService.success('Contrat signé avec succès!');
 
