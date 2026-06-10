@@ -24,5 +24,7 @@ public record RegisterRequest(
         String phone,
 
         @NotNull(message = "Role is required")
-        Role role
+        Role role,
+
+        String referralCode
 ) {}

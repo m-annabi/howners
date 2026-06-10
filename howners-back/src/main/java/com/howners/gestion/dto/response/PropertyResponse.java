@@ -35,10 +35,25 @@ public record PropertyResponse(
         Boolean hasElevator,
         Boolean isFurnished,
         PropertyCondition propertyCondition,
+        BigDecimal currentMonthlyRent,
+        BigDecimal grossYieldPercent,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
     public static PropertyResponse from(Property property) {
+        return from(property, null);
+    }
+
+    public static PropertyResponse from(Property property, BigDecimal currentMonthlyRent) {
+        BigDecimal yield = null;
+        if (currentMonthlyRent != null
+                && property.getPurchasePrice() != null
+                && property.getPurchasePrice().signum() > 0) {
+            BigDecimal annualIncome = currentMonthlyRent.multiply(BigDecimal.valueOf(12));
+            yield = annualIncome
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(property.getPurchasePrice(), 2, java.math.RoundingMode.HALF_UP);
+        }
         return new PropertyResponse(
                 property.getId(),
                 property.getOwner().getId(),
@@ -71,6 +86,8 @@ public record PropertyResponse(
                 property.getHasElevator(),
                 property.getIsFurnished(),
                 property.getPropertyCondition(),
+                currentMonthlyRent,
+                yield,
                 property.getCreatedAt(),
                 property.getUpdatedAt()
         );

@@ -8,7 +8,6 @@ import com.howners.gestion.dto.request.UpdatePropertyRequest;
 import com.howners.gestion.dto.response.PropertyResponse;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.exception.ResourceNotFoundException;
-import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.rental.RentalStatus;
 import com.howners.gestion.repository.PropertyRepository;
 import com.howners.gestion.repository.RentalRepository;
@@ -40,14 +39,26 @@ public class PropertyService {
 
         List<Property> properties = propertyRepository.findByOwnerId(currentUserId);
         return properties.stream()
-                .map(PropertyResponse::from)
+                .map(p -> PropertyResponse.from(p, activeMonthlyRent(p.getId())))
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public PropertyResponse findById(UUID propertyId) {
         Property property = findPropertyByIdAndCheckOwnership(propertyId);
-        return PropertyResponse.from(property);
+        return PropertyResponse.from(property, activeMonthlyRent(property.getId()));
+    }
+
+    /**
+     * Returns the monthly rent of the currently active rental for the property,
+     * or null if the property has no ACTIVE rental.
+     */
+    private java.math.BigDecimal activeMonthlyRent(UUID propertyId) {
+        return rentalRepository.findByPropertyId(propertyId).stream()
+                .filter(r -> r.getStatus() == RentalStatus.ACTIVE)
+                .map(com.howners.gestion.domain.rental.Rental::getMonthlyRent)
+                .findFirst()
+                .orElse(null);
     }
 
     @Transactional
@@ -186,13 +197,13 @@ public class PropertyService {
         Property property = findPropertyByIdAndCheckOwnership(propertyId);
         log.info("Deleting property {}", propertyId);
 
-        List<Rental> activeRentals = rentalRepository.findByPropertyId(propertyId).stream()
+        // Check if property has active or pending rentals
+        long activeRentals = rentalRepository.findByPropertyId(propertyId).stream()
                 .filter(r -> r.getStatus() == RentalStatus.ACTIVE || r.getStatus() == RentalStatus.PENDING)
-                .toList();
-
-        if (!activeRentals.isEmpty()) {
+                .count();
+        if (activeRentals > 0) {
             throw new BusinessException(
-                String.format("Cannot delete property. %d active or pending rental(s) are associated with this property. Please terminate them first.", activeRentals.size())
+                String.format("Cannot delete property. %d active/pending rental(s) exist. Please terminate rentals first.", activeRentals)
             );
         }
 

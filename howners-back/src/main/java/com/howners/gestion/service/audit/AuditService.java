@@ -109,7 +109,7 @@ public class AuditService {
         } catch (Exception e) {
             // No request context
         }
-        return "unknown";
+        return null;
     }
 
     private String getUserAgent() {
@@ -121,6 +121,6 @@ public class AuditService {
         } catch (Exception e) {
             // No request context
         }
-        return "unknown";
+        return null;
     }
 }

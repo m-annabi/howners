@@ -4,7 +4,11 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  {
+    path: '',
+    loadChildren: () => import('./features/landing/landing.module').then(m => m.LandingModule),
+    pathMatch: 'full'
+  },
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
@@ -49,7 +53,7 @@ const routes: Routes = [
     path: 'payments',
     loadChildren: () => import('./features/payments/payments.module').then(m => m.PaymentsModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: ['OWNER', 'ADMIN'] }
+    data: { roles: ['OWNER', 'TENANT', 'ADMIN'] }
   },
   {
     path: 'invoices',
@@ -114,6 +118,11 @@ const routes: Routes = [
   {
     path: 'billing',
     loadChildren: () => import('./features/billing/billing.module').then(m => m.BillingModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'referral',
+    loadChildren: () => import('./features/referral/referral.module').then(m => m.ReferralModule),
     canActivate: [AuthGuard]
   },
   {

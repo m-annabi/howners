@@ -24,5 +24,7 @@ public record ContractPublicView(
         LocalDate rentalEndDate,
         String monthlyRent,
         LocalDateTime createdAt,
-        String documentUrl
+        String documentUrl,
+        String signatureProvider,
+        boolean canSignWithCanvas
 ) {}

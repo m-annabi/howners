@@ -1,9 +1,12 @@
 package com.howners.gestion.service.email;
 
+import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
 import com.howners.gestion.dto.email.SignatureRequestEmailData;
+import com.howners.gestion.dto.email.WeeklyDigestEmailData;
+import com.howners.gestion.dto.email.WelcomeOwnerEmailData;
 import com.howners.gestion.dto.email.WelcomeTenantEmailData;
 
 /**
@@ -32,7 +35,27 @@ public interface EmailService {
     void sendWelcomeTenantEmail(WelcomeTenantEmailData data);
 
     /**
+     * Envoie un email de bienvenue à un nouveau bailleur après inscription
+     */
+    void sendWelcomeOwnerEmail(WelcomeOwnerEmailData data);
+
+    /**
      * Envoie un email de notification au locataire quand sa quittance de loyer est générée
      */
     void sendReceiptEmail(ReceiptEmailData data);
+
+    /**
+     * Envoie un email au candidat quand sa candidature est acceptée
+     */
+    void sendApplicationAcceptedEmail(ApplicationReviewedEmailData data);
+
+    /**
+     * Envoie un email au candidat quand sa candidature est refusée
+     */
+    void sendApplicationRejectedEmail(ApplicationReviewedEmailData data);
+
+    /**
+     * Envoie le digest hebdomadaire "À traiter" au bailleur.
+     */
+    void sendWeeklyDigestEmail(WeeklyDigestEmailData data);
 }

@@ -5,11 +5,13 @@ import { SharedModule } from '../../shared/shared.module';
 import { TenantDiscoveryRoutingModule } from './tenant-discovery-routing.module';
 import { TenantSearchComponent } from './tenant-search/tenant-search.component';
 import { TenantProfileDetailComponent } from './tenant-profile-detail/tenant-profile-detail.component';
+import { SentInvitationsComponent } from './sent-invitations/sent-invitations.component';
 
 @NgModule({
   declarations: [
     TenantSearchComponent,
-    TenantProfileDetailComponent
+    TenantProfileDetailComponent,
+    SentInvitationsComponent
   ],
   imports: [
     CommonModule,

@@ -126,9 +126,9 @@
           <button class="action-btn" [routerLink]="['/inventory', 'new', rental.id]">
             <i class="bi bi-clipboard-check"></i> Nouvel état des lieux
           </button>
-          <button class="action-btn" disabled>💳 Voir les paiements</button>
-          <button class="action-btn" disabled>🧾 Voir les factures</button>
-          <button class="action-btn" disabled>📊 Statistiques</button>
+          <button class="action-btn" (click)="viewPayments()">💳 Voir les paiements</button>
+          <button class="action-btn" (click)="viewInvoices()">🧾 Voir les factures</button>
+          <button class="action-btn" (click)="viewStats()">📊 Statistiques</button>
         </div>
       </div>
     </div>

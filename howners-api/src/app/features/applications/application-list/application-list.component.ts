@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApplicationService } from '../../../core/services/application.service';
 import { DocumentService } from '../../../core/services/document.service';
+
 import {
   Application,
   ApplicationStatus,
@@ -10,6 +11,7 @@ import {
   APPLICATION_STATUS_COLORS
 } from '../../../core/models/application.model';
 import { DocumentType } from '../../../core/models/document.model';
+import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
 
 interface RequiredDocumentType {
   type: DocumentType;
@@ -22,14 +24,54 @@ interface RequiredDocumentType {
 })
 export class ApplicationListComponent implements OnInit {
   applications: Application[] = [];
+  filteredApplications: Application[] = [];
   loading = false;
+  error: string | null = null;
   listingId: string | null = null;
   reviewingId: string | null = null;
   reviewNotes = '';
   expandedDossierId: string | null = null;
+  activeFilter: string = 'PENDING';
 
   statusLabels = APPLICATION_STATUS_LABELS;
   statusColors = APPLICATION_STATUS_COLORS;
+
+  get filters(): QuickFilter[] {
+    const counts = new Map<string, number>();
+    counts.set('ALL', this.applications.length);
+    let pending = 0;
+    for (const a of this.applications) {
+      counts.set(a.status, (counts.get(a.status) || 0) + 1);
+      if (a.status === ApplicationStatus.SUBMITTED || a.status === ApplicationStatus.UNDER_REVIEW) {
+        pending++;
+      }
+    }
+    const list: QuickFilter[] = [
+      { key: 'PENDING', label: 'À examiner', count: pending, tone: 'warning' },
+      { key: 'ALL', label: 'Toutes', count: counts.get('ALL') || 0 },
+      { key: ApplicationStatus.ACCEPTED, label: 'Acceptées', count: counts.get(ApplicationStatus.ACCEPTED) || 0, tone: 'success' },
+      { key: ApplicationStatus.REJECTED, label: 'Refusées', count: counts.get(ApplicationStatus.REJECTED) || 0 },
+      { key: ApplicationStatus.WITHDRAWN, label: 'Retirées', count: counts.get(ApplicationStatus.WITHDRAWN) || 0 }
+    ];
+    return list.filter(f => f.key === 'PENDING' || f.key === 'ALL' || (f.count || 0) > 0);
+  }
+
+  onFilterChange(key: string): void {
+    this.activeFilter = key;
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    if (this.activeFilter === 'PENDING') {
+      this.filteredApplications = this.applications.filter(a =>
+        a.status === ApplicationStatus.SUBMITTED || a.status === ApplicationStatus.UNDER_REVIEW
+      );
+    } else if (this.activeFilter === 'ALL') {
+      this.filteredApplications = this.applications;
+    } else {
+      this.filteredApplications = this.applications.filter(a => a.status === this.activeFilter);
+    }
+  }
 
   readonly REQUIRED_DOCUMENT_TYPES: RequiredDocumentType[] = [
     { type: DocumentType.IDENTITY, label: 'Piece d\'identite' },
@@ -47,11 +89,14 @@ export class ApplicationListComponent implements OnInit {
 
   ngOnInit(): void {
     this.listingId = this.route.snapshot.queryParamMap.get('listingId');
+    const filter = this.route.snapshot.queryParamMap.get('filter');
+    if (filter === 'pending') this.activeFilter = 'PENDING';
     this.loadApplications();
   }
 
   loadApplications(): void {
     this.loading = true;
+    this.error = null;
     const obs = this.listingId
       ? this.applicationService.getByListing(this.listingId)
       : this.applicationService.getReceivedApplications();
@@ -59,9 +104,13 @@ export class ApplicationListComponent implements OnInit {
     obs.subscribe({
       next: (apps) => {
         this.applications = apps;
+        this.applyFilters();
         this.loading = false;
       },
-      error: () => this.loading = false
+      error: () => {
+        this.error = 'Erreur lors du chargement des candidatures';
+        this.loading = false;
+      }
     });
   }
 
@@ -93,8 +142,16 @@ export class ApplicationListComponent implements OnInit {
         this.reviewingId = null;
         this.reviewNotes = '';
         this.loadApplications();
+      },
+      error: () => {
+        this.error = 'Erreur lors du traitement de la candidature';
       }
     });
+  }
+
+  // Backwards-compat for template references to `applications` count
+  hasFilteredApplications(): boolean {
+    return this.filteredApplications.length > 0;
   }
 
   canReview(app: Application): boolean {
@@ -124,6 +181,9 @@ export class ApplicationListComponent implements OnInit {
         a.download = fileName;
         a.click();
         window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.error = 'Erreur lors du telechargement du document';
       }
     });
   }

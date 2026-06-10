@@ -1,0 +1,11 @@
+{
+  "code": "RCT8XNH",
+  "shareUrl": "http://localhost:4200/auth/register?ref=RCT8XNH",
+  "pendingCount": 2,
+  "convertedCount": 1,
+  "referees": [
+    { "name": "Léa Moreau",     "status": "CONVERTED", "createdAt": "2026-03-15T10:00:00Z" },
+    { "name": "Thomas Roux",    "status": "PENDING",   "createdAt": "2026-04-22T14:30:00Z" },
+    { "name": "Camille Lefèvre","status": "PENDING",   "createdAt": "2026-05-02T09:15:00Z" }
+  ]
+}

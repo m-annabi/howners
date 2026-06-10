@@ -23,3 +23,11 @@
     opacity: 1;
   }
 }
+
+.clickable {
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.95);
+  }
+}

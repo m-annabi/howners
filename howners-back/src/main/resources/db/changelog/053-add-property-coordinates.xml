@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="053-add-property-coordinates" author="howners">
+        <comment>Add latitude/longitude to properties for radius-based proximity search</comment>
+
+        <addColumn tableName="properties">
+            <column name="latitude" type="NUMERIC(10, 7)"/>
+            <column name="longitude" type="NUMERIC(10, 7)"/>
+        </addColumn>
+
+        <!-- Composite index covering both axes for bbox lookup -->
+        <createIndex tableName="properties" indexName="idx_properties_coords">
+            <column name="latitude"/>
+            <column name="longitude"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="properties" indexName="idx_properties_coords"/>
+            <dropColumn tableName="properties" columnName="longitude"/>
+            <dropColumn tableName="properties" columnName="latitude"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="053b-seed-property-coordinates" author="howners">
+        <comment>Backfill coordinates on sample properties (Île-de-France cities)</comment>
+
+        <!-- Owner 1 -->
+        <update tableName="properties">
+            <column name="latitude" valueNumeric="48.8714"/>
+            <column name="longitude" valueNumeric="2.2266"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000001'</where>
+        </update>
+        <update tableName="properties">
+            <column name="latitude" valueNumeric="48.8351"/>
+            <column name="longitude" valueNumeric="2.2410"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000002'</where>
+        </update>
+        <update tableName="properties">
+            <column name="latitude" valueNumeric="48.8775"/>
+            <column name="longitude" valueNumeric="2.1808"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000003'</where>
+        </update>
+        <update tableName="properties">
+            <column name="latitude" valueNumeric="48.8852"/>
+            <column name="longitude" valueNumeric="2.2391"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000004'</where>
+        </update>
+
+        <!-- Owner 2 — Paris + Levallois -->
+        <update tableName="properties">
+            <column name="latitude" valueNumeric="48.8566"/>
+            <column name="longitude" valueNumeric="2.3522"/>
+            <where>id = 'a0000002-0000-0000-0000-000000000001'</where>
+        </update>
+        <update tableName="properties">
+            <column name="latitude" valueNumeric="48.8945"/>
+            <column name="longitude" valueNumeric="2.2876"/>
+            <where>id = 'a0000002-0000-0000-0000-000000000002'</where>
+        </update>
+
+        <rollback>
+            <update tableName="properties">
+                <column name="latitude" valueComputed="NULL"/>
+                <column name="longitude" valueComputed="NULL"/>
+                <where>id IN (
+                    'a0000001-0000-0000-0000-000000000001',
+                    'a0000001-0000-0000-0000-000000000002',
+                    'a0000001-0000-0000-0000-000000000003',
+                    'a0000001-0000-0000-0000-000000000004',
+                    'a0000002-0000-0000-0000-000000000001',
+                    'a0000002-0000-0000-0000-000000000002'
+                )</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

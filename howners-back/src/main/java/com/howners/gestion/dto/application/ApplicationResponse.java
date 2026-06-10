@@ -4,6 +4,7 @@ import com.howners.gestion.domain.application.Application;
 import com.howners.gestion.domain.application.ApplicationStatus;
 import com.howners.gestion.dto.document.DocumentResponse;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +15,9 @@ public record ApplicationResponse(
         UUID listingId,
         String listingTitle,
         String propertyName,
+        UUID propertyId,
+        BigDecimal listingPricePerMonth,
+        String listingCurrency,
         UUID applicantId,
         String applicantName,
         String applicantEmail,
@@ -36,6 +40,9 @@ public record ApplicationResponse(
                 a.getListing().getId(),
                 a.getListing().getTitle(),
                 a.getListing().getProperty().getName(),
+                a.getListing().getProperty().getId(),
+                a.getListing().getPricePerMonth(),
+                a.getListing().getCurrency(),
                 a.getApplicant().getId(),
                 a.getApplicant().getFullName(),
                 a.getApplicant().getEmail(),

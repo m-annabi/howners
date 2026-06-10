@@ -35,7 +35,8 @@ export class MyInvitationsComponent implements OnInit {
       next: (updated) => {
         const idx = this.invitations.findIndex(i => i.id === updated.id);
         if (idx >= 0) this.invitations[idx] = updated;
-      }
+      },
+      error: () => {} // silent — status unchanged in UI
     });
   }
 
@@ -45,7 +46,8 @@ export class MyInvitationsComponent implements OnInit {
         next: (updated) => {
           const idx = this.invitations.findIndex(i => i.id === updated.id);
           if (idx >= 0) this.invitations[idx] = updated;
-        }
+        },
+        error: () => {} // silent — best effort
       });
     }
   }

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="055a-seed-property-financials" author="howners">
+        <comment>Backfill purchase_price and recurring charges on the 6 seed properties so the yield calculations show real numbers.</comment>
+
+        <!-- Studio Suresnes (small, mid-range) -->
+        <update tableName="properties">
+            <column name="purchase_price" valueNumeric="195000"/>
+            <column name="condo_fees" valueNumeric="80"/>
+            <column name="property_tax" valueNumeric="650"/>
+            <column name="home_insurance" valueNumeric="120"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000001'</where>
+        </update>
+
+        <!-- T3 Boulogne (premium location) -->
+        <update tableName="properties">
+            <column name="purchase_price" valueNumeric="520000"/>
+            <column name="condo_fees" valueNumeric="180"/>
+            <column name="property_tax" valueNumeric="1450"/>
+            <column name="home_insurance" valueNumeric="240"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000002'</where>
+        </update>
+
+        <!-- Maison Rueil — large -->
+        <update tableName="properties">
+            <column name="purchase_price" valueNumeric="780000"/>
+            <column name="condo_fees" valueNumeric="0"/>
+            <column name="property_tax" valueNumeric="2200"/>
+            <column name="home_insurance" valueNumeric="380"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000003'</where>
+        </update>
+
+        <!-- Loft Puteaux La Défense -->
+        <update tableName="properties">
+            <column name="purchase_price" valueNumeric="610000"/>
+            <column name="condo_fees" valueNumeric="220"/>
+            <column name="property_tax" valueNumeric="1800"/>
+            <column name="home_insurance" valueNumeric="290"/>
+            <where>id = 'a0000001-0000-0000-0000-000000000004'</where>
+        </update>
+
+        <!-- T2 Paris 15e (owner 2) -->
+        <update tableName="properties">
+            <column name="purchase_price" valueNumeric="450000"/>
+            <column name="condo_fees" valueNumeric="150"/>
+            <column name="property_tax" valueNumeric="1200"/>
+            <column name="home_insurance" valueNumeric="220"/>
+            <where>id = 'a0000002-0000-0000-0000-000000000001'</where>
+        </update>
+
+        <!-- Villa Versailles (owner 2) -->
+        <update tableName="properties">
+            <column name="purchase_price" valueNumeric="920000"/>
+            <column name="condo_fees" valueNumeric="0"/>
+            <column name="property_tax" valueNumeric="2700"/>
+            <column name="home_insurance" valueNumeric="450"/>
+            <where>id = 'a0000002-0000-0000-0000-000000000002'</where>
+        </update>
+
+        <rollback>
+            <update tableName="properties">
+                <column name="purchase_price" valueComputed="NULL"/>
+                <column name="condo_fees" valueComputed="NULL"/>
+                <column name="property_tax" valueComputed="NULL"/>
+                <column name="home_insurance" valueComputed="NULL"/>
+                <where>id::text LIKE 'a0000001-%' OR id::text LIKE 'a0000002-%'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="055b-seed-active-rentals" author="howners">
+        <comment>Seed 4 ACTIVE rentals matching seed tenants to seed properties so yield/cash-flow computations have meaningful numbers.</comment>
+
+        <!-- Studio Suresnes → Lucas Petit (étudiant) -->
+        <sql>
+            INSERT INTO rentals
+                (id, property_id, tenant_id, rental_type, status, start_date, monthly_rent, currency,
+                 deposit_amount, charges, payment_day, created_at, updated_at)
+            VALUES
+                ('d0000000-0000-0000-0000-000000000001',
+                 'a0000001-0000-0000-0000-000000000001',
+                 (SELECT id FROM users WHERE email='tenant3@howners.test'),
+                 'LONG_TERM', 'ACTIVE', '2026-01-01', 850, 'EUR', 1700, 50, 5,
+                 NOW() - INTERVAL '4 months', NOW());
+        </sql>
+
+        <!-- T3 Boulogne → Jean Locataire -->
+        <sql>
+            INSERT INTO rentals
+                (id, property_id, tenant_id, rental_type, status, start_date, monthly_rent, currency,
+                 deposit_amount, charges, payment_day, created_at, updated_at)
+            VALUES
+                ('d0000000-0000-0000-0000-000000000002',
+                 'a0000001-0000-0000-0000-000000000002',
+                 (SELECT id FROM users WHERE email='tenant1@howners.test'),
+                 'LONG_TERM', 'ACTIVE', '2025-11-15', 1750, 'EUR', 3500, 110, 5,
+                 NOW() - INTERVAL '6 months', NOW());
+        </sql>
+
+        <!-- T2 Paris 15e → Sophie Bernard (designer freelance) -->
+        <sql>
+            INSERT INTO rentals
+                (id, property_id, tenant_id, rental_type, status, start_date, monthly_rent, currency,
+                 deposit_amount, charges, payment_day, created_at, updated_at)
+            VALUES
+                ('d0000000-0000-0000-0000-000000000003',
+                 'a0000002-0000-0000-0000-000000000001',
+                 (SELECT id FROM users WHERE email='tenant2@howners.test'),
+                 'LONG_TERM', 'ACTIVE', '2025-09-01', 1380, 'EUR', 2760, 90, 1,
+                 NOW() - INTERVAL '8 months', NOW());
+        </sql>
+
+        <!-- Loft Puteaux La Defense → Inès Bernard (cadre dirigeante) -->
+        <sql>
+            INSERT INTO rentals
+                (id, property_id, tenant_id, rental_type, status, start_date, monthly_rent, currency,
+                 deposit_amount, charges, payment_day, created_at, updated_at)
+            VALUES
+                ('d0000000-0000-0000-0000-000000000004',
+                 'a0000001-0000-0000-0000-000000000004',
+                 (SELECT id FROM users WHERE email='ines.bernard@howners.test'),
+                 'LONG_TERM', 'ACTIVE', '2026-03-01', 2400, 'EUR', 4800, 180, 5,
+                 NOW() - INTERVAL '2 months', NOW());
+        </sql>
+
+        <!-- Maison Rueil-Malmaison and Villa Versailles intentionally left vacant -->
+
+        <rollback>
+            <delete tableName="rentals">
+                <where>id::text LIKE 'd0000000-%'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

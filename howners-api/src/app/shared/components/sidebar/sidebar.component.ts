@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { MessageService } from '../../../core/services/message.service';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { User } from '../../../core/models/user.model';
 import { Subscription, filter } from 'rxjs';
@@ -36,6 +37,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private subscriptionService: SubscriptionService,
+    private messageService: MessageService,
     private router: Router
   ) {}
 
@@ -46,6 +48,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.buildSections();
         if (user) {
           this.loadPlan();
+        }
+      })
+    );
+
+    this.subs.push(
+      this.messageService.unreadCount$.subscribe(count => {
+        const messagesSection = this.sections.find(s => s.title === 'COMMUNICATION');
+        if (messagesSection) {
+          const item = messagesSection.items.find(i => i.route === '/messages');
+          if (item) item.badge = count > 0 ? count : undefined;
         }
       })
     );
@@ -66,10 +78,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   isActive(route: string): boolean {
-    if (route === '/dashboard') {
-      return this.currentRoute === '/dashboard';
-    }
-    return this.currentRoute.startsWith(route);
+    const exact = this.currentRoute === route;
+    const child = this.currentRoute.startsWith(route + '/');
+
+    if (!exact && !child) return false;
+    if (exact) return true;
+
+    // Partial match: active only if no other menu item is a more specific match
+    const allRoutes = this.sections.flatMap(s => s.items.map(i => i.route));
+    return !allRoutes.some(r =>
+      r !== route &&
+      r.length > route.length &&
+      (this.currentRoute === r || this.currentRoute.startsWith(r + '/'))
+    );
   }
 
   canViewSection(section: NavSection): boolean {
@@ -113,10 +134,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
         title: 'GESTION',
         items: [
           { label: 'Biens', icon: 'bi-building', route: '/properties', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Locations', icon: 'bi-key', route: '/rentals' },
-          { label: 'Contrats', icon: 'bi-file-earmark-text', route: '/contracts' },
+          { label: 'Locations', icon: 'bi-key', route: '/rentals', roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT'] },
+          { label: 'Contrats', icon: 'bi-file-earmark-text', route: '/contracts', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
           { label: 'États des lieux', icon: 'bi-clipboard-check', route: '/inventory', roles: ['OWNER', 'ADMIN'] },
-        ]
+        ],
+        roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT']
       },
       {
         title: 'ANNONCES',
@@ -124,6 +146,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Rechercher', icon: 'bi-search', route: '/listings' },
           { label: 'Mes annonces', icon: 'bi-megaphone', route: '/listings/my', roles: ['OWNER', 'ADMIN'] },
           { label: 'Trouver locataires', icon: 'bi-person-lines-fill', route: '/tenant-discovery', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Invitations envoyées', icon: 'bi-send', route: '/tenant-discovery/sent-invitations', roles: ['OWNER', 'ADMIN'] },
           { label: 'Candidatures', icon: 'bi-people', route: '/applications' },
           { label: 'Mon profil recherche', icon: 'bi-person-badge', route: '/search-profile', roles: ['TENANT'] },
           { label: 'Invitations', icon: 'bi-envelope-open', route: '/search-profile/invitations', roles: ['TENANT'] },
@@ -133,7 +156,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       {
         title: 'FINANCES',
         items: [
-          { label: 'Paiements', icon: 'bi-credit-card', route: '/payments', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Paiements', icon: 'bi-credit-card', route: '/payments', roles: ['OWNER', 'ADMIN', 'TENANT'] },
           { label: 'Factures', icon: 'bi-receipt', route: '/invoices', roles: ['OWNER', 'ADMIN', 'TENANT'] },
           { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts', roles: ['OWNER', 'ADMIN', 'TENANT'] },
           { label: 'Dépenses', icon: 'bi-wallet2', route: '/expenses', roles: ['OWNER', 'ADMIN'] },
@@ -153,6 +176,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Notes', icon: 'bi-star', route: '/ratings' },
         ],
         roles: ['OWNER', 'CONCIERGE', 'ADMIN']
+      },
+      {
+        title: 'CROISSANCE',
+        items: [
+          { label: 'Parrainage', icon: 'bi-stars', route: '/referral' },
+        ],
+        roles: ['OWNER', 'ADMIN']
       }
     ];
   }

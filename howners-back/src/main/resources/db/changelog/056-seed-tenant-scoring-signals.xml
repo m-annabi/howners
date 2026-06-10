@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- ================== -->
+    <!-- Seed payment history for active rentals (varied punctuality)    -->
+    <!-- ================== -->
+    <changeSet id="056a-seed-rental-payments" author="howners">
+        <comment>Seed monthly payments with realistic on-time / late patterns to differentiate tenant scores.</comment>
+
+        <!-- ======== -->
+        <!-- Jean Locataire — Boulogne — EXCELLENT (6/6 on-time)            -->
+        <!-- rental d2, monthly 1750€, started 2025-11-15, payment day 5    -->
+        <!-- ======== -->
+        <sql>
+            INSERT INTO payments (id, rental_id, payer_id, payment_type, amount, currency, status, due_date, paid_at, created_at, updated_at) VALUES
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', (SELECT id FROM users WHERE email='tenant1@howners.test'), 'RENT', 1750, 'EUR', 'PAID', '2025-12-05', '2025-12-03 10:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', (SELECT id FROM users WHERE email='tenant1@howners.test'), 'RENT', 1750, 'EUR', 'PAID', '2026-01-05', '2026-01-04 09:30', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', (SELECT id FROM users WHERE email='tenant1@howners.test'), 'RENT', 1750, 'EUR', 'PAID', '2026-02-05', '2026-02-02 14:15', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', (SELECT id FROM users WHERE email='tenant1@howners.test'), 'RENT', 1750, 'EUR', 'PAID', '2026-03-05', '2026-03-04 08:50', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', (SELECT id FROM users WHERE email='tenant1@howners.test'), 'RENT', 1750, 'EUR', 'PAID', '2026-04-05', '2026-04-03 11:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000002', (SELECT id FROM users WHERE email='tenant1@howners.test'), 'RENT', 1750, 'EUR', 'PAID', '2026-05-05', '2026-05-04 16:20', NOW(), NOW());
+        </sql>
+
+        <!-- ======== -->
+        <!-- Sophie Bernard — Paris 15 — MIXED (6/8 on-time, 2 late)        -->
+        <!-- rental d3, monthly 1380€, started 2025-09-01, payment day 1    -->
+        <!-- ======== -->
+        <sql>
+            INSERT INTO payments (id, rental_id, payer_id, payment_type, amount, currency, status, due_date, paid_at, created_at, updated_at) VALUES
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2025-10-01', '2025-09-29 10:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2025-11-01', '2025-10-31 14:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2025-12-01', '2025-12-08 18:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2026-01-01', '2025-12-30 09:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2026-02-01', '2026-01-30 11:30', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2026-03-01', '2026-03-12 16:45', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2026-04-01', '2026-03-30 10:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000003', (SELECT id FROM users WHERE email='tenant2@howners.test'), 'RENT', 1380, 'EUR', 'PAID', '2026-05-01', '2026-04-29 13:00', NOW(), NOW());
+        </sql>
+
+        <!-- ======== -->
+        <!-- Lucas Petit — Suresnes — FRAGILE (2/4 on-time + 1 LATE status) -->
+        <!-- rental d1, monthly 850€, started 2026-01-01, payment day 5     -->
+        <!-- ======== -->
+        <sql>
+            INSERT INTO payments (id, rental_id, payer_id, payment_type, amount, currency, status, due_date, paid_at, created_at, updated_at) VALUES
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', (SELECT id FROM users WHERE email='tenant3@howners.test'), 'RENT', 850, 'EUR', 'PAID', '2026-02-05', '2026-02-04 12:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', (SELECT id FROM users WHERE email='tenant3@howners.test'), 'RENT', 850, 'EUR', 'PAID', '2026-03-05', '2026-03-18 08:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', (SELECT id FROM users WHERE email='tenant3@howners.test'), 'RENT', 850, 'EUR', 'PAID', '2026-04-05', '2026-04-04 11:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000001', (SELECT id FROM users WHERE email='tenant3@howners.test'), 'RENT', 850, 'EUR', 'LATE', '2026-05-05', NULL, NOW(), NOW());
+        </sql>
+
+        <!-- ======== -->
+        <!-- Inès Bernard — Puteaux — NEW (2/2 on-time, short history)     -->
+        <!-- rental d4, monthly 2400€, started 2026-03-01, payment day 5    -->
+        <!-- ======== -->
+        <sql>
+            INSERT INTO payments (id, rental_id, payer_id, payment_type, amount, currency, status, due_date, paid_at, created_at, updated_at) VALUES
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', (SELECT id FROM users WHERE email='ines.bernard@howners.test'), 'RENT', 2400, 'EUR', 'PAID', '2026-04-05', '2026-04-03 09:00', NOW(), NOW()),
+                (gen_random_uuid(), 'd0000000-0000-0000-0000-000000000004', (SELECT id FROM users WHERE email='ines.bernard@howners.test'), 'RENT', 2400, 'EUR', 'PAID', '2026-05-05', '2026-05-03 14:00', NOW(), NOW());
+        </sql>
+
+        <rollback>
+            <delete tableName="payments">
+                <where>rental_id::text LIKE 'd0000000-%'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- ================== -->
+    <!-- Tenant ratings — from previous & current landlords                -->
+    <!-- ================== -->
+    <changeSet id="056b-seed-tenant-ratings" author="howners">
+        <comment>Past-landlord ratings to give every tenant a differentiated score signal.</comment>
+
+        <sql>
+            INSERT INTO tenant_ratings (id, tenant_id, rater_id, rental_id, payment_rating, property_respect_rating, communication_rating, overall_rating, comment, rating_period, created_at) VALUES
+            -- Jean (current owner1 rating: excellent)
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='tenant1@howners.test'),
+                (SELECT id FROM users WHERE email='owner1@howners.test'),
+                'd0000000-0000-0000-0000-000000000002',
+                5, 5, 5, 5.0, 'Paiements impeccables, communication fluide, bien tenu.', '6_MONTHS', NOW() - INTERVAL '7 days'),
+
+            -- Sophie (current owner2 rating: bon mais quelques retards)
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='tenant2@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                'd0000000-0000-0000-0000-000000000003',
+                4, 5, 5, 4.5, 'Très soigneuse, deux retards de paiement sur 8 mois.', '8_MONTHS', NOW() - INTERVAL '10 days'),
+
+            -- Lucas (current owner1 rating: étudiant, fragile mais correct)
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='tenant3@howners.test'),
+                (SELECT id FROM users WHERE email='owner1@howners.test'),
+                'd0000000-0000-0000-0000-000000000001',
+                3, 4, 4, 3.5, 'Étudiant, quelques retards. Reste joignable et de bonne foi.', '4_MONTHS', NOW() - INTERVAL '3 days'),
+
+            -- Inès (current owner1 rating + past owner2 rating: excellent)
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='ines.bernard@howners.test'),
+                (SELECT id FROM users WHERE email='owner1@howners.test'),
+                'd0000000-0000-0000-0000-000000000004',
+                5, 5, 5, 5.0, 'Locataire premium, paiements anticipés, très professionnelle.', '2_MONTHS', NOW() - INTERVAL '5 days'),
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='ines.bernard@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                NULL,
+                5, 5, 5, 5.0, 'Bailleur précédent — ancienne location à Singapour, recommandation forte.', 'PAST', NOW() - INTERVAL '90 days'),
+
+            -- Tenants without current rentals — past landlord ratings from owner2 (Marie Martin, plays the previous landlord)
+
+            -- Antoine Dubois (famille stable) — excellent
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='antoine.dubois@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                NULL, 5, 5, 5, 5.0, 'Famille très stable, 4 ans de location précédente sans incident.', 'PAST', NOW() - INTERVAL '60 days'),
+
+            -- Camille Lefèvre (couple cadre) — excellent
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='camille.lefevre@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                NULL, 5, 5, 5, 5.0, 'Couple irréprochable sur 3 ans, état des lieux parfait à la sortie.', 'PAST', NOW() - INTERVAL '45 days'),
+
+            -- Mathieu Roussel (entrepreneur) — bon
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='mathieu.roussel@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                NULL, 4, 4, 4, 4.0, 'Entrepreneur, paiements parfois 2-3 jours après. Sérieux globalement.', 'PAST', NOW() - INTERVAL '120 days'),
+
+            -- Thomas Roux (consultant) — bon
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='thomas.roux@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                NULL, 4, 5, 4, 4.3, 'Consultant CDI, locataire fiable sur 2 ans.', 'PAST', NOW() - INTERVAL '40 days'),
+
+            -- Élodie Garnier (fonctionnaire) — bon
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='elodie.garnier@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                NULL, 5, 4, 4, 4.3, 'Fonctionnaire, ponctualité exemplaire. Logement bien tenu.', 'PAST', NOW() - INTERVAL '30 days'),
+
+            -- Léa Moreau (étudiante) — moyen, peu d'historique
+            (gen_random_uuid(),
+                (SELECT id FROM users WHERE email='lea.moreau@howners.test'),
+                (SELECT id FROM users WHERE email='owner2@howners.test'),
+                NULL, 3, 4, 4, 3.5, 'Étudiante, premier bail. Garant solide mais profil court.', 'PAST', NOW() - INTERVAL '15 days');
+        </sql>
+
+        <rollback>
+            <delete tableName="tenant_ratings">
+                <where>created_at >= NOW() - INTERVAL '200 days'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

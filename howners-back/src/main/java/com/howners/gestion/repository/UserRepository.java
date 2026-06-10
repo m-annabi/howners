@@ -20,6 +20,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     List<User> findByRole(Role role);
 
+    Optional<User> findByReferralCode(String referralCode);
+
+    boolean existsByReferralCode(String referralCode);
+
     @Query("SELECT DISTINCT r.tenant FROM Rental r WHERE r.property.owner.id = :ownerId AND r.tenant IS NOT NULL")
     List<User> findTenantsByOwnerId(@Param("ownerId") UUID ownerId);
 }

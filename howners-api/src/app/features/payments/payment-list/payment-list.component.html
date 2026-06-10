@@ -5,30 +5,28 @@
 </app-page-header>
 
 <ng-template #headerActions>
-  <button class="hw-btn hw-btn--primary" (click)="createPayment()">
+  <button *ngIf="!isTenant" class="hw-btn hw-btn--primary" (click)="createPayment()">
     <i class="bi bi-plus-lg"></i> Nouveau Paiement
   </button>
 </ng-template>
 
-<!-- Filters -->
+<!-- Toolbar: filter chips + search -->
 <div *ngIf="!loading && payments.length > 0" class="payment-list__toolbar">
+  <app-quick-filters
+    [filters]="filters"
+    [activeKey]="selectedStatus"
+    (filterChange)="onFilterChange($event)">
+  </app-quick-filters>
+
   <div class="payment-list__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
       class="form-control"
-      placeholder="Rechercher par propriété ou payeur..."
+      placeholder="Rechercher par bien ou payeur..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
   </div>
-  <select
-    class="form-select payment-list__filter"
-    [(ngModel)]="selectedStatus"
-    (ngModelChange)="onStatusChange()">
-    <option *ngFor="let status of statuses" [value]="status.value">
-      {{ status.label }}
-    </option>
-  </select>
 </div>
 
 <!-- Loading -->
@@ -40,9 +38,17 @@
   <span>{{ error }}</span>
 </div>
 
-<!-- Empty -->
+<!-- Empty — TENANT -->
 <app-empty-state
-  *ngIf="!loading && !error && payments.length === 0"
+  *ngIf="!loading && !error && payments.length === 0 && isTenant"
+  icon="bi-credit-card"
+  title="Aucun paiement en cours"
+  message="Vous n'avez pas encore de paiement à effectuer.">
+</app-empty-state>
+
+<!-- Empty — OWNER -->
+<app-empty-state
+  *ngIf="!loading && !error && payments.length === 0 && !isTenant"
   icon="bi-credit-card"
   title="Aucun paiement"
   message="Créez votre premier paiement pour commencer le suivi."
@@ -55,49 +61,69 @@
   *ngIf="!loading && !error && filteredPayments.length === 0 && payments.length > 0"
   icon="bi-search"
   title="Aucun résultat"
-  message="Essayez avec d'autres termes de recherche.">
+  message="Essayez d'autres termes ou changez de filtre.">
 </app-empty-state>
 
-<!-- Table -->
-<div *ngIf="!loading && !error && filteredPayments.length > 0" class="hw-card">
-  <div class="hw-table-responsive">
-    <table class="hw-table">
-      <thead>
-        <tr>
-          <th>Propriété</th>
-          <th>Payeur</th>
-          <th>Type</th>
-          <th>Montant</th>
-          <th>Échéance</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let payment of filteredPayments" class="hw-table__row--clickable" (click)="viewPayment(payment)">
-          <td>
-            <span class="hw-text-medium">{{ payment.propertyName }}</span>
-          </td>
-          <td>{{ payment.payerName }}</td>
-          <td>
-            <span class="hw-badge hw-badge--neutral">{{ getTypeLabel(payment.paymentType) }}</span>
-          </td>
-          <td>
-            <span class="hw-text-medium">{{ payment.amount | number:'1.2-2' }} {{ payment.currency }}</span>
-          </td>
-          <td>{{ payment.dueDate | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <app-status-badge [status]="payment.status" type="payment"></app-status-badge>
-          </td>
-          <td>
-            <button
-              class="hw-btn hw-btn--ghost hw-btn--sm"
-              (click)="viewPayment(payment); $event.stopPropagation()">
-              <i class="bi bi-eye"></i> Voir
+<!-- Dense table -->
+<div *ngIf="!loading && !error && filteredPayments.length > 0" class="hw-card payment-table-wrap">
+  <table class="payment-table">
+    <thead>
+      <tr>
+        <th>Bien</th>
+        <th>Payeur</th>
+        <th class="payment-table__col-type">Type</th>
+        <th class="payment-table__col-amount">Montant</th>
+        <th class="payment-table__col-date">Échéance</th>
+        <th class="payment-table__col-status">Statut</th>
+        <th class="payment-table__col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let payment of filteredPayments"
+          class="payment-row"
+          [class.payment-row--overdue]="isOverdue(payment)"
+          (click)="viewPayment(payment)">
+
+        <td>
+          <div class="payment-table__property">{{ payment.propertyName }}</div>
+        </td>
+
+        <td>{{ payment.payerName }}</td>
+
+        <td class="payment-table__col-type">
+          <span class="badge bg-light">{{ getTypeLabel(payment.paymentType) }}</span>
+        </td>
+
+        <td class="payment-table__col-amount">
+          <div class="payment-table__amount">{{ payment.amount | number:'1.2-2' }} {{ payment.currency }}</div>
+        </td>
+
+        <td class="payment-table__col-date">
+          <div [class.payment-table__overdue]="isOverdue(payment)">
+            {{ payment.dueDate | date:'dd/MM/yyyy' }}
+          </div>
+        </td>
+
+        <td class="payment-table__col-status">
+          <app-status-badge [status]="payment.status" type="payment"></app-status-badge>
+        </td>
+
+        <td class="payment-table__col-actions" (click)="$event.stopPropagation()">
+          <div class="row-actions">
+            <button *ngIf="!isTenant && payment.status !== PaymentStatus.PAID && payment.status !== PaymentStatus.REFUNDED"
+                    class="row-actions__btn row-actions__btn--success"
+                    (click)="markPaid(payment, $event)"
+                    title="Marquer payé">
+              <i class="bi bi-check2"></i>
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <button class="row-actions__btn"
+                    (click)="viewPayment(payment); $event.stopPropagation()"
+                    title="Voir">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

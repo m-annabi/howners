@@ -49,6 +49,7 @@ class ApplicationServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private DocumentRepository documentRepository;
     @Mock private DocumentService documentService;
+    @Mock private com.howners.gestion.service.audit.AuditService auditService;
 
     @InjectMocks
     private ApplicationService applicationService;

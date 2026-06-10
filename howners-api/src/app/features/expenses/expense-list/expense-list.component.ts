@@ -7,6 +7,7 @@ import {
   ExpenseCategory,
   EXPENSE_CATEGORY_LABELS
 } from '../../../core/models/expense.model';
+import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
 
 @Component({
   selector: 'app-expense-list',
@@ -19,14 +20,32 @@ export class ExpenseListComponent implements OnInit {
   loading = false;
   error: string | null = null;
   searchTerm = '';
-  selectedCategory: ExpenseCategory | 'ALL' = 'ALL';
+  selectedCategory: string = 'ALL';
 
   categoryLabels = EXPENSE_CATEGORY_LABELS;
 
-  categories = [
-    { value: 'ALL', label: 'Toutes les catégories' },
-    ...Object.values(ExpenseCategory).map(c => ({ value: c, label: EXPENSE_CATEGORY_LABELS[c] }))
-  ];
+  get filters(): QuickFilter[] {
+    const counts = new Map<string, number>();
+    counts.set('ALL', this.expenses.length);
+    for (const e of this.expenses) {
+      counts.set(e.category, (counts.get(e.category) || 0) + 1);
+    }
+    const list: QuickFilter[] = [
+      { key: 'ALL', label: 'Toutes', count: counts.get('ALL') || 0 }
+    ];
+    for (const c of Object.values(ExpenseCategory)) {
+      const cnt = counts.get(c) || 0;
+      if (cnt > 0) {
+        list.push({ key: c, label: this.categoryLabels[c], count: cnt });
+      }
+    }
+    return list;
+  }
+
+  onFilterChange(key: string): void {
+    this.selectedCategory = key;
+    this.applyFilters();
+  }
 
   constructor(
     private expenseService: ExpenseService,

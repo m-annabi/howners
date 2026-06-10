@@ -1,30 +1,29 @@
-<!-- Non authenticated: full page -->
-<ng-container *ngIf="!isAuthenticated">
-  <router-outlet></router-outlet>
-</ng-container>
+<div class="hw-layout" [class.hw-layout--guest]="!isAuthenticated">
 
-<!-- Authenticated: sidebar layout -->
-<div class="hw-layout" *ngIf="isAuthenticated">
-  <!-- Sidebar -->
-  <aside class="hw-sidebar" [class.hw-sidebar--open]="sidebarOpen">
+  <!-- Sidebar — authenticated only -->
+  <aside *ngIf="isAuthenticated"
+         class="hw-sidebar"
+         [class.hw-sidebar--open]="sidebarOpen">
     <app-sidebar (navigate)="closeSidebar()"></app-sidebar>
   </aside>
 
-  <!-- Sidebar overlay (mobile) -->
-  <div class="hw-sidebar-overlay"
-       *ngIf="sidebarOpen"
+  <!-- Overlay mobile — authenticated only -->
+  <div *ngIf="isAuthenticated && sidebarOpen"
+       class="hw-sidebar-overlay"
        (click)="closeSidebar()"></div>
 
-  <!-- Main -->
+  <!-- Main area -->
   <div class="hw-main">
-    <header class="hw-topbar">
+    <header *ngIf="isAuthenticated" class="hw-topbar">
       <app-topbar (toggleSidebar)="toggleSidebar()"></app-topbar>
     </header>
-    <main class="hw-content">
+    <main class="hw-content" [class.hw-content--guest]="!isAuthenticated">
       <router-outlet></router-outlet>
     </main>
   </div>
+
 </div>
 
 <app-toast></app-toast>
 <app-confirm-dialog></app-confirm-dialog>
+<app-nps-prompt *ngIf="isAuthenticated"></app-nps-prompt>

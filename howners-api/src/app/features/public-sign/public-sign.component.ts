@@ -1,42 +1,38 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PublicContractService } from '../../core/services/public-contract.service';
-import { ContractPublicView } from '../../core/models/esignature.model';
+import { ContractPublicView, SigningRedirectResponse } from '../../core/models/esignature.model';
+import { SignaturePadComponent } from '../../shared/components/signature-pad/signature-pad.component';
 
+/**
+ * Composant public pour la signature de contrat via token
+ * Accessible sans authentification
+ */
 @Component({
   selector: 'app-public-sign',
   templateUrl: './public-sign.component.html',
   styleUrls: ['./public-sign.component.scss']
 })
-export class PublicSignComponent implements OnInit, OnDestroy {
+export class PublicSignComponent implements OnInit {
+  @ViewChild(SignaturePadComponent) signaturePad?: SignaturePadComponent;
+
   contract: ContractPublicView | null = null;
   loading = true;
   error: string | null = null;
   token: string | null = null;
-
   signing = false;
   signed = false;
-  signatureData = '';
-  signerName = '';
-  acceptTerms = false;
-
-  pdfUrl: SafeResourceUrl | null = null;
-  loadingPdf = false;
-
-  private pdfObjectUrl: string | null = null;
-  private destroy$ = new Subject<void>();
+  signatureData: string = '';
 
   constructor(
     private route: ActivatedRoute,
-    private publicContractService: PublicContractService,
-    private sanitizer: DomSanitizer
+    private router: Router,
+    private publicContractService: PublicContractService
   ) {}
 
   ngOnInit(): void {
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+    // Récupérer le token depuis les query params
+    this.route.queryParams.subscribe(params => {
       this.token = params['token'];
 
       if (!this.token) {
@@ -49,12 +45,9 @@ export class PublicSignComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.revokePdfUrl();
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
+  /**
+   * Charge le contrat via le token
+   */
   private loadContract(): void {
     if (!this.token) return;
 
@@ -64,68 +57,88 @@ export class PublicSignComponent implements OnInit, OnDestroy {
     this.publicContractService.getContractByToken(this.token).subscribe({
       next: (contract: ContractPublicView) => {
         this.contract = contract;
-        this.signerName = contract.tenantName;
         this.loading = false;
-        this.loadPdfPreview();
       },
       error: (err: any) => {
+        console.error('Erreur lors du chargement du contrat:', err);
         this.loading = false;
-        this.error = this.getErrorMessage(err);
+
+        if (err.status === 400 || err.status === 404) {
+          this.error = 'Le lien de signature est invalide ou a expiré. Veuillez contacter votre propriétaire.';
+        } else {
+          this.error = 'Une erreur est survenue lors du chargement du contrat. Veuillez réessayer plus tard.';
+        }
       }
     });
   }
 
-  private loadPdfPreview(): void {
-    if (!this.token) return;
-
-    this.loadingPdf = true;
-    this.publicContractService.downloadContractPdf(this.token).subscribe({
-      next: (blob: Blob) => {
-        this.revokePdfUrl();
-        this.pdfObjectUrl = URL.createObjectURL(blob);
-        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl);
-        this.loadingPdf = false;
-      },
-      error: () => {
-        this.loadingPdf = false;
-      }
-    });
-  }
-
-  onSignatureChange(signatureData: string): void {
-    this.signatureData = signatureData;
-  }
-
-  canSign(): boolean {
-    return this.acceptTerms
-        && this.signerName.trim().length > 0
-        && this.signatureData.length > 0
-        && !this.signing;
-  }
-
+  /**
+   * Initie le processus de signature
+   */
   signContract(): void {
-    if (!this.token || !this.canSign()) return;
+    if (!this.token || this.signing) return;
 
     this.signing = true;
     this.error = null;
 
-    let signatureBase64 = this.signatureData;
-    if (signatureBase64.startsWith('data:')) {
-      signatureBase64 = signatureBase64.split(',')[1];
+    // URL de retour après signature
+    const returnUrl = `${window.location.origin}/contracts/sign/complete?token=${this.token}`;
+
+    this.publicContractService.getSigningRedirect(this.token, returnUrl).subscribe({
+      next: (response: SigningRedirectResponse) => {
+        // Rediriger vers DocuSign
+        window.location.href = response.signingUrl;
+      },
+      error: (err: any) => {
+        console.error('Erreur lors de l\'obtention de l\'URL de signature:', err);
+        this.signing = false;
+        this.error = 'Impossible d\'ouvrir la page de signature. Veuillez réessayer.';
+      }
+    });
+  }
+
+  /**
+   * Signe le contrat via le canvas HTML5.
+   */
+  signWithCanvas(): void {
+    if (!this.token || this.signing) return;
+    if (!this.signatureData) {
+      this.error = 'Veuillez apposer votre signature avant de valider.';
+      return;
     }
 
-    this.publicContractService.signContract(this.token, signatureBase64, this.signerName).subscribe({
+    this.signing = true;
+    this.error = null;
+
+    this.publicContractService.signWithCanvas(this.token, this.signatureData).subscribe({
       next: () => {
         this.signing = false;
         this.signed = true;
       },
       error: (err: any) => {
+        console.error('Erreur lors de la signature canvas:', err);
         this.signing = false;
-        this.error = this.getErrorMessage(err);
+        this.error = err?.error?.message
+          || 'Impossible de finaliser la signature. Veuillez réessayer.';
       }
     });
   }
 
+  onSignatureChange(dataUrl: string): void {
+    this.signatureData = dataUrl;
+    if (this.error && dataUrl) {
+      this.error = null;
+    }
+  }
+
+  clearSignature(): void {
+    this.signaturePad?.clear();
+    this.signatureData = '';
+  }
+
+  /**
+   * Formate une date au format français
+   */
   formatDate(dateString: string): string {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -134,28 +147,5 @@ export class PublicSignComponent implements OnInit, OnDestroy {
       month: '2-digit',
       year: 'numeric'
     });
-  }
-
-  private revokePdfUrl(): void {
-    if (this.pdfObjectUrl) {
-      URL.revokeObjectURL(this.pdfObjectUrl);
-      this.pdfObjectUrl = null;
-    }
-  }
-
-  private getErrorMessage(err: any): string {
-    if (err.error?.message) {
-      return err.error.message;
-    }
-    switch (err.status) {
-      case 401:
-        return 'Le lien de signature est invalide. Veuillez contacter votre propriétaire.';
-      case 410:
-        return 'Le lien de signature a expiré. Veuillez demander un nouvel envoi à votre propriétaire.';
-      case 404:
-        return 'Contrat introuvable. Veuillez vérifier votre lien.';
-      default:
-        return 'Une erreur est survenue. Veuillez réessayer plus tard.';
-    }
   }
 }

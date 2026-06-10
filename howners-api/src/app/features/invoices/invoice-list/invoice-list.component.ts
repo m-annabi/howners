@@ -9,6 +9,7 @@ import {
   INVOICE_STATUS_COLORS,
   INVOICE_TYPE_LABELS
 } from '../../../core/models/invoice.model';
+import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
 
 @Component({
   selector: 'app-invoice-list',
@@ -21,17 +22,12 @@ export class InvoiceListComponent implements OnInit {
   loading = false;
   error: string | null = null;
   searchTerm = '';
-  selectedStatus: InvoiceStatus | 'ALL' = 'ALL';
+  selectedStatus: string = 'ALL';
 
   InvoiceStatus = InvoiceStatus;
   statusLabels = INVOICE_STATUS_LABELS;
   statusColors = INVOICE_STATUS_COLORS;
   typeLabels = INVOICE_TYPE_LABELS;
-
-  statuses = [
-    { value: 'ALL', label: 'Tous les statuts' },
-    ...Object.values(InvoiceStatus).map(s => ({ value: s, label: INVOICE_STATUS_LABELS[s] }))
-  ];
 
   constructor(
     private invoiceService: InvoiceService,
@@ -40,6 +36,24 @@ export class InvoiceListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadInvoices();
+  }
+
+  get filters(): QuickFilter[] {
+    const counts = new Map<string, number>();
+    counts.set('ALL', this.invoices.length);
+    for (const i of this.invoices) {
+      counts.set(i.status, (counts.get(i.status) || 0) + 1);
+    }
+    const list: QuickFilter[] = [
+      { key: 'ALL', label: 'Toutes', count: counts.get('ALL') || 0 }
+    ];
+    for (const s of Object.values(InvoiceStatus)) {
+      const c = counts.get(s) || 0;
+      if (c > 0) {
+        list.push({ key: s, label: this.statusLabels[s], count: c });
+      }
+    }
+    return list;
   }
 
   loadInvoices(): void {
@@ -52,12 +66,16 @@ export class InvoiceListComponent implements OnInit {
         this.applyFilters();
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading invoices:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des factures';
         this.loading = false;
       }
     });
+  }
+
+  onFilterChange(key: string): void {
+    this.selectedStatus = key;
+    this.applyFilters();
   }
 
   applyFilters(): void {
@@ -79,7 +97,6 @@ export class InvoiceListComponent implements OnInit {
     this.filteredInvoices = filtered;
   }
 
-  onStatusChange(): void { this.applyFilters(); }
   onSearchChange(): void { this.applyFilters(); }
 
   viewInvoice(invoice: Invoice): void {
@@ -97,9 +114,7 @@ export class InvoiceListComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => {
-        console.error('Error downloading PDF:', err);
-      }
+      error: () => {}
     });
   }
 }

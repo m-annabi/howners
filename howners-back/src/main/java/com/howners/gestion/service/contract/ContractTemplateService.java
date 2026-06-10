@@ -12,7 +12,6 @@ import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ContractTemplateRepository;
 import com.howners.gestion.repository.RentalRepository;
-import com.howners.gestion.util.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -65,7 +64,7 @@ public class ContractTemplateService {
         // Variables propriétaire
         variables.put("owner.firstName", owner.getFirstName() != null ? owner.getFirstName() : "");
         variables.put("owner.lastName", owner.getLastName() != null ? owner.getLastName() : "");
-        variables.put("owner.fullName", UserDisplayUtils.getFullName(owner));
+        variables.put("owner.fullName", getFullName(owner));
         variables.put("owner.email", owner.getEmail());
         variables.put("owner.phone", owner.getPhone() != null ? owner.getPhone() : "");
 
@@ -73,7 +72,7 @@ public class ContractTemplateService {
         if (tenant != null) {
             variables.put("tenant.firstName", tenant.getFirstName() != null ? tenant.getFirstName() : "");
             variables.put("tenant.lastName", tenant.getLastName() != null ? tenant.getLastName() : "");
-            variables.put("tenant.fullName", UserDisplayUtils.getFullName(tenant));
+            variables.put("tenant.fullName", getFullName(tenant));
             variables.put("tenant.email", tenant.getEmail());
             variables.put("tenant.phone", tenant.getPhone() != null ? tenant.getPhone() : "");
         } else {
@@ -94,12 +93,16 @@ public class ContractTemplateService {
         variables.put("property.address.country", property.getCountry() != null ? property.getCountry() : "");
         variables.put("property.address.full", getFullAddress(property));
         variables.put("property.surface", property.getSurfaceArea() != null ? property.getSurfaceArea().toString() : "");
-        variables.put("property.rooms", "");  // Not available in Property entity
+        variables.put("property.rooms", computeRoomCount(property));
         variables.put("property.bedrooms", property.getBedrooms() != null ? property.getBedrooms().toString() : "");
 
         // Variables location
         variables.put("rental.startDate", formatDate(rental.getStartDate()));
         variables.put("rental.endDate", rental.getEndDate() != null ? formatDate(rental.getEndDate()) : "Indéterminée");
+        // Clause complète, à utiliser dans une phrase à la place de "le {{rental.endDate}}"
+        variables.put("rental.endDateClause", rental.getEndDate() != null
+                ? "le " + formatDate(rental.getEndDate())
+                : "à l'échéance convenue, par renouvellement tacite annuel");
         variables.put("rental.monthlyRent", formatAmount(rental.getMonthlyRent()));
         variables.put("rental.depositAmount", rental.getDepositAmount() != null ? formatAmount(rental.getDepositAmount()) : "0");
         variables.put("rental.type", rental.getRentalType().name());
@@ -146,7 +149,7 @@ public class ContractTemplateService {
      * pour que le remplacement de variables fonctionne avec le contenu HTML de Quill
      */
     private String cleanVariablesInHtml(String htmlContent) {
-        if (htmlContent == null) return "";
+        if (htmlContent == null) return null;
 
         // 1. Supprimer TOUS les caractères zero-width de tout le contenu
         //    (Quill insère des zero-width spaces autour du curseur)
@@ -187,6 +190,12 @@ public class ContractTemplateService {
         return sb.toString();
     }
 
+    private String getFullName(User user) {
+        String firstName = user.getFirstName() != null ? user.getFirstName() : "";
+        String lastName = user.getLastName() != null ? user.getLastName() : "";
+        return (firstName + " " + lastName).trim();
+    }
+
     private String getFullAddress(Property property) {
         return String.format("%s, %s %s, %s",
                 property.getAddressLine1() != null ? property.getAddressLine1() : "",
@@ -201,6 +210,19 @@ public class ContractTemplateService {
 
     private String formatAmount(BigDecimal amount) {
         return amount != null ? String.format("%.2f €", amount) : "0.00 €";
+    }
+
+    /**
+     * Property has no "rooms" field — we derive a pragmatic count from bedrooms.
+     * Convention française: pièces = chambres + 1 (le séjour), studio = 1 pièce.
+     */
+    private String computeRoomCount(Property property) {
+        if (property.getPropertyType() == com.howners.gestion.domain.property.PropertyType.STUDIO) {
+            return "1";
+        }
+        Integer beds = property.getBedrooms();
+        if (beds == null) return "";
+        return String.valueOf(Math.max(1, beds) + 1);
     }
 
     /**
@@ -263,7 +285,7 @@ public class ContractTemplateService {
         return new PreviewTemplateResponse(
                 filledContent,
                 rental.getProperty().getName(),
-                UserDisplayUtils.getFullName(rental.getTenant())
+                getFullName(rental.getTenant())
         );
     }
 
@@ -280,7 +302,7 @@ public class ContractTemplateService {
         return new PreviewTemplateResponse(
                 filledContent,
                 rental.getProperty().getName(),
-                UserDisplayUtils.getFullName(rental.getTenant())
+                getFullName(rental.getTenant())
         );
     }
 

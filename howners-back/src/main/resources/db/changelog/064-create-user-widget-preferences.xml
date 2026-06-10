@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="064-create-user-widget-preferences" author="olivier">
+        <createTable tableName="user_widget_preferences">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"
+                             foreignKeyName="fk_uwp_user"
+                             references="users(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="page" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="preferences" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <addUniqueConstraint
+            tableName="user_widget_preferences"
+            columnNames="user_id, page"
+            constraintName="uq_uwp_user_page"/>
+    </changeSet>
+
+</databaseChangeLog>

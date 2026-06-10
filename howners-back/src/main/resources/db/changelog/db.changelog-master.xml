@@ -3,7 +3,7 @@
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
 
     <include file="db/changelog/001-create-users-table.xml"/>
     <include file="db/changelog/002-create-properties-table.xml"/>
@@ -55,7 +55,18 @@
     <include file="db/changelog/049-seed-sample-properties.xml"/>
     <include file="db/changelog/050-seed-sample-listings.xml"/>
     <include file="db/changelog/051-seed-listing-photos.xml"/>
-    <include file="db/changelog/052-add-performance-indexes.xml"/>
-    <include file="db/changelog/053-remove-docusign-columns.xml"/>
+    <include file="db/changelog/052-add-application-id-to-rentals.xml"/>
+    <include file="db/changelog/053-add-property-coordinates.xml"/>
+    <include file="db/changelog/054-seed-tenant-profiles.xml"/>
+    <include file="db/changelog/055-seed-property-prices-and-rentals.xml"/>
+    <include file="db/changelog/056-seed-tenant-scoring-signals.xml"/>
+    <include file="db/changelog/057-fix-contract-template-end-date.xml"/>
+    <include file="db/changelog/058-create-referrals.xml"/>
+    <include file="db/changelog/059-create-nps-responses.xml"/>
+    <include file="db/changelog/060-add-stripe-connect-fields.xml"/>
+    <include file="db/changelog/061-create-affiliate-partners.xml"/>
+    <include file="db/changelog/062-fix-expense-categories.xml"/>
+    <include file="db/changelog/063-fix-edl-types.xml"/>
+    <include file="db/changelog/064-create-user-widget-preferences.xml"/>
 
 </databaseChangeLog>

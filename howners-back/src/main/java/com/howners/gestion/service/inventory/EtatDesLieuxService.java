@@ -11,6 +11,7 @@ import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.inventory.CreateEtatDesLieuxRequest;
 import com.howners.gestion.dto.inventory.EtatDesLieuxResponse;
 import com.howners.gestion.exception.BadRequestException;
+import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.DocumentRepository;
 import com.howners.gestion.repository.EtatDesLieuxRepository;
@@ -46,6 +47,9 @@ public class EtatDesLieuxService {
 
     @Transactional(readOnly = true)
     public List<EtatDesLieuxResponse> findByRentalId(UUID rentalId) {
+        Rental rental = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rental not found"));
+        checkRentalAccess(rental);
         return edlRepository.findByRentalIdOrderByInspectionDateDesc(rentalId)
                 .stream()
                 .map(EtatDesLieuxResponse::from)
@@ -72,6 +76,7 @@ public class EtatDesLieuxService {
     public EtatDesLieuxResponse findById(UUID id) {
         EtatDesLieux edl = edlRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Etat des lieux not found"));
+        checkRentalAccess(edl.getRental());
         return EtatDesLieuxResponse.from(edl);
     }
 
@@ -83,6 +88,7 @@ public class EtatDesLieuxService {
 
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rental not found"));
+        checkRentalAccess(rental);
 
         EtatDesLieux edl = EtatDesLieux.builder()
                 .rental(rental)
@@ -129,6 +135,7 @@ public class EtatDesLieuxService {
         UUID currentUserId = AuthService.getCurrentUserId();
         EtatDesLieux edl = edlRepository.findById(edlId)
                 .orElseThrow(() -> new ResourceNotFoundException("Etat des lieux not found"));
+        checkRentalAccess(edl.getRental());
 
         if ("OWNER".equalsIgnoreCase(signerRole)) {
             if (Boolean.TRUE.equals(edl.getOwnerSigned())) {
@@ -156,12 +163,26 @@ public class EtatDesLieuxService {
     public byte[] downloadPdf(UUID edlId) throws IOException {
         EtatDesLieux edl = edlRepository.findById(edlId)
                 .orElseThrow(() -> new ResourceNotFoundException("Etat des lieux not found"));
+        checkRentalAccess(edl.getRental());
 
         if (edl.getDocument() == null) {
             throw new BadRequestException("No PDF document for this état des lieux");
         }
 
         return storageService.downloadFile(edl.getDocument().getFileKey());
+    }
+
+    private void checkRentalAccess(Rental rental) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        UUID ownerId = rental.getProperty().getOwner().getId();
+        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (currentUser.getRole() != Role.ADMIN && !ownerId.equals(currentUserId) && !currentUserId.equals(tenantId)) {
+            throw new ForbiddenException("You are not authorized to access this état des lieux");
+        }
     }
 
     private String buildEdlHtml(EtatDesLieux edl, Rental rental) {

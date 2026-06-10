@@ -1,0 +1,14 @@
+<div class="quick-filters" role="tablist">
+  <button
+    *ngFor="let f of filters; trackBy: trackFilter"
+    type="button"
+    role="tab"
+    class="quick-filter"
+    [class.quick-filter--active]="f.key === activeKey"
+    [attr.data-tone]="f.tone || 'neutral'"
+    [attr.aria-selected]="f.key === activeKey"
+    (click)="select(f.key)">
+    <span class="quick-filter__label">{{ f.label }}</span>
+    <span *ngIf="f.count !== undefined" class="quick-filter__count">{{ f.count }}</span>
+  </button>
+</div>

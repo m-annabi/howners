@@ -8,7 +8,7 @@ import { SignatureTrackingDashboard } from '../models/signature-tracking.model';
   providedIn: 'root'
 })
 export class SignatureTrackingService {
-  private readonly apiUrl = `${environment.apiUrl}/signature-tracking`;
+  private apiUrl = `${environment.apiUrl}/signature-tracking`;
 
   constructor(private http: HttpClient) {}
 

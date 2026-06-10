@@ -48,10 +48,12 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   showSignDialog = false;
   contractContent = '';
 
-  // E-Signature status
+  // E-Signature (DocuSign - deprecated)
   signatureRequest: SignatureRequestResponse | null = null;
   loadingSignatureRequest = false;
   sendingForSignature = false;
+  resendingEmail = false;
+  cancellingSignature = false;
 
   // Enums et constantes pour le template
   ContractStatus = ContractStatus;
@@ -69,13 +71,13 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     private esignatureService: EsignatureService,
     private authService: AuthService,
     private notificationService: NotificationService
-  ) {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUserId = user?.id || null;
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
+    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      this.currentUserId = user?.id || null;
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadContract(id);
@@ -122,6 +124,27 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
 
   getStatusLabel(status: ContractStatus): string {
     return this.contractStatusLabels[status];
+  }
+
+  sendContract(): void {
+    if (!this.contract) return;
+
+    if (confirm('Êtes-vous sûr de vouloir envoyer ce contrat au locataire ?')) {
+      const request: UpdateContractRequest = {
+        status: ContractStatus.SENT
+      };
+
+      this.contractService.updateContract(this.contract.id, request).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (updatedContract) => {
+          this.contract = updatedContract;
+          this.notificationService.success('Contrat envoyé avec succès');
+        },
+        error: (err) => {
+          console.error('Error sending contract:', err);
+          alert('Erreur lors de l\'envoi du contrat');
+        }
+      });
+    }
   }
 
   downloadPdf(): void {
@@ -192,6 +215,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
 
     this.signing = true;
 
+    // Extraire la partie Base64 de la signature (enlever le préfixe data:image/png;base64,)
     let signatureBase64 = signatureData;
     if (signatureBase64.startsWith('data:')) {
       signatureBase64 = signatureBase64.split(',')[1];
@@ -202,21 +226,30 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     const request: CreateSignatureRequest = {
       contractId: this.contract.id,
       signatureData: signatureBase64,
-      ipAddress: 'frontend',
+      ipAddress: 'frontend', // L'IP sera ajoutée côté backend si nécessaire
       userAgent: userAgent
     };
 
+    console.log('Creating signature with request:', {
+      contractId: request.contractId,
+      dataLength: signatureBase64.length,
+      userAgent: userAgent
+    });
+
     this.signatureService.createSignature(request).pipe(takeUntil(this.destroy$)).subscribe({
       next: (signature) => {
+        console.log('Signature created successfully:', signature);
         this.signing = false;
         this.showSignaturePad = false;
         this.notificationService.success('Contrat signé avec succès!');
 
+        // Recharger le contrat et les signatures
         this.loadContract(this.contract!.id);
         this.loadSignatures(this.contract!.id);
       },
       error: (err) => {
         console.error('Error creating signature:', err);
+        console.error('Error details:', err.error);
         this.signing = false;
         this.notificationService.error(err.error?.message || 'Erreur lors de la signature du contrat');
       }
@@ -224,13 +257,16 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   }
 
   onSignatureCleared(): void {
-    // Signature pad cleared
+    console.log('Signature cleared');
   }
 
   canSign(): boolean {
     if (!this.contract || !this.currentUserId) return false;
+
+    // Le contrat doit être en statut SENT
     if (this.contract.status !== ContractStatus.SENT) return false;
 
+    // L'utilisateur ne doit pas avoir déjà signé
     const alreadySigned = this.signatures.some(s => s.signerId === this.currentUserId);
     return !alreadySigned;
   }
@@ -240,14 +276,22 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     return this.signatures.some(s => s.signerId === this.currentUserId);
   }
 
-  // === Signature Dialog ===
+  // === New Signature Dialog Methods ===
 
+  /**
+   * Ouvre le dialogue de signature avec le contenu du contrat
+   */
   openSignDialog(): void {
     if (!this.contract) return;
+
+    // Préparer le contenu du contrat pour affichage
     this.contractContent = this.prepareContractContent();
     this.showSignDialog = true;
   }
 
+  /**
+   * Prépare le contenu du contrat pour affichage dans le dialogue
+   */
   prepareContractContent(): string {
     if (!this.contract) return '';
 
@@ -262,12 +306,16 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     `;
   }
 
+  /**
+   * Gère la signature depuis le dialogue
+   */
   handleSign(signaturePayload: string): void {
     if (!this.contract) return;
 
     this.signing = true;
     const payload = JSON.parse(signaturePayload);
 
+    // Extraire la partie Base64 de la signature (enlever le préfixe data:image/png;base64,)
     let signatureBase64 = payload.signature;
     if (signatureBase64.startsWith('data:')) {
       signatureBase64 = signatureBase64.split(',')[1];
@@ -285,9 +333,11 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       finalize(() => this.signing = false)
     ).subscribe({
       next: (signature) => {
+        console.log('Signature created successfully:', signature);
         this.showSignDialog = false;
         this.notificationService.success('Contrat signé avec succès!');
 
+        // Recharger le contrat et les signatures
         this.loadContract(this.contract!.id);
         this.loadSignatures(this.contract!.id);
       },
@@ -298,14 +348,15 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Ferme le dialogue de signature
+   */
   closeSignDialog(): void {
     this.showSignDialog = false;
   }
 
-  // === E-Signature (envoi pour signature au locataire) ===
-
   /**
-   * Envoie le contrat pour signature au locataire via email
+   * Envoie le contrat pour signature (remplace DocuSign)
    */
   sendForSignature(): void {
     if (!this.contract) return;
@@ -316,25 +367,30 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     }
 
     if (confirm('Envoyer ce contrat au locataire pour signature ?')) {
-      this.sendingForSignature = true;
+      const request: UpdateContractRequest = {
+        status: ContractStatus.SENT
+      };
 
-      this.esignatureService.sendForSignature(this.contract.id).pipe(takeUntil(this.destroy$)).subscribe({
-        next: (request) => {
-          this.signatureRequest = request;
-          this.sendingForSignature = false;
-          this.notificationService.success('Contrat envoyé pour signature avec succès ! Le locataire recevra un email.');
-
-          this.loadContract(this.contract!.id);
+      this.contractService.updateContract(this.contract.id, request).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (updatedContract) => {
+          this.contract = updatedContract;
+          this.notificationService.success('Contrat envoyé avec succès ! Le locataire peut maintenant le signer.');
         },
         error: (err) => {
-          console.error('Error sending for signature:', err);
-          this.sendingForSignature = false;
-          this.notificationService.error(err.error?.message || 'Erreur lors de l\'envoi pour signature');
+          console.error('Error sending contract:', err);
+          this.notificationService.error(err.error?.message || 'Erreur lors de l\'envoi du contrat');
         }
       });
     }
   }
 
+  // === E-Signature Methods ===
+
+  /**
+   * Charge la demande de signature électronique si elle existe
+   */
   loadSignatureRequest(contractId: string): void {
     this.loadingSignatureRequest = true;
 
@@ -344,11 +400,47 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         this.loadingSignatureRequest = false;
       },
       error: (err) => {
+        // Pas de demande de signature, c'est normal
         this.loadingSignatureRequest = false;
       }
     });
   }
 
+  /**
+   * Envoie le contrat pour signature électronique
+   */
+  sendForESignature(): void {
+    if (!this.contract) return;
+
+    if (this.contract.status !== ContractStatus.DRAFT) {
+      this.notificationService.warning('Seuls les contrats en brouillon peuvent être envoyés pour signature');
+      return;
+    }
+
+    if (confirm('Envoyer ce contrat au locataire pour signature électronique via DocuSign ?')) {
+      this.sendingForSignature = true;
+
+      this.esignatureService.sendForSignature(this.contract.id).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (request) => {
+          this.signatureRequest = request;
+          this.sendingForSignature = false;
+          this.notificationService.success('Contrat envoyé pour signature électronique avec succès !');
+
+          // Recharger le contrat pour voir le nouveau statut
+          this.loadContract(this.contract!.id);
+        },
+        error: (err) => {
+          console.error('Error sending for e-signature:', err);
+          this.sendingForSignature = false;
+          alert(err.error?.message || 'Erreur lors de l\'envoi pour signature');
+        }
+      });
+    }
+  }
+
+  /**
+   * Renvoie l'email de signature
+   */
   resendSignatureRequest(): void {
     if (!this.contract || !this.signatureRequest) return;
 
@@ -363,12 +455,15 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error resending signature request:', err);
-          this.notificationService.error('Erreur lors du renvoi de l\'email');
+          alert('Erreur lors du renvoi de l\'email');
         }
       });
     }
   }
 
+  /**
+   * Annule la demande de signature
+   */
   cancelSignatureRequest(): void {
     if (!this.contract || !this.signatureRequest) return;
 
@@ -384,12 +479,22 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error cancelling signature request:', err);
-          this.notificationService.error('Erreur lors de l\'annulation');
+          alert('Erreur lors de l\'annulation');
         }
       });
     }
   }
 
+  /**
+   * Vérifie si le bouton d'envoi pour e-signature doit être affiché
+   */
+  canSendForESignature(): boolean {
+    return this.contract?.status === ContractStatus.DRAFT && !this.signatureRequest;
+  }
+
+  /**
+   * Vérifie si les actions de renvoi/annulation sont disponibles
+   */
   canManageSignatureRequest(): boolean {
     if (!this.signatureRequest) return false;
     return SignatureStatusHelper.canResend(this.signatureRequest.status) ||

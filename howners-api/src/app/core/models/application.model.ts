@@ -5,6 +5,9 @@ export interface Application {
   listingId: string;
   listingTitle: string;
   propertyName: string;
+  propertyId: string;
+  listingPricePerMonth: number | null;
+  listingCurrency: string | null;
   applicantId: string;
   applicantName: string;
   applicantEmail: string;
@@ -36,6 +39,17 @@ export interface CreateApplicationRequest {
 export interface ReviewApplicationRequest {
   status: ApplicationStatus;
   notes?: string;
+}
+
+export interface CreateRentalFromApplicationRequest {
+  rentalType: string;
+  startDate: string;
+  endDate?: string;
+  monthlyRent: number;
+  currency?: string;
+  depositAmount?: number;
+  charges?: number;
+  paymentDay?: number;
 }
 
 export const APPLICATION_STATUS_LABELS: { [key in ApplicationStatus]: string } = {
