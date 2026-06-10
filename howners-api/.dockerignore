@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.angular/
+cypress/
+*.spec.ts
+karma.conf.js
+.env
