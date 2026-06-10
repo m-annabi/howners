@@ -1,8 +1,9 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription, interval, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
+import { map, switchMap, catchError, filter } from 'rxjs/operators';
 import { InAppNotification, InAppNotificationType } from '../models/in-app-notification.model';
 import { NotificationCenterService, ServerNotification } from './notification-center.service';
+import { StorageService } from './storage.service';
 
 const ICON_MAP: Record<string, string> = {
   PAYMENT_REMINDER:     'bi-credit-card',
@@ -13,7 +14,6 @@ const ICON_MAP: Record<string, string> = {
   APPLICATION_REJECTED: 'bi-x-circle',
   SIGNATURE_COMPLETED:  'bi-pen',
   SYSTEM:               'bi-info-circle',
-  // Fallback pour les anciens types client-side
   message:     'bi-chat-dots',
   payment:     'bi-credit-card',
   contract:    'bi-file-earmark-text',
@@ -32,13 +32,23 @@ export class InAppNotificationService implements OnDestroy {
 
   readonly unreadCount$: Observable<number> = this.countSubject.asObservable();
 
-  constructor(private notificationCenterService: NotificationCenterService) {
-    // Chargement initial + polling toutes les 60 secondes
-    this.loadNotifications();
-    this.loadUnreadCount();
-    this.pollSub = interval(60_000).subscribe(() => {
+  constructor(
+    private notificationCenterService: NotificationCenterService,
+    private storageService: StorageService
+  ) {
+    if (this.isAuthenticated()) {
+      this.loadNotifications();
       this.loadUnreadCount();
+    }
+    this.pollSub = interval(60_000).subscribe(() => {
+      if (this.isAuthenticated()) {
+        this.loadUnreadCount();
+      }
     });
+  }
+
+  private isAuthenticated(): boolean {
+    return !!this.storageService.getItem('access_token');
   }
 
   ngOnDestroy(): void {
