@@ -138,7 +138,6 @@ export class ListingPhotoUploadComponent {
           i--;
         }
       } catch (error: any) {
-        console.error('Error uploading photo:', error);
         filePreview.error = error.error?.message || 'Erreur lors de l\'upload';
         filePreview.uploading = false;
       }

@@ -69,7 +69,8 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/listings", "/api/listings/{id}").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/subscriptions/plans").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/affiliates", "/api/affiliates/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -102,7 +103,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

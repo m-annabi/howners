@@ -129,7 +129,7 @@ export class ListingFormComponent implements OnInit {
       next: () => {
         this.listingPhotos = this.listingPhotos.filter(p => p.id !== photo.id);
       },
-      error: (err) => console.error('Error deleting photo:', err)
+      error: () => {}
     });
   }
 

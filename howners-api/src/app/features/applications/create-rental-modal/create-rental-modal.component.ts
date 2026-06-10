@@ -77,7 +77,6 @@ export class CreateRentalModalComponent implements OnInit {
         this.onConfirm.emit(rental);
       },
       error: (err) => {
-        console.error('Error creating rental from application:', err);
         this.error = err.error?.message || 'Erreur lors de la creation de la location';
         this.submitting = false;
       }
