@@ -1,6 +1,8 @@
 package com.howners.gestion.service.email;
 
 import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
+import com.howners.gestion.dto.email.ContractExpiryEmailData;
+import com.howners.gestion.dto.email.OnboardingReminderEmailData;
 import com.howners.gestion.dto.email.PaymentReminderEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
@@ -316,6 +318,57 @@ public class SmtpEmailService implements EmailService {
         } catch (Exception e) {
             log.error("Failed to send payment reminder email to: {}", data.recipientEmail(), e);
             throw new RuntimeException("Failed to send payment reminder email", e);
+        }
+    }
+
+    @Override
+    public void sendOnboardingReminderEmail(OnboardingReminderEmailData data) {
+        log.info("Sending onboarding reminder email to: {}", data.recipientEmail());
+
+        try {
+            Context context = new Context();
+            context.setVariable("recipientName", data.recipientName());
+            context.setVariable("addPropertyUrl", data.addPropertyUrl());
+            context.setVariable("dashboardUrl", data.dashboardUrl());
+
+            String htmlContent = templateEngine.process("email/onboarding-reminder", context);
+
+            sendHtmlEmail(
+                    data.recipientEmail(),
+                    "N'oubliez pas d'ajouter votre premier bien",
+                    htmlContent
+            );
+
+            log.info("Onboarding reminder email sent successfully to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            log.error("Failed to send onboarding reminder email to {}: {}", data.recipientEmail(), e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendContractExpiryWarningEmail(ContractExpiryEmailData data) {
+        log.info("Sending contract expiry warning email to: {}", data.recipientEmail());
+
+        try {
+            Context context = new Context();
+            context.setVariable("recipientName", data.recipientName());
+            context.setVariable("tenantName", data.tenantName());
+            context.setVariable("propertyName", data.propertyName());
+            context.setVariable("contractNumber", data.contractNumber());
+            context.setVariable("expiryDate", data.expiryDate());
+            context.setVariable("contractViewUrl", data.contractViewUrl());
+
+            String htmlContent = templateEngine.process("email/contract-expiry", context);
+
+            sendHtmlEmail(
+                    data.recipientEmail(),
+                    "Contrat arrivant a echeance - " + data.propertyName(),
+                    htmlContent
+            );
+
+            log.info("Contract expiry warning email sent successfully to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            log.error("Failed to send contract expiry warning email to {}: {}", data.recipientEmail(), e.getMessage());
         }
     }
 

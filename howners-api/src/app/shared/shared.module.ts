@@ -28,6 +28,7 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { TopbarComponent } from './components/topbar/topbar.component';
 import { QuickFiltersComponent } from './components/quick-filters/quick-filters.component';
 import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component';
+import { UpgradeModalComponent } from './components/upgrade-modal/upgrade-modal.component';
 
 @NgModule({
   declarations: [
@@ -53,7 +54,8 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     TopbarComponent,
     QuickFiltersComponent,
     NpsPromptComponent,
-    WidgetConfiguratorComponent
+    WidgetConfiguratorComponent,
+    UpgradeModalComponent
   ],
   imports: [
     CommonModule,
@@ -85,7 +87,8 @@ import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component
     TopbarComponent,
     QuickFiltersComponent,
     NpsPromptComponent,
-    WidgetConfiguratorComponent
+    WidgetConfiguratorComponent,
+    UpgradeModalComponent
   ]
 })
 export class SharedModule { }

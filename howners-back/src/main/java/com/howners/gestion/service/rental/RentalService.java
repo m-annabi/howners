@@ -20,6 +20,7 @@ import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.email.EmailService;
+import com.howners.gestion.service.subscription.FeatureGateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +46,7 @@ public class RentalService {
     private final PaymentRepository paymentRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final FeatureGateService featureGateService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -88,6 +90,7 @@ public class RentalService {
     @Transactional
     public RentalResponse create(CreateRentalRequest request) {
         UUID currentUserId = AuthService.getCurrentUserId();
+        featureGateService.assertCanCreate(currentUserId, "RENTALS");
         log.info("Creating rental for property {} by user {}", request.propertyId(), currentUserId);
 
         // Vérifier que la propriété existe et appartient à l'utilisateur

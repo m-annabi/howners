@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="065-1" author="claude">
+        <addColumn tableName="subscription_plans">
+            <column name="max_rentals" type="INT" defaultValueNumeric="-1"/>
+            <column name="max_listings" type="INT" defaultValueNumeric="-1"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="065-2" author="claude">
+        <update tableName="subscription_plans">
+            <column name="max_rentals" valueNumeric="3"/>
+            <column name="max_listings" valueNumeric="2"/>
+            <where>name = 'FREE'</where>
+        </update>
+        <update tableName="subscription_plans">
+            <column name="max_rentals" valueNumeric="-1"/>
+            <column name="max_listings" valueNumeric="10"/>
+            <where>name = 'PRO'</where>
+        </update>
+        <update tableName="subscription_plans">
+            <column name="max_rentals" valueNumeric="-1"/>
+            <column name="max_listings" valueNumeric="-1"/>
+            <where>name = 'PREMIUM'</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

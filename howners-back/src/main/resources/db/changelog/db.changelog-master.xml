@@ -68,5 +68,6 @@
     <include file="db/changelog/062-fix-expense-categories.xml"/>
     <include file="db/changelog/063-fix-edl-types.xml"/>
     <include file="db/changelog/064-create-user-widget-preferences.xml"/>
+    <include file="db/changelog/065-add-rental-listing-limits.xml"/>
 
 </databaseChangeLog>

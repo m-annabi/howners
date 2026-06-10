@@ -43,6 +43,7 @@ class ListingServiceTest {
     @Mock private PropertyRepository propertyRepository;
     @Mock private UserRepository userRepository;
     @Mock private ListingPhotoService listingPhotoService;
+    @Mock private com.howners.gestion.service.subscription.FeatureGateService featureGateService;
 
     @InjectMocks
     private ListingService listingService;
