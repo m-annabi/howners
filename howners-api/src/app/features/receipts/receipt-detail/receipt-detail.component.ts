@@ -37,8 +37,7 @@ export class ReceiptDetailComponent implements OnInit, OnDestroy {
         this.receipt = receipt;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading receipt:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement de la quittance';
         this.loading = false;
       }
@@ -56,8 +55,7 @@ export class ReceiptDetailComponent implements OnInit, OnDestroy {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => {
-        console.error('Error downloading PDF:', err);
+      error: () => {
       }
     });
   }

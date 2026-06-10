@@ -37,8 +37,7 @@ export class PropertyPhotoGalleryComponent implements OnInit {
         this.photos = photos;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading photos:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des photos';
         this.loading = false;
       }
@@ -68,8 +67,7 @@ export class PropertyPhotoGalleryComponent implements OnInit {
       next: (photos) => {
         this.photos = photos;
       },
-      error: (err) => {
-        console.error('Error reordering photos:', err);
+      error: () => {
         this.error = 'Erreur lors de la réorganisation des photos';
         // Recharger pour restaurer l'ordre original
         this.loadPhotos();
@@ -97,8 +95,7 @@ export class PropertyPhotoGalleryComponent implements OnInit {
           this.editingCaptionId = null;
           this.tempCaption = '';
         },
-        error: (err) => {
-          console.error('Error updating caption:', err);
+        error: () => {
           this.error = 'Erreur lors de la mise à jour de la légende';
           this.editingCaptionId = null;
         }
@@ -122,8 +119,7 @@ export class PropertyPhotoGalleryComponent implements OnInit {
         // Notifier que la photo de couverture a changé
         this.photoStateService.notifyPhotoUpdate(this.propertyId);
       },
-      error: (err) => {
-        console.error('Error setting primary photo:', err);
+      error: () => {
         this.error = 'Erreur lors de la définition de la photo de couverture';
       }
     });
@@ -142,8 +138,7 @@ export class PropertyPhotoGalleryComponent implements OnInit {
         // Notifier que les photos ont changé (la photo de couverture peut avoir changé)
         this.photoStateService.notifyPhotoUpdate(this.propertyId);
       },
-      error: (err) => {
-        console.error('Error deleting photo:', err);
+      error: () => {
         this.error = 'Erreur lors de la suppression de la photo';
       }
     });

@@ -65,8 +65,7 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
         this.contracts = contracts;
         this.loadingContracts = false;
       },
-      error: (err) => {
-        console.error('Erreur lors du chargement des contrats:', err);
+      error: () => {
         this.loadingContracts = false;
       }
     });

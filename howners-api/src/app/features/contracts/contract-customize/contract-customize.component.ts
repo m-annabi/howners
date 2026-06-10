@@ -124,8 +124,7 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
           this.initialContent = preview.filledContent;
           this.loading = false;
         },
-        error: (err) => {
-          console.error('Error loading preview:', err);
+        error: () => {
           this.error = 'Erreur lors du chargement de la prévisualisation';
           this.loading = false;
         }
@@ -153,15 +152,13 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
             }
             this.loading = false;
           },
-          error: (err) => {
-            console.error('Error loading contract versions:', err);
+          error: () => {
             this.error = 'Erreur lors du chargement des versions du contrat';
             this.loading = false;
           }
         });
       },
-      error: (err) => {
-        console.error('Error loading contract:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement du contrat';
         this.loading = false;
       }
@@ -213,7 +210,6 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
           this.router.navigate(['/contracts', contract.id]);
         },
         error: (err) => {
-          console.error('Error updating contract:', err);
           this.error = err.error?.message || 'Erreur lors de la mise à jour du contrat';
           this.submitting = false;
         }
@@ -231,7 +227,6 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
           this.router.navigate(['/contracts', contract.id]);
         },
         error: (err) => {
-          console.error('Error creating contract:', err);
           this.error = err.error?.message || 'Erreur lors de la création du contrat';
           this.submitting = false;
         }

@@ -120,10 +120,10 @@ server:
 logging:
   level:
     root: INFO
-    com.howners: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    liquibase: DEBUG
+    com.howners: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    liquibase: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 

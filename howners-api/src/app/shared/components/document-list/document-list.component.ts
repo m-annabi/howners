@@ -51,8 +51,7 @@ export class DocumentListComponent implements OnInit {
         this.documents = documents;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading documents:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des documents';
         this.loading = false;
       }
@@ -80,8 +79,7 @@ export class DocumentListComponent implements OnInit {
         window.document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => {
-        console.error('Error downloading document:', err);
+      error: () => {
         this.notificationService.error('Erreur lors du téléchargement du document');
       }
     });
@@ -95,8 +93,7 @@ export class DocumentListComponent implements OnInit {
         next: () => {
           this.loadDocuments();
         },
-        error: (err) => {
-          console.error('Error deleting document:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de la suppression du document');
         }
       });
@@ -112,8 +109,7 @@ export class DocumentListComponent implements OnInit {
     if (confirm(`Archiver le document ${doc.fileName} ?`)) {
       this.documentService.archiveDocument(doc.id).subscribe({
         next: () => this.loadDocuments(),
-        error: (err) => {
-          console.error('Error archiving document:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de l\'archivage du document');
         }
       });
@@ -126,8 +122,7 @@ export class DocumentListComponent implements OnInit {
     if (confirm(`${action} ${doc.fileName} ?`)) {
       this.documentService.setLegalHold(doc.id, !doc.legalHold).subscribe({
         next: () => this.loadDocuments(),
-        error: (err) => {
-          console.error('Error toggling legal hold:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de la modification du blocage légal');
         }
       });
@@ -152,8 +147,7 @@ export class DocumentListComponent implements OnInit {
         this.retentionDate = '';
         this.loadDocuments();
       },
-      error: (err) => {
-        console.error('Error setting retention:', err);
+      error: () => {
         this.notificationService.error('Erreur lors de la définition de la rétention');
       }
     });

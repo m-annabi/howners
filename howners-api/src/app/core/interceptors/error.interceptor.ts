@@ -40,6 +40,10 @@ export class ErrorInterceptor implements HttpInterceptor {
               errorMessage = 'Session expirée. Veuillez vous reconnecter.';
               this.router.navigate(['/auth/login']);
               break;
+            case 402:
+              errorMessage = error.error?.message || 'Cette fonctionnalité nécessite un plan supérieur';
+              this.router.navigate(['/billing/pricing']);
+              break;
             case 403:
               errorMessage = error.error?.message || "Vous n'avez pas les droits nécessaires pour effectuer cette action";
               break;

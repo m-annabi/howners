@@ -42,8 +42,7 @@ export class VariableHelperComponent implements OnInit {
         this.applyFilters();
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading variables:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des variables';
         this.loading = false;
       }
