@@ -1,5 +1,6 @@
 package com.howners.gestion.domain.rental;
 
+import com.howners.gestion.domain.application.Application;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.user.User;
 import jakarta.persistence.*;
@@ -63,6 +64,10 @@ public class Rental {
 
     @Column(name = "payment_day")
     private Integer paymentDay;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "application_id", unique = true)
+    private Application application;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -1,10 +1,19 @@
 /**
  * Models pour la signature électronique de contrats
  */
-import { SignatureRequestStatus } from './signature-tracking.model';
 
-// Ré-export pour les consommateurs existants
-export { SignatureRequestStatus };
+/**
+ * Statut d'une demande de signature
+ */
+export enum SignatureRequestStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  VIEWED = 'VIEWED',
+  SIGNED = 'SIGNED',
+  DECLINED = 'DECLINED',
+  CANCELLED = 'CANCELLED',
+  EXPIRED = 'EXPIRED'
+}
 
 /**
  * Réponse contenant les informations d'une demande de signature
@@ -14,9 +23,11 @@ export interface SignatureRequestResponse {
   contractId: string;
   contractNumber: string;
   provider: string;
+  providerEnvelopeId?: string;
   signerEmail: string;
   signerName: string;
   status: SignatureRequestStatus;
+  signingUrl?: string;
   sentAt?: string;
   viewedAt?: string;
   signedAt?: string;
@@ -24,9 +35,6 @@ export interface SignatureRequestResponse {
   tokenExpiresAt: string;
   resendCount: number;
   declineReason?: string;
-  reminderCount?: number;
-  lastReminderAt?: string;
-  signerOrder?: number;
 }
 
 /**
@@ -44,7 +52,16 @@ export interface ContractPublicView {
   rentalEndDate?: string;
   monthlyRent: string;
   createdAt: string;
-  documentUrl?: string;
+  documentUrl: string;
+  signatureProvider?: string;
+  canSignWithCanvas?: boolean;
+}
+
+/**
+ * Réponse de redirection vers l'URL de signature
+ */
+export interface SigningRedirectResponse {
+  signingUrl: string;
 }
 
 /**
@@ -64,21 +81,61 @@ export class SignatureStatusHelper {
   static getBadgeInfo(status: SignatureRequestStatus): SignatureStatusBadge {
     switch (status) {
       case SignatureRequestStatus.PENDING:
-        return { status, label: 'En attente', color: 'secondary', icon: 'clock' };
+        return {
+          status,
+          label: 'En attente',
+          color: 'secondary',
+          icon: 'clock'
+        };
       case SignatureRequestStatus.SENT:
-        return { status, label: 'Envoyé', color: 'info', icon: 'envelope' };
+        return {
+          status,
+          label: 'Envoyé',
+          color: 'info',
+          icon: 'envelope'
+        };
       case SignatureRequestStatus.VIEWED:
-        return { status, label: 'Consulté', color: 'primary', icon: 'eye' };
+        return {
+          status,
+          label: 'Consulté',
+          color: 'primary',
+          icon: 'eye'
+        };
       case SignatureRequestStatus.SIGNED:
-        return { status, label: 'Signé', color: 'success', icon: 'check-circle' };
+        return {
+          status,
+          label: 'Signé',
+          color: 'success',
+          icon: 'check-circle'
+        };
       case SignatureRequestStatus.DECLINED:
-        return { status, label: 'Refusé', color: 'danger', icon: 'x-circle' };
+        return {
+          status,
+          label: 'Refusé',
+          color: 'danger',
+          icon: 'x-circle'
+        };
       case SignatureRequestStatus.CANCELLED:
-        return { status, label: 'Annulé', color: 'warning', icon: 'ban' };
+        return {
+          status,
+          label: 'Annulé',
+          color: 'warning',
+          icon: 'ban'
+        };
       case SignatureRequestStatus.EXPIRED:
-        return { status, label: 'Expiré', color: 'danger', icon: 'clock' };
+        return {
+          status,
+          label: 'Expiré',
+          color: 'danger',
+          icon: 'clock'
+        };
       default:
-        return { status, label: 'Inconnu', color: 'secondary', icon: 'question' };
+        return {
+          status,
+          label: 'Inconnu',
+          color: 'secondary',
+          icon: 'question'
+        };
     }
   }
 

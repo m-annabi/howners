@@ -27,12 +27,17 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
+              "src/robots.txt",
               "src/assets"
             ],
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "@stomp/stompjs",
+              "quill"
+            ]
           },
           "configurations": {
             "production": {
@@ -90,6 +95,7 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
+              "src/robots.txt",
               "src/assets"
             ],
             "styles": [

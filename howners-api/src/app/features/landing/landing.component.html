@@ -1,0 +1,203 @@
+<div class="landing">
+  <!-- Top nav -->
+  <header class="landing-nav">
+    <div class="landing-nav__inner">
+      <a class="landing-nav__brand" routerLink="/">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Howners</span>
+      </a>
+      <nav class="landing-nav__links">
+        <a href="#features">Fonctionnalités</a>
+        <a href="#pricing">Tarifs</a>
+        <a href="#faq">FAQ</a>
+        <a (click)="browseListings()" class="landing-nav__listings">Voir les annonces</a>
+      </nav>
+      <div class="landing-nav__cta">
+        <button class="btn btn-link" (click)="login()">Connexion</button>
+        <button class="btn btn-accent" (click)="signup()">Créer un compte</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero__inner">
+      <div class="hero__copy">
+        <span class="hero__pill"><i class="bi bi-stars"></i> Nouveau · Signature canvas + score locataire</span>
+        <h1>La gestion locative, comme votre notaire l'imagine.</h1>
+        <p class="hero__sub">
+          Contrats conformes en un clic. Signature électronique sécurisée. Suivi des loyers,
+          quittances et fiches locataires sans tableur. Pour propriétaires exigeants.
+        </p>
+        <div class="hero__ctas">
+          <button class="btn btn-primary btn-lg" (click)="signup()">
+            <i class="bi bi-rocket-takeoff"></i> Commencer gratuitement
+          </button>
+          <button class="btn btn-outline-secondary btn-lg" (click)="browseListings()">
+            <i class="bi bi-search"></i> Parcourir les annonces
+          </button>
+        </div>
+        <p class="hero__trust">
+          <i class="bi bi-shield-check"></i> 2 biens et 3 contrats gratuits — sans carte bancaire
+        </p>
+      </div>
+      <div class="hero__visual">
+        <div class="hero-card">
+          <div class="hero-card__head">
+            <span class="hero-card__dot"></span>
+            <span class="hero-card__dot"></span>
+            <span class="hero-card__dot"></span>
+            <span class="hero-card__title">CTR-2026-7F3A · T3 Boulogne</span>
+          </div>
+          <div class="hero-card__body">
+            <div class="hero-card__row"><span>Locataire</span><strong>Jean Locataire</strong></div>
+            <div class="hero-card__row"><span>Loyer</span><strong>1 750 €/mois</strong></div>
+            <div class="hero-card__row"><span>Statut</span><span class="hero-card__badge">Signé</span></div>
+            <div class="hero-card__row"><span>Rentabilité brute</span><strong class="hero-card__yield">4,04 %</strong></div>
+            <div class="hero-card__row"><span>Score locataire</span><strong>95 / 100</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Value props -->
+  <section id="features" class="features">
+    <h2>Tout ce qu'il faut, rien de plus.</h2>
+    <p class="features__intro">Quatre piliers pour gérer un patrimoine locatif sereinement.</p>
+    <div class="features__grid">
+      <article class="feature-card">
+        <i class="bi bi-file-earmark-text feature-card__icon"></i>
+        <h3>Contrats prêts à signer</h3>
+        <p>Templates de bail conformes (loi de 89, meublé, courte durée). Variables auto-remplies depuis vos biens et locataires. PDF généré en moins d'une seconde.</p>
+      </article>
+      <article class="feature-card">
+        <i class="bi bi-pen feature-card__icon"></i>
+        <h3>Signature électronique</h3>
+        <p>Canvas HTML5 intégré ou DocuSign si vous préférez. Lien tokenisé envoyé par mail, signature opposable, audit trail complet (IP, user-agent, date).</p>
+      </article>
+      <article class="feature-card">
+        <i class="bi bi-graph-up-arrow feature-card__icon"></i>
+        <h3>Rentabilité visible</h3>
+        <p>Loyer, charges, taxe foncière, copropriété — la rentabilité brute par bien est calculée pour vous. Classez votre portefeuille par yield en un clic.</p>
+      </article>
+      <article class="feature-card">
+        <i class="bi bi-person-check feature-card__icon"></i>
+        <h3>Scoring locataire</h3>
+        <p>Historique de paiements, notes des bailleurs précédents, durée de bail moyenne. Une note 0-100 et un risque (LOW/MEDIUM/HIGH) à chaque candidature.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how-it-works">
+    <h2>Trois minutes pour démarrer.</h2>
+    <ol class="steps">
+      <li>
+        <span class="step-num">1</span>
+        <h3>Créez votre bien</h3>
+        <p>Surface, adresse, charges, prix d'achat. Photos en glisser-déposer.</p>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <h3>Invitez votre locataire</h3>
+        <p>Ou trouvez-en un via la marketplace. Score et compatibilité affichés.</p>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <h3>Générez et signez le bail</h3>
+        <p>Template auto-rempli, signature électronique, quittances mensuelles automatiques.</p>
+      </li>
+    </ol>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="pricing">
+    <h2>Un tarif clair, sans surprise.</h2>
+    <p class="pricing__intro">Démarrez gratuitement. Passez Pro quand votre patrimoine grandit.</p>
+    <div class="pricing__grid">
+      <article class="plan-card">
+        <h3>Gratuit</h3>
+        <div class="plan-card__price">0 €<span class="plan-card__period">/mois</span></div>
+        <ul class="plan-card__features">
+          <li><i class="bi bi-check2"></i> Jusqu'à 2 biens</li>
+          <li><i class="bi bi-check2"></i> 3 contrats par mois</li>
+          <li><i class="bi bi-check2"></i> Quittances automatiques</li>
+          <li><i class="bi bi-check2"></i> Messagerie intégrée</li>
+        </ul>
+        <button class="btn btn-outline-primary w-100" (click)="signup()">Commencer</button>
+      </article>
+      <article class="plan-card plan-card--featured">
+        <div class="plan-card__badge">Le plus populaire</div>
+        <h3>Pro</h3>
+        <div class="plan-card__price">19,90 €<span class="plan-card__period">/mois</span></div>
+        <div class="plan-card__annual">ou 199 € / an (économisez 17 %)</div>
+        <ul class="plan-card__features">
+          <li><i class="bi bi-check2"></i> Jusqu'à 10 biens</li>
+          <li><i class="bi bi-check2"></i> Contrats illimités</li>
+          <li><i class="bi bi-check2"></i> Signature électronique DocuSign</li>
+          <li><i class="bi bi-check2"></i> Scoring locataire détaillé</li>
+          <li><i class="bi bi-check2"></i> Tableau de bord financier</li>
+        </ul>
+        <button class="btn btn-primary w-100" (click)="signup()">Essayer Pro</button>
+      </article>
+      <article class="plan-card">
+        <h3>Premium</h3>
+        <div class="plan-card__price">49,90 €<span class="plan-card__period">/mois</span></div>
+        <div class="plan-card__annual">ou 499 € / an</div>
+        <ul class="plan-card__features">
+          <li><i class="bi bi-check2"></i> Biens & contrats illimités</li>
+          <li><i class="bi bi-check2"></i> Chiffrement documents</li>
+          <li><i class="bi bi-check2"></i> Support prioritaire</li>
+          <li><i class="bi bi-check2"></i> Accès API</li>
+        </ul>
+        <button class="btn btn-outline-primary w-100" (click)="signup()">Choisir Premium</button>
+      </article>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="faq">
+    <h2>Questions fréquentes</h2>
+    <details class="faq-item">
+      <summary>Mes contrats sont-ils juridiquement opposables ?</summary>
+      <p>Oui. Howners s'appuie sur la signature électronique conforme au règlement eIDAS (DocuSign ou notre signature canvas avec horodatage, IP et user-agent loggés). Les contrats sont archivés avec hash SHA-256 d'intégrité.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Mes données sont-elles sécurisées ?</summary>
+      <p>Hébergement européen (S3 EU-West). Mots de passe BCrypt, sessions JWT, chiffrement TLS partout. Conforme RGPD avec export et anonymisation des données.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Puis-je migrer depuis un autre outil ?</summary>
+      <p>Oui. L'import CSV est disponible sur les plans Pro et Premium. Notre équipe peut vous accompagner sur la reprise des contrats actifs (sur demande).</p>
+    </details>
+    <details class="faq-item">
+      <summary>Que se passe-t-il si je dépasse mon quota ?</summary>
+      <p>Vous êtes prévenu avant. Aucun bien ni contrat n'est supprimé : vous pouvez les consulter mais pas en créer de nouveaux jusqu'à montée en gamme ou attente du prochain mois.</p>
+    </details>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta">
+    <h2>Prêt à reprendre le contrôle de votre gestion locative ?</h2>
+    <p>2 minutes pour créer votre compte, sans carte bancaire.</p>
+    <button class="btn btn-accent btn-lg" (click)="signup()">
+      <i class="bi bi-rocket-takeoff"></i> Démarrer gratuitement
+    </button>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <div class="landing-footer__inner">
+      <div class="landing-footer__brand">
+        <i class="bi bi-house-door-fill"></i> Howners
+      </div>
+      <div class="landing-footer__legal">
+        <a href="#">Mentions légales</a>
+        <a href="#">CGU</a>
+        <a href="#">RGPD</a>
+        <span>© 2026 Howners</span>
+      </div>
+    </div>
+  </footer>
+</div>

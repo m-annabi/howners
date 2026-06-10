@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="057-fix-end-date-clause" author="howners">
+        <comment>
+            Replace "le {{rental.endDate}}" with "{{rental.endDateClause}}" in default
+            templates so leases without a fixed end date render a proper French clause
+            ("à l'échéance convenue, par renouvellement tacite annuel") instead of
+            "le Indéterminée".
+        </comment>
+
+        <sql>
+            UPDATE contract_templates
+            SET content = REPLACE(content,
+                'le {{rental.endDate}}',
+                '{{rental.endDateClause}}')
+            WHERE content LIKE '%le {{rental.endDate}}%';
+        </sql>
+
+        <rollback>
+            <sql>
+                UPDATE contract_templates
+                SET content = REPLACE(content,
+                    '{{rental.endDateClause}}',
+                    'le {{rental.endDate}}')
+                WHERE content LIKE '%{{rental.endDateClause}}%';
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -22,7 +22,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
     public ResponseEntity<List<PaymentResponse>> getAllPayments() {
         return ResponseEntity.ok(paymentService.findByCurrentUser());
     }

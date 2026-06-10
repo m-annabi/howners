@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ContractPublicView } from '../models/esignature.model';
+import { ContractPublicView, SigningRedirectResponse } from '../models/esignature.model';
 
 /**
  * Service pour l'accès public aux contrats via token (sans authentification)
@@ -23,21 +23,29 @@ export class PublicContractService {
   }
 
   /**
-   * Télécharge le PDF du contrat pour prévisualisation
+   * Obtient l'URL de redirection vers DocuSign pour signer
    */
-  downloadContractPdf(token: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/token/${token}/pdf`, {
-      responseType: 'blob'
-    });
+  getSigningRedirect(token: string, returnUrl?: string): Observable<SigningRedirectResponse> {
+    let params = new HttpParams();
+    if (returnUrl) {
+      params = params.set('returnUrl', returnUrl);
+    }
+
+    return this.http.post<SigningRedirectResponse>(
+      `${this.apiUrl}/token/${token}/redirect`,
+      {},
+      { params }
+    );
   }
 
   /**
-   * Signe le contrat directement avec l'image de signature
+   * Signe un contrat via canvas HTML5 (fallback quand DocuSign indisponible
+   * ou quand le provider de la demande est INTERNAL).
    */
-  signContract(token: string, signatureData: string, signerName: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/token/${token}/sign`, {
-      signatureData,
-      signerName
-    });
+  signWithCanvas(token: string, signatureData: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.apiUrl}/token/${token}/sign-canvas`,
+      { signatureData }
+    );
   }
 }

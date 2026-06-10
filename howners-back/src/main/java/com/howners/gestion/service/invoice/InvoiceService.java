@@ -75,6 +75,9 @@ public class InvoiceService {
 
     @Transactional(readOnly = true)
     public List<InvoiceResponse> findByRentalId(UUID rentalId) {
+        Rental rental = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", rentalId.toString()));
+        checkRentalAccess(rental);
         return invoiceRepository.findByRentalId(rentalId).stream()
                 .map(InvoiceResponse::from)
                 .collect(Collectors.toList());
@@ -152,6 +155,19 @@ public class InvoiceService {
             }
         }
         log.info("Monthly invoice generation completed");
+    }
+
+    private void checkRentalAccess(Rental rental) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        UUID ownerId = rental.getProperty().getOwner().getId();
+        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
+
+        if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId) && currentUser.getRole() != Role.ADMIN) {
+            throw new ForbiddenException("You are not authorized to access invoices for this rental");
+        }
     }
 
     private void checkAccess(Invoice invoice) {

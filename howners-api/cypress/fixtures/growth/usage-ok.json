@@ -1,0 +1,14 @@
+{
+  "planName": "Pro",
+  "currentProperties": 4,
+  "maxProperties": 10,
+  "currentContractsThisMonth": 2,
+  "maxContractsPerMonth": -1,
+  "canCreateProperty": true,
+  "canCreateContract": true,
+  "canCreateRental": true,
+  "canCreateListing": true,
+  "hasESignature": true,
+  "hasTenantScoring": true,
+  "hasDocumentEncryption": false
+}

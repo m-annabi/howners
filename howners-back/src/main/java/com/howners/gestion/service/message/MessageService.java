@@ -15,6 +15,7 @@ import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class MessageService {
     private final UserRepository userRepository;
     private final ListingRepository listingRepository;
     private final ApplicationRepository applicationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public MessageResponse send(CreateMessageRequest request) {
@@ -65,7 +67,15 @@ public class MessageService {
         Message message = builder.build();
         message = messageRepository.save(message);
         log.info("Message sent from {} to {}", currentUserId, request.recipientId());
-        return MessageResponse.from(message);
+
+        MessageResponse response = MessageResponse.from(message);
+        // Principal.getName() = email (voir UserPrincipal.getUsername())
+        messagingTemplate.convertAndSendToUser(
+                recipient.getEmail(),
+                "/queue/messages",
+                response
+        );
+        return response;
     }
 
     @Transactional(readOnly = true)

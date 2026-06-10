@@ -13,8 +13,6 @@ import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.dto.email.WelcomeTenantEmailData;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.exception.ResourceNotFoundException;
-import com.howners.gestion.domain.payment.Payment;
-import com.howners.gestion.domain.payment.PaymentStatus;
 import com.howners.gestion.repository.ContractRepository;
 import com.howners.gestion.repository.PaymentRepository;
 import com.howners.gestion.repository.PropertyRepository;
@@ -56,7 +54,18 @@ public class RentalService {
         UUID currentUserId = AuthService.getCurrentUserId();
         log.debug("Finding all rentals for user {}", currentUserId);
 
-        List<Rental> rentals = rentalRepository.findByOwnerId(currentUserId);
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
+
+        List<Rental> rentals;
+        if (currentUser.getRole() == Role.ADMIN) {
+            rentals = rentalRepository.findAll();
+        } else if (currentUser.getRole() == Role.TENANT) {
+            rentals = rentalRepository.findByTenantId(currentUserId);
+        } else {
+            rentals = rentalRepository.findByOwnerId(currentUserId);
+        }
+
         return rentals.stream()
                 .map(RentalResponse::from)
                 .collect(Collectors.toList());
@@ -187,13 +196,12 @@ public class RentalService {
             );
         }
 
-        List<Payment> pendingPayments = paymentRepository.findByRentalId(rentalId).stream()
-                .filter(p -> p.getStatus() == PaymentStatus.PENDING || p.getStatus() == PaymentStatus.LATE)
-                .toList();
-
-        if (!pendingPayments.isEmpty()) {
+        // Vérifier qu'il n'y a pas de paiements en attente
+        long pendingPayments = paymentRepository.findByRentalIdAndStatus(
+                rentalId, com.howners.gestion.domain.payment.PaymentStatus.PENDING).size();
+        if (pendingPayments > 0) {
             throw new BusinessException(
-                String.format("Cannot delete rental. %d pending or late payment(s) are associated with this rental. Please resolve them first.", pendingPayments.size())
+                String.format("Cannot delete rental. %d pending payment(s) exist. Please settle payments first.", pendingPayments)
             );
         }
 

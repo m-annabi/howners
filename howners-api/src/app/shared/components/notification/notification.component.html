@@ -2,12 +2,14 @@
   <div
     *ngFor="let notification of notifications$ | async"
     [class]="'alert alert-dismissible fade show ' + getAlertClass(notification.type)"
+    [class.clickable]="!!notification.route"
+    (click)="notification.route ? navigate(notification) : null"
     role="alert">
     {{ notification.message }}
     <button
       type="button"
       class="btn-close"
-      (click)="dismiss(notification.id)"
+      (click)="$event.stopPropagation(); dismiss(notification.id)"
       aria-label="Close"></button>
   </div>
 </div>

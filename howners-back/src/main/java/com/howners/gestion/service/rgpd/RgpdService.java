@@ -261,6 +261,6 @@ public class RgpdService {
         } catch (Exception e) {
             // No request context
         }
-        return "unknown";
+        return null;
     }
 }

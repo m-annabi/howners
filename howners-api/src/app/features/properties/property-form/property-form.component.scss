@@ -1,74 +1,87 @@
 .property-form-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--hw-space-6);
 }
 
 .form-header {
-  margin-bottom: 2rem;
+  margin-bottom: var(--hw-space-6);
 
   h1 {
     margin: 0;
-    color: #333;
+    font-family: var(--hw-font-display);
+    font-size: 1.75rem;
+    font-weight: var(--hw-fw-semibold);
+    letter-spacing: -0.015em;
+    color: var(--hw-primary-800);
   }
 }
 
 .error-message {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #fee;
-  border: 1px solid #fcc;
-  border-radius: 4px;
-  color: #e74c3c;
+  margin-bottom: var(--hw-space-5);
+  padding: var(--hw-space-4);
+  background: var(--hw-danger-light);
+  border: 1px solid rgba(166, 51, 46, 0.18);
+  border-radius: var(--hw-radius-md);
+  color: var(--hw-danger);
 }
 
 .property-form {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  box-shadow: var(--hw-shadow-xs);
+  padding: var(--hw-space-8);
 }
 
 .form-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--hw-space-6);
 
   h2 {
-    margin: 0 0 1.5rem;
-    font-size: 1.25rem;
-    color: #333;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #667eea;
+    margin: 0 0 var(--hw-space-5);
+    font-family: var(--hw-font-display);
+    font-size: 1.125rem;
+    font-weight: var(--hw-fw-semibold);
+    letter-spacing: -0.01em;
+    color: var(--hw-primary-800);
+    padding-bottom: var(--hw-space-2);
+    border-bottom: 2px solid var(--hw-accent-500);
+    display: inline-block;
   }
 }
 
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: var(--hw-space-4);
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--hw-space-5);
 
   label {
     display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #333;
+    margin-bottom: var(--hw-space-2);
+    font-weight: var(--hw-fw-medium);
+    color: var(--hw-gray-700);
+    font-size: var(--hw-fs-sm);
   }
 
   .form-control {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--hw-gray-300);
+    border-radius: var(--hw-radius-md);
+    font-size: var(--hw-fs-base);
     font-family: inherit;
+    background: var(--hw-surface);
+    color: var(--hw-gray-900);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
     &:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: var(--hw-primary-500);
+      box-shadow: 0 0 0 3px var(--hw-primary-50);
     }
   }
 
@@ -78,43 +91,47 @@
   }
 
   .error {
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #e74c3c;
+    margin-top: var(--hw-space-1);
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-danger);
   }
 }
 
 .form-actions {
   display: flex;
-  gap: 1rem;
+  gap: var(--hw-space-3);
   justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+  padding-top: var(--hw-space-4);
+  border-top: 1px solid var(--hw-gray-200);
 
   .btn {
-    padding: 0.75rem 2rem;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    border: 1px solid transparent;
+    border-radius: var(--hw-radius-md);
+    font-size: var(--hw-fs-base);
+    font-weight: var(--hw-fw-medium);
     cursor: pointer;
-    transition: all 0.3s;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
     &.btn-secondary {
-      background: #f5f5f5;
-      color: #333;
+      background: var(--hw-surface);
+      border-color: var(--hw-gray-300);
+      color: var(--hw-gray-800);
 
       &:hover {
-        background: #e0e0e0;
+        background: var(--hw-gray-50);
+        border-color: var(--hw-gray-400);
       }
     }
 
     &.btn-primary {
-      background: #667eea;
-      color: white;
+      background: var(--hw-primary-600);
+      border-color: var(--hw-primary-600);
+      color: #fff;
 
       &:hover:not(:disabled) {
-        background: #5568d3;
+        background: var(--hw-primary-700);
+        border-color: var(--hw-primary-700);
       }
 
       &:disabled {
@@ -126,54 +143,58 @@
 }
 
 .info-message {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: #e7f3ff;
-  border: 1px solid #b3d9ff;
-  border-radius: 8px;
+  margin-top: var(--hw-space-6);
+  padding: var(--hw-space-5);
+  background: var(--hw-info-light);
+  border: 1px solid rgba(36, 95, 143, 0.18);
+  border-radius: var(--hw-radius-md);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--hw-space-3);
 
   svg {
     flex-shrink: 0;
-    color: #0066cc;
+    color: var(--hw-info);
   }
 
   p {
     margin: 0;
-    color: #0066cc;
+    color: var(--hw-info);
     font-size: 0.95rem;
   }
 }
 
 .form-section:not(.property-form .form-section) {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
-  margin-top: 2rem;
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  box-shadow: var(--hw-shadow-xs);
+  padding: var(--hw-space-8);
+  margin-top: var(--hw-space-6);
 
   h3 {
-    margin: 0 0 1.5rem;
-    font-size: 1.25rem;
-    color: #333;
+    margin: 0 0 var(--hw-space-5);
+    font-family: var(--hw-font-display);
+    font-size: 1.125rem;
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-primary-800);
   }
 }
 
 .section-description {
-  color: #666;
-  font-size: 0.9rem;
-  margin: -0.5rem 0 1rem 0;
+  color: var(--hw-gray-600);
+  font-size: 0.875rem;
+  margin: -0.5rem 0 var(--hw-space-4) 0;
 }
 
 .checkbox-row {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f9f9f9;
-  border-radius: 8px;
+  gap: var(--hw-space-3);
+  padding: var(--hw-space-4);
+  background: var(--hw-gray-50);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-md);
 
   .form-check {
     display: flex;
@@ -181,15 +202,15 @@
     gap: 0.75rem;
 
     .form-check-input {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       cursor: pointer;
     }
 
     .form-check-label {
       cursor: pointer;
-      font-weight: 500;
-      color: #333;
+      font-weight: var(--hw-fw-medium);
+      color: var(--hw-gray-800);
       font-size: 0.95rem;
     }
   }

@@ -5,30 +5,46 @@
 </app-page-header>
 
 <ng-template #headerActions>
-  <button class="hw-btn hw-btn--primary" (click)="createContract()">
+  <!-- Not disabled at saturation: the click opens the upgrade modal in createContract(). -->
+  <button class="hw-btn hw-btn--primary"
+          (click)="createContract()">
     <i class="bi bi-plus-lg"></i> Nouveau Contrat
   </button>
 </ng-template>
 
-<!-- Filters -->
-<div *ngIf="!loading && contracts.length > 0" class="contract-list__toolbar">
+<!-- Quota banner -->
+<div *ngIf="usage" class="quota-banner" [attr.data-tone]="quotaTone">
+  <div class="quota-banner__head">
+    <span class="quota-banner__plan">
+      <i class="bi bi-stars"></i> {{ usage.planName }}
+    </span>
+    <span class="quota-banner__label">{{ quotaLabel }}</span>
+    <a *ngIf="quotaTone !== 'ok'" routerLink="/billing/pricing" class="quota-banner__cta">
+      Mettre à niveau <i class="bi bi-arrow-right"></i>
+    </a>
+  </div>
+  <div *ngIf="usage.maxContractsPerMonth >= 0" class="quota-banner__bar">
+    <div class="quota-banner__fill" [style.width.%]="quotaPercent"></div>
+  </div>
+</div>
+
+<!-- Toolbar: filter chips + search -->
+<div class="contract-list__toolbar" [class.contract-list__toolbar--hidden]="loading || contracts.length === 0">
+  <app-quick-filters
+    [filters]="filters"
+    [activeKey]="selectedStatus"
+    (filterChange)="onFilterChange($event)">
+  </app-quick-filters>
+
   <div class="contract-list__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
       class="form-control"
-      placeholder="Rechercher par numéro, propriété ou locataire..."
+      placeholder="Rechercher par numéro, bien ou locataire..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
   </div>
-  <select
-    class="form-select contract-list__filter"
-    [(ngModel)]="selectedStatus"
-    (ngModelChange)="onStatusChange()">
-    <option *ngFor="let status of statuses" [value]="status.value">
-      {{ status.label }}
-    </option>
-  </select>
 </div>
 
 <!-- Loading -->
@@ -55,47 +71,105 @@
   *ngIf="!loading && !error && filteredContracts.length === 0 && contracts.length > 0"
   icon="bi-search"
   title="Aucun résultat"
-  message="Essayez avec d'autres termes de recherche.">
+  message="Essayez d'autres termes ou changez de filtre.">
 </app-empty-state>
 
-<!-- Contract cards -->
-<div *ngIf="!loading && !error && filteredContracts.length > 0" class="contract-list__grid">
-  <div
-    *ngFor="let contract of filteredContracts"
-    class="contract-card hw-card hw-card--clickable"
-    (click)="viewContract(contract)">
+<!-- Upgrade modal — quota atteint -->
+<div *ngIf="showUpgradeModal" class="upgrade-modal" (click)="closeUpgradeModal()">
+  <div class="upgrade-modal__dialog" (click)="$event.stopPropagation()">
+    <button type="button" class="upgrade-modal__close" (click)="closeUpgradeModal()">
+      <i class="bi bi-x-lg"></i>
+    </button>
 
-    <div class="contract-card__header">
-      <span class="contract-card__number">{{ contract.contractNumber }}</span>
-      <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
+    <div class="upgrade-modal__icon"><i class="bi bi-stars"></i></div>
+
+    <h3 class="upgrade-modal__title">Vous avez atteint votre quota mensuel</h3>
+    <p class="upgrade-modal__sub">
+      Vous avez utilisé <strong>{{ usage?.currentContractsThisMonth }} / {{ usage?.maxContractsPerMonth }}</strong> contrats ce mois sur le plan
+      <strong>{{ usage?.planName }}</strong>. Passez au plan Pro pour générer des contrats sans limite, plus la signature électronique DocuSign et le scoring locataire détaillé.
+    </p>
+
+    <div class="upgrade-modal__compare">
+      <div class="upgrade-modal__col">
+        <span class="upgrade-modal__col-label">{{ usage?.planName }} (actuel)</span>
+        <ul>
+          <li><i class="bi bi-check2 text-muted"></i> {{ usage?.maxProperties }} biens</li>
+          <li><i class="bi bi-check2 text-muted"></i> {{ usage?.maxContractsPerMonth }} contrats/mois</li>
+          <li class="upgrade-modal__missing"><i class="bi bi-x"></i> Signature électronique</li>
+          <li class="upgrade-modal__missing"><i class="bi bi-x"></i> Scoring locataire</li>
+        </ul>
+      </div>
+      <div class="upgrade-modal__col upgrade-modal__col--featured">
+        <span class="upgrade-modal__col-label">Pro · 19,90 €/mois</span>
+        <ul>
+          <li><i class="bi bi-check2"></i> 10 biens</li>
+          <li><i class="bi bi-check2"></i> <strong>Contrats illimités</strong></li>
+          <li><i class="bi bi-check2"></i> <strong>Signature DocuSign</strong></li>
+          <li><i class="bi bi-check2"></i> <strong>Scoring locataire complet</strong></li>
+        </ul>
+      </div>
     </div>
 
-    <div class="contract-card__body">
-      <div class="contract-card__row">
-        <i class="bi bi-building"></i>
-        <span>{{ contract.rentalPropertyName }}</span>
-      </div>
-      <div class="contract-card__row">
-        <i class="bi bi-person"></i>
-        <span>{{ contract.tenantFullName }}</span>
-      </div>
-      <div class="contract-card__row">
-        <i class="bi bi-layers"></i>
-        <span>Version {{ contract.currentVersion }}</span>
-      </div>
-      <div class="contract-card__row">
-        <i class="bi bi-calendar3"></i>
-        <span>{{ contract.createdAt | date:'dd/MM/yyyy' }}</span>
-      </div>
-    </div>
-
-    <div *ngIf="contract.status === ContractStatus.DRAFT" class="contract-card__actions">
-      <button
-        class="hw-btn hw-btn--ghost hw-btn--sm"
-        style="color: var(--hw-danger)"
-        (click)="deleteContract(contract, $event)">
-        <i class="bi bi-trash"></i> Supprimer
+    <div class="upgrade-modal__actions">
+      <button class="btn btn-link" (click)="closeUpgradeModal()">Plus tard</button>
+      <button class="btn btn-primary btn-lg" (click)="goToPricing()">
+        Voir les plans <i class="bi bi-arrow-right ms-1"></i>
       </button>
     </div>
   </div>
+</div>
+
+<!-- Dense table -->
+<div *ngIf="!loading && !error && filteredContracts.length > 0" class="hw-card contract-table-wrap">
+  <table class="contract-table">
+    <thead>
+      <tr>
+        <th>N° de contrat</th>
+        <th class="sortable" [class.sorted]="sortCol==='property'" (click)="sortOn('property')">Bien <i class="bi" [ngClass]="sortIcon('property')"></i></th>
+        <th class="sortable" [class.sorted]="sortCol==='tenant'" (click)="sortOn('tenant')">Locataire <i class="bi" [ngClass]="sortIcon('tenant')"></i></th>
+        <th class="contract-table__col-version">Version</th>
+        <th class="sortable" [class.sorted]="sortCol==='date'" (click)="sortOn('date')">Créé le <i class="bi" [ngClass]="sortIcon('date')"></i></th>
+        <th class="contract-table__col-status sortable" [class.sorted]="sortCol==='status'" (click)="sortOn('status')">Statut <i class="bi" [ngClass]="sortIcon('status')"></i></th>
+        <th class="contract-table__col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let contract of filteredContracts"
+          class="contract-row"
+          (click)="viewContract(contract)">
+
+        <td>
+          <div class="contract-table__number">{{ contract.contractNumber }}</div>
+        </td>
+
+        <td>{{ contract.rentalPropertyName }}</td>
+
+        <td>{{ contract.tenantFullName }}</td>
+
+        <td class="contract-table__col-version">v{{ contract.currentVersion }}</td>
+
+        <td>{{ contract.createdAt | date:'dd/MM/yyyy' }}</td>
+
+        <td class="contract-table__col-status">
+          <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
+        </td>
+
+        <td class="contract-table__col-actions" (click)="$event.stopPropagation()">
+          <div class="row-actions">
+            <button class="row-actions__btn"
+                    (click)="viewContract(contract); $event.stopPropagation()"
+                    title="Voir">
+              <i class="bi bi-eye"></i>
+            </button>
+            <button *ngIf="contract.status === ContractStatus.DRAFT"
+                    class="row-actions__btn row-actions__btn--danger"
+                    (click)="deleteContract(contract, $event)"
+                    title="Supprimer">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

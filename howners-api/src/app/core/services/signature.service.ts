@@ -8,7 +8,7 @@ import { Signature, CreateSignatureRequest } from '../models/signature.model';
   providedIn: 'root'
 })
 export class SignatureService {
-  private readonly apiUrl = `${environment.apiUrl}/signatures`;
+  private apiUrl = `${environment.apiUrl}/signatures`;
 
   constructor(private http: HttpClient) {}
 

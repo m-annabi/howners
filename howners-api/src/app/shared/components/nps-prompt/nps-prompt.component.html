@@ -1,0 +1,44 @@
+<div *ngIf="visible" class="nps-prompt">
+  <div class="nps-prompt__card">
+    <button type="button" class="nps-prompt__close" (click)="remindLater()" title="Plus tard">
+      <i class="bi bi-x-lg"></i>
+    </button>
+
+    <h3 class="nps-prompt__title">
+      Sur 10, recommanderiez-vous Howners ?
+    </h3>
+    <p class="nps-prompt__sub">Vous nous aidez à améliorer le produit en quelques secondes.</p>
+
+    <div class="nps-prompt__scale">
+      <button *ngFor="let s of scores"
+              type="button"
+              class="nps-prompt__score"
+              [class.is-selected]="selectedScore === s"
+              [attr.data-tone]="toneClass(s)"
+              (click)="select(s)">
+        {{ s }}
+      </button>
+    </div>
+
+    <div class="nps-prompt__legend">
+      <span>Pas du tout probable</span>
+      <span>Très probable</span>
+    </div>
+
+    <textarea *ngIf="selectedScore != null"
+              class="nps-prompt__comment form-control"
+              rows="3"
+              [(ngModel)]="comment"
+              placeholder="Dites-nous pourquoi (optionnel)">
+    </textarea>
+
+    <div class="nps-prompt__actions">
+      <button class="btn btn-link" (click)="dismiss()">Ne plus me proposer</button>
+      <button class="btn btn-primary"
+              [disabled]="selectedScore == null || submitting"
+              (click)="submit()">
+        <i class="bi bi-send"></i> Envoyer
+      </button>
+    </div>
+  </div>
+</div>

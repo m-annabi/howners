@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
 
@@ -9,11 +9,12 @@ import { Role } from '../../../core/models/user.model';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   loading = false;
   error: string | null = null;
   showPassword = false;
+  referralCode: string | null = null;
   roles = [
     { value: Role.OWNER, label: 'Propriétaire' },
     { value: Role.TENANT, label: 'Locataire' }
@@ -22,7 +23,8 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -30,8 +32,17 @@ export class RegisterComponent {
       firstName: ['', [Validators.required]],
       lastName: ['', [Validators.required]],
       phone: [''],
-      role: [Role.OWNER, [Validators.required]]
+      role: [Role.OWNER, [Validators.required]],
+      referralCode: ['']
     });
+  }
+
+  ngOnInit(): void {
+    const ref = this.route.snapshot.queryParamMap.get('ref');
+    if (ref) {
+      this.referralCode = ref.trim().toUpperCase();
+      this.registerForm.patchValue({ referralCode: this.referralCode });
+    }
   }
 
   onSubmit(): void {

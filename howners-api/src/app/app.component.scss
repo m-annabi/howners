@@ -2,6 +2,11 @@
 .hw-layout {
   display: flex;
   min-height: 100vh;
+
+  // Guest mode: no sidebar, full width
+  &--guest .hw-main {
+    margin-left: 0;
+  }
 }
 
 .hw-sidebar {
@@ -12,7 +17,7 @@
   left: 0;
   bottom: 0;
   z-index: 1030;
-  background: white;
+  background: var(--hw-primary-800);
   transition: transform 0.25s ease;
 
   @media (max-width: 991px) {
@@ -59,6 +64,12 @@
   max-width: var(--hw-content-max-width);
   width: 100%;
   margin: 0 auto;
+
+  // Guest pages handle their own full-viewport layout
+  &--guest {
+    padding: 0;
+    max-width: 100%;
+  }
 
   @media (max-width: 767px) {
     padding: var(--hw-space-4);

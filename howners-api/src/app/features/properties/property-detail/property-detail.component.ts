@@ -113,18 +113,14 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   viewDocuments(): void {
-    const el = document.querySelector('app-document-list');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const docSection = document.querySelector('app-document-list');
+    if (docSection) {
+      docSection.scrollIntoView({ behavior: 'smooth' });
     }
   }
 
   viewStats(): void {
-    if (this.property) {
-      this.router.navigate(['/financial'], {
-        queryParams: { propertyId: this.property.id }
-      });
-    }
+    this.router.navigate(['/financial']);
   }
 
   viewRentalDetail(): void {

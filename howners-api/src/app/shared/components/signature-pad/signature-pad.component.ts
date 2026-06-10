@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Output, EventEmitter, Input, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, Input, AfterViewInit } from '@angular/core';
 import SignaturePad from 'signature_pad';
 
 @Component({
@@ -6,7 +6,7 @@ import SignaturePad from 'signature_pad';
   templateUrl: './signature-pad.component.html',
   styleUrls: ['./signature-pad.component.scss']
 })
-export class SignaturePadComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SignaturePadComponent implements OnInit, AfterViewInit {
   @ViewChild('signatureCanvas', { static: false }) signatureCanvas!: ElementRef<HTMLCanvasElement>;
   @Output() signatureChange = new EventEmitter<string>();
   @Input() disabled = false;
@@ -16,6 +16,7 @@ export class SignaturePadComponent implements OnInit, AfterViewInit, OnDestroy {
   canvasHeight = 200;
 
   ngOnInit(): void {
+    // Adjust canvas size for mobile
     if (window.innerWidth < 768) {
       this.canvasWidth = window.innerWidth - 40;
       this.canvasHeight = 150;
@@ -26,14 +27,10 @@ export class SignaturePadComponent implements OnInit, AfterViewInit, OnDestroy {
     this.initializeSignaturePad();
   }
 
-  ngOnDestroy(): void {
-    if (this.signaturePad) {
-      this.signaturePad.off();
-    }
-  }
-
   initializeSignaturePad(): void {
     const canvas = this.signatureCanvas.nativeElement;
+
+    // Set canvas size
     canvas.width = this.canvasWidth;
     canvas.height = this.canvasHeight;
 
@@ -46,6 +43,7 @@ export class SignaturePadComponent implements OnInit, AfterViewInit, OnDestroy {
       velocityFilterWeight: 0.7
     });
 
+    // Emit signature on every stroke end
     this.signaturePad.addEventListener('endStroke', () => {
       this.onSignatureChange();
     });
@@ -87,7 +85,7 @@ export class SignaturePadComponent implements OnInit, AfterViewInit, OnDestroy {
   undo(): void {
     const data = this.signaturePad.toData();
     if (data && data.length > 0) {
-      data.pop();
+      data.pop(); // Remove the last stroke
       this.signaturePad.fromData(data);
       this.onSignatureChange();
     }

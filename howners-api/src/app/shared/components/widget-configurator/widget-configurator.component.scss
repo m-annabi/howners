@@ -1,0 +1,212 @@
+.wc-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 35, 0.35);
+  z-index: 1100;
+  backdrop-filter: blur(2px);
+}
+
+.wc-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 320px;
+  background: var(--hw-surface);
+  border-left: var(--hw-border);
+  box-shadow: var(--hw-shadow-lg);
+  z-index: 1101;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 480px) {
+    width: 100vw;
+  }
+}
+
+.wc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--hw-space-4) var(--hw-space-5);
+  border-bottom: var(--hw-border);
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    font-size: var(--hw-fs-base);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-800);
+
+    i { color: var(--hw-primary-600); font-size: 1rem; }
+  }
+}
+
+.wc-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: var(--hw-radius-md);
+  color: var(--hw-gray-400);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: var(--hw-gray-100); color: var(--hw-gray-700); }
+}
+
+.wc-hint {
+  padding: var(--hw-space-3) var(--hw-space-5);
+  font-size: var(--hw-fs-xs);
+  color: var(--hw-gray-400);
+  border-bottom: var(--hw-border);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.wc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--hw-space-2) 0;
+}
+
+.wc-item {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  padding: var(--hw-space-3) var(--hw-space-5);
+  transition: background 0.1s;
+  cursor: default;
+  position: relative;
+
+  &:hover { background: var(--hw-gray-50); }
+
+  &__drag {
+    color: var(--hw-gray-300);
+    cursor: grab;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s;
+
+    &:hover { color: var(--hw-gray-500); }
+    &:active { cursor: grabbing; }
+  }
+
+  &__icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--hw-radius-md);
+    background: var(--hw-primary-50);
+    color: var(--hw-primary-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+  }
+
+  &__label {
+    flex: 1;
+    font-size: var(--hw-fs-sm);
+    font-weight: var(--hw-fw-medium);
+    color: var(--hw-gray-700);
+  }
+
+  &__placeholder {
+    height: 48px;
+    background: var(--hw-primary-50);
+    border: 1px dashed var(--hw-primary-300);
+    border-radius: var(--hw-radius-md);
+    margin: 0 var(--hw-space-5);
+  }
+}
+
+// CDK drag preview
+.cdk-drag-preview {
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  box-shadow: var(--hw-shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  padding: var(--hw-space-3) var(--hw-space-5);
+  opacity: 0.95;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
+}
+
+// Toggle switch
+.wc-toggle {
+  position: relative;
+  cursor: pointer;
+
+  &__track {
+    display: block;
+    width: 36px;
+    height: 20px;
+    border-radius: var(--hw-radius-full);
+    background: var(--hw-gray-200);
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  &__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: var(--hw-shadow-xs);
+    transition: transform 0.2s;
+  }
+
+  &--on .wc-toggle__track { background: var(--hw-primary-600); }
+  &--on .wc-toggle__thumb { transform: translateX(16px); }
+}
+
+.wc-footer {
+  padding: var(--hw-space-4) var(--hw-space-5);
+  border-top: var(--hw-border);
+  display: flex;
+  gap: var(--hw-space-2);
+}
+
+.wc-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-1);
+  padding: var(--hw-space-2) var(--hw-space-4);
+  border-radius: var(--hw-radius-md);
+  font-size: var(--hw-fs-sm);
+  font-weight: var(--hw-fw-medium);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+
+  &--primary {
+    background: var(--hw-primary-600);
+    color: white;
+    flex: 1;
+    justify-content: center;
+
+    &:hover { background: var(--hw-primary-700); }
+  }
+
+  &--ghost {
+    background: none;
+    color: var(--hw-gray-600);
+    border: var(--hw-border);
+
+    &:hover { background: var(--hw-gray-50); }
+  }
+}

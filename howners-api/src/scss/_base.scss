@@ -20,24 +20,39 @@ body {
   font-weight: var(--hw-fw-normal);
   line-height: var(--hw-lh-normal);
   color: var(--hw-gray-900);
-  background-color: var(--hw-gray-50);
+  background-color: var(--hw-bg-soft);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
+  font-family: var(--hw-font-display);
   font-weight: var(--hw-fw-semibold);
+  letter-spacing: -0.01em;
   line-height: var(--hw-lh-tight);
   color: var(--hw-gray-900);
 }
 
-h1 { font-size: var(--hw-fs-3xl); }
-h2 { font-size: var(--hw-fs-2xl); }
-h3 { font-size: var(--hw-fs-xl); }
-h4 { font-size: var(--hw-fs-lg); }
-h5 { font-size: var(--hw-fs-md); }
-h6 { font-size: var(--hw-fs-base); }
+h1 { font-size: var(--hw-fs-4xl); font-weight: var(--hw-fw-semibold); }
+h2 { font-size: var(--hw-fs-3xl); }
+h3 { font-size: var(--hw-fs-2xl); }
+h4 { font-size: var(--hw-fs-xl); }
+h5 { font-size: var(--hw-fs-lg); }
+h6 { font-size: var(--hw-fs-md); }
+
+// Bootstrap heading scale should also use display font
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--hw-font-display);
+  letter-spacing: -0.01em;
+}
+
+// Card titles, page headers — preserve weight balance
+.card-title,
+.modal-title {
+  font-family: var(--hw-font-display);
+  letter-spacing: -0.01em;
+}
 
 p {
   margin: 0;

@@ -37,6 +37,11 @@
         </div>
       </div>
 
+      <div *ngIf="referralCode" class="alert alert-success py-2 mb-3" style="font-size: 0.875rem;">
+        <i class="bi bi-stars"></i>
+        Invité par un utilisateur Howners (code <strong>{{ referralCode }}</strong>).
+      </div>
+
       <div class="auth-field">
         <label class="form-label" for="email">Adresse email</label>
         <input

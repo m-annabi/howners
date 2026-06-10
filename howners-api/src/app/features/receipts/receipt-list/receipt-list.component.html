@@ -3,14 +3,14 @@
   [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Quittances'}]">
 </app-page-header>
 
-<!-- Filters -->
+<!-- Toolbar: search -->
 <div *ngIf="!loading && receipts.length > 0" class="receipt-list__toolbar">
   <div class="receipt-list__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
       class="form-control"
-      placeholder="Rechercher par numéro, propriété ou locataire..."
+      placeholder="Rechercher par numéro, bien ou locataire..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
   </div>
@@ -38,43 +38,51 @@
   *ngIf="!loading && !error && filteredReceipts.length === 0 && receipts.length > 0"
   icon="bi-search"
   title="Aucun résultat"
-  message="Essayez avec d'autres termes de recherche.">
+  message="Essayez d'autres termes de recherche.">
 </app-empty-state>
 
-<!-- Table -->
-<div *ngIf="!loading && !error && filteredReceipts.length > 0" class="hw-card">
-  <div class="hw-table-responsive">
-    <table class="hw-table">
-      <thead>
-        <tr>
-          <th>Numéro</th>
-          <th>Propriété</th>
-          <th>Locataire</th>
-          <th>Période</th>
-          <th>Montant</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let receipt of filteredReceipts" class="hw-table__row--clickable" (click)="viewReceipt(receipt)">
-          <td>
-            <span class="hw-text-medium">{{ receipt.receiptNumber }}</span>
-          </td>
-          <td>{{ receipt.propertyName }}</td>
-          <td>{{ receipt.tenantName }}</td>
-          <td>{{ receipt.periodStart | date:'dd/MM/yyyy' }} - {{ receipt.periodEnd | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <span class="hw-text-medium">{{ receipt.amount | number:'1.2-2' }} {{ receipt.currency }}</span>
-          </td>
-          <td>
-            <button
-              class="hw-btn hw-btn--ghost hw-btn--sm"
-              (click)="downloadPdf(receipt, $event)">
-              <i class="bi bi-download"></i> PDF
+<!-- Dense table -->
+<div *ngIf="!loading && !error && filteredReceipts.length > 0" class="hw-card receipt-table-wrap">
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th>Numéro</th>
+        <th>Bien</th>
+        <th>Locataire</th>
+        <th class="receipt-table__col-period">Période</th>
+        <th class="receipt-table__col-amount">Montant</th>
+        <th class="receipt-table__col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let receipt of filteredReceipts"
+          class="receipt-row"
+          (click)="viewReceipt(receipt)">
+        <td><div class="receipt-table__number">{{ receipt.receiptNumber }}</div></td>
+        <td>{{ receipt.propertyName }}</td>
+        <td>{{ receipt.tenantName }}</td>
+        <td class="receipt-table__col-period">
+          <div>{{ receipt.periodStart | date:'dd/MM/yyyy' }}</div>
+          <div class="receipt-table__muted">→ {{ receipt.periodEnd | date:'dd/MM/yyyy' }}</div>
+        </td>
+        <td class="receipt-table__col-amount">
+          <div class="receipt-table__amount">{{ receipt.amount | number:'1.2-2' }} {{ receipt.currency }}</div>
+        </td>
+        <td class="receipt-table__col-actions" (click)="$event.stopPropagation()">
+          <div class="row-actions">
+            <button class="row-actions__btn"
+                    (click)="downloadPdf(receipt, $event)"
+                    title="Télécharger PDF">
+              <i class="bi bi-download"></i>
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <button class="row-actions__btn"
+                    (click)="viewReceipt(receipt); $event.stopPropagation()"
+                    title="Voir">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

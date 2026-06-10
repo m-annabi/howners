@@ -20,4 +20,6 @@ public interface RentalRepository extends JpaRepository<Rental, UUID> {
 
     @Query("SELECT r FROM Rental r WHERE r.property.owner.id = :ownerId")
     List<Rental> findByOwnerId(UUID ownerId);
+
+    boolean existsByApplicationId(UUID applicationId);
 }

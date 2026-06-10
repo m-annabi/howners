@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue sur Howners</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #1A1A1A;
+            background-color: #F7F4EE;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 24px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(30, 58, 95, 0.08);
+        }
+        .header {
+            background: #1E3A5F;
+            color: #ffffff;
+            padding: 36px 28px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 8px;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 15px;
+        }
+        .accent-bar {
+            height: 3px;
+            background: #C9A961;
+        }
+        .body {
+            padding: 28px;
+        }
+        .greeting {
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 20px;
+            color: #1E3A5F;
+            margin: 0 0 16px;
+        }
+        .lead {
+            color: #495057;
+            margin: 0 0 24px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 24px;
+        }
+        .checklist li {
+            display: flex;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #F7F4EE;
+            border-left: 3px solid #C9A961;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            color: #1A1A1A;
+        }
+        .step-num {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            background: #1E3A5F;
+            color: #fff;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fraunces', Georgia, serif;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .step-body strong { color: #1E3A5F; }
+        .step-body { font-size: 14px; line-height: 1.5; }
+        .cta {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #1E3A5F;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 8px 0 16px;
+        }
+        .cta-secondary {
+            display: inline-block;
+            padding: 14px 28px;
+            background: transparent;
+            color: #1E3A5F !important;
+            border: 1px solid #1E3A5F;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 15px;
+            margin: 8px 8px 16px 0;
+        }
+        .perks {
+            margin-top: 20px;
+            padding: 18px 20px;
+            background: #FBF7EB;
+            border: 1px solid #F5EBCB;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .perks h3 {
+            margin: 0 0 8px;
+            color: #8E6F30;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .perks p { margin: 0; color: #495057; }
+        .footer {
+            background: #08111C;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 20px 28px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .footer a { color: #C9A961; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Bienvenue sur Howners</h1>
+        <p>Votre gestion locative commence ici.</p>
+    </div>
+    <div class="accent-bar"></div>
+    <div class="body">
+        <p class="greeting">Bonjour <span th:text="${recipientName}">Pierre</span>,</p>
+        <p class="lead">
+            Votre compte est prêt. En trois minutes vous aurez votre premier bien dans Howners.
+            Voici le parcours conseillé&nbsp;:
+        </p>
+
+        <ol class="checklist">
+            <li>
+                <span class="step-num">1</span>
+                <div class="step-body">
+                    <strong>Ajoutez votre premier bien</strong><br>
+                    Nom, surface, adresse, prix d'achat (optionnel). 30 secondes.
+                </div>
+            </li>
+            <li>
+                <span class="step-num">2</span>
+                <div class="step-body">
+                    <strong>Créez une location</strong><br>
+                    Saisissez votre locataire actuel ou publiez une annonce pour en trouver un.
+                </div>
+            </li>
+            <li>
+                <span class="step-num">3</span>
+                <div class="step-body">
+                    <strong>Générez le bail et envoyez-le à la signature</strong><br>
+                    Template auto-rempli, signature électronique, quittances mensuelles automatiques.
+                </div>
+            </li>
+        </ol>
+
+        <p>
+            <a th:href="${addPropertyUrl}" class="cta">Ajouter mon premier bien →</a>
+        </p>
+        <p>
+            <a th:href="${dashboardUrl}" class="cta-secondary">Voir le tableau de bord</a>
+        </p>
+
+        <div class="perks">
+            <h3>Inclus dans le plan gratuit</h3>
+            <p>2 biens · 3 contrats par mois · signature canvas · messagerie · quittances automatiques. Aucun engagement, aucune carte bancaire requise.</p>
+        </div>
+
+        <p style="margin-top: 28px; color: #6B7280; font-size: 14px;">
+            Besoin d'aller plus loin (signature DocuSign, scoring locataire, biens illimités) ? <a th:href="${pricingUrl}" style="color: #1E3A5F;">Comparez les plans Pro et Premium</a>.
+        </p>
+    </div>
+    <div class="footer">
+        <p style="margin: 0 0 4px;">© 2026 Howners. Tous droits réservés.</p>
+        <p style="margin: 0;">Cet email vous a été envoyé suite à votre inscription. Pour toute question, répondez simplement à ce message.</p>
+    </div>
+</div>
+</body>
+</html>

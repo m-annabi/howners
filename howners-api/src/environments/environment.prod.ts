@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: `${window.location.protocol}//${window.location.hostname}/api`
+  apiUrl: 'https://api.howners.com/api',  // À configurer plus tard
+  wsUrl: 'https://api.howners.com'
 };

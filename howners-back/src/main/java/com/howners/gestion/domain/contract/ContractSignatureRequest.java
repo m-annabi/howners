@@ -17,6 +17,7 @@ import java.util.UUID;
         @Index(name = "idx_contract_id", columnList = "contract_id"),
         @Index(name = "idx_access_token", columnList = "access_token"),
         @Index(name = "idx_signer_id", columnList = "signer_id"),
+        @Index(name = "idx_provider_envelope_id", columnList = "provider_envelope_id")
 })
 @Getter
 @Setter
@@ -37,10 +38,16 @@ public class ContractSignatureRequest {
     private Contract contract;
 
     /**
-     * Le fournisseur de signature électronique (DIRECT)
+     * Le fournisseur de signature électronique (DOCUSIGN, HELLOSIGN, etc.)
      */
     @Column(name = "provider", nullable = false, length = 50)
     private String provider;
+
+    /**
+     * L'identifiant de l'enveloppe/document chez le fournisseur
+     */
+    @Column(name = "provider_envelope_id", length = 255)
+    private String providerEnvelopeId;
 
     /**
      * Le signataire (locataire)
@@ -73,6 +80,12 @@ public class ContractSignatureRequest {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private SignatureRequestStatus status;
+
+    /**
+     * URL de signature (fournie par le provider)
+     */
+    @Column(name = "signing_url", length = 1000)
+    private String signingUrl;
 
     /**
      * Date d'envoi de l'email

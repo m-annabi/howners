@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- ================================================================ -->
+    <!-- 7 additional TENANT users (password: Test1234!)                 -->
+    <!-- ================================================================ -->
+    <changeSet id="054a-seed-additional-tenants" author="howners">
+        <comment>Add 7 additional tenant users for tenant-discovery demo</comment>
+
+        <insert tableName="users">
+            <column name="id" value="b0000000-0000-0000-0000-000000000004"/>
+            <column name="email" value="lea.moreau@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Léa"/>
+            <column name="last_name" value="Moreau"/>
+            <column name="phone" value="+33600000104"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="id" value="b0000000-0000-0000-0000-000000000005"/>
+            <column name="email" value="thomas.roux@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Thomas"/>
+            <column name="last_name" value="Roux"/>
+            <column name="phone" value="+33600000105"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="id" value="b0000000-0000-0000-0000-000000000006"/>
+            <column name="email" value="camille.lefevre@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Camille"/>
+            <column name="last_name" value="Lefèvre"/>
+            <column name="phone" value="+33600000106"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="id" value="b0000000-0000-0000-0000-000000000007"/>
+            <column name="email" value="antoine.dubois@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Antoine"/>
+            <column name="last_name" value="Dubois"/>
+            <column name="phone" value="+33600000107"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="id" value="b0000000-0000-0000-0000-000000000008"/>
+            <column name="email" value="ines.bernard@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Inès"/>
+            <column name="last_name" value="Bernard"/>
+            <column name="phone" value="+33600000108"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="id" value="b0000000-0000-0000-0000-000000000009"/>
+            <column name="email" value="mathieu.roussel@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Mathieu"/>
+            <column name="last_name" value="Roussel"/>
+            <column name="phone" value="+33600000109"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="id" value="b0000000-0000-0000-0000-000000000010"/>
+            <column name="email" value="elodie.garnier@howners.test"/>
+            <column name="password_hash" value="$2a$10$9C3ymv5fFd1ONAnS8hd2Z.Pa6E3prn578ZI.areQDcvld/qsfxMU."/>
+            <column name="first_name" value="Élodie"/>
+            <column name="last_name" value="Garnier"/>
+            <column name="phone" value="+33600000110"/>
+            <column name="role" value="TENANT"/>
+            <column name="enabled" valueBoolean="true"/>
+            <column name="created_at" valueComputed="NOW()"/>
+            <column name="updated_at" valueComputed="NOW()"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="users">
+                <where>email IN (
+                    'lea.moreau@howners.test', 'thomas.roux@howners.test',
+                    'camille.lefevre@howners.test', 'antoine.dubois@howners.test',
+                    'ines.bernard@howners.test', 'mathieu.roussel@howners.test',
+                    'elodie.garnier@howners.test'
+                )</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!-- ================================================================ -->
+    <!-- 10 tenant search profiles (the 3 existing + 7 new tenants)      -->
+    <!-- ================================================================ -->
+    <changeSet id="054b-seed-tenant-search-profiles" author="howners">
+        <comment>Seed realistic tenant search profiles for the discovery demo</comment>
+
+        <!-- 1. Jean Locataire — junior dev, recherche T2 Boulogne -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000001',
+                 (SELECT id FROM users WHERE email = 'tenant1@howners.test'),
+                 'Boulogne-Billancourt', '92', '92100',
+                 900, 1400, 'APARTMENT', 35, 1,
+                 'NO_PREFERENCE', '2026-06-01',
+                 'Développeur junior en CDI depuis 1 an. Calme, non-fumeur, sans animaux. Garant familial solide.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 2. Sophie Bernard — designer freelance, Studio Paris meublé -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000002',
+                 (SELECT id FROM users WHERE email = 'tenant2@howners.test'),
+                 'Paris', '75', '75011',
+                 950, 1300, 'STUDIO', 22, 0,
+                 'FURNISHED_ONLY', '2026-07-01',
+                 'Designer graphique freelance, revenus 3500€/mois. Cherche studio meublé Paris 11e/Bastille. Stable depuis 3 ans.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 3. Lucas Petit — étudiant master 2, Suresnes -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000003',
+                 (SELECT id FROM users WHERE email = 'tenant3@howners.test'),
+                 'Suresnes', '92', '92150',
+                 550, 800, 'STUDIO', 18, 0,
+                 'FURNISHED_ONLY', '2026-09-01',
+                 'Étudiant en M2 Finance à Dauphine. Bourse + emploi étudiant 800€/mois. Garant parental solide.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 4. Léa Moreau — master communication, Paris 16e meublé -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000004',
+                 (SELECT id FROM users WHERE email = 'lea.moreau@howners.test'),
+                 'Paris', '75', '75016',
+                 700, 1100, 'STUDIO', 20, 0,
+                 'FURNISHED_ONLY', '2026-09-01',
+                 'Étudiante M2 Communication à Sciences Po. Stage en alternance 1200€/mois. Très calme, non-fumeuse.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 5. Thomas Roux — jeune cadre, T2 Levallois -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000005',
+                 (SELECT id FROM users WHERE email = 'thomas.roux@howners.test'),
+                 'Levallois-Perret', '92', '92300',
+                 1300, 1800, 'APARTMENT', 35, 1,
+                 'NO_PREFERENCE', '2026-06-15',
+                 'Consultant CDI depuis 4 ans, 4200€ net. Cherche T2 lumineux proche métro ligne 3.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 6. Camille Lefèvre — couple sans enfant, T3 Neuilly -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000006',
+                 (SELECT id FROM users WHERE email = 'camille.lefevre@howners.test'),
+                 'Neuilly-sur-Seine', '92', '92200',
+                 2000, 2800, 'APARTMENT', 55, 2,
+                 'UNFURNISHED_ONLY', '2026-07-01',
+                 'Couple cadre + médecin, revenus cumulés 8500€/mois. Cherche T3 non-meublé avec balcon ou terrasse.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 7. Antoine Dubois — famille 2 enfants, maison Versailles -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000007',
+                 (SELECT id FROM users WHERE email = 'antoine.dubois@howners.test'),
+                 'Versailles', '78', '78000',
+                 2500, 3500, 'HOUSE', 90, 3,
+                 'UNFURNISHED_ONLY', '2026-08-15',
+                 'Famille avec 2 enfants (6 et 9 ans). Cadres dans le public, revenus 7800€/mois. Cherche maison avec jardin proche écoles.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 8. Inès Bernard — expat retour, urgent Paris -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000008',
+                 (SELECT id FROM users WHERE email = 'ines.bernard@howners.test'),
+                 'Paris', '75', '75007',
+                 1800, 2500, 'APARTMENT', 45, 1,
+                 'FURNISHED_ONLY', '2026-06-01',
+                 'Retour de mission à Singapour. Cadre dirigeante, 6000€/mois. Cherche meublé prêt-à-vivre Paris rive gauche.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 9. Mathieu Roussel — entrepreneur, loft Issy -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000009',
+                 (SELECT id FROM users WHERE email = 'mathieu.roussel@howners.test'),
+                 'Issy-les-Moulineaux', '92', '92130',
+                 1500, 2200, 'LOFT', 60, 1,
+                 'NO_PREFERENCE', '2026-07-01',
+                 'Fondateur d''une startup SaaS (15 employés). Bilans à jour. Cherche loft atypique, télétravail à domicile.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <!-- 10. Élodie Garnier — fonctionnaire, T2 Vincennes -->
+        <sql>
+            INSERT INTO tenant_search_profiles
+                (id, tenant_id, desired_city, desired_department, desired_postal_code,
+                 budget_min, budget_max, desired_property_type, min_surface, min_bedrooms,
+                 furnished_preference, desired_move_in, description, is_active, created_at, updated_at)
+            VALUES
+                ('c0000000-0000-0000-0000-000000000010',
+                 (SELECT id FROM users WHERE email = 'elodie.garnier@howners.test'),
+                 'Vincennes', '94', '94300',
+                 1100, 1500, 'APARTMENT', 40, 1,
+                 'UNFURNISHED_ONLY', '2026-08-01',
+                 'Fonctionnaire Éducation Nationale, CDI titulaire. Mutation récente. Profil très stable, garante de la MGEN.',
+                 true, NOW(), NOW());
+        </sql>
+
+        <rollback>
+            <delete tableName="tenant_search_profiles">
+                <where>id::text LIKE 'c0000000-%'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

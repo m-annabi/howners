@@ -142,6 +142,18 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  viewPayments(): void {
+    this.router.navigate(['/payments']);
+  }
+
+  viewInvoices(): void {
+    this.router.navigate(['/invoices']);
+  }
+
+  viewStats(): void {
+    this.router.navigate(['/financial']);
+  }
+
   goBack(): void {
     this.router.navigate(['/rentals']);
   }

@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RentalService } from '../rental.service';
 import { Rental, RENTAL_TYPE_LABELS, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS, RentalStatus } from '../../../core/models/rental.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
 
 @Component({
   selector: 'app-rental-list',
@@ -12,28 +14,65 @@ import { NotificationService } from '../../../core/services/notification.service
 export class RentalListComponent implements OnInit {
   rentals: Rental[] = [];
   filteredRentals: Rental[] = [];
+  filters: QuickFilter[] = [];
   loading = true;
   error: string | null = null;
   searchTerm = '';
   filterStatus: string = 'all';
+  sortCol = '';
+  sortDir: 'asc' | 'desc' = 'desc';
 
   rentalTypeLabels = RENTAL_TYPE_LABELS;
   rentalStatusLabels = RENTAL_STATUS_LABELS;
   rentalStatusColors = RENTAL_STATUS_COLORS;
 
-  statuses = Object.keys(RentalStatus).map(key => ({
-    value: RentalStatus[key as keyof typeof RentalStatus],
-    label: RENTAL_STATUS_LABELS[RentalStatus[key as keyof typeof RentalStatus]]
-  }));
+  get isTenant(): boolean {
+    return this.authService.hasRole('TENANT');
+  }
 
   constructor(
     private rentalService: RentalService,
     private router: Router,
-    private notificationService: NotificationService
+    private route: ActivatedRoute,
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const f = params['filter'];
+      if (f && Object.values(RentalStatus).includes(f as RentalStatus)) {
+        this.filterStatus = f;
+      }
+    });
     this.loadRentals();
+  }
+
+  sortIcon(col: string): string {
+    if (this.sortCol !== col) return 'bi-arrow-down-up';
+    return this.sortDir === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down';
+  }
+
+  sortOn(col: string): void {
+    this.sortDir = this.sortCol === col && this.sortDir === 'desc' ? 'asc' : 'desc';
+    this.sortCol = col;
+    this.applyFilters();
+  }
+
+  private buildFilters(): void {
+    const counts = new Map<string, number>();
+    counts.set('all', this.rentals.length);
+    for (const r of this.rentals) {
+      counts.set(r.status, (counts.get(r.status) || 0) + 1);
+    }
+    const list: QuickFilter[] = [
+      { key: 'all', label: 'Toutes', count: counts.get('all') || 0 },
+      { key: RentalStatus.ACTIVE, label: 'Actives', count: counts.get(RentalStatus.ACTIVE) || 0, tone: 'success' },
+      { key: RentalStatus.PENDING, label: 'En attente', count: counts.get(RentalStatus.PENDING) || 0, tone: 'warning' },
+      { key: RentalStatus.TERMINATED, label: 'Terminées', count: counts.get(RentalStatus.TERMINATED) || 0 },
+      { key: RentalStatus.CANCELLED, label: 'Annulées', count: counts.get(RentalStatus.CANCELLED) || 0 }
+    ];
+    this.filters = list.filter(f => f.key === 'all' || (f.count || 0) > 0);
   }
 
   loadRentals(): void {
@@ -43,6 +82,7 @@ export class RentalListComponent implements OnInit {
     this.rentalService.getRentals().subscribe({
       next: (rentals) => {
         this.rentals = rentals;
+        this.buildFilters();
         this.applyFilters();
         this.loading = false;
       },
@@ -53,15 +93,18 @@ export class RentalListComponent implements OnInit {
     });
   }
 
+  onFilterChange(key: string): void {
+    this.filterStatus = key;
+    this.applyFilters();
+  }
+
   applyFilters(): void {
     let filtered = this.rentals;
 
-    // Filtrer par statut
     if (this.filterStatus !== 'all') {
       filtered = filtered.filter(rental => rental.status === this.filterStatus);
     }
 
-    // Filtrer par recherche
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(rental =>
@@ -69,6 +112,21 @@ export class RentalListComponent implements OnInit {
         (rental.tenantName && rental.tenantName.toLowerCase().includes(term)) ||
         (rental.tenantEmail && rental.tenantEmail.toLowerCase().includes(term))
       );
+    }
+
+    if (this.sortCol) {
+      filtered = filtered.slice().sort((a, b) => {
+        let diff = 0;
+        if (this.sortCol === 'date') diff = new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+        else if (this.sortCol === 'rent') diff = (a.monthlyRent ?? 0) - (b.monthlyRent ?? 0);
+        else if (this.sortCol === 'tenant') diff = (a.tenantName || '').localeCompare(b.tenantName || '');
+        else if (this.sortCol === 'property') diff = a.propertyName.localeCompare(b.propertyName);
+        else if (this.sortCol === 'status') diff = a.status.localeCompare(b.status);
+        return this.sortDir === 'asc' ? diff : -diff;
+      });
+    } else {
+      filtered = filtered.slice().sort((a, b) =>
+        new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
     }
 
     this.filteredRentals = filtered;
@@ -81,6 +139,11 @@ export class RentalListComponent implements OnInit {
   editRental(id: string, event: Event): void {
     event.stopPropagation();
     this.router.navigate(['/rentals', id, 'edit']);
+  }
+
+  viewPayments(id: string, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/payments'], { queryParams: { rentalId: id } });
   }
 
   deleteRental(id: string, event: Event): void {

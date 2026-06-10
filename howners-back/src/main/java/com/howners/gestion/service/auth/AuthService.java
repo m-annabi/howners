@@ -1,12 +1,15 @@
 package com.howners.gestion.service.auth;
 
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.dto.email.WelcomeOwnerEmailData;
 import com.howners.gestion.dto.request.LoginRequest;
 import com.howners.gestion.dto.request.RegisterRequest;
 import com.howners.gestion.dto.request.UpdateProfileRequest;
 import com.howners.gestion.domain.audit.AuditAction;
+import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.dto.response.AuthResponse;
 import com.howners.gestion.dto.response.UserResponse;
+import com.howners.gestion.service.email.EmailService;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.security.UserPrincipal;
@@ -33,9 +36,14 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
     private final com.howners.gestion.service.audit.AuditService auditService;
     private final com.howners.gestion.service.subscription.SubscriptionService subscriptionService;
+    private final EmailService emailService;
+    private final com.howners.gestion.service.referral.ReferralService referralService;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -59,6 +67,30 @@ public class AuthService {
 
         // Auto-assigner le plan FREE
         subscriptionService.assignFreePlan(user.getId());
+
+        // Generate a referral code for this user and, if signup came via a ref link, link it.
+        try {
+            referralService.ensureReferralCode(user.getId());
+            referralService.recordReferral(request.referralCode(), user);
+        } catch (Exception e) {
+            // Never block registration on referral side-effects.
+        }
+
+        // Welcome email pour les bailleurs (les tenants reçoivent un email distinct
+        // au moment où un owner les ajoute à une location).
+        if (request.role() == Role.OWNER) {
+            try {
+                emailService.sendWelcomeOwnerEmail(WelcomeOwnerEmailData.builder()
+                        .recipientEmail(user.getEmail())
+                        .recipientName(user.getFirstName())
+                        .dashboardUrl(frontendUrl + "/dashboard")
+                        .addPropertyUrl(frontendUrl + "/properties/new")
+                        .pricingUrl(frontendUrl + "/billing/pricing")
+                        .build());
+            } catch (Exception ignored) {
+                // SmtpEmailService logs already — never block registration on email failure.
+            }
+        }
 
         // Générer le token
         Authentication authentication = authenticationManager.authenticate(
