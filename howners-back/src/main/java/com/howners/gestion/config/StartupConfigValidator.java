@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -31,6 +32,7 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
         List<String> errors = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
 
+        errors.addAll(validateJwtConfig());
         warnings.addAll(validateDocuSignConfig());  // DocuSign is optional
         warnings.addAll(validateEmailConfig());     // Email is optional
         errors.addAll(validateStorageConfig());
@@ -46,6 +48,31 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
         }
 
         log.info("✅ Required configuration validated successfully");
+    }
+
+    private List<String> validateJwtConfig() {
+        List<String> errors = new ArrayList<>();
+
+        String jwtSecret = environment.getProperty("jwt.secret");
+        String[] activeProfiles = environment.getActiveProfiles();
+        boolean isProd = Arrays.asList(activeProfiles).contains("prod");
+
+        if (isBlank(jwtSecret)) {
+            errors.add("JWT_SECRET is missing");
+        } else {
+            if (isProd && jwtSecret.equals("change-this-secret-in-production-it-must-be-at-least-256-bits-long-for-hs256-algorithm")) {
+                errors.add("JWT_SECRET is using the default fallback value — this is not safe for production");
+            }
+            if (jwtSecret.length() < 64) {
+                errors.add("JWT_SECRET must be at least 64 characters long");
+            }
+        }
+
+        if (errors.isEmpty()) {
+            log.info("✅ JWT configuration is valid");
+        }
+
+        return errors;
     }
 
     private List<String> validateDocuSignConfig() {

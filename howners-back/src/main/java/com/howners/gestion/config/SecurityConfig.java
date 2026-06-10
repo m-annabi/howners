@@ -43,6 +43,12 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins}")
     private String[] allowedOrigins;
 
+    @Value("${app.backend-url}")
+    private String backendUrl;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -50,7 +56,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
-                                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *; font-src 'self' data:; connect-src 'self' *"))
+                                String.format("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: %s; font-src 'self' data:; connect-src 'self' %s %s ws: wss:", backendUrl, backendUrl, frontendUrl)))
                         .frameOptions(frame -> frame.deny())
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)

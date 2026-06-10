@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./howners-back
+      dockerfile: Dockerfile
+    container_name: howners-backend
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      MINIO_ENDPOINT: http://minio:9000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - howners-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  frontend:
+    build:
+      context: ./howners-api
+      dockerfile: Dockerfile
+    container_name: howners-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - howners-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: howners-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - howners-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: howners-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - howners-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio-setup:
+    image: minio/mc:latest
+    container_name: howners-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb myminio/$${MINIO_BUCKET} --ignore-existing;
+      /usr/bin/mc anonymous set none myminio/$${MINIO_BUCKET};
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+    networks:
+      - howners-network
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  howners-network:
+    driver: bridge
