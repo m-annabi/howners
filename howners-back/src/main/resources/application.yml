@@ -73,6 +73,7 @@ stripe:
   api-key: ${STRIPE_SECRET_KEY:}
   public-key: ${STRIPE_PUBLIC_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  platform-fee-percent: ${STRIPE_PLATFORM_FEE_PERCENT:2.5}
 
 # YouSign Configuration
 yousign:

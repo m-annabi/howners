@@ -2,9 +2,11 @@ package com.howners.gestion.service.payment;
 
 import com.howners.gestion.domain.payment.Payment;
 import com.howners.gestion.domain.payment.PaymentStatus;
+import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.dto.email.PaymentReminderEmailData;
 import com.howners.gestion.dto.payment.CreatePaymentRequest;
 import com.howners.gestion.dto.payment.PaymentResponse;
 import com.howners.gestion.dto.payment.StripePaymentIntentResponse;
@@ -17,6 +19,7 @@ import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.domain.audit.AuditAction;
 import com.howners.gestion.service.audit.AuditService;
 import com.howners.gestion.service.auth.AuthService;
+import com.howners.gestion.service.email.EmailService;
 import com.howners.gestion.service.receipt.ReceiptService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.net.ApiResource;
@@ -35,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -49,9 +53,16 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final AuditService auditService;
     private final ReceiptService receiptService;
+    private final EmailService emailService;
 
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
+
+    @Value("${stripe.platform-fee-percent:2.5}")
+    private double platformFeePercent;
+
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
 
     @Transactional(readOnly = true)
     public List<PaymentResponse> findByCurrentUser() {
@@ -136,15 +147,30 @@ public class PaymentService {
 
         try {
             long amountInCents = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
+            long platformFee = Math.round(amountInCents * platformFeePercent / 100.0);
 
-            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+            User owner = payment.getRental().getProperty().getOwner();
+            String connectedAccountId = owner.getStripeConnectAccountId();
+
+            PaymentIntentCreateParams.Builder paramsBuilder = PaymentIntentCreateParams.builder()
                     .setAmount(amountInCents)
                     .setCurrency(payment.getCurrency().toLowerCase())
                     .putMetadata("payment_id", payment.getId().toString())
-                    .putMetadata("rental_id", payment.getRental().getId().toString())
-                    .build();
+                    .putMetadata("rental_id", payment.getRental().getId().toString());
 
-            PaymentIntent intent = PaymentIntent.create(params);
+            if (connectedAccountId != null && !connectedAccountId.isBlank()) {
+                paramsBuilder
+                        .setApplicationFeeAmount(platformFee)
+                        .setTransferData(PaymentIntentCreateParams.TransferData.builder()
+                                .setDestination(connectedAccountId)
+                                .build());
+                log.info("Stripe Connect: routing payment to {} with {}% platform fee ({} cents)",
+                        connectedAccountId, platformFeePercent, platformFee);
+            } else {
+                log.info("Owner {} has no Stripe Connect account — payment without transfer", owner.getId());
+            }
+
+            PaymentIntent intent = PaymentIntent.create(paramsBuilder.build());
 
             payment.setStripePaymentIntentId(intent.getId());
             payment.setPaymentMethod("stripe");
@@ -256,6 +282,82 @@ public class PaymentService {
         if (!overduePayments.isEmpty()) {
             log.info("Marked {} payments as LATE", overduePayments.size());
         }
+    }
+
+    /**
+     * Envoie des rappels de paiement automatiques :
+     * - J-3 : rappel amical
+     * - J-1 : rappel urgent
+     * - J+1 (LATE) : avis de retard
+     */
+    @Scheduled(cron = "0 0 9 * * ?")
+    @Transactional(readOnly = true)
+    public void sendPaymentReminders() {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        // J-3 : rappel amical pour les paiements dus dans 3 jours
+        List<Payment> dueIn3Days = paymentRepository.findPaymentsDueOn(today.plusDays(3));
+        log.info("Found {} payments due in 3 days (J-3)", dueIn3Days.size());
+        for (Payment payment : dueIn3Days) {
+            try {
+                sendReminderForPayment(payment, false, dateFormatter);
+            } catch (Exception e) {
+                log.error("Failed to send J-3 reminder for payment {}: {}", payment.getId(), e.getMessage(), e);
+            }
+        }
+
+        // J-1 : rappel urgent pour les paiements dus demain
+        List<Payment> dueTomorrow = paymentRepository.findPaymentsDueOn(today.plusDays(1));
+        log.info("Found {} payments due tomorrow (J-1)", dueTomorrow.size());
+        for (Payment payment : dueTomorrow) {
+            try {
+                sendReminderForPayment(payment, false, dateFormatter);
+            } catch (Exception e) {
+                log.error("Failed to send J-1 reminder for payment {}: {}", payment.getId(), e.getMessage(), e);
+            }
+        }
+
+        // J+1 : avis de retard pour les paiements marqués LATE hier
+        List<Payment> lateYesterday = paymentRepository.findLatePaymentsDueOn(today.minusDays(1));
+        log.info("Found {} late payments from yesterday (J+1)", lateYesterday.size());
+        for (Payment payment : lateYesterday) {
+            try {
+                sendReminderForPayment(payment, true, dateFormatter);
+            } catch (Exception e) {
+                log.error("Failed to send overdue notice for payment {}: {}", payment.getId(), e.getMessage(), e);
+            }
+        }
+    }
+
+    private void sendReminderForPayment(Payment payment, boolean isOverdue, DateTimeFormatter dateFormatter) {
+        Rental rental = payment.getRental();
+        Property property = rental.getProperty();
+        User tenant = payment.getPayer();
+        User owner = property.getOwner();
+
+        String propertyAddress = property.getAddressLine1() != null
+                ? property.getAddressLine1() + ", " + property.getPostalCode() + " " + property.getCity()
+                : property.getCity() != null ? property.getCity() : "";
+
+        String paymentUrl = frontendUrl + "/payments/" + payment.getId();
+
+        PaymentReminderEmailData emailData = PaymentReminderEmailData.builder()
+                .recipientEmail(tenant.getEmail())
+                .recipientName(tenant.getFirstName() + " " + tenant.getLastName())
+                .ownerName(owner.getFirstName() + " " + owner.getLastName())
+                .propertyName(property.getName())
+                .propertyAddress(propertyAddress)
+                .amount(payment.getAmount().toPlainString())
+                .currency(payment.getCurrency())
+                .dueDate(payment.getDueDate().format(dateFormatter))
+                .paymentUrl(paymentUrl)
+                .isOverdue(isOverdue)
+                .build();
+
+        emailService.sendPaymentReminderEmail(emailData);
+        log.info("Payment reminder sent to {} for payment {} (overdue: {})",
+                tenant.getEmail(), payment.getId(), isOverdue);
     }
 
     private Payment findPaymentAndCheckAccess(UUID paymentId) {

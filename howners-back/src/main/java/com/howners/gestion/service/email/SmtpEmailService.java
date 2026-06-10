@@ -1,6 +1,7 @@
 package com.howners.gestion.service.email;
 
 import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
+import com.howners.gestion.dto.email.PaymentReminderEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
@@ -284,6 +285,37 @@ public class SmtpEmailService implements EmailService {
             log.info("Weekly digest sent to: {}", data.recipientEmail());
         } catch (Exception e) {
             log.error("Failed to send weekly digest to {}: {}", data.recipientEmail(), e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendPaymentReminderEmail(PaymentReminderEmailData data) {
+        log.info("Sending payment reminder email to: {}", data.recipientEmail());
+
+        try {
+            Context context = new Context();
+            context.setVariable("recipientName", data.recipientName());
+            context.setVariable("ownerName", data.ownerName());
+            context.setVariable("propertyName", data.propertyName());
+            context.setVariable("propertyAddress", data.propertyAddress());
+            context.setVariable("amount", data.amount());
+            context.setVariable("currency", data.currency());
+            context.setVariable("dueDate", data.dueDate());
+            context.setVariable("paymentUrl", data.paymentUrl());
+            context.setVariable("isOverdue", data.isOverdue());
+
+            String htmlContent = templateEngine.process("email/payment-reminder", context);
+
+            sendHtmlEmail(
+                    data.recipientEmail(),
+                    "Rappel de loyer - " + data.propertyName(),
+                    htmlContent
+            );
+
+            log.info("Payment reminder email sent successfully to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            log.error("Failed to send payment reminder email to: {}", data.recipientEmail(), e);
+            throw new RuntimeException("Failed to send payment reminder email", e);
         }
     }
 
