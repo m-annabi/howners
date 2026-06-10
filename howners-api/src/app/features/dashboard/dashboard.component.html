@@ -309,6 +309,60 @@
       </div>
 
     </div>
+
+    <!-- ════ ANALYTICS (OWNER only) ════ -->
+    <ng-container *ngIf="isOwner && !loading && !error">
+      <ng-container *ngIf="analyticsSummary">
+
+        <div class="widget-section" style="margin-bottom:var(--hw-space-4)">
+          <div class="widget-section__header">
+            <i class="bi bi-graph-up"></i>
+            <span>Analyse financiere</span>
+            <button class="dash-btn dash-btn--outline" style="margin-left:auto" (click)="exportCsv()">
+              <i class="bi bi-download"></i><span>Exporter CSV</span>
+            </button>
+          </div>
+          <div class="widget-section__body">
+            <!-- KPI row -->
+            <div class="widget-grid" style="margin-bottom:var(--hw-space-4)">
+              <app-stats-card label="Revenus totaux"
+                [value]="(analyticsSummary.totalRevenue | number:'1.2-2') + ' EUR'"
+                icon="bi-cash-stack" color="warning" class="widget-sm"></app-stats-card>
+              <app-stats-card label="Taux d'occupation"
+                [value]="analyticsSummary.occupancyRate + '%'"
+                icon="bi-pie-chart" color="success" class="widget-sm"></app-stats-card>
+              <app-stats-card label="Biens"
+                [value]="analyticsSummary.totalProperties"
+                icon="bi-building" color="primary" class="widget-sm"></app-stats-card>
+              <app-stats-card label="Locations actives"
+                [value]="analyticsSummary.activeRentals"
+                icon="bi-key" color="success" class="widget-sm"></app-stats-card>
+            </div>
+            <!-- Bar chart -->
+            <div *ngIf="analyticsSummary.monthlyRevenue.length > 0" style="margin-bottom:var(--hw-space-4)">
+              <h4 style="font-family:var(--hw-font-display);font-size:var(--hw-fs-sm);font-weight:600;color:var(--hw-primary-800);margin:0 0 var(--hw-space-3)">Revenus mensuels (6 derniers mois)</h4>
+              <div class="a-bars">
+                <div class="a-bar-g" *ngFor="let m of analyticsSummary.monthlyRevenue">
+                  <div class="a-bar-w"><div class="a-bar" [style.height.%]="getBarHeight(m.amount)" [title]="m.amount + ' EUR'"></div></div>
+                  <span class="a-lbl">{{ formatMonth(m.month) }}</span>
+                  <span class="a-amt">{{ m.amount | number:'1.0-0' }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Vacant -->
+            <div *ngIf="analyticsSummary.vacantProperties.length > 0" class="hw-alert hw-alert--warning">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ analyticsSummary.vacantProperties.length }} bien{{ analyticsSummary.vacantProperties.length > 1 ? 's' : '' }} vacant{{ analyticsSummary.vacantProperties.length > 1 ? 's' : '' }}:
+                <span *ngFor="let name of analyticsSummary.vacantProperties; let last = last">{{ name }}{{ last ? '' : ', ' }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+      <app-loading-skeleton *ngIf="analyticsLoading" type="card" [count]="2"></app-loading-skeleton>
+    </ng-container>
+
   </ng-container>
 
   <!-- ─── TENANT ────────────────────────────────────────────────────────── -->

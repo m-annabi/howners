@@ -41,13 +41,13 @@ export class PropertyDetailComponent implements OnInit {
 
     forkJoin({
       property: this.propertyService.getProperty(id),
-      rentals: this.rentalService.getRentals()
+      rentalsPage: this.rentalService.getRentals()
     }).subscribe({
-      next: ({ property, rentals }) => {
+      next: ({ property, rentalsPage }) => {
         this.property = property;
 
         // Find active rental for this property
-        this.activeRental = rentals.find(
+        this.activeRental = rentalsPage.content.find(
           r => r.propertyId === id && r.status === RentalStatus.ACTIVE
         ) || null;
 

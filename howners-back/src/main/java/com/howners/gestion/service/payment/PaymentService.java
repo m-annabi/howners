@@ -20,7 +20,9 @@ import com.howners.gestion.domain.audit.AuditAction;
 import com.howners.gestion.service.audit.AuditService;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.email.EmailService;
+import com.howners.gestion.service.notification.NotificationService;
 import com.howners.gestion.service.receipt.ReceiptService;
+import com.howners.gestion.domain.notification.NotificationType;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.net.ApiResource;
 import com.stripe.exception.StripeException;
@@ -54,6 +56,7 @@ public class PaymentService {
     private final AuditService auditService;
     private final ReceiptService receiptService;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
@@ -278,6 +281,22 @@ public class PaymentService {
             payment.setStatus(PaymentStatus.LATE);
             paymentRepository.save(payment);
             log.info("Payment {} marked as LATE (due date: {})", payment.getId(), payment.getDueDate());
+
+            // Notifier le propriétaire du retard de paiement
+            try {
+                UUID ownerId = payment.getRental().getProperty().getOwner().getId();
+                String tenantName = payment.getPayer().getFullName();
+                notificationService.create(
+                        ownerId,
+                        NotificationType.PAYMENT_OVERDUE,
+                        "Paiement en retard",
+                        "Le paiement de " + payment.getAmount() + " " + payment.getCurrency()
+                                + " de " + tenantName + " est en retard.",
+                        "/payments"
+                );
+            } catch (Exception e) {
+                log.error("Échec de la création de notification pour le paiement en retard {}", payment.getId(), e);
+            }
         }
         if (!overduePayments.isEmpty()) {
             log.info("Marked {} payments as LATE", overduePayments.size());

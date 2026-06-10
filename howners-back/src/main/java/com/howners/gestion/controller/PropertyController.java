@@ -6,12 +6,13 @@ import com.howners.gestion.dto.response.PropertyResponse;
 import com.howners.gestion.service.property.PropertyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +24,8 @@ public class PropertyController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
-    public ResponseEntity<List<PropertyResponse>> getAllProperties() {
-        return ResponseEntity.ok(propertyService.findAllByCurrentUser());
+    public ResponseEntity<Page<PropertyResponse>> getAllProperties(Pageable pageable) {
+        return ResponseEntity.ok(propertyService.findAllByCurrentUser(pageable));
     }
 
     @GetMapping("/{id}")

@@ -1,0 +1,134 @@
+// ─── Admin dashboard ──────────────────────────────────────────────────────────
+.admin-dashboard {
+  max-width: 1100px;
+}
+
+.admin-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-2);
+  margin: 0 0 var(--hw-space-4);
+  font-family: var(--hw-font-display);
+  font-size: 1.125rem;
+  font-weight: var(--hw-fw-semibold);
+  color: var(--hw-primary-800);
+  letter-spacing: -0.01em;
+
+  i { color: var(--hw-accent-600); font-size: 1rem; }
+}
+
+// ─── KPI grid ─────────────────────────────────────────────────────────────────
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--hw-space-4);
+  margin-bottom: var(--hw-space-6);
+
+  @media (max-width: 960px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 580px) { grid-template-columns: 1fr; }
+}
+
+.admin-kpi {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  padding: var(--hw-space-4) var(--hw-space-5);
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  box-shadow: var(--hw-shadow-xs);
+
+  &__icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--hw-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+
+    &--primary { background: rgba(var(--hw-primary-rgb, 79, 70, 229), 0.12); color: var(--hw-primary-700); }
+    &--success { background: rgba(var(--hw-success-rgb, 16, 185, 129), 0.12); color: var(--hw-success); }
+    &--info    { background: rgba(var(--hw-info-rgb, 59, 130, 246), 0.12); color: var(--hw-info); }
+    &--warning { background: rgba(var(--hw-warning-rgb, 245, 158, 11), 0.12); color: var(--hw-warning); }
+    &--accent  { background: rgba(var(--hw-accent-rgb, 168, 85, 247), 0.12); color: var(--hw-accent-600, #9333ea); }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__value {
+    font-family: var(--hw-font-display);
+    font-size: 1.375rem;
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-800);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+
+  &__label {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-gray-500);
+    font-weight: var(--hw-fw-medium);
+    margin-top: 2px;
+  }
+}
+
+// ─── Subscription plan distribution ───────────────────────────────────────────
+.admin-subscriptions {
+  margin-bottom: var(--hw-space-6);
+}
+
+.admin-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-3);
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  box-shadow: var(--hw-shadow-xs);
+  padding: var(--hw-space-5);
+}
+
+.admin-plan {
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--hw-space-2);
+  }
+
+  &__name {
+    font-family: var(--hw-font-display);
+    font-weight: var(--hw-fw-semibold);
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__count {
+    font-family: var(--hw-font-display);
+    font-weight: var(--hw-fw-semibold);
+    font-size: var(--hw-fs-base);
+    color: var(--hw-gray-800);
+  }
+
+  &__bar-track {
+    height: 8px;
+    background: var(--hw-gray-100);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  &__bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+    min-width: 4px;
+  }
+}

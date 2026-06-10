@@ -3,6 +3,8 @@ package com.howners.gestion.repository;
 import com.howners.gestion.domain.listing.Listing;
 import com.howners.gestion.domain.listing.ListingStatus;
 import com.howners.gestion.domain.property.PropertyType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,8 +20,13 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
 
     List<Listing> findByStatusOrderByPublishedAtDesc(ListingStatus status);
 
+    Page<Listing> findByStatusOrderByPublishedAtDesc(ListingStatus status, Pageable pageable);
+
     @Query("SELECT l FROM Listing l WHERE l.property.owner.id = :ownerId ORDER BY l.createdAt DESC")
     List<Listing> findByOwnerId(@Param("ownerId") UUID ownerId);
+
+    @Query("SELECT l FROM Listing l WHERE l.property.owner.id = :ownerId ORDER BY l.createdAt DESC")
+    Page<Listing> findByOwnerId(@Param("ownerId") UUID ownerId, Pageable pageable);
 
     List<Listing> findByPropertyId(UUID propertyId);
 
@@ -31,6 +38,14 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
            "OR LOWER(l.property.department) LIKE LOWER(CONCAT('%', :search, '%')))" +
            " ORDER BY l.publishedAt DESC")
     List<Listing> searchPublished(@Param("search") String search);
+
+    @Query("SELECT l FROM Listing l WHERE l.status = 'PUBLISHED' AND " +
+           "(LOWER(l.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(l.description) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(l.property.city) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(l.property.postalCode) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(l.property.department) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Listing> searchPublished(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT l FROM Listing l WHERE l.status = 'PUBLISHED' " +
            "AND (:search = '' OR " +
@@ -86,4 +101,42 @@ public interface ListingRepository extends JpaRepository<Listing, UUID> {
             @Param("latMax") BigDecimal latMax,
             @Param("lngMin") BigDecimal lngMin,
             @Param("lngMax") BigDecimal lngMax);
+
+    @Query("SELECT l FROM Listing l WHERE l.status = 'PUBLISHED' " +
+           "AND (:search = '' OR " +
+           "  LOWER(l.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "  OR LOWER(l.description) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "  OR LOWER(l.property.city) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "  OR LOWER(l.property.postalCode) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "  OR LOWER(l.property.department) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:city = '' OR LOWER(l.property.city) = LOWER(:city)) " +
+           "AND (:department = '' OR LOWER(l.property.department) = LOWER(:department)) " +
+           "AND (:postalCode = '' OR l.property.postalCode LIKE CONCAT(:postalCode, '%')) " +
+           "AND (:priceMin IS NULL OR l.pricePerMonth >= :priceMin) " +
+           "AND (:priceMax IS NULL OR l.pricePerMonth <= :priceMax) " +
+           "AND (:propertyType IS NULL OR l.property.propertyType = :propertyType) " +
+           "AND (:minSurface IS NULL OR l.property.surfaceArea >= :minSurface) " +
+           "AND (:minBedrooms IS NULL OR l.property.bedrooms >= :minBedrooms) " +
+           "AND (:furnished IS NULL OR l.property.isFurnished = :furnished) " +
+           "AND (:availableFrom IS NULL OR l.availableFrom IS NULL OR l.availableFrom <= :availableFrom) " +
+           "AND (:latMin IS NULL OR (l.property.latitude IS NOT NULL " +
+           "      AND l.property.latitude BETWEEN :latMin AND :latMax " +
+           "      AND l.property.longitude BETWEEN :lngMin AND :lngMax))")
+    Page<Listing> searchPublishedAdvanced(
+            @Param("search") String search,
+            @Param("city") String city,
+            @Param("department") String department,
+            @Param("postalCode") String postalCode,
+            @Param("priceMin") BigDecimal priceMin,
+            @Param("priceMax") BigDecimal priceMax,
+            @Param("propertyType") PropertyType propertyType,
+            @Param("minSurface") BigDecimal minSurface,
+            @Param("minBedrooms") Integer minBedrooms,
+            @Param("furnished") Boolean furnished,
+            @Param("availableFrom") LocalDate availableFrom,
+            @Param("latMin") BigDecimal latMin,
+            @Param("latMax") BigDecimal latMax,
+            @Param("lngMin") BigDecimal lngMin,
+            @Param("lngMax") BigDecimal lngMax,
+            Pageable pageable);
 }

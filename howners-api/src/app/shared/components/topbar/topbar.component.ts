@@ -107,7 +107,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   toggleNotifPanel(): void {
     this.notifPanelOpen = !this.notifPanelOpen;
-    if (this.notifPanelOpen) this.dropdownOpen = false;
+    if (this.notifPanelOpen) {
+      this.dropdownOpen = false;
+      this.inAppNotificationService.loadNotifications();
+    }
   }
 
   closeNotifPanel(): void {

@@ -17,6 +17,17 @@ export interface ReferralSummary {
   referees: RefereeItem[];
 }
 
+export interface ReferralCodeResponse {
+  code: string;
+  link: string;
+}
+
+export interface ReferralStatsResponse {
+  total: number;
+  successful: number;
+  pending: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReferralService {
   private apiUrl = `${environment.apiUrl}/referrals`;
@@ -25,5 +36,17 @@ export class ReferralService {
 
   getMySummary(): Observable<ReferralSummary> {
     return this.http.get<ReferralSummary>(`${this.apiUrl}/me`);
+  }
+
+  getMyCode(): Observable<ReferralCodeResponse> {
+    return this.http.get<ReferralCodeResponse>(`${this.apiUrl}/my-code`);
+  }
+
+  getStats(): Observable<ReferralStatsResponse> {
+    return this.http.get<ReferralStatsResponse>(`${this.apiUrl}/stats`);
+  }
+
+  applyCode(code: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/apply`, { code });
   }
 }

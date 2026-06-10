@@ -53,9 +53,9 @@ export class ContractFormComponent implements OnInit {
     this.error = null;
 
     this.rentalService.getRentals().subscribe({
-      next: (rentals: Rental[]) => {
+      next: (page) => {
         // Filtrer uniquement les locations actives ou en attente
-        this.rentals = rentals.filter((r: Rental) =>
+        this.rentals = page.content.filter((r: Rental) =>
           r.status === 'ACTIVE' || r.status === 'PENDING'
         );
         this.loading = false;

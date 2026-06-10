@@ -24,6 +24,8 @@ import com.howners.gestion.service.subscription.FeatureGateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +73,26 @@ public class RentalService {
         return rentals.stream()
                 .map(RentalResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RentalResponse> findAllByCurrentUser(Pageable pageable) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        log.debug("Finding all rentals (paginated) for user {}", currentUserId);
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
+
+        Page<Rental> rentals;
+        if (currentUser.getRole() == Role.ADMIN) {
+            rentals = rentalRepository.findAll(pageable);
+        } else if (currentUser.getRole() == Role.TENANT) {
+            rentals = rentalRepository.findByTenantId(currentUserId, pageable);
+        } else {
+            rentals = rentalRepository.findByOwnerId(currentUserId, pageable);
+        }
+
+        return rentals.map(RentalResponse::from);
     }
 
     @Transactional(readOnly = true)
