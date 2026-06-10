@@ -57,6 +57,12 @@
       </div>
     </div>
 
+    <!-- Checklist d'onboarding (depuis le backend) -->
+    <app-onboarding-checklist
+      *ngIf="showChecklist"
+      (hidden)="onChecklistHidden()">
+    </app-onboarding-checklist>
+
     <!-- Loading -->
     <app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
 

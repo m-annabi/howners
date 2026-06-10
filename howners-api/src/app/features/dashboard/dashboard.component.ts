@@ -10,6 +10,7 @@ import { ContractService } from '../../core/services/contract.service';
 import { ApplicationService } from '../../core/services/application.service';
 import { TenantDiscoveryService } from '../../core/services/tenant-discovery.service';
 import { WidgetPreferenceService } from '../../core/services/widget-preference.service';
+import { OnboardingService, OnboardingStatus } from '../../core/services/onboarding.service';
 import { User } from '../../core/models/user.model';
 import { DashboardStats } from '../../core/models/dashboard.model';
 import { PaymentStatus } from '../../core/models/payment.model';
@@ -40,6 +41,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   error: string | null = null;
   actionItems: ActionItems | null = null;
   topTenants: TenantSearchResult[] = [];
+
+  showChecklist = false;
 
   widgetConfigs: WidgetConfig[] = [];
   displayWidgets: WidgetConfig[] = [];
@@ -247,6 +250,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.currentUser = user;
       this.loadStats();
       if (user && user.role !== 'TENANT') {
+        this.showChecklist = true;
         this.loadWidgetPreferences();
         this.loadActionItems();
         this.loadTopTenants();
@@ -320,6 +324,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }))
     ).subscribe(items => { this.actionItems = items; });
   }
+
+  onChecklistHidden(): void { this.showChecklist = false; }
 
   navigateTo(path: string): void { this.router.navigate([path]); }
   goToLatePayments(): void { this.router.navigate(['/payments'], { queryParams: { filter: 'late' } }); }

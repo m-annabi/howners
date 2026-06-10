@@ -29,6 +29,7 @@ import { TopbarComponent } from './components/topbar/topbar.component';
 import { QuickFiltersComponent } from './components/quick-filters/quick-filters.component';
 import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component';
 import { UpgradeModalComponent } from './components/upgrade-modal/upgrade-modal.component';
+import { OnboardingChecklistComponent } from './components/onboarding-checklist/onboarding-checklist.component';
 
 @NgModule({
   declarations: [
@@ -55,7 +56,8 @@ import { UpgradeModalComponent } from './components/upgrade-modal/upgrade-modal.
     QuickFiltersComponent,
     NpsPromptComponent,
     WidgetConfiguratorComponent,
-    UpgradeModalComponent
+    UpgradeModalComponent,
+    OnboardingChecklistComponent
   ],
   imports: [
     CommonModule,
@@ -88,7 +90,8 @@ import { UpgradeModalComponent } from './components/upgrade-modal/upgrade-modal.
     QuickFiltersComponent,
     NpsPromptComponent,
     WidgetConfiguratorComponent,
-    UpgradeModalComponent
+    UpgradeModalComponent,
+    OnboardingChecklistComponent
   ]
 })
 export class SharedModule { }

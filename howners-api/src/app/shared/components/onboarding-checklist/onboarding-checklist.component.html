@@ -1,0 +1,52 @@
+<section *ngIf="visible" class="onboarding-checklist">
+  <header class="onboarding-checklist__header">
+    <div class="onboarding-checklist__title-row">
+      <h3 class="onboarding-checklist__title">Bienvenue sur Howners !</h3>
+      <button class="onboarding-checklist__dismiss" type="button"
+              title="Masquer"
+              (click)="dismiss()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <p class="onboarding-checklist__subtitle">
+      Complétez ces étapes pour tirer le meilleur parti de votre espace bailleur.
+    </p>
+
+    <!-- Barre de progression -->
+    <div class="onboarding-checklist__progress">
+      <div class="onboarding-checklist__progress-bar">
+        <div class="onboarding-checklist__progress-fill"
+             [style.width.%]="status?.completionPercent || 0">
+        </div>
+      </div>
+      <span class="onboarding-checklist__progress-label">
+        {{ status?.completionPercent || 0 }}% complété
+      </span>
+    </div>
+  </header>
+
+  <!-- Liste des étapes -->
+  <ul class="onboarding-checklist__steps">
+    <li *ngFor="let step of status?.steps"
+        class="onboarding-checklist__step"
+        [class.onboarding-checklist__step--done]="step.done">
+
+      <span class="onboarding-checklist__step-icon">
+        <i *ngIf="step.done" class="bi bi-check-circle-fill"></i>
+        <i *ngIf="!step.done" class="bi bi-circle"></i>
+      </span>
+
+      <span class="onboarding-checklist__step-label"
+            [class.onboarding-checklist__step-label--done]="step.done">
+        {{ step.label }}
+      </span>
+
+      <button *ngIf="!step.done"
+              class="onboarding-checklist__step-action"
+              type="button"
+              (click)="navigateTo(step.link)">
+        Commencer <i class="bi bi-arrow-right"></i>
+      </button>
+    </li>
+  </ul>
+</section>
