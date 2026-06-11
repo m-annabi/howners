@@ -1,6 +1,8 @@
 package com.howners.gestion.repository;
 
 import com.howners.gestion.domain.property.Property;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,4 +13,6 @@ import java.util.UUID;
 public interface PropertyRepository extends JpaRepository<Property, UUID> {
 
     List<Property> findByOwnerId(UUID ownerId);
+
+    Page<Property> findByOwnerId(UUID ownerId, Pageable pageable);
 }

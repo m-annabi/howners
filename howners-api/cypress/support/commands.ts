@@ -1,8 +1,10 @@
 declare namespace Cypress {
   interface Chainable {
     login(): Chainable<void>;
+    loginWithCredentials(email: string, password: string): Chainable<void>;
     interceptContractsApi(): Chainable<void>;
     interceptTemplatesApi(): Chainable<void>;
+    interceptListingsApi(listings?: any[]): Chainable<void>;
   }
 }
 
@@ -21,6 +23,20 @@ Cypress.Commands.add('login', () => {
       body: { count: 0 },
     }).as('getUnreadCount');
   });
+});
+
+Cypress.Commands.add('loginWithCredentials', (email: string, password: string) => {
+  cy.visit('/auth/login');
+  cy.get('input#email').type(email);
+  cy.get('input#password').type(password);
+  cy.get('button[type="submit"]').click();
+});
+
+Cypress.Commands.add('interceptListingsApi', (listings: any[] = []) => {
+  cy.intercept('GET', '**/api/listings/search*', {
+    statusCode: 200,
+    body: listings,
+  }).as('searchListings');
 });
 
 Cypress.Commands.add('interceptContractsApi', () => {

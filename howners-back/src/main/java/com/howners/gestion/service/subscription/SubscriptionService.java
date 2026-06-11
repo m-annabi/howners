@@ -82,12 +82,10 @@ public class SubscriptionService {
             throw new BadRequestException("Cannot checkout for free plan");
         }
 
-        // Dev mode: if Stripe is not configured, switch plan directly
         if (!isStripeConfigured()) {
-            log.info("Stripe not configured — switching plan directly for user {}", userId);
-            switchPlanDirectly(userId, user, plan, request.billingPeriod());
-            String successUrl = frontendUrl + "/billing/success?session_id=dev-mode";
-            return new CheckoutSessionResponse("dev-mode", successUrl);
+            log.error("Stripe API key not configured — cannot process payment for plan {}", plan.getName());
+            throw new BadRequestException(
+                    "Le paiement n'est pas disponible actuellement. Veuillez réessayer plus tard ou contacter le support.");
         }
 
         try {

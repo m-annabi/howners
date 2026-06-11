@@ -180,7 +180,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       {
         title: 'CROISSANCE',
         items: [
-          { label: 'Parrainage', icon: 'bi-stars', route: '/referral' },
+          { label: 'Parrainage', icon: 'bi-gift', route: '/referral' },
         ],
         roles: ['OWNER', 'ADMIN']
       }

@@ -87,8 +87,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     this.error = null;
 
     this.propertyService.getProperties().subscribe({
-      next: (properties) => {
-        this.properties = properties;
+      next: (page) => {
+        this.properties = page.content;
         this.buildFilters();
         this.applyFilters();
         this.loadPrimaryPhotos();

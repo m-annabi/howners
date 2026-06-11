@@ -60,7 +60,6 @@ export class PublicSignComponent implements OnInit {
         this.loading = false;
       },
       error: (err: any) => {
-        console.error('Erreur lors du chargement du contrat:', err);
         this.loading = false;
 
         if (err.status === 400 || err.status === 404) {
@@ -90,7 +89,6 @@ export class PublicSignComponent implements OnInit {
         window.location.href = response.signingUrl;
       },
       error: (err: any) => {
-        console.error('Erreur lors de l\'obtention de l\'URL de signature:', err);
         this.signing = false;
         this.error = 'Impossible d\'ouvrir la page de signature. Veuillez réessayer.';
       }
@@ -116,7 +114,6 @@ export class PublicSignComponent implements OnInit {
         this.signed = true;
       },
       error: (err: any) => {
-        console.error('Erreur lors de la signature canvas:', err);
         this.signing = false;
         this.error = err?.error?.message
           || 'Impossible de finaliser la signature. Veuillez réessayer.';

@@ -5,6 +5,7 @@ import { PropertyType, PROPERTY_TYPE_LABELS } from '../../../core/models/propert
 import { COUNTRIES, Department, getDepartmentsByCountry, getDepartmentLabel } from '../../../core/data/geo-reference';
 import { GeolocationService } from '../../../core/services/geolocation.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { SeoService } from '../../../core/services/seo.service';
 
 @Component({
   selector: 'app-listing-search',
@@ -52,10 +53,19 @@ export class ListingSearchComponent implements OnInit {
   constructor(
     private listingService: ListingService,
     private geolocationService: GeolocationService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
+    // SEO — page de recherche d'annonces
+    const title = 'Annonces de location — Howners';
+    const description =
+      'Parcourez les annonces de location disponibles sur Howners. ' +
+      'Appartements, maisons, studios — trouvez votre prochain logement.';
+    this.seoService.setMetaTags({ title, description, url: window.location.href });
+    this.seoService.setCanonical('https://howners.fr/listings');
+
     this.updateDepartments();
     this.search();
   }
@@ -83,8 +93,8 @@ export class ListingSearchComponent implements OnInit {
     }
 
     this.listingService.searchListings(Object.keys(filters).length > 0 ? filters : undefined).subscribe({
-      next: (listings) => {
-        this.listings = listings;
+      next: (page) => {
+        this.listings = page.content;
         this.loading = false;
       },
       error: () => this.loading = false

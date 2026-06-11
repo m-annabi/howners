@@ -3,7 +3,10 @@ package com.howners.gestion.service.referral;
 import com.howners.gestion.domain.referral.Referral;
 import com.howners.gestion.domain.referral.ReferralStatus;
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.dto.referral.ReferralCodeResponse;
+import com.howners.gestion.dto.referral.ReferralStatsResponse;
 import com.howners.gestion.dto.referral.ReferralSummary;
+import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.repository.ReferralRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
@@ -110,6 +113,64 @@ public class ReferralService {
                         r.getCreatedAt()
                 )).collect(Collectors.toList())
         );
+    }
+
+    /**
+     * Returns the current user's referral code and shareable link.
+     */
+    @Transactional
+    public ReferralCodeResponse getMyCode() {
+        UUID userId = AuthService.getCurrentUserId();
+        String code = ensureReferralCode(userId);
+        String link = frontendUrl + "/auth/register?ref=" + code;
+        return new ReferralCodeResponse(code, link);
+    }
+
+    /**
+     * Returns referral statistics for the current user.
+     */
+    @Transactional(readOnly = true)
+    public ReferralStatsResponse getReferralStats() {
+        UUID userId = AuthService.getCurrentUserId();
+        List<Referral> all = referralRepository.findByReferrerIdOrderByCreatedAtDesc(userId);
+        long pending = all.stream().filter(r -> r.getStatus() == ReferralStatus.PENDING).count();
+        long converted = all.stream().filter(r -> r.getStatus() == ReferralStatus.CONVERTED).count();
+        long total = all.size();
+        return new ReferralStatsResponse(total, converted, pending);
+    }
+
+    /**
+     * Apply a referral code — links the current authenticated user to the referrer.
+     * Used when a user signs up without the ref query parameter and wants to apply a code later.
+     */
+    @Transactional
+    public void applyReferralCode(String code) {
+        UUID userId = AuthService.getCurrentUserId();
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("Utilisateur introuvable"));
+
+        // Check if this user was already referred
+        boolean alreadyReferred = referralRepository.findAll().stream()
+                .anyMatch(r -> r.getReferee().getId().equals(userId));
+        if (alreadyReferred) {
+            throw new BusinessException("Vous avez déjà utilisé un code de parrainage.");
+        }
+
+        String normalised = code.trim().toUpperCase();
+        User referrer = userRepository.findByReferralCode(normalised)
+                .orElseThrow(() -> new BusinessException("Code de parrainage invalide."));
+
+        if (referrer.getId().equals(userId)) {
+            throw new BusinessException("Vous ne pouvez pas utiliser votre propre code.");
+        }
+
+        Referral r = Referral.builder()
+                .referrer(referrer)
+                .referee(currentUser)
+                .status(ReferralStatus.PENDING)
+                .build();
+        referralRepository.save(r);
+        log.info("Referral applied via code — referrer={} referee={}", referrer.getEmail(), currentUser.getEmail());
     }
 
     private static String generateCode() {

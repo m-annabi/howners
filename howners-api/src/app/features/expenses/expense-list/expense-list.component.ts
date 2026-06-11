@@ -67,8 +67,7 @@ export class ExpenseListComponent implements OnInit {
         this.applyFilters();
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading expenses:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des dépenses';
         this.loading = false;
       }
@@ -116,8 +115,7 @@ export class ExpenseListComponent implements OnInit {
           this.notificationService.success('Dépense supprimée');
           this.loadExpenses();
         },
-        error: (err) => {
-          console.error('Error deleting expense:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de la suppression');
         }
       });

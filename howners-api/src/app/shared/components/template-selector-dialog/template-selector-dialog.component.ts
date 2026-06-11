@@ -60,8 +60,7 @@ export class TemplateSelectorDialogComponent implements OnInit, OnDestroy {
             this.selectTemplate(defaultTemplate);
           }
         },
-        error: (err) => {
-          console.error('Error loading templates:', err);
+        error: () => {
           this.notificationService.error('Erreur lors du chargement des templates');
         }
       });
@@ -85,8 +84,7 @@ export class TemplateSelectorDialogComponent implements OnInit, OnDestroy {
         next: (preview) => {
           this.preview = preview;
         },
-        error: (err) => {
-          console.error('Error loading preview:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de la prévisualisation');
           this.preview = null;
         }

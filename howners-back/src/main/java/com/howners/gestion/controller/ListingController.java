@@ -7,6 +7,8 @@ import com.howners.gestion.service.listing.ListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,7 +28,7 @@ public class ListingController {
     private final ListingService listingService;
 
     @GetMapping
-    public ResponseEntity<List<ListingResponse>> searchListings(
+    public ResponseEntity<Page<ListingResponse>> searchListings(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String department,
@@ -42,14 +43,15 @@ public class ListingController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) BigDecimal nearLat,
             @RequestParam(required = false) BigDecimal nearLng,
-            @RequestParam(required = false) BigDecimal radiusKm) {
-        log.info("Searching listings - search: {}, city: {}, near: {},{} r={}km",
-                search, city, nearLat, nearLng, radiusKm);
-        List<ListingResponse> listings = listingService.searchPublishedAdvanced(
+            @RequestParam(required = false) BigDecimal radiusKm,
+            Pageable pageable) {
+        log.info("Searching listings - search: {}, city: {}, near: {},{} r={}km, page: {}, size: {}",
+                search, city, nearLat, nearLng, radiusKm, pageable.getPageNumber(), pageable.getPageSize());
+        Page<ListingResponse> listings = listingService.searchPublishedAdvanced(
                 search, city, department, postalCode,
                 priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished,
                 availableFrom, sortBy,
-                nearLat, nearLng, radiusKm);
+                nearLat, nearLng, radiusKm, pageable);
         return ResponseEntity.ok(listings);
     }
 
@@ -62,9 +64,9 @@ public class ListingController {
 
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
-    public ResponseEntity<List<ListingResponse>> getMyListings() {
-        log.info("Fetching my listings");
-        List<ListingResponse> listings = listingService.findMyListings();
+    public ResponseEntity<Page<ListingResponse>> getMyListings(Pageable pageable) {
+        log.info("Fetching my listings - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
+        Page<ListingResponse> listings = listingService.findMyListings(pageable);
         return ResponseEntity.ok(listings);
     }
 

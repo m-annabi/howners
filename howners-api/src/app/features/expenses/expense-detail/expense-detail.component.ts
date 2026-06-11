@@ -41,8 +41,7 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
         this.expense = expense;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading expense:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement de la dépense';
         this.loading = false;
       }
@@ -63,8 +62,7 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
           this.notificationService.success('Dépense supprimée');
           this.goBack();
         },
-        error: (err) => {
-          console.error('Error deleting expense:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de la suppression');
         }
       });

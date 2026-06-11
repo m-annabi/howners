@@ -47,8 +47,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
         this.invoice = invoice;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading invoice:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement de la facture';
         this.loading = false;
       }
@@ -66,8 +65,8 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => {
-        console.error('Error downloading PDF:', err);
+      error: () => {
+        // Handled by error interceptor
       }
     });
   }

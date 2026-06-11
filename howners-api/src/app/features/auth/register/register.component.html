@@ -61,7 +61,8 @@
             id="password"
             formControlName="password"
             class="form-control"
-            placeholder="Min. 6 caractères"
+            placeholder="Min. 8 caractères (majuscule, minuscule, chiffre)"
+            [class.is-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
           >
           <button
             type="button"
@@ -71,6 +72,12 @@
           >
             <i class="bi" [ngClass]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
           </button>
+        </div>
+        <div class="invalid-feedback" *ngIf="registerForm.get('password')?.hasError('minlength') && registerForm.get('password')?.touched">
+          Le mot de passe doit contenir au moins 8 caractères
+        </div>
+        <div class="invalid-feedback" *ngIf="registerForm.get('password')?.hasError('pattern') && !registerForm.get('password')?.hasError('minlength') && registerForm.get('password')?.touched">
+          Le mot de passe doit contenir une majuscule, une minuscule et un chiffre
         </div>
       </div>
 

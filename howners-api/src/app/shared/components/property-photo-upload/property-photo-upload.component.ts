@@ -146,7 +146,6 @@ export class PropertyPhotoUploadComponent {
           i--; // Ajuster l'index après suppression
         }
       } catch (error: any) {
-        console.error('Error uploading photo:', error);
         filePreview.error = error.error?.message || 'Erreur lors de l\'upload';
         filePreview.uploading = false;
       }

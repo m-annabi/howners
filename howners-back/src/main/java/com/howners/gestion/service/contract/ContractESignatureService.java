@@ -17,6 +17,7 @@ import com.howners.gestion.dto.email.SignatureRequestEmailData;
 import com.howners.gestion.dto.esignature.ESignatureRequest;
 import com.howners.gestion.dto.esignature.ESignatureResponse;
 import com.howners.gestion.dto.esignature.WebhookEvent;
+import com.howners.gestion.exception.PlanLimitExceededException;
 import com.howners.gestion.exception.esignature.*;
 import com.howners.gestion.repository.ContractRepository;
 import com.howners.gestion.repository.ContractSignatureRequestRepository;
@@ -59,6 +60,7 @@ public class ContractESignatureService {
     private final ContractTokenProvider tokenProvider;
     private final StorageService storageService;
     private final PdfService pdfService;
+    private final com.howners.gestion.service.subscription.FeatureGateService featureGateService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -76,6 +78,12 @@ public class ContractESignatureService {
     @Transactional
     public SignatureRequestResponse sendContractForSignature(UUID contractId) {
         log.info("Sending contract {} for electronic signature", contractId);
+
+        UUID currentUserId = AuthService.getCurrentUserId();
+        if (!featureGateService.hasFeature(currentUserId, "e_signature")) {
+            throw new PlanLimitExceededException(
+                    "La signature électronique est réservée aux plans PRO et PREMIUM. Passez au plan supérieur pour y accéder.");
+        }
 
         // 1. Charger et valider le contrat
         Contract contract = contractRepository.findById(contractId)
@@ -618,6 +626,12 @@ public class ContractESignatureService {
     @Transactional
     public List<SignatureRequestResponse> sendContractForMultiSignature(UUID contractId, List<SignerInfo> signers) {
         log.info("Sending contract {} for multi-signature with {} signers", contractId, signers.size());
+
+        UUID currentUserId = AuthService.getCurrentUserId();
+        if (!featureGateService.hasFeature(currentUserId, "e_signature")) {
+            throw new PlanLimitExceededException(
+                    "La signature électronique est réservée aux plans PRO et PREMIUM. Passez au plan supérieur pour y accéder.");
+        }
 
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ContractNotFoundException(

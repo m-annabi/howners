@@ -65,8 +65,8 @@ export class TenantSearchComponent implements OnInit, OnDestroy {
 
   loadMyListings(): void {
     this.listingService.getMyListings().subscribe({
-      next: (listings) => {
-        this.myListings = listings.filter(l => l.status === 'PUBLISHED');
+      next: (page) => {
+        this.myListings = page.content.filter(l => l.status === 'PUBLISHED');
       },
       error: () => {}
     });

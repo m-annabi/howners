@@ -25,7 +25,6 @@ export class EsignatureService {
       {}
     ).pipe(
       catchError(error => {
-        console.error('Error sending contract for signature:', error);
         const userMessage = this.extractErrorMessage(error, 'send');
         return throwError(() => ({ ...error, userMessage }));
       })
@@ -40,7 +39,6 @@ export class EsignatureService {
       `${this.apiUrl}/${contractId}/esignature/status`
     ).pipe(
       catchError(error => {
-        console.error('Error getting signature status:', error);
         const userMessage = this.extractErrorMessage(error, 'status');
         return throwError(() => ({ ...error, userMessage }));
       })
@@ -58,7 +56,6 @@ export class EsignatureService {
       { params }
     ).pipe(
       catchError(error => {
-        console.error('Error resending signature request:', error);
         const userMessage = this.extractErrorMessage(error, 'resend');
         return throwError(() => ({ ...error, userMessage }));
       })
@@ -75,7 +72,6 @@ export class EsignatureService {
       { params }
     ).pipe(
       catchError(error => {
-        console.error('Error cancelling signature request:', error);
         const userMessage = this.extractErrorMessage(error, 'cancel');
         return throwError(() => ({ ...error, userMessage }));
       })

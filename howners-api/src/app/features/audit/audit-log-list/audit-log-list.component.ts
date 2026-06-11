@@ -67,8 +67,7 @@ export class AuditLogListComponent implements OnInit {
         this.totalElements = page.totalElements;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading audit logs:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des logs d\'audit';
         this.loading = false;
       }

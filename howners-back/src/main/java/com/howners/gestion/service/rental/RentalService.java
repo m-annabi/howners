@@ -20,9 +20,12 @@ import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.email.EmailService;
+import com.howners.gestion.service.subscription.FeatureGateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +48,7 @@ public class RentalService {
     private final PaymentRepository paymentRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final FeatureGateService featureGateService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -72,6 +76,26 @@ public class RentalService {
     }
 
     @Transactional(readOnly = true)
+    public Page<RentalResponse> findAllByCurrentUser(Pageable pageable) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        log.debug("Finding all rentals (paginated) for user {}", currentUserId);
+
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
+
+        Page<Rental> rentals;
+        if (currentUser.getRole() == Role.ADMIN) {
+            rentals = rentalRepository.findAll(pageable);
+        } else if (currentUser.getRole() == Role.TENANT) {
+            rentals = rentalRepository.findByTenantId(currentUserId, pageable);
+        } else {
+            rentals = rentalRepository.findByOwnerId(currentUserId, pageable);
+        }
+
+        return rentals.map(RentalResponse::from);
+    }
+
+    @Transactional(readOnly = true)
     public List<UserResponse> findMyTenants() {
         UUID currentUserId = AuthService.getCurrentUserId();
         return userRepository.findTenantsByOwnerId(currentUserId).stream()
@@ -88,6 +112,7 @@ public class RentalService {
     @Transactional
     public RentalResponse create(CreateRentalRequest request) {
         UUID currentUserId = AuthService.getCurrentUserId();
+        featureGateService.assertCanCreate(currentUserId, "RENTALS");
         log.info("Creating rental for property {} by user {}", request.propertyId(), currentUserId);
 
         // Vérifier que la propriété existe et appartient à l'utilisateur

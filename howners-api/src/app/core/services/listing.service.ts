@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Listing, CreateListingRequest } from '../models/listing.model';
+import { Page } from '../models/page.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +19,8 @@ export class ListingService {
     minSurface?: number; minBedrooms?: number; furnished?: boolean;
     availableFrom?: string; sortBy?: string;
     nearLat?: number; nearLng?: number; radiusKm?: number;
-  }): Observable<Listing[]> {
+    page?: number; size?: number;
+  }): Observable<Page<Listing>> {
     let params = new HttpParams();
     if (filters?.search) params = params.set('search', filters.search);
     if (filters?.city) params = params.set('city', filters.city);
@@ -35,15 +37,20 @@ export class ListingService {
     if (filters?.nearLat != null) params = params.set('nearLat', filters.nearLat.toString());
     if (filters?.nearLng != null) params = params.set('nearLng', filters.nearLng.toString());
     if (filters?.radiusKm != null) params = params.set('radiusKm', filters.radiusKm.toString());
-    return this.http.get<Listing[]>(this.apiUrl, { params });
+    if (filters?.page != null) params = params.set('page', filters.page.toString());
+    if (filters?.size != null) params = params.set('size', filters.size.toString());
+    return this.http.get<Page<Listing>>(this.apiUrl, { params });
   }
 
   getListing(id: string): Observable<Listing> {
     return this.http.get<Listing>(`${this.apiUrl}/${id}`);
   }
 
-  getMyListings(): Observable<Listing[]> {
-    return this.http.get<Listing[]>(`${this.apiUrl}/my`);
+  getMyListings(page?: number, size?: number): Observable<Page<Listing>> {
+    let params = new HttpParams();
+    if (page != null) params = params.set('page', page.toString());
+    if (size != null) params = params.set('size', size.toString());
+    return this.http.get<Page<Listing>>(`${this.apiUrl}/my`, { params });
   }
 
   createListing(request: CreateListingRequest): Observable<Listing> {

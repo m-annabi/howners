@@ -7,6 +7,8 @@ import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.service.rental.RentalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,8 +26,8 @@ public class RentalController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
-    public ResponseEntity<List<RentalResponse>> getAllRentals() {
-        return ResponseEntity.ok(rentalService.findAllByCurrentUser());
+    public ResponseEntity<Page<RentalResponse>> getAllRentals(Pageable pageable) {
+        return ResponseEntity.ok(rentalService.findAllByCurrentUser(pageable));
     }
 
     @GetMapping("/my-tenants")

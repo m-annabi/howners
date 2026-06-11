@@ -6,11 +6,14 @@ import com.howners.gestion.dto.rating.TenantScoreResponse;
 import com.howners.gestion.dto.rating.TenantScoreResponse.PaymentStats;
 import com.howners.gestion.dto.rating.TenantScoreResponse.RiskLevel;
 import com.howners.gestion.dto.rating.TenantScoreResponse.ScoreBreakdown;
+import com.howners.gestion.exception.PlanLimitExceededException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.PaymentRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.TenantRatingRepository;
 import com.howners.gestion.repository.UserRepository;
+import com.howners.gestion.service.auth.AuthService;
+import com.howners.gestion.service.subscription.FeatureGateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class TenantScoringService {
     private final PaymentRepository paymentRepository;
     private final TenantRatingRepository ratingRepository;
     private final RentalRepository rentalRepository;
+    private final FeatureGateService featureGateService;
 
     private static final double PAYMENT_WEIGHT = 0.40;
     private static final double RATING_WEIGHT = 0.40;
@@ -39,6 +43,12 @@ public class TenantScoringService {
 
     @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public TenantScoreResponse calculateScore(UUID tenantId) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        if (!featureGateService.hasFeature(currentUserId, "tenant_scoring")) {
+            throw new PlanLimitExceededException(
+                    "Le scoring locataire est réservé aux plans PRO et PREMIUM. Passez au plan supérieur pour y accéder.");
+        }
+
         User tenant = userRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
 

@@ -95,8 +95,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         this.contract = contract;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading contract:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement du contrat';
         this.loading = false;
       }
@@ -111,8 +110,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         this.versions = versions;
         this.showVersions = true;
       },
-      error: (err) => {
-        console.error('Error loading versions:', err);
+      error: () => {
         this.notificationService.error('Erreur lors du chargement des versions');
       }
     });
@@ -139,8 +137,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.contract = updatedContract;
           this.notificationService.success('Contrat envoyé avec succès');
         },
-        error: (err) => {
-          console.error('Error sending contract:', err);
+        error: () => {
           alert('Erreur lors de l\'envoi du contrat');
         }
       });
@@ -162,8 +159,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => {
-        console.error('Error downloading PDF:', err);
+      error: () => {
         this.notificationService.error('Erreur lors du téléchargement du PDF');
       }
     });
@@ -187,8 +183,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.notificationService.success('Contrat supprimé avec succès');
           this.goBack();
         },
-        error: (err) => {
-          console.error('Error deleting contract:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de la suppression du contrat');
         }
       });
@@ -200,8 +195,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       next: (signatures) => {
         this.signatures = signatures;
       },
-      error: (err) => {
-        console.error('Error loading signatures:', err);
+      error: () => {
       }
     });
   }
@@ -230,15 +224,8 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       userAgent: userAgent
     };
 
-    console.log('Creating signature with request:', {
-      contractId: request.contractId,
-      dataLength: signatureBase64.length,
-      userAgent: userAgent
-    });
-
     this.signatureService.createSignature(request).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (signature) => {
-        console.log('Signature created successfully:', signature);
+      next: () => {
         this.signing = false;
         this.showSignaturePad = false;
         this.notificationService.success('Contrat signé avec succès!');
@@ -248,8 +235,6 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         this.loadSignatures(this.contract!.id);
       },
       error: (err) => {
-        console.error('Error creating signature:', err);
-        console.error('Error details:', err.error);
         this.signing = false;
         this.notificationService.error(err.error?.message || 'Erreur lors de la signature du contrat');
       }
@@ -257,7 +242,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   }
 
   onSignatureCleared(): void {
-    console.log('Signature cleared');
+    // Rien à faire : le pad gère son propre état
   }
 
   canSign(): boolean {
@@ -332,8 +317,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$),
       finalize(() => this.signing = false)
     ).subscribe({
-      next: (signature) => {
-        console.log('Signature created successfully:', signature);
+      next: () => {
         this.showSignDialog = false;
         this.notificationService.success('Contrat signé avec succès!');
 
@@ -342,7 +326,6 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         this.loadSignatures(this.contract!.id);
       },
       error: (err) => {
-        console.error('Error creating signature:', err);
         this.notificationService.error(err.error?.message || 'Erreur lors de la signature du contrat');
       }
     });
@@ -379,7 +362,6 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.notificationService.success('Contrat envoyé avec succès ! Le locataire peut maintenant le signer.');
         },
         error: (err) => {
-          console.error('Error sending contract:', err);
           this.notificationService.error(err.error?.message || 'Erreur lors de l\'envoi du contrat');
         }
       });
@@ -430,7 +412,6 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.loadContract(this.contract!.id);
         },
         error: (err) => {
-          console.error('Error sending for e-signature:', err);
           this.sendingForSignature = false;
           alert(err.error?.message || 'Erreur lors de l\'envoi pour signature');
         }
@@ -453,8 +434,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.notificationService.success('Email de signature renvoyé avec succès');
           this.loadSignatureRequest(this.contract!.id);
         },
-        error: (err) => {
-          console.error('Error resending signature request:', err);
+        error: () => {
           alert('Erreur lors du renvoi de l\'email');
         }
       });
@@ -477,8 +457,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.loadSignatureRequest(this.contract!.id);
           this.loadContract(this.contract!.id);
         },
-        error: (err) => {
-          console.error('Error cancelling signature request:', err);
+        error: () => {
           alert('Erreur lors de l\'annulation');
         }
       });

@@ -30,6 +30,12 @@ spring:
     default-schema: public
     drop-first: false
 
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -73,6 +79,7 @@ stripe:
   api-key: ${STRIPE_SECRET_KEY:}
   public-key: ${STRIPE_PUBLIC_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  platform-fee-percent: ${STRIPE_PLATFORM_FEE_PERCENT:2.5}
 
 # YouSign Configuration
 yousign:
@@ -109,6 +116,13 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4201}
 
+# SpringDoc / Swagger
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 # Server Configuration
 server:
   port: 8080
@@ -120,10 +134,10 @@ server:
 logging:
   level:
     root: INFO
-    com.howners: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    liquibase: DEBUG
+    com.howners: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    liquibase: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 
