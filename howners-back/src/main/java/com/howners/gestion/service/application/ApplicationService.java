@@ -23,10 +23,12 @@ import com.howners.gestion.repository.DocumentRepository;
 import com.howners.gestion.repository.ListingRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
+import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.service.audit.AuditService;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.document.DocumentService;
 import com.howners.gestion.service.email.EmailService;
+import com.howners.gestion.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +52,7 @@ public class ApplicationService {
     private final RentalRepository rentalRepository;
     private final EmailService emailService;
     private final AuditService auditService;
+    private final NotificationService notificationService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -81,6 +84,21 @@ public class ApplicationService {
 
         application = applicationRepository.save(application);
         log.info("Application submitted by {} for listing {}", currentUserId, request.listingId());
+
+        // Notifier le propriétaire de la nouvelle candidature
+        try {
+            UUID ownerId = listing.getProperty().getOwner().getId();
+            notificationService.create(
+                    ownerId,
+                    NotificationType.APPLICATION_RECEIVED,
+                    "Nouvelle candidature",
+                    applicant.getFullName() + " a postulé pour \"" + listing.getTitle() + "\".",
+                    "/applications"
+            );
+        } catch (Exception e) {
+            log.error("Échec de la création de notification pour la candidature {}", application.getId(), e);
+        }
+
         return ApplicationResponse.from(application);
     }
 

@@ -7,6 +7,8 @@ import com.howners.gestion.service.listing.ListingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,7 +28,7 @@ public class ListingController {
     private final ListingService listingService;
 
     @GetMapping
-    public ResponseEntity<?> searchListings(
+    public ResponseEntity<Page<ListingResponse>> searchListings(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String department,
@@ -43,35 +44,15 @@ public class ListingController {
             @RequestParam(required = false) BigDecimal nearLat,
             @RequestParam(required = false) BigDecimal nearLng,
             @RequestParam(required = false) BigDecimal radiusKm,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
-        log.info("Searching listings - search: {}, city: {}, near: {},{} r={}km page={} size={}",
-                search, city, nearLat, nearLng, radiusKm, page, size);
-        List<ListingResponse> listings = listingService.searchPublishedAdvanced(
+            Pageable pageable) {
+        log.info("Searching listings - search: {}, city: {}, near: {},{} r={}km, page: {}, size: {}",
+                search, city, nearLat, nearLng, radiusKm, pageable.getPageNumber(), pageable.getPageSize());
+        Page<ListingResponse> listings = listingService.searchPublishedAdvanced(
                 search, city, department, postalCode,
                 priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished,
                 availableFrom, sortBy,
-                nearLat, nearLng, radiusKm);
-
-        // Backwards-compatible: without page/size, keep returning the bare list so the
-        // existing front-end isn't broken. With page/size, return a paged envelope.
-        if (page == null && size == null) {
-            return ResponseEntity.ok(listings);
-        }
-
-        int pageIdx = page != null ? Math.max(0, page) : 0;
-        int pageSize = size != null ? Math.max(1, Math.min(size, 100)) : 20;
-        int from = Math.min(pageIdx * pageSize, listings.size());
-        int to = Math.min(from + pageSize, listings.size());
-        int totalPages = pageSize > 0 ? (int) Math.ceil((double) listings.size() / pageSize) : 1;
-
-        return ResponseEntity.ok(new com.howners.gestion.dto.listing.PagedListingsResponse(
-                listings.subList(from, to),
-                pageIdx,
-                pageSize,
-                listings.size(),
-                totalPages
-        ));
+                nearLat, nearLng, radiusKm, pageable);
+        return ResponseEntity.ok(listings);
     }
 
     @GetMapping("/{id}")
@@ -83,9 +64,9 @@ public class ListingController {
 
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
-    public ResponseEntity<List<ListingResponse>> getMyListings() {
-        log.info("Fetching my listings");
-        List<ListingResponse> listings = listingService.findMyListings();
+    public ResponseEntity<Page<ListingResponse>> getMyListings(Pageable pageable) {
+        log.info("Fetching my listings - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
+        Page<ListingResponse> listings = listingService.findMyListings(pageable);
         return ResponseEntity.ok(listings);
     }
 

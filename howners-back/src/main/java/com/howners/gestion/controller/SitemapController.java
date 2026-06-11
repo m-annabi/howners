@@ -6,25 +6,16 @@ import com.howners.gestion.repository.ListingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * sitemap.xml conforme à <a href="https://www.sitemaps.org/protocol.html">sitemap.org</a>.
- *
- * Liste les URLs publiquement indexables :
- *  - Landing /
- *  - Browse /listings
- *  - Auth: /auth/login, /auth/register
- *  - Une URL par annonce PUBLISHED (lastmod = updatedAt)
- *
- * Le robots.txt référence /sitemap.xml — sans cet endpoint, Googlebot reçoit un 404.
+ * Contrôleur public qui génère le sitemap.xml pour les moteurs de recherche.
+ * Inclut les pages statiques (accueil, annonces) et les annonces publiées.
  */
 @RestController
 @RequiredArgsConstructor
@@ -36,40 +27,52 @@ public class SitemapController {
     private String frontendUrl;
 
     @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<String> sitemap() {
-        StringBuilder xml = new StringBuilder(4096);
+    public String sitemap() {
+        List<Listing> publishedListings =
+                listingRepository.findByStatusOrderByPublishedAtDesc(ListingStatus.PUBLISHED);
+
+        StringBuilder xml = new StringBuilder();
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
 
-        // Static pages
-        String today = LocalDate.now().toString();
-        appendUrl(xml, frontendUrl, today, "weekly", "1.0");
-        appendUrl(xml, frontendUrl + "/listings", today, "daily", "0.9");
-        appendUrl(xml, frontendUrl + "/auth/register", today, "monthly", "0.5");
-        appendUrl(xml, frontendUrl + "/auth/login", today, "monthly", "0.3");
+        // Page d'accueil
+        appendUrl(xml, frontendUrl + "/", null, "daily", "1.0");
 
-        // Each published listing as its own URL
-        List<Listing> published = listingRepository.findByStatusOrderByPublishedAtDesc(ListingStatus.PUBLISHED);
-        for (Listing l : published) {
-            LocalDateTime updated = l.getUpdatedAt() != null ? l.getUpdatedAt() : l.getPublishedAt();
-            String lastmod = updated != null
-                    ? updated.toLocalDate().toString()
-                    : today;
-            appendUrl(xml, frontendUrl + "/listings/" + l.getId(), lastmod, "weekly", "0.7");
+        // Page de recherche d'annonces
+        appendUrl(xml, frontendUrl + "/listings", null, "daily", "0.9");
+
+        // Pages d'annonces publiées
+        for (Listing listing : publishedListings) {
+            String loc = frontendUrl + "/listings/" + listing.getId();
+            LocalDateTime lastmod = listing.getUpdatedAt() != null
+                    ? listing.getUpdatedAt()
+                    : listing.getPublishedAt();
+            appendUrl(xml, loc, lastmod, "weekly", "0.7");
         }
 
-        xml.append("</urlset>\n");
-        return ResponseEntity.ok()
-                .header("Cache-Control", "public, max-age=3600")
-                .body(xml.toString());
+        xml.append("</urlset>");
+        return xml.toString();
     }
 
-    private void appendUrl(StringBuilder xml, String loc, String lastmod, String changefreq, String priority) {
-        xml.append("  <url>\n")
-           .append("    <loc>").append(loc).append("</loc>\n")
-           .append("    <lastmod>").append(lastmod).append("</lastmod>\n")
-           .append("    <changefreq>").append(changefreq).append("</changefreq>\n")
-           .append("    <priority>").append(priority).append("</priority>\n")
-           .append("  </url>\n");
+    private void appendUrl(StringBuilder xml, String loc, LocalDateTime lastmod,
+                           String changefreq, String priority) {
+        xml.append("  <url>\n");
+        xml.append("    <loc>").append(escapeXml(loc)).append("</loc>\n");
+        if (lastmod != null) {
+            xml.append("    <lastmod>")
+               .append(lastmod.format(DateTimeFormatter.ISO_DATE))
+               .append("</lastmod>\n");
+        }
+        xml.append("    <changefreq>").append(changefreq).append("</changefreq>\n");
+        xml.append("    <priority>").append(priority).append("</priority>\n");
+        xml.append("  </url>\n");
+    }
+
+    private String escapeXml(String value) {
+        return value.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\"", "&quot;")
+                    .replace("'", "&apos;");
     }
 }

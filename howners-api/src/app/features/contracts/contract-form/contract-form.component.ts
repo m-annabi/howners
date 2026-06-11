@@ -53,15 +53,14 @@ export class ContractFormComponent implements OnInit {
     this.error = null;
 
     this.rentalService.getRentals().subscribe({
-      next: (rentals: Rental[]) => {
+      next: (page) => {
         // Filtrer uniquement les locations actives ou en attente
-        this.rentals = rentals.filter((r: Rental) =>
+        this.rentals = page.content.filter((r: Rental) =>
           r.status === 'ACTIVE' || r.status === 'PENDING'
         );
         this.loading = false;
       },
-      error: (err: any) => {
-        console.error('Error loading rentals:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des locations';
         this.loading = false;
       }
@@ -73,8 +72,7 @@ export class ContractFormComponent implements OnInit {
       next: (templates) => {
         this.templates = templates;
       },
-      error: (err) => {
-        console.error('Error loading templates:', err);
+      error: () => {
         // Ne pas bloquer si le chargement des templates échoue
       }
     });
@@ -131,7 +129,6 @@ export class ContractFormComponent implements OnInit {
         this.router.navigate(['/contracts', contract.id]);
       },
       error: (err) => {
-        console.error('Error creating contract:', err);
         this.error = err.error?.message || 'Erreur lors de la création du contrat';
         this.submitting = false;
       }

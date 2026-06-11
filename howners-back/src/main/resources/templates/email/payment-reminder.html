@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rappel de loyer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header-overdue {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1, .header-overdue h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .message {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .payment-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .payment-box-overdue {
+            background-color: #fdf2f2;
+            border-left: 4px solid #e74c3c;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .payment-box h3, .payment-box-overdue h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+        .payment-box h3 {
+            color: #667eea;
+        }
+        .payment-box-overdue h3 {
+            color: #e74c3c;
+        }
+        .detail-item {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .amount-value {
+            font-family: 'Courier New', monospace;
+            background-color: #e9ecef;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .urgency-message {
+            background-color: #fdf2f2;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin: 25px 0;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin: 30px 0;
+            transition: transform 0.2s;
+        }
+        .cta-button-overdue {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin: 30px 0;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover, .cta-button-overdue:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        @media only screen and (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 4px;
+            }
+            .header, .header-overdue {
+                padding: 30px 20px;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .cta-button, .cta-button-overdue {
+                display: block;
+                padding: 14px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête : rouge si en retard, violet sinon -->
+        <div th:if="${isOverdue}" class="header-overdue">
+            <div class="logo">Howners</div>
+            <h1>Loyer en retard</h1>
+        </div>
+        <div th:unless="${isOverdue}" class="header">
+            <div class="logo">Howners</div>
+            <h1>Rappel de loyer</h1>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Bonjour <span th:text="${recipientName}">Locataire</span>,</p>
+
+            <!-- Message pour loyer en retard -->
+            <div th:if="${isOverdue}">
+                <p class="message">
+                    Votre loyer pour le bien <strong th:text="${propertyName}">Appartement</strong>
+                    est en retard de paiement. Nous vous invitons à régulariser votre situation dans les meilleurs délais.
+                </p>
+            </div>
+
+            <!-- Message pour rappel amical -->
+            <div th:unless="${isOverdue}">
+                <p class="message">
+                    Ceci est un rappel concernant votre prochain loyer pour le bien
+                    <strong th:text="${propertyName}">Appartement</strong>,
+                    géré par <strong th:text="${ownerName}">Propriétaire</strong>.
+                </p>
+            </div>
+
+            <!-- Détails du paiement -->
+            <div th:classappend="${isOverdue} ? 'payment-box-overdue' : 'payment-box'">
+                <h3>Détails du paiement</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Bien :</span>
+                    <span th:text="${propertyName}">Appartement</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Adresse :</span>
+                    <span th:text="${propertyAddress}">1 rue de la Paix, 75001 Paris</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Montant :</span>
+                    <span class="amount-value" th:text="${amount} + ' ' + ${currency}">850.00 EUR</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Date d'échéance :</span>
+                    <span th:text="${dueDate}">01/07/2026</span>
+                </div>
+            </div>
+
+            <!-- Message d'urgence si en retard -->
+            <div th:if="${isOverdue}" class="urgency-message">
+                Votre paiement est en retard. Des pénalités de retard peuvent s'appliquer conformément
+                à votre contrat de location. Merci de procéder au règlement dès que possible.
+            </div>
+
+            <p class="message">
+                Vous pouvez effectuer votre paiement en ligne en cliquant sur le bouton ci-dessous :
+            </p>
+
+            <div style="text-align: center;">
+                <a th:href="${paymentUrl}"
+                   th:classappend="${isOverdue} ? 'cta-button-overdue' : 'cta-button'">
+                    Payer mon loyer
+                </a>
+            </div>
+
+            <p class="message" style="margin-top: 30px; font-size: 14px; color: #666;">
+                Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :<br>
+                <span th:text="${paymentUrl}" style="word-break: break-all; color: #667eea;">
+                    https://app.howners.com/payments/xxx
+                </span>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Howners</strong></p>
+            <p>La plateforme de gestion locative</p>
+            <p style="margin-top: 15px;">
+                Vous avez des questions ? Contactez votre propriétaire ou notre équipe support.
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                &copy; 2025 Howners. Tous droits réservés.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

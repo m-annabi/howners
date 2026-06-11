@@ -10,6 +10,9 @@ import { ContractService } from '../../core/services/contract.service';
 import { ApplicationService } from '../../core/services/application.service';
 import { TenantDiscoveryService } from '../../core/services/tenant-discovery.service';
 import { WidgetPreferenceService } from '../../core/services/widget-preference.service';
+import { OnboardingService, OnboardingStatus } from '../../core/services/onboarding.service';
+import { AnalyticsService, AnalyticsSummary } from '../../core/services/analytics.service';
+import { ExportService } from '../../core/services/export.service';
 import { User } from '../../core/models/user.model';
 import { DashboardStats } from '../../core/models/dashboard.model';
 import { PaymentStatus } from '../../core/models/payment.model';
@@ -41,6 +44,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   actionItems: ActionItems | null = null;
   topTenants: TenantSearchResult[] = [];
 
+  showChecklist = false;
+
+  // Analytics
+  analyticsSummary: AnalyticsSummary | null = null;
+  analyticsLoading = false;
+  maxMonthlyRevenue = 0;
+
   widgetConfigs: WidgetConfig[] = [];
   displayWidgets: WidgetConfig[] = [];
   editWidgets: WidgetConfig[] = [];
@@ -59,6 +69,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ── Computed ───────────────────────────────────────────────────────────
 
   get isTenant(): boolean { return this.currentUser?.role === 'TENANT'; }
+  get isOwner(): boolean { return this.currentUser?.role === 'OWNER'; }
 
   get hasActionItems(): boolean {
     return !!this.actionItems && (
@@ -239,6 +250,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private applicationService: ApplicationService,
     private tenantDiscoveryService: TenantDiscoveryService,
     private widgetPreferenceService: WidgetPreferenceService,
+    private analyticsServiceFe: AnalyticsService,
+    private exportService: ExportService,
     private router: Router
   ) {}
 
@@ -247,9 +260,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.currentUser = user;
       this.loadStats();
       if (user && user.role !== 'TENANT') {
+        this.showChecklist = true;
         this.loadWidgetPreferences();
         this.loadActionItems();
         this.loadTopTenants();
+        if (user.role === 'OWNER') {
+          this.loadAnalytics();
+        }
       }
     });
   }
@@ -319,6 +336,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
         ).length,
       }))
     ).subscribe(items => { this.actionItems = items; });
+  }
+
+  onChecklistHidden(): void { this.showChecklist = false; }
+
+  loadAnalytics(): void {
+    this.analyticsLoading = true;
+    this.analyticsServiceFe.getSummary().subscribe({
+      next: summary => {
+        this.analyticsSummary = summary;
+        this.maxMonthlyRevenue = Math.max(
+          ...summary.monthlyRevenue.map(m => m.amount),
+          1
+        );
+        this.analyticsLoading = false;
+      },
+      error: () => { this.analyticsLoading = false; }
+    });
+  }
+
+  exportCsv(): void {
+    const year = new Date().getFullYear();
+    this.exportService.downloadFinancialCsv(year);
+  }
+
+  formatMonth(month: string): string {
+    const [y, m] = month.split('-');
+    const months = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[parseInt(m, 10) - 1] || m;
+  }
+
+  getBarHeight(amount: number): number {
+    if (this.maxMonthlyRevenue <= 0) return 0;
+    return Math.round((amount / this.maxMonthlyRevenue) * 100);
   }
 
   navigateTo(path: string): void { this.router.navigate([path]); }

@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ListingService } from '../../../core/services/listing.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { SeoService } from '../../../core/services/seo.service';
 import { Listing, LISTING_STATUS_LABELS, LISTING_STATUS_COLORS } from '../../../core/models/listing.model';
 import { AMENITIES_MAP, REQUIREMENTS_MAP, AmenityItem } from '../../../core/models/listing-amenities.model';
 import { Role } from '../../../core/models/user.model';
@@ -29,7 +30,8 @@ export class ListingDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private listingService: ListingService,
-    private authService: AuthService
+    private authService: AuthService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
@@ -54,12 +56,29 @@ export class ListingDetailComponent implements OnInit, OnDestroy {
         this.listing = listing;
         this.isOwner = listing.ownerId === this.currentUserId;
         this.loading = false;
+        this.updateSeoForListing(listing);
       },
       error: () => {
         this.loading = false;
         this.router.navigate(['/listings']);
       }
     });
+  }
+
+  /** Met à jour les méta-tags SEO en fonction de l'annonce chargée. */
+  private updateSeoForListing(listing: Listing): void {
+    const pricePart = listing.pricePerMonth ? `${listing.pricePerMonth} €/mois` : '';
+    const locationPart = listing.propertyCity || '';
+    const title = `${listing.title} — ${[locationPart, pricePart].filter(Boolean).join(' · ')} | Howners`;
+
+    const descriptionRaw = listing.description || '';
+    const description = descriptionRaw.length > 160 ? descriptionRaw.substring(0, 157) + '...' : descriptionRaw;
+
+    const url = `${window.location.origin}/listings/${listing.id}`;
+    const image = listing.photos?.length > 0 ? listing.photos[0].fileUrl : undefined;
+
+    this.seoService.setMetaTags({ title, description, url, image });
+    this.seoService.setCanonical(url);
   }
 
   ngOnDestroy(): void {

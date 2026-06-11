@@ -91,12 +91,31 @@ public class StripeConnectService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public StripeConnectStatusResponse getStatus() {
         UUID userId = AuthService.getCurrentUserId();
         User user = userRepository.findById(userId).orElseThrow();
+
+        String accountId = user.getStripeConnectAccountId();
+        if (accountId != null && !accountId.isBlank() && stripeApiKey != null && !stripeApiKey.isBlank()) {
+            try {
+                Account account = Account.retrieve(accountId);
+                boolean chargesEnabled = account.getChargesEnabled() != null && account.getChargesEnabled();
+                boolean payoutsEnabled = account.getPayoutsEnabled() != null && account.getPayoutsEnabled();
+
+                if (chargesEnabled && payoutsEnabled) {
+                    user.setStripeConnectStatus("COMPLETED");
+                } else if ("PENDING".equals(user.getStripeConnectStatus())) {
+                    user.setStripeConnectStatus("PENDING");
+                }
+                userRepository.save(user);
+            } catch (StripeException e) {
+                log.error("Failed to retrieve Stripe Connect account status for {}: {}", accountId, e.getMessage());
+            }
+        }
+
         return new StripeConnectStatusResponse(
-                user.getStripeConnectAccountId() != null,
+                accountId != null,
                 user.getStripeConnectStatus() != null ? user.getStripeConnectStatus() : "NONE",
                 null
         );

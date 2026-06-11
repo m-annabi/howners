@@ -17,3 +17,9 @@ server:
     include-message: never
     include-binding-errors: never
     include-stacktrace: never
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

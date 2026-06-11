@@ -59,7 +59,7 @@ export class ListingFormComponent implements OnInit {
     this.isEditMode = !!this.listingId;
 
     this.propertyService.getProperties().subscribe({
-      next: (properties) => this.properties = properties,
+      next: (page) => this.properties = page.content,
       error: () => {} // silent — dropdown stays empty
     });
 
@@ -129,7 +129,7 @@ export class ListingFormComponent implements OnInit {
       next: () => {
         this.listingPhotos = this.listingPhotos.filter(p => p.id !== photo.id);
       },
-      error: (err) => console.error('Error deleting photo:', err)
+      error: () => {}
     });
   }
 

@@ -50,12 +50,11 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   loadRentals(): void {
     this.loadingRentals = true;
     this.rentalService.getRentals().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (rentals) => {
-        this.rentals = rentals;
+      next: (page) => {
+        this.rentals = page.content;
         this.loadingRentals = false;
       },
-      error: (err) => {
-        console.error('Error loading rentals:', err);
+      error: () => {
         this.loadingRentals = false;
       }
     });
@@ -72,7 +71,6 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
         this.router.navigate(['/payments', payment.id]);
       },
       error: (err) => {
-        console.error('Error creating payment:', err);
         this.submitting = false;
         this.notificationService.error(err.error?.message || 'Erreur lors de la création du paiement');
       }

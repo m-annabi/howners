@@ -62,8 +62,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             phone: user.phone || ''
           });
         },
-        error: (err) => {
-          console.error('Error loading profile:', err);
+        error: () => {
           this.notificationService.error('Erreur lors du chargement du profil');
         }
       });
@@ -82,8 +81,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             phone: user.phone || ''
           });
         },
-        error: (err) => {
-          console.error('Error loading profile:', err);
+        error: () => {
           this.notificationService.error('Erreur lors du chargement du profil');
         }
       });
@@ -111,7 +109,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.notificationService.success('Profil mis à jour avec succès');
       },
       error: (err) => {
-        console.error('Error updating profile:', err);
         this.notificationService.error(err.error?.message || 'Erreur lors de la mise à jour du profil');
       }
     });

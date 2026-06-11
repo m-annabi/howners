@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { Title, Meta } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { SeoService } from '../../core/services/seo.service';
 
 @Component({
   selector: 'app-landing',
@@ -10,39 +10,25 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class LandingComponent implements OnInit {
   constructor(
-    private titleService: Title,
-    private meta: Meta,
     private router: Router,
-    private auth: AuthService
+    private auth: AuthService,
+    private seoService: SeoService
   ) {}
 
   ngOnInit(): void {
-    // If already authenticated, send them to the dashboard.
+    // Si déjà authentifié, rediriger vers le tableau de bord.
     if (this.auth.isAuthenticated()) {
       this.router.navigate(['/dashboard']);
       return;
     }
 
-    const title = 'Howners — Gestion locative simple et professionnelle';
-    const description = 'Gérez vos biens, contrats, paiements et quittances en un seul endroit. Signature électronique, suivi des loyers, fiches locataires — sans tableurs.';
+    const title = 'Howners — Gestion locative simplifiée pour propriétaires';
+    const description =
+      'Gérez vos biens, contrats, paiements et quittances en un seul endroit. ' +
+      'Signature électronique, suivi des loyers, fiches locataires — sans tableurs.';
 
-    this.titleService.setTitle(title);
-    this.meta.updateTag({ name: 'description', content: description });
-
-    // Open Graph
-    this.meta.updateTag({ property: 'og:title', content: title });
-    this.meta.updateTag({ property: 'og:description', content: description });
-    this.meta.updateTag({ property: 'og:type', content: 'website' });
-    this.meta.updateTag({ property: 'og:url', content: window.location.origin });
-    this.meta.updateTag({ property: 'og:site_name', content: 'Howners' });
-
-    // Twitter
-    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
-    this.meta.updateTag({ name: 'twitter:title', content: title });
-    this.meta.updateTag({ name: 'twitter:description', content: description });
-
-    // Robots
-    this.meta.updateTag({ name: 'robots', content: 'index, follow' });
+    this.seoService.setMetaTags({ title, description, url: window.location.origin, type: 'website' });
+    this.seoService.setCanonical('https://howners.fr/');
 
     // schema.org SoftwareApplication
     this.injectJsonLd();

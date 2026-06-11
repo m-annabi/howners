@@ -10,6 +10,7 @@ import com.howners.gestion.dto.request.UpdatePropertyRequest;
 import com.howners.gestion.dto.response.PropertyResponse;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.repository.PropertyRepository;
+import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.security.UserPrincipal;
 import com.howners.gestion.service.subscription.FeatureGateService;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.*;
 class PropertyServiceTest {
 
     @Mock private PropertyRepository propertyRepository;
+    @Mock private RentalRepository rentalRepository;
     @Mock private UserRepository userRepository;
     @Mock private FeatureGateService featureGateService;
 

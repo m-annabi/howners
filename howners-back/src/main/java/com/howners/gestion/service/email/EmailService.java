@@ -1,6 +1,9 @@
 package com.howners.gestion.service.email;
 
 import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
+import com.howners.gestion.dto.email.ContractExpiryEmailData;
+import com.howners.gestion.dto.email.OnboardingReminderEmailData;
+import com.howners.gestion.dto.email.PaymentReminderEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
 import com.howners.gestion.dto.email.SignatureCompletedEmailData;
 import com.howners.gestion.dto.email.SignatureDeclinedEmailData;
@@ -58,4 +61,19 @@ public interface EmailService {
      * Envoie le digest hebdomadaire "À traiter" au bailleur.
      */
     void sendWeeklyDigestEmail(WeeklyDigestEmailData data);
+
+    /**
+     * Envoie un email de rappel de paiement au locataire
+     */
+    void sendPaymentReminderEmail(PaymentReminderEmailData data);
+
+    /**
+     * Envoie un email de relance d'onboarding (J+2) au bailleur sans bien
+     */
+    void sendOnboardingReminderEmail(OnboardingReminderEmailData data);
+
+    /**
+     * Envoie un email d'alerte d'echeance de contrat (J-30) au bailleur
+     */
+    void sendContractExpiryWarningEmail(ContractExpiryEmailData data);
 }

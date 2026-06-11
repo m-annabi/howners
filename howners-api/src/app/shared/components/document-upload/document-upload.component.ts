@@ -80,7 +80,6 @@ export class DocumentUploadComponent {
         }
       },
       error: (err) => {
-        console.error('Error uploading document:', err);
         this.error = err.error?.message || 'Erreur lors de l\'upload du document';
         this.uploading = false;
       }

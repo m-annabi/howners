@@ -55,6 +55,14 @@ public class SubscriptionPlan {
     @Builder.Default
     private Integer maxContractsPerMonth = -1; // -1 = unlimited
 
+    @Column(name = "max_rentals")
+    @Builder.Default
+    private Integer maxRentals = -1; // -1 = unlimited
+
+    @Column(name = "max_listings")
+    @Builder.Default
+    private Integer maxListings = -1; // -1 = unlimited
+
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> features;
 

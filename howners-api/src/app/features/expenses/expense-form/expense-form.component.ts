@@ -64,8 +64,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
           expenseDate: expense.expenseDate
         });
       },
-      error: (err) => {
-        console.error('Error loading expense:', err);
+      error: () => {
         this.notificationService.error('Erreur lors du chargement');
       }
     });

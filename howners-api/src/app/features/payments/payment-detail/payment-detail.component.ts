@@ -54,8 +54,7 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
         this.payment = payment;
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading payment:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement du paiement';
         this.loading = false;
       }
@@ -73,8 +72,7 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
           this.confirming = false;
           this.notificationService.success('Paiement confirmé avec succès. Une quittance a été générée.');
         },
-        error: (err) => {
-          console.error('Error confirming payment:', err);
+        error: () => {
           this.confirming = false;
           this.notificationService.error('Erreur lors de la confirmation du paiement');
         }
@@ -91,8 +89,7 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
         this.creatingIntent = false;
         this.notificationService.success('Intent Stripe créé. ID: ' + response.paymentIntentId);
       },
-      error: (err) => {
-        console.error('Error creating Stripe intent:', err);
+      error: () => {
         this.creatingIntent = false;
         this.notificationService.error('Erreur lors de la création du paiement Stripe');
       }

@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Rental, CreateRentalRequest, UpdateRentalRequest } from '../../core/models/rental.model';
 import { User } from '../../core/models/user.model';
+import { Page } from '../../core/models/page.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,11 @@ export class RentalService {
 
   constructor(private http: HttpClient) {}
 
-  getRentals(): Observable<Rental[]> {
-    return this.http.get<Rental[]>(this.API_URL);
+  getRentals(page?: number, size?: number): Observable<Page<Rental>> {
+    let params = new HttpParams();
+    if (page != null) params = params.set('page', page.toString());
+    if (size != null) params = params.set('size', size.toString());
+    return this.http.get<Page<Rental>>(this.API_URL, { params });
   }
 
   getRental(id: string): Observable<Rental> {

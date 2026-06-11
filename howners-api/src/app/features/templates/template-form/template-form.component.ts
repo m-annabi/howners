@@ -83,8 +83,7 @@ export class TemplateFormComponent implements OnInit {
         });
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading template:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement du template';
         this.loading = false;
       }
@@ -128,7 +127,6 @@ export class TemplateFormComponent implements OnInit {
           this.router.navigate(['/templates']);
         },
         error: (err) => {
-          console.error('Error updating template:', err);
           this.error = err.error?.message || 'Erreur lors de la mise à jour du template';
           this.submitting = false;
         }
@@ -141,7 +139,6 @@ export class TemplateFormComponent implements OnInit {
           this.router.navigate(['/templates']);
         },
         error: (err) => {
-          console.error('Error creating template:', err);
           this.error = err.error?.message || 'Erreur lors de la création du template';
           this.submitting = false;
         }

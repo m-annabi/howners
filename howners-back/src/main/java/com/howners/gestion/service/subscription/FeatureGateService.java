@@ -3,7 +3,9 @@ package com.howners.gestion.service.subscription;
 import com.howners.gestion.domain.subscription.*;
 import com.howners.gestion.dto.subscription.UsageLimitsResponse;
 import com.howners.gestion.exception.PlanLimitExceededException;
+import com.howners.gestion.repository.ListingRepository;
 import com.howners.gestion.repository.PropertyRepository;
+import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UsageTrackingRepository;
 import com.howners.gestion.repository.UserSubscriptionRepository;
 import com.howners.gestion.service.auth.AuthService;
@@ -24,6 +26,8 @@ public class FeatureGateService {
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final UsageTrackingRepository usageTrackingRepository;
     private final PropertyRepository propertyRepository;
+    private final RentalRepository rentalRepository;
+    private final ListingRepository listingRepository;
 
     public boolean canCreateProperty(UUID userId) {
         SubscriptionPlan plan = getActivePlan(userId);
@@ -39,6 +43,22 @@ public class FeatureGateService {
 
         int currentMonth = getUsageCount(userId, "CONTRACTS");
         return currentMonth < plan.getMaxContractsPerMonth();
+    }
+
+    public boolean canCreateRental(UUID userId) {
+        SubscriptionPlan plan = getActivePlan(userId);
+        if (plan.getMaxRentals() == -1) return true;
+
+        int current = rentalRepository.findByOwnerId(userId).size();
+        return current < plan.getMaxRentals();
+    }
+
+    public boolean canCreateListing(UUID userId) {
+        SubscriptionPlan plan = getActivePlan(userId);
+        if (plan.getMaxListings() == -1) return true;
+
+        int current = listingRepository.findByOwnerId(userId).size();
+        return current < plan.getMaxListings();
     }
 
     public boolean hasFeature(UUID userId, String featureKey) {
@@ -60,6 +80,18 @@ public class FeatureGateService {
                 if (!canCreateContract(userId)) {
                     throw new PlanLimitExceededException(
                             "Limite de contrats mensuels atteinte pour votre plan. Passez au plan supérieur pour créer plus de contrats.");
+                }
+            }
+            case "RENTALS" -> {
+                if (!canCreateRental(userId)) {
+                    throw new PlanLimitExceededException(
+                            "Limite de locations atteinte pour votre plan. Passez au plan supérieur pour en créer davantage.");
+                }
+            }
+            case "LISTINGS" -> {
+                if (!canCreateListing(userId)) {
+                    throw new PlanLimitExceededException(
+                            "Limite d'annonces atteinte pour votre plan. Passez au plan supérieur pour publier plus d'annonces.");
                 }
             }
             default -> log.warn("Unknown resource type for feature gate: {}", resourceType);
@@ -96,6 +128,8 @@ public class FeatureGateService {
         SubscriptionPlan plan = getActivePlan(userId);
         int currentProperties = propertyRepository.findByOwnerId(userId).size();
         int currentContracts = getUsageCount(userId, "CONTRACTS");
+        int currentRentals = rentalRepository.findByOwnerId(userId).size();
+        int currentListings = listingRepository.findByOwnerId(userId).size();
 
         return new UsageLimitsResponse(
                 plan.getName().name(),
@@ -103,10 +137,14 @@ public class FeatureGateService {
                 plan.getMaxProperties(),
                 currentContracts,
                 plan.getMaxContractsPerMonth(),
+                currentRentals,
+                plan.getMaxRentals(),
+                currentListings,
+                plan.getMaxListings(),
                 plan.getMaxProperties() == -1 || currentProperties < plan.getMaxProperties(),
                 plan.getMaxContractsPerMonth() == -1 || currentContracts < plan.getMaxContractsPerMonth(),
-                true, // canCreateRental - always allowed
-                true, // canCreateListing - always allowed
+                plan.getMaxRentals() == -1 || currentRentals < plan.getMaxRentals(),
+                plan.getMaxListings() == -1 || currentListings < plan.getMaxListings(),
                 hasFeature(userId, "e_signature"),
                 hasFeature(userId, "tenant_scoring"),
                 hasFeature(userId, "document_encryption")
@@ -122,6 +160,8 @@ public class FeatureGateService {
                     freePlan.setName(PlanName.FREE);
                     freePlan.setMaxProperties(2);
                     freePlan.setMaxContractsPerMonth(3);
+                    freePlan.setMaxRentals(3);
+                    freePlan.setMaxListings(2);
                     return freePlan;
                 });
     }

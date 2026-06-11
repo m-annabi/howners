@@ -80,8 +80,8 @@ export class RentalListComponent implements OnInit {
     this.error = null;
 
     this.rentalService.getRentals().subscribe({
-      next: (rentals) => {
-        this.rentals = rentals;
+      next: (page) => {
+        this.rentals = page.content;
         this.buildFilters();
         this.applyFilters();
         this.loading = false;

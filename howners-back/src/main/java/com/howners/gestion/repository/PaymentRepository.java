@@ -44,4 +44,10 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     @Query("SELECT COUNT(p) FROM Payment p WHERE p.payer.id = :tenantId AND (p.status = 'LATE' OR (p.status = 'PAID' AND p.dueDate IS NOT NULL AND p.paidAt > CAST(p.dueDate AS timestamp)))")
     long countLatePaymentsByTenantId(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT p FROM Payment p WHERE p.status = 'PENDING' AND p.dueDate = :targetDate")
+    List<Payment> findPaymentsDueOn(@Param("targetDate") LocalDate targetDate);
+
+    @Query("SELECT p FROM Payment p WHERE p.status = 'LATE' AND p.dueDate = :targetDate")
+    List<Payment> findLatePaymentsDueOn(@Param("targetDate") LocalDate targetDate);
 }

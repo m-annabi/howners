@@ -78,8 +78,8 @@ export class RentalFormComponent implements OnInit {
 
   loadProperties(): void {
     this.propertyService.getProperties().subscribe({
-      next: (properties) => {
-        this.properties = properties;
+      next: (page) => {
+        this.properties = page.content;
       },
       error: (err) => {
         this.error = 'Erreur lors du chargement des biens';

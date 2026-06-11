@@ -18,3 +18,7 @@ Thumbs.db
 # Docker volumes
 postgres_data/
 minio_data/
+
+# Sensitive scripts with inline credentials
+restart-backend.sh
+howners-back/restart-backend.sh

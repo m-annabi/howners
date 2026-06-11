@@ -54,8 +54,7 @@ export class TemplateListComponent implements OnInit {
         this.applyFilters();
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Error loading templates:', err);
+      error: () => {
         this.error = 'Erreur lors du chargement des templates';
         this.loading = false;
       }
@@ -121,8 +120,7 @@ export class TemplateListComponent implements OnInit {
       next: () => {
         this.loadTemplates();
       },
-      error: (err) => {
-        console.error('Error duplicating template:', err);
+      error: () => {
         this.notificationService.error('Erreur lors de la duplication du template');
       }
     });
@@ -141,8 +139,7 @@ export class TemplateListComponent implements OnInit {
         next: () => {
           this.loadTemplates();
         },
-        error: (err) => {
-          console.error('Error deleting template:', err);
+        error: () => {
           this.notificationService.error('Erreur lors de la suppression du template');
         }
       });
