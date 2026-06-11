@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { QuillEditorComponent } from 'ngx-quill';
 import { ContractService } from '../../../core/services/contract.service';
@@ -48,6 +49,7 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
   constructor(
     private contractService: ContractService,
     private templateService: ContractTemplateService,
+    private sanitizer: DomSanitizer,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -84,7 +86,7 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
   onEditorCreated(quill: any): void {
     this.editorReady = true;
     if (this.initialContent) {
-      quill.clipboard.dangerouslyPasteHTML(this.initialContent);
+      quill.clipboard.dangerouslyPasteHTML(this.sanitizeHtml(this.initialContent));
       this.initialContent = null;
     }
   }
@@ -94,10 +96,24 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
    */
   private setEditorContent(html: string): void {
     if (this.editorReady && this.editor?.quillEditor) {
-      this.editor.quillEditor.clipboard.dangerouslyPasteHTML(html);
+      this.editor.quillEditor.clipboard.dangerouslyPasteHTML(this.sanitizeHtml(html));
     } else {
       this.initialContent = html;
     }
+  }
+
+  private sanitizeHtml(html: string): string {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    div.querySelectorAll('script, iframe, object, embed, form, link').forEach(el => el.remove());
+    div.querySelectorAll('*').forEach(el => {
+      for (const attr of Array.from(el.attributes)) {
+        if (attr.name.startsWith('on') || attr.value.trim().toLowerCase().startsWith('javascript:')) {
+          el.removeAttribute(attr.name);
+        }
+      }
+    });
+    return div.innerHTML;
   }
 
   /**
