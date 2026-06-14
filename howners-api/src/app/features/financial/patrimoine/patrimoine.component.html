@@ -1,0 +1,88 @@
+<app-page-header
+  title="Patrimoine"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Patrimoine'}]">
+</app-page-header>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<div *ngIf="error" class="hw-alert hw-alert--warning">
+  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+</div>
+
+<div *ngIf="!loading && patrimoine" class="patrimoine">
+
+  <div class="patrimoine__stats">
+    <app-stats-card label="Valeur d'achat du portefeuille"
+      [value]="(patrimoine.valeurAchatTotale | number:'1.0-0') + ' €'"
+      icon="bi-buildings" color="primary"></app-stats-card>
+    <app-stats-card label="Revenus 12 mois"
+      [value]="(patrimoine.revenusAnnuelsTotaux | number:'1.0-0') + ' €'"
+      icon="bi-cash-stack" color="success"></app-stats-card>
+    <app-stats-card label="Cash-flow mensuel"
+      [value]="(patrimoine.cashFlowMensuelTotal | number:'1.0-0') + ' €'"
+      icon="bi-graph-up-arrow"
+      [color]="patrimoine.cashFlowMensuelTotal >= 0 ? 'success' : 'danger'"></app-stats-card>
+    <app-stats-card label="Rendement net moyen"
+      [value]="patrimoine.rendementNetMoyenPondere != null ? (patrimoine.rendementNetMoyenPondere | number:'1.1-2') + ' %' : '—'"
+      icon="bi-percent" color="warning"></app-stats-card>
+  </div>
+
+  <app-empty-state *ngIf="patrimoine.biens.length === 0"
+    icon="bi-pie-chart"
+    title="Aucun bien"
+    message="Ajoutez vos biens et renseignez leur prix d'achat pour suivre votre patrimoine.">
+  </app-empty-state>
+
+  <div *ngIf="patrimoine.biens.length > 0" class="hw-card" style="padding: 0; overflow-x: auto;">
+    <table class="patrimoine-table">
+      <thead>
+        <tr>
+          <th>Bien</th>
+          <th>Prix d'achat</th>
+          <th>Revenus 12 mois</th>
+          <th>Charges 12 mois</th>
+          <th>Cash-flow/mois</th>
+          <th>Renta. brute</th>
+          <th>Renta. nette</th>
+          <th>Occupation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let bien of patrimoine.biens">
+          <td>
+            <a [routerLink]="['/properties', bien.propertyId]" class="patrimoine-table__nom">{{ bien.nom }}</a>
+            <small *ngIf="bien.ville" class="patrimoine-table__ville">{{ bien.ville }}</small>
+          </td>
+          <td>
+            <ng-container *ngIf="bien.purchasePrice != null">{{ bien.purchasePrice | number:'1.0-0' }} €</ng-container>
+            <small *ngIf="bien.purchasePrice == null" class="text-muted">à renseigner</small>
+          </td>
+          <td>{{ bien.revenusAnnuels | number:'1.0-0' }} €</td>
+          <td>{{ bien.chargesAnnuelles | number:'1.0-0' }} €</td>
+          <td>
+            <span [class.patrimoine-table__positif]="bien.cashFlowMensuel >= 0"
+                  [class.patrimoine-table__negatif]="bien.cashFlowMensuel < 0">
+              {{ bien.cashFlowMensuel | number:'1.0-0' }} €
+            </span>
+            <div class="patrimoine-table__bar-track">
+              <div class="patrimoine-table__bar"
+                   [class.patrimoine-table__bar--negatif]="bien.cashFlowMensuel < 0"
+                   [style.width.%]="getCashFlowBarWidth(bien)"></div>
+            </div>
+          </td>
+          <td>{{ bien.rentabiliteBrutePercent != null ? (bien.rentabiliteBrutePercent | number:'1.1-2') + ' %' : '—' }}</td>
+          <td>{{ bien.rentabiliteNettePercent != null ? (bien.rentabiliteNettePercent | number:'1.1-2') + ' %' : '—' }}</td>
+          <td>{{ bien.tauxOccupationPercent | number:'1.0-1' }} %</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="patrimoine__note">
+    Indicateurs calculés sur les 12 derniers mois glissants. Charges = taxes, assurance et
+    copropriété du bien (annualisées) + dépenses enregistrées. Renseignez le prix d'achat
+    de chaque bien pour obtenir les rentabilités.
+  </p>
+</div>

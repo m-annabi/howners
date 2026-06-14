@@ -101,6 +101,7 @@ public class PropertyService {
                 .homeInsurance(request.homeInsurance())
                 .purchasePrice(request.purchasePrice())
                 .dpeRating(request.dpeRating())
+                .dpeDate(request.dpeDate())
                 .gesRating(request.gesRating())
                 .constructionYear(request.constructionYear())
                 .floorNumber(request.floorNumber())
@@ -168,6 +169,9 @@ public class PropertyService {
         }
         if (request.dpeRating() != null) {
             property.setDpeRating(request.dpeRating());
+        }
+        if (request.dpeDate() != null) {
+            property.setDpeDate(request.dpeDate());
         }
         if (request.gesRating() != null) {
             property.setGesRating(request.gesRating());

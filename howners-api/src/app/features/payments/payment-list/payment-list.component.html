@@ -106,6 +106,14 @@
 
         <td class="payment-table__col-status">
           <app-status-badge [status]="payment.status" type="payment"></app-status-badge>
+          <span *ngIf="payment.relanceNiveau === 1" class="badge bg-warning text-dark payment-table__relance"
+                title="Relance envoyée le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}">
+            Relancé
+          </span>
+          <span *ngIf="payment.relanceNiveau === 2" class="badge bg-danger payment-table__relance"
+                title="Mise en demeure envoyée le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}">
+            Mise en demeure
+          </span>
         </td>
 
         <td class="payment-table__col-actions" (click)="$event.stopPropagation()">
@@ -115,6 +123,12 @@
                     (click)="markPaid(payment, $event)"
                     title="Marquer payé">
               <i class="bi bi-check2"></i>
+            </button>
+            <button *ngIf="!isTenant && payment.status === PaymentStatus.LATE && payment.relanceNiveau < 2"
+                    class="row-actions__btn row-actions__btn--warning"
+                    (click)="relancer(payment, $event)"
+                    [title]="payment.relanceNiveau === 0 ? 'Envoyer une relance' : 'Envoyer la mise en demeure'">
+              <i class="bi bi-megaphone"></i>
             </button>
             <button class="row-actions__btn"
                     (click)="viewPayment(payment); $event.stopPropagation()"

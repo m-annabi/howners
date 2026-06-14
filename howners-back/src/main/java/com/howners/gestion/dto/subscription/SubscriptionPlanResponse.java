@@ -15,6 +15,7 @@ public record SubscriptionPlanResponse(
         BigDecimal annualPrice,
         Integer maxProperties,
         Integer maxContractsPerMonth,
+        BigDecimal platformFeePercent,
         Map<String, Object> features
 ) {
     public static SubscriptionPlanResponse from(SubscriptionPlan plan) {
@@ -26,6 +27,7 @@ public record SubscriptionPlanResponse(
                 plan.getAnnualPrice(),
                 plan.getMaxProperties(),
                 plan.getMaxContractsPerMonth(),
+                plan.getPlatformFeePercent(),
                 plan.getFeatures()
         );
     }

@@ -25,6 +25,7 @@ public record RentalResponse(
         BigDecimal depositAmount,
         BigDecimal charges,
         Integer paymentDay,
+        LocalDate assuranceExpiration,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -45,6 +46,7 @@ public record RentalResponse(
                 rental.getDepositAmount(),
                 rental.getCharges(),
                 rental.getPaymentDay(),
+                rental.getAssuranceExpiration(),
                 rental.getCreatedAt(),
                 rental.getUpdatedAt()
         );

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="067-1" author="claude">
+        <comment>Commission plateforme dégressive par plan sur les loyers encaissés via Stripe Connect</comment>
+        <addColumn tableName="subscription_plans">
+            <column name="platform_fee_percent" type="NUMERIC(4,2)" defaultValueNumeric="2.5">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="067-2" author="claude">
+        <update tableName="subscription_plans">
+            <column name="platform_fee_percent" valueNumeric="2.5"/>
+            <where>name = 'FREE'</where>
+        </update>
+        <update tableName="subscription_plans">
+            <column name="platform_fee_percent" valueNumeric="1.5"/>
+            <where>name = 'PRO'</where>
+        </update>
+        <update tableName="subscription_plans">
+            <column name="platform_fee_percent" valueNumeric="0.9"/>
+            <where>name = 'PREMIUM'</where>
+        </update>
+    </changeSet>
+
+    <changeSet id="067-3" author="claude">
+        <comment>Nouvelles features gated PRO+ : export fiscal et dashboard patrimonial</comment>
+        <sql>
+            UPDATE subscription_plans
+            SET features = features || '{"tax_export": true, "advanced_dashboard": true}'::jsonb
+            WHERE name IN ('PRO', 'PREMIUM');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

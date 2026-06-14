@@ -41,4 +41,8 @@ export class PaymentService {
   confirmPayment(paymentId: string): Observable<Payment> {
     return this.http.post<Payment>(`${this.apiUrl}/${paymentId}/confirm`, {});
   }
+
+  relancer(paymentId: string): Observable<Payment> {
+    return this.http.post<Payment>(`${this.apiUrl}/${paymentId}/relancer`, {});
+  }
 }

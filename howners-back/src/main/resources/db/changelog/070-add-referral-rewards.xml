@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="070-1" author="claude">
+        <comment>Suivi des récompenses de parrainage (1 mois PRO offert parrain + filleul)</comment>
+        <addColumn tableName="referrals">
+            <column name="referrer_rewarded_at" type="TIMESTAMP"/>
+            <column name="referee_rewarded_at" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

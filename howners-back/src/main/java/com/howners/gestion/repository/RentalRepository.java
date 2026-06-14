@@ -34,4 +34,7 @@ public interface RentalRepository extends JpaRepository<Rental, UUID> {
 
     @Query("SELECT r FROM Rental r WHERE r.endDate = :targetDate AND r.status = 'ACTIVE'")
     List<Rental> findActiveRentalsEndingOn(@Param("targetDate") LocalDate targetDate);
+
+    @Query("SELECT r FROM Rental r WHERE r.status = 'ACTIVE' AND r.assuranceExpiration IS NOT NULL AND r.assuranceExpiration <= :limite")
+    List<Rental> findActiveWithAssuranceExpiringBefore(@Param("limite") LocalDate limite);
 }

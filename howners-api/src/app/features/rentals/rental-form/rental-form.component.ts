@@ -52,6 +52,7 @@ export class RentalFormComponent implements OnInit {
       depositAmount: [null, [Validators.min(0)]],
       charges: [null, [Validators.min(0)]],
       paymentDay: [1, [Validators.min(1), Validators.max(31)]],
+      assuranceExpiration: [''],
       // Existing tenant
       tenantId: [''],
       // New tenant info
@@ -112,7 +113,8 @@ export class RentalFormComponent implements OnInit {
           currency: rental.currency,
           depositAmount: rental.depositAmount,
           charges: rental.charges,
-          paymentDay: rental.paymentDay
+          paymentDay: rental.paymentDay,
+          assuranceExpiration: rental.assuranceExpiration
         });
         this.loading = false;
       },
@@ -142,7 +144,8 @@ export class RentalFormComponent implements OnInit {
       currency: formValue.currency || 'EUR',
       depositAmount: formValue.depositAmount,
       charges: formValue.charges,
-      paymentDay: formValue.paymentDay
+      paymentDay: formValue.paymentDay,
+      assuranceExpiration: formValue.assuranceExpiration || undefined
     };
 
     if (this.isEditMode) {

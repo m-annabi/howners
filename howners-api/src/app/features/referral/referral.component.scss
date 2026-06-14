@@ -29,6 +29,19 @@
     font-size: var(--hw-fs-base);
   }
 
+  &__reward {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    margin-top: var(--hw-space-3) !important;
+    padding: var(--hw-space-2) var(--hw-space-3);
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--hw-radius-md);
+    color: #fff !important;
+
+    i { color: var(--hw-accent-500); }
+  }
+
   &__pill {
     display: inline-flex;
     align-items: center;

@@ -63,6 +63,10 @@ public class SubscriptionPlan {
     @Builder.Default
     private Integer maxListings = -1; // -1 = unlimited
 
+    @Column(name = "platform_fee_percent", precision = 4, scale = 2)
+    @Builder.Default
+    private BigDecimal platformFeePercent = new BigDecimal("2.5");
+
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> features;
 

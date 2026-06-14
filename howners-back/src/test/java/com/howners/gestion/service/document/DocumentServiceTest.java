@@ -81,6 +81,9 @@ class DocumentServiceTest {
                 .build();
 
         setCurrentUser(userId, "tenant@test.com", "TENANT");
+
+        // @Value non injecté hors contexte Spring : sans cela le quota vaut 0 et tout upload échoue
+        org.springframework.test.util.ReflectionTestUtils.setField(documentService, "maxDocumentsPerOwner", 500L);
     }
 
     @AfterEach

@@ -1,0 +1,162 @@
+<app-page-header
+  title="Comparatif entrée / sortie"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'États des lieux', route: '/inventory'}, {label: 'Comparatif'}]">
+</app-page-header>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<div *ngIf="error" class="hw-alert hw-alert--warning">
+  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+</div>
+
+<div *ngIf="!loading && comparaison" class="edl-comp">
+
+  <div class="edl-comp__header hw-card">
+    <div>
+      <span class="hw-badge"
+            [class.hw-badge--secondary]="comparaison.statut === 'BROUILLON'"
+            [class.hw-badge--success]="comparaison.statut === 'VALIDEE'">
+        {{ comparaison.statut === 'VALIDEE' ? 'Validé' : 'Brouillon' }}
+      </span>
+      <span class="edl-comp__dates">
+        Entrée : {{ comparaison.dateEntree | date:'dd/MM/yyyy' }} —
+        Sortie : {{ comparaison.dateSortie | date:'dd/MM/yyyy' }}
+      </span>
+    </div>
+    <div class="edl-comp__header-actions">
+      <button *ngIf="comparaison.documentId" class="hw-btn hw-btn--secondary hw-btn--sm" (click)="telecharger()">
+        <i class="bi bi-download"></i> PDF
+      </button>
+      <button *ngIf="isOwner && comparaison.statut === 'BROUILLON'" class="hw-btn hw-btn--primary hw-btn--sm"
+              (click)="valider()" [disabled]="working || depassementDepot">
+        Valider et envoyer
+      </button>
+    </div>
+  </div>
+
+  <!-- Comparatif des pièces -->
+  <section class="hw-card edl-comp__section">
+    <h3>État des pièces</h3>
+    <table class="edl-comp__table">
+      <thead>
+        <tr>
+          <th>Pièce</th>
+          <th>Entrée</th>
+          <th>Sortie</th>
+          <th></th>
+          <th *ngIf="isOwner && comparaison.statut === 'BROUILLON'"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let piece of comparaison.pieces" [class.edl-comp__row--degradee]="piece.degradee">
+          <td>
+            {{ piece.nom }}
+            <small *ngIf="piece.commentairesSortie" class="edl-comp__comment">{{ piece.commentairesSortie }}</small>
+          </td>
+          <td>{{ piece.etatEntree || '—' }}</td>
+          <td>{{ piece.etatSortie || '—' }}</td>
+          <td>
+            <span *ngIf="piece.degradee" class="hw-badge hw-badge--danger">Dégradée</span>
+            <span *ngIf="piece.nonComparable" class="hw-badge hw-badge--secondary">Non comparable</span>
+          </td>
+          <td *ngIf="isOwner && comparaison.statut === 'BROUILLON'">
+            <button *ngIf="piece.degradee" class="hw-btn hw-btn--secondary hw-btn--sm"
+                    (click)="ajouterRetenue(piece)" title="Ajouter une retenue">
+              <i class="bi bi-plus-lg"></i> Retenue
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Compteurs et clés -->
+  <section class="hw-card edl-comp__section" *ngIf="comparaison.compteurs.length > 0 || comparaison.clesEntree != null">
+    <h3>Compteurs et clés</h3>
+    <table class="edl-comp__table">
+      <tbody>
+        <tr *ngFor="let compteur of comparaison.compteurs">
+          <td>{{ compteur.type }}</td>
+          <td>Entrée : {{ compteur.releveEntree || '—' }}</td>
+          <td>Sortie : {{ compteur.releveSortie || '—' }}</td>
+        </tr>
+        <tr *ngIf="comparaison.clesEntree != null || comparaison.clesSortie != null">
+          <td>Clés</td>
+          <td>Entrée : {{ comparaison.clesEntree ?? '—' }}</td>
+          <td>Sortie : {{ comparaison.clesSortie ?? '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Retenues -->
+  <section class="hw-card edl-comp__section">
+    <h3>Retenues sur le dépôt de garantie</h3>
+
+    <p *ngIf="retenues.length === 0" class="edl-comp__empty">
+      Aucune retenue. {{ isOwner && comparaison.statut === 'BROUILLON' ? 'Ajoutez une retenue depuis une pièce dégradée ci-dessus.' : '' }}
+    </p>
+
+    <table *ngIf="retenues.length > 0" class="edl-comp__table">
+      <thead>
+        <tr>
+          <th>Pièce</th>
+          <th>Motif</th>
+          <th>Montant (€)</th>
+          <th *ngIf="isOwner && comparaison.statut === 'BROUILLON'"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let retenue of retenues; let i = index">
+          <td>{{ retenue.piece }}</td>
+          <td>
+            <input *ngIf="isOwner && comparaison.statut === 'BROUILLON'" type="text" class="form-control form-control-sm"
+                   [(ngModel)]="retenue.motif" placeholder="Ex : remise en état du mur">
+            <span *ngIf="!isOwner || comparaison.statut !== 'BROUILLON'">{{ retenue.motif }}</span>
+          </td>
+          <td>
+            <input *ngIf="isOwner && comparaison.statut === 'BROUILLON'" type="number" class="form-control form-control-sm"
+                   [(ngModel)]="retenue.montant" min="0" step="0.01" style="max-width: 120px;">
+            <span *ngIf="!isOwner || comparaison.statut !== 'BROUILLON'">{{ retenue.montant | number:'1.2-2' }}</span>
+          </td>
+          <td *ngIf="isOwner && comparaison.statut === 'BROUILLON'">
+            <button class="hw-btn hw-btn--secondary hw-btn--sm" (click)="supprimerRetenue(i)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="edl-comp__totaux">
+      <div class="edl-comp__total-line">
+        <span>Total des retenues</span>
+        <strong [class.text-danger]="depassementDepot">{{ totalRetenues | number:'1.2-2' }} €</strong>
+      </div>
+      <div class="edl-comp__total-line" *ngIf="comparaison.depositAmount != null">
+        <span>Dépôt de garantie</span>
+        <span>{{ comparaison.depositAmount | number:'1.2-2' }} €</span>
+      </div>
+      <div class="edl-comp__total-line edl-comp__total-line--solde" *ngIf="soldeARestituer != null">
+        <span>Solde à restituer au locataire</span>
+        <strong>{{ soldeARestituer | number:'1.2-2' }} €</strong>
+      </div>
+    </div>
+
+    <div *ngIf="depassementDepot" class="hw-alert hw-alert--danger">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      Le total des retenues dépasse le dépôt de garantie.
+    </div>
+
+    <div *ngIf="isOwner && comparaison.statut === 'BROUILLON'" class="edl-comp__actions">
+      <button class="hw-btn hw-btn--primary" (click)="enregistrer()"
+              [disabled]="working || depassementDepot">
+        <span *ngIf="working" class="spinner-border spinner-border-sm"></span>
+        Enregistrer les retenues
+      </button>
+    </div>
+  </section>
+
+</div>

@@ -152,6 +152,7 @@ public class RentalService {
                 .depositAmount(request.depositAmount())
                 .charges(request.charges())
                 .paymentDay(request.paymentDay())
+                .assuranceExpiration(request.assuranceExpiration())
                 .build();
 
         rental = rentalRepository.save(rental);
@@ -200,6 +201,9 @@ public class RentalService {
         }
         if (request.paymentDay() != null) {
             rental.setPaymentDay(request.paymentDay());
+        }
+        if (request.assuranceExpiration() != null) {
+            rental.setAssuranceExpiration(request.assuranceExpiration());
         }
 
         rental = rentalRepository.save(rental);

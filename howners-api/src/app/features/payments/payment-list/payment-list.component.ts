@@ -147,6 +147,26 @@ export class PaymentListComponent implements OnInit {
     this.router.navigate(['/payments/new']);
   }
 
+  relancer(payment: Payment, event: Event): void {
+    event.stopPropagation();
+    const action = payment.relanceNiveau === 0 ? 'une relance' : 'la mise en demeure';
+    if (!confirm(`Envoyer ${action} à ${payment.payerName} pour ${payment.amount} ${payment.currency} ?`)) return;
+
+    this.paymentService.relancer(payment.id).subscribe({
+      next: (updated) => {
+        const idx = this.payments.findIndex(p => p.id === updated.id);
+        if (idx >= 0) this.payments[idx] = updated;
+        this.applyFilters();
+        this.notificationService.success(payment.relanceNiveau === 0
+          ? 'Relance envoyée au locataire'
+          : 'Mise en demeure envoyée et archivée');
+      },
+      error: (err) => {
+        this.notificationService.error(err.error?.message || 'Impossible d\'envoyer la relance');
+      }
+    });
+  }
+
   markPaid(payment: Payment, event: Event): void {
     event.stopPropagation();
     if (payment.status === PaymentStatus.PAID) return;

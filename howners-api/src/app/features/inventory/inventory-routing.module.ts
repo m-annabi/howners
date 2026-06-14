@@ -3,10 +3,12 @@ import { RouterModule, Routes } from '@angular/router';
 import { EdlListComponent } from './edl-list/edl-list.component';
 import { EdlFormComponent } from './edl-form/edl-form.component';
 import { EdlDetailComponent } from './edl-detail/edl-detail.component';
+import { EdlComparisonComponent } from './edl-comparison/edl-comparison.component';
 
 const routes: Routes = [
   { path: '', component: EdlListComponent },
   { path: 'new/:rentalId', component: EdlFormComponent },
+  { path: 'comparaison/:rentalId', component: EdlComparisonComponent },
   { path: ':rentalId/:id', component: EdlDetailComponent }
 ];
 

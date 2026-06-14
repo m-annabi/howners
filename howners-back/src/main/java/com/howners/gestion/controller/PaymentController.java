@@ -4,6 +4,7 @@ import com.howners.gestion.dto.payment.CreatePaymentRequest;
 import com.howners.gestion.dto.payment.PaymentResponse;
 import com.howners.gestion.dto.payment.StripePaymentIntentResponse;
 import com.howners.gestion.service.payment.PaymentService;
+import com.howners.gestion.service.payment.RelanceImpayesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final RelanceImpayesService relanceImpayesService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
@@ -55,5 +57,11 @@ public class PaymentController {
     @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByRental(@PathVariable UUID rentalId) {
         return ResponseEntity.ok(paymentService.findByRentalId(rentalId));
+    }
+
+    @PostMapping("/{id}/relancer")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<PaymentResponse> relancer(@PathVariable UUID id) {
+        return ResponseEntity.ok(relanceImpayesService.relancerManuellement(id));
     }
 }

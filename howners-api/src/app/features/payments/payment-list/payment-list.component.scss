@@ -136,5 +136,18 @@
       border-color: rgba(166, 51, 46, 0.18);
       color: var(--hw-danger);
     }
+
+    &--warning:hover {
+      background: var(--hw-warning-light, #fdf6e3);
+      border-color: rgba(180, 130, 20, 0.18);
+      color: var(--hw-warning, #b48214);
+    }
   }
+}
+
+.payment-table__relance {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.68rem;
+  vertical-align: middle;
 }

@@ -7,6 +7,7 @@ export interface RefereeItem {
   name: string;
   status: 'PENDING' | 'CONVERTED';
   createdAt: string;
+  rewardedAt: string | null;
 }
 
 export interface ReferralSummary {

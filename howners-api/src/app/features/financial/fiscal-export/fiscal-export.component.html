@@ -1,0 +1,84 @@
+<app-page-header
+  title="Export fiscal 2044"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Synthèse', route: '/financial'}, {label: 'Export fiscal'}]">
+</app-page-header>
+
+<div class="fiscal">
+
+  <div class="hw-card fiscal__toolbar">
+    <div class="fiscal__year">
+      <label>Année fiscale</label>
+      <select [(ngModel)]="annee" (ngModelChange)="load()" class="form-select">
+        <option *ngFor="let a of anneesDisponibles" [ngValue]="a">{{ a }}</option>
+      </select>
+    </div>
+    <div class="fiscal__actions" *ngIf="declaration">
+      <button class="hw-btn hw-btn--primary" (click)="download('pdf')">
+        <i class="bi bi-file-earmark-pdf"></i> Télécharger le PDF
+      </button>
+      <button class="hw-btn hw-btn--secondary" (click)="download('csv')">
+        <i class="bi bi-filetype-csv"></i> Export CSV
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+
+  <div *ngIf="error" class="hw-alert hw-alert--warning">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  </div>
+
+  <ng-container *ngIf="!loading && declaration">
+
+    <div class="fiscal__totaux">
+      <app-stats-card label="Revenus bruts (ligne 211)"
+        [value]="(declaration.totalRevenusBruts | number:'1.0-0') + ' €'"
+        icon="bi-cash-stack" color="primary"></app-stats-card>
+      <app-stats-card label="Charges déductibles"
+        [value]="(declaration.totalChargesDeductibles | number:'1.0-0') + ' €'"
+        icon="bi-receipt" color="warning"></app-stats-card>
+      <app-stats-card label="Revenu foncier net"
+        [value]="(declaration.revenuFoncierNet | number:'1.0-0') + ' €'"
+        icon="bi-wallet2"
+        [color]="declaration.revenuFoncierNet >= 0 ? 'success' : 'danger'"></app-stats-card>
+    </div>
+
+    <app-empty-state *ngIf="declaration.biens.length === 0"
+      icon="bi-file-earmark-text"
+      title="Aucune activité sur cette année"
+      [message]="'Aucun loyer encaissé ni charge déductible enregistrée en ' + annee + '.'">
+    </app-empty-state>
+
+    <section *ngFor="let bien of declaration.biens" class="hw-card fiscal__bien">
+      <h3>{{ bien.nom }}</h3>
+      <p class="fiscal__adresse">{{ bien.adresse }}</p>
+      <table class="fiscal__table">
+        <tbody>
+          <tr>
+            <td><strong>Ligne 211 — Loyers bruts encaissés</strong></td>
+            <td class="fiscal__montant"><strong>{{ bien.revenusBruts | number:'1.2-2' }} €</strong></td>
+          </tr>
+          <tr *ngFor="let ligne of lignesOf(bien.chargesParLigne)">
+            <td>Ligne {{ ligne }} — {{ lignesLabels[ligne] || ligne }}</td>
+            <td class="fiscal__montant">{{ bien.chargesParLigne[ligne] | number:'1.2-2' }} €</td>
+          </tr>
+          <tr class="fiscal__net">
+            <td><strong>Revenu net du bien</strong></td>
+            <td class="fiscal__montant"><strong>{{ bien.revenuNet | number:'1.2-2' }} €</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <p class="fiscal__disclaimer">
+      <i class="bi bi-info-circle"></i>
+      Document d'aide : il ne remplace pas la déclaration officielle et ne constitue pas un conseil
+      fiscal. Les charges récupérables sur le locataire sont exclues. Les travaux de construction,
+      reconstruction ou agrandissement ne sont pas déductibles. En cas de doute, rapprochez-vous
+      d'un expert-comptable.
+    </p>
+
+  </ng-container>
+</div>

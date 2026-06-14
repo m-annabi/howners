@@ -50,4 +50,10 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     @Query("SELECT p FROM Payment p WHERE p.status = 'LATE' AND p.dueDate = :targetDate")
     List<Payment> findLatePaymentsDueOn(@Param("targetDate") LocalDate targetDate);
+
+    @Query("SELECT p FROM Payment p WHERE p.status = 'LATE' AND p.dueDate <= :seuilDate AND p.relanceNiveau < :niveauCible")
+    List<Payment> findLatePaymentsForRelance(@Param("seuilDate") LocalDate seuilDate, @Param("niveauCible") int niveauCible);
+
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.rental.property.id = :propertyId AND p.paymentType = 'RENT' AND p.status = 'PAID' AND p.paidAt >= :from AND p.paidAt < :to")
+    BigDecimal sumPaidRentByPropertyAndPeriod(@Param("propertyId") UUID propertyId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

@@ -52,6 +52,8 @@ public record CreatePropertyRequest(
         @Pattern(regexp = "[A-G]", message = "DPE rating must be between A and G")
         String dpeRating,
 
+        java.time.LocalDate dpeDate,
+
         @Pattern(regexp = "[A-G]", message = "GES rating must be between A and G")
         String gesRating,
 

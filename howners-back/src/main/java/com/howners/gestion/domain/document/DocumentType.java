@@ -16,5 +16,6 @@ public enum DocumentType {
     TAX_NOTICE,           // Avis d'imposition
     EMPLOYMENT_CONTRACT,  // Contrat de travail
     PHOTOS,               // Photos
+    MISE_EN_DEMEURE,      // Mise en demeure de payer
     OTHER          // Autre
 }

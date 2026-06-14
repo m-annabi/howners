@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="073-1" author="claude">
+        <comment>Régularisation annuelle des charges locatives</comment>
+        <createTable tableName="charge_regularisations">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_regul_rental" references="rentals(id)"/>
+            </column>
+            <column name="annee" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provisions_encaissees" type="NUMERIC(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="charges_reelles" type="NUMERIC(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="solde" type="NUMERIC(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="detail" type="JSONB"/>
+            <column name="statut" type="VARCHAR(20)" defaultValue="BROUILLON">
+                <constraints nullable="false"/>
+            </column>
+            <column name="document_id" type="UUID">
+                <constraints foreignKeyName="fk_regul_document" references="documents(id)"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+        <addUniqueConstraint tableName="charge_regularisations" columnNames="rental_id, annee"
+            constraintName="uq_regul_rental_annee"/>
+    </changeSet>
+
+</databaseChangeLog>

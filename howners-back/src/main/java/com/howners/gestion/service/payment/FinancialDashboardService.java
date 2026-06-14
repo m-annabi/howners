@@ -33,7 +33,12 @@ public class FinancialDashboardService {
 
     @Transactional(readOnly = true)
     public FinancialDashboardResponse getFinancialDashboard() {
-        UUID currentUserId = AuthService.getCurrentUserId();
+        return getFinancialDashboard(AuthService.getCurrentUserId());
+    }
+
+    @Transactional(readOnly = true)
+    public FinancialDashboardResponse getFinancialDashboard(UUID ownerId) {
+        UUID currentUserId = ownerId;
         userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
 

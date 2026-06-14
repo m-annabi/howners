@@ -54,6 +54,7 @@ export interface Property {
   homeInsurance?: number;
   purchasePrice?: number;
   dpeRating?: string;
+  dpeDate?: string;
   gesRating?: string;
   constructionYear?: number;
   floorNumber?: number;
@@ -84,6 +85,7 @@ export interface CreatePropertyRequest {
   homeInsurance?: number;
   purchasePrice?: number;
   dpeRating?: string;
+  dpeDate?: string;
   gesRating?: string;
   constructionYear?: number;
   floorNumber?: number;
@@ -109,6 +111,7 @@ export interface UpdatePropertyRequest {
   homeInsurance?: number;
   purchasePrice?: number;
   dpeRating?: string;
+  dpeDate?: string;
   gesRating?: string;
   constructionYear?: number;
   floorNumber?: number;

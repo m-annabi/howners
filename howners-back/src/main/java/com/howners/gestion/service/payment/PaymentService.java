@@ -57,12 +57,10 @@ public class PaymentService {
     private final ReceiptService receiptService;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final PlatformFeeService platformFeeService;
 
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
-
-    @Value("${stripe.platform-fee-percent:2.5}")
-    private double platformFeePercent;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -150,9 +148,11 @@ public class PaymentService {
 
         try {
             long amountInCents = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
-            long platformFee = Math.round(amountInCents * platformFeePercent / 100.0);
 
             User owner = payment.getRental().getProperty().getOwner();
+            BigDecimal platformFeePercent = platformFeeService.getFeePercentPourProprietaire(owner.getId());
+            long platformFee = Math.round(amountInCents * platformFeePercent.doubleValue() / 100.0);
+
             String connectedAccountId = owner.getStripeConnectAccountId();
 
             PaymentIntentCreateParams.Builder paramsBuilder = PaymentIntentCreateParams.builder()

@@ -6,13 +6,15 @@ export interface SubscriptionPlan {
   annualPrice: number;
   maxProperties: number;
   maxContractsPerMonth: number;
+  platformFeePercent: number;
   features: { [key: string]: boolean };
 }
 
 export enum PlanName {
   FREE = 'FREE',
   PRO = 'PRO',
-  PREMIUM = 'PREMIUM'
+  PREMIUM = 'PREMIUM',
+  AGENCE = 'AGENCE'
 }
 
 export interface UserSubscription {
@@ -51,6 +53,7 @@ export interface UsageLimits {
   hasESignature: boolean;
   hasTenantScoring: boolean;
   hasDocumentEncryption: boolean;
+  hasMultiAccount: boolean;
 }
 
 export const PLAN_FEATURES: { [key in PlanName]: string[] } = {
@@ -65,6 +68,9 @@ export const PLAN_FEATURES: { [key in PlanName]: string[] } = {
     'Contrats illimités',
     'Signature électronique',
     'Scoring locataire',
+    'Révision de loyer IRL',
+    'Export fiscal 2044',
+    'Dashboard patrimonial',
     'Rapports avancés'
   ],
   [PlanName.PREMIUM]: [
@@ -74,11 +80,19 @@ export const PLAN_FEATURES: { [key in PlanName]: string[] } = {
     'Chiffrement des documents',
     'Support prioritaire',
     'Accès API'
+  ],
+  [PlanName.AGENCE]: [
+    'Tout illimité',
+    'Toutes les fonctionnalités Premium',
+    'Comptes délégués (multi-comptes)',
+    'Commission réduite sur les loyers',
+    'Pensé pour agences et SCI'
   ]
 };
 
 export const PLAN_COLORS: { [key in PlanName]: string } = {
   [PlanName.FREE]: 'secondary',
   [PlanName.PRO]: 'primary',
-  [PlanName.PREMIUM]: 'warning'
+  [PlanName.PREMIUM]: 'warning',
+  [PlanName.AGENCE]: 'dark'
 };

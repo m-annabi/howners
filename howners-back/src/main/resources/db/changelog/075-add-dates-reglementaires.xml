@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="075-1" author="claude">
+        <comment>Dates réglementaires : réalisation du DPE (validité 10 ans) et échéance de l'assurance habitation du locataire</comment>
+        <addColumn tableName="properties">
+            <column name="dpe_date" type="DATE"/>
+        </addColumn>
+        <addColumn tableName="rentals">
+            <column name="assurance_expiration" type="DATE"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

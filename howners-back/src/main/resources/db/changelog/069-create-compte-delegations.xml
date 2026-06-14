@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="069-1" author="claude">
+        <comment>Délégations de compte lecture seule pour le plan AGENCE</comment>
+        <createTable tableName="compte_delegations">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="agence_user_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_delegation_agence" references="users(id)"/>
+            </column>
+            <column name="delegue_user_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_delegation_delegue" references="users(id)"/>
+            </column>
+            <column name="statut" type="VARCHAR(20)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        </createTable>
+        <addUniqueConstraint tableName="compte_delegations"
+            columnNames="agence_user_id, delegue_user_id"
+            constraintName="uq_delegation_pair"/>
+        <createIndex tableName="compte_delegations" indexName="idx_delegation_delegue">
+            <column name="delegue_user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

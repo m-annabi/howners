@@ -82,10 +82,8 @@ public class ReferralService {
      */
     @Transactional
     public void markConverted(UUID refereeId) {
-        referralRepository.findAll().stream()
-                .filter(r -> r.getReferee().getId().equals(refereeId))
+        referralRepository.findByRefereeId(refereeId)
                 .filter(r -> r.getStatus() == ReferralStatus.PENDING)
-                .findFirst()
                 .ifPresent(r -> {
                     r.setStatus(ReferralStatus.CONVERTED);
                     r.setConvertedAt(LocalDateTime.now());
@@ -110,7 +108,8 @@ public class ReferralService {
                 all.stream().map(r -> new ReferralSummary.RefereeItem(
                         r.getReferee().getFullName(),
                         r.getStatus().name(),
-                        r.getCreatedAt()
+                        r.getCreatedAt(),
+                        r.getReferrerRewardedAt()
                 )).collect(Collectors.toList())
         );
     }
@@ -150,8 +149,7 @@ public class ReferralService {
                 .orElseThrow(() -> new BusinessException("Utilisateur introuvable"));
 
         // Check if this user was already referred
-        boolean alreadyReferred = referralRepository.findAll().stream()
-                .anyMatch(r -> r.getReferee().getId().equals(userId));
+        boolean alreadyReferred = referralRepository.existsByRefereeId(userId);
         if (alreadyReferred) {
             throw new BusinessException("Vous avez déjà utilisé un code de parrainage.");
         }

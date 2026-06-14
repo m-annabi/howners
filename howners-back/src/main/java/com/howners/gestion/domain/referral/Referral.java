@@ -42,4 +42,10 @@ public class Referral {
 
     @Column(name = "converted_at")
     private LocalDateTime convertedAt;
+
+    @Column(name = "referrer_rewarded_at")
+    private LocalDateTime referrerRewardedAt;
+
+    @Column(name = "referee_rewarded_at")
+    private LocalDateTime refereeRewardedAt;
 }

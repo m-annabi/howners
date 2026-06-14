@@ -6,12 +6,14 @@ import { InventoryRoutingModule } from './inventory-routing.module';
 import { EdlListComponent } from './edl-list/edl-list.component';
 import { EdlFormComponent } from './edl-form/edl-form.component';
 import { EdlDetailComponent } from './edl-detail/edl-detail.component';
+import { EdlComparisonComponent } from './edl-comparison/edl-comparison.component';
 
 @NgModule({
   declarations: [
     EdlListComponent,
     EdlFormComponent,
-    EdlDetailComponent
+    EdlDetailComponent,
+    EdlComparisonComponent
   ],
   imports: [
     CommonModule,

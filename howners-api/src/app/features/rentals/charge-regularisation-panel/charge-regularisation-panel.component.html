@@ -1,0 +1,69 @@
+<div class="regul-panel">
+  <div class="regul-panel__header">
+    <h2><i class="bi bi-calculator"></i> Régularisation des charges</h2>
+    <div *ngIf="isOwner" class="regul-panel__actions">
+      <select [(ngModel)]="annee" class="form-select form-select-sm">
+        <option *ngFor="let a of anneesDisponibles" [ngValue]="a">{{ a }}</option>
+      </select>
+      <button class="hw-btn hw-btn--primary hw-btn--sm" (click)="calculer()" [disabled]="working">
+        <span *ngIf="working" class="spinner-border spinner-border-sm"></span>
+        Calculer
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-3">
+    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+  </div>
+
+  <p *ngIf="!loading && regularisations.length === 0" class="regul-panel__empty">
+    Aucune régularisation. Le calcul compare les provisions versées par le locataire
+    aux charges récupérables réellement engagées sur l'année.
+  </p>
+
+  <table *ngIf="!loading && regularisations.length > 0" class="regul-table">
+    <thead>
+      <tr>
+        <th>Année</th>
+        <th>Provisions</th>
+        <th>Charges réelles</th>
+        <th>Solde</th>
+        <th>Statut</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of regularisations">
+        <td>{{ r.annee }}</td>
+        <td>{{ r.provisionsEncaissees | number:'1.2-2' }} €</td>
+        <td>{{ r.chargesReelles | number:'1.2-2' }} €</td>
+        <td>
+          <strong [class.regul-table__solde--positif]="r.solde > 0"
+                  [class.regul-table__solde--negatif]="r.solde < 0">
+            {{ r.solde | number:'1.2-2' }} €
+          </strong>
+          <small *ngIf="r.solde > 0"> (dû par le locataire)</small>
+          <small *ngIf="r.solde < 0"> (à restituer)</small>
+        </td>
+        <td>
+          <span class="hw-badge"
+                [class.hw-badge--secondary]="r.statut === 'BROUILLON'"
+                [class.hw-badge--warning]="r.statut === 'ENVOYEE'"
+                [class.hw-badge--success]="r.statut === 'SOLDEE'">
+            {{ statutLabels[r.statut] }}
+          </span>
+        </td>
+        <td class="regul-table__actions">
+          <button *ngIf="isOwner && r.statut === 'BROUILLON'" class="hw-btn hw-btn--primary hw-btn--sm"
+                  (click)="envoyer(r)" [disabled]="working">Envoyer le décompte</button>
+          <button *ngIf="isOwner && r.statut === 'ENVOYEE' && r.solde > 0" class="hw-btn hw-btn--primary hw-btn--sm"
+                  (click)="creerPaiement(r)" [disabled]="working">Créer le paiement</button>
+          <button *ngIf="r.documentId" class="hw-btn hw-btn--secondary hw-btn--sm"
+                  (click)="telecharger(r)" title="Télécharger le décompte">
+            <i class="bi bi-download"></i>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

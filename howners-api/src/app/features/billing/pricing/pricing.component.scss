@@ -129,6 +129,20 @@
     margin-bottom: var(--hw-space-6);
   }
 
+  &__fee {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--hw-space-2);
+    font-size: var(--hw-fs-xs);
+    font-weight: var(--hw-fw-medium);
+    color: var(--hw-gray-600);
+    background: var(--hw-gray-100);
+    border-radius: var(--hw-radius-full);
+    padding: var(--hw-space-1) var(--hw-space-3);
+    margin-bottom: var(--hw-space-4);
+  }
+
   &__features {
     list-style: none;
     padding: 0;

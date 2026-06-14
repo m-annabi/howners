@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="071-1" author="claude">
+        <comment>Indices de référence des loyers (IRL) INSEE — série 001515333</comment>
+        <createTable tableName="irl_indices">
+            <column name="id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="annee" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trimestre" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valeur" type="NUMERIC(6,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="irl_indices" columnNames="annee, trimestre"
+            constraintName="uq_irl_annee_trimestre"/>
+    </changeSet>
+
+    <changeSet id="071-2" author="claude">
+        <comment>
+            Seed des valeurs IRL publiées par l'INSEE (vérifiées jusqu'au T4 2024).
+            Les trimestres suivants doivent être ajoutés via POST /api/irl-indices (ADMIN)
+            après publication par l'INSEE.
+        </comment>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2022"/><column name="trimestre" valueNumeric="1"/><column name="valeur" valueNumeric="133.93"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2022"/><column name="trimestre" valueNumeric="2"/><column name="valeur" valueNumeric="135.84"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2022"/><column name="trimestre" valueNumeric="3"/><column name="valeur" valueNumeric="136.27"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2022"/><column name="trimestre" valueNumeric="4"/><column name="valeur" valueNumeric="137.26"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2023"/><column name="trimestre" valueNumeric="1"/><column name="valeur" valueNumeric="138.61"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2023"/><column name="trimestre" valueNumeric="2"/><column name="valeur" valueNumeric="140.59"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2023"/><column name="trimestre" valueNumeric="3"/><column name="valeur" valueNumeric="141.03"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2023"/><column name="trimestre" valueNumeric="4"/><column name="valeur" valueNumeric="142.06"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2024"/><column name="trimestre" valueNumeric="1"/><column name="valeur" valueNumeric="143.46"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2024"/><column name="trimestre" valueNumeric="2"/><column name="valeur" valueNumeric="145.17"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2024"/><column name="trimestre" valueNumeric="3"/><column name="valeur" valueNumeric="145.47"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2024"/><column name="trimestre" valueNumeric="4"/><column name="valeur" valueNumeric="146.13"/></insert>
+    </changeSet>
+
+</databaseChangeLog>

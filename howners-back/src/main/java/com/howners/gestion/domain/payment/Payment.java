@@ -67,6 +67,13 @@ public class Payment {
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
+    @Column(name = "relance_niveau", nullable = false)
+    @Builder.Default
+    private Integer relanceNiveau = 0;
+
+    @Column(name = "derniere_relance_le")
+    private LocalDateTime derniereRelanceLe;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

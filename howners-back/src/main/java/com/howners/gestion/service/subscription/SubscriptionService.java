@@ -18,6 +18,7 @@ import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ public class SubscriptionService {
     private final SubscriptionPlanRepository planRepository;
     private final UserSubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -63,7 +65,8 @@ public class SubscriptionService {
                     SubscriptionPlanResponse freePlan = planRepository.findByName(PlanName.FREE)
                             .map(SubscriptionPlanResponse::from)
                             .orElse(new SubscriptionPlanResponse(null, PlanName.FREE, "Gratuit",
-                                    java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, 2, 3, null));
+                                    java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, 2, 3,
+                                    new java.math.BigDecimal("2.5"), null));
                     return new UserSubscriptionResponse(null, userId, freePlan,
                             SubscriptionStatus.ACTIVE, null, null, false, LocalDateTime.now());
                 });
@@ -83,9 +86,11 @@ public class SubscriptionService {
         }
 
         if (!isStripeConfigured()) {
-            log.error("Stripe API key not configured — cannot process payment for plan {}", plan.getName());
-            throw new BadRequestException(
-                    "Le paiement n'est pas disponible actuellement. Veuillez réessayer plus tard ou contacter le support.");
+            // Mode dev sans Stripe : bascule directe de plan (le front gère sessionId === 'dev-mode')
+            log.warn("Stripe non configuré — bascule directe vers le plan {} (mode dev)", plan.getName());
+            switchPlanDirectly(userId, user, plan, request.billingPeriod());
+            return new CheckoutSessionResponse("dev-mode",
+                    frontendUrl + "/billing/success?session_id=dev-mode");
         }
 
         try {
@@ -124,7 +129,13 @@ public class SubscriptionService {
         }
     }
 
-    private void switchPlanDirectly(UUID userId, User user, SubscriptionPlan newPlan, String billingPeriod) {
+    void switchPlanDirectly(UUID userId, User user, SubscriptionPlan newPlan, String billingPeriod) {
+        // Première activation payante = aucun abonnement payant géré jusque-là
+        boolean premiereActivation = newPlan.getName() != PlanName.FREE
+                && subscriptionRepository.findFirstByUserIdOrderByCreatedAtDesc(userId)
+                        .map(s -> s.getPlan() == null || s.getPlan().getName() == PlanName.FREE)
+                        .orElse(true);
+
         // Deactivate current subscription
         subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .ifPresent(sub -> {
@@ -147,6 +158,63 @@ public class SubscriptionService {
 
         subscriptionRepository.save(subscription);
         log.info("Plan switched directly to {} for user {}", newPlan.getName(), userId);
+
+        if (newPlan.getName() != PlanName.FREE) {
+            eventPublisher.publishEvent(new AbonnementActiveEvent(userId, newPlan.getName(), premiereActivation));
+        }
+    }
+
+    /**
+     * Récompense de parrainage : 1 mois de plan PRO offert.
+     * - Utilisateur en FREE (ou sans abonnement) : bascule sur PRO pour 1 mois.
+     * - Abonnement payant non géré par Stripe : prolonge la période d'1 mois.
+     * - Abonnement Stripe actif : pas de modification côté Stripe en V1 (le coupon
+     *   Stripe sera traité dans une itération ultérieure) — retourne false.
+     */
+    @Transactional
+    public boolean offrirMoisPro(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        UserSubscription current = subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .orElse(null);
+
+        if (current != null && current.getStripeSubscriptionId() != null) {
+            log.warn("Récompense parrainage non appliquée automatiquement pour {} (abonnement Stripe actif) — TODO coupon Stripe", userId);
+            return false;
+        }
+
+        if (current != null && current.getPlan() != null && current.getPlan().getName() != PlanName.FREE) {
+            current.setCurrentPeriodEnd(
+                    (current.getCurrentPeriodEnd() != null ? current.getCurrentPeriodEnd() : LocalDateTime.now())
+                            .plusMonths(1));
+            current.setUpdatedAt(LocalDateTime.now());
+            subscriptionRepository.save(current);
+            log.info("Récompense parrainage : +1 mois sur le plan {} pour {}", current.getPlan().getName(), userId);
+            return true;
+        }
+
+        SubscriptionPlan proPlan = planRepository.findByName(PlanName.PRO)
+                .orElseThrow(() -> new ResourceNotFoundException("Plan PRO introuvable"));
+
+        if (current != null) {
+            current.setStatus(SubscriptionStatus.CANCELLED);
+            current.setUpdatedAt(LocalDateTime.now());
+            subscriptionRepository.save(current);
+        }
+
+        UserSubscription reward = UserSubscription.builder()
+                .user(user)
+                .plan(proPlan)
+                .status(SubscriptionStatus.ACTIVE)
+                .currentPeriodStart(LocalDateTime.now())
+                .currentPeriodEnd(LocalDateTime.now().plusMonths(1))
+                .cancelAtPeriodEnd(true)
+                .build();
+        subscriptionRepository.save(reward);
+        log.info("Récompense parrainage : 1 mois PRO offert à {}", userId);
+        return true;
     }
 
     @Transactional
@@ -240,11 +308,11 @@ public class SubscriptionService {
 
     @Transactional
     public void processSubscriptionWebhook(String eventType, String subscriptionId, String customerId,
-                                            Long periodStart, Long periodEnd) {
+                                            String priceId, Long periodStart, Long periodEnd) {
         switch (eventType) {
             case "customer.subscription.created",
                  "customer.subscription.updated" -> {
-                handleSubscriptionUpdate(subscriptionId, customerId, periodStart, periodEnd);
+                handleSubscriptionUpdate(subscriptionId, customerId, priceId, periodStart, periodEnd);
             }
             case "customer.subscription.deleted" -> {
                 handleSubscriptionCancelled(subscriptionId);
@@ -254,7 +322,7 @@ public class SubscriptionService {
     }
 
     private void handleSubscriptionUpdate(String subscriptionId, String customerId,
-                                           Long periodStart, Long periodEnd) {
+                                           String priceId, Long periodStart, Long periodEnd) {
         UserSubscription sub = subscriptionRepository.findByStripeSubscriptionId(subscriptionId)
                 .or(() -> subscriptionRepository.findByStripeCustomerId(customerId))
                 .orElse(null);
@@ -263,6 +331,18 @@ public class SubscriptionService {
             log.warn("No subscription found for Stripe subscription {}", subscriptionId);
             return;
         }
+
+        // Première activation payante : l'entité n'était pas encore rattachée à un abonnement Stripe
+        boolean premiereActivation = sub.getStripeSubscriptionId() == null;
+
+        // Résoudre le plan depuis le price Stripe (le checkout ne le persiste pas)
+        if (priceId != null) {
+            planRepository.findByStripePriceIdMonthlyOrStripePriceIdAnnual(priceId, priceId)
+                    .ifPresent(sub::setPlan);
+        }
+
+        premiereActivation = premiereActivation
+                && sub.getPlan() != null && sub.getPlan().getName() != PlanName.FREE;
 
         sub.setStripeSubscriptionId(subscriptionId);
         sub.setStatus(SubscriptionStatus.ACTIVE);
@@ -278,6 +358,11 @@ public class SubscriptionService {
         sub.setUpdatedAt(LocalDateTime.now());
         subscriptionRepository.save(sub);
         log.info("Subscription updated: {}", subscriptionId);
+
+        if (sub.getPlan() != null && sub.getPlan().getName() != PlanName.FREE) {
+            eventPublisher.publishEvent(new AbonnementActiveEvent(
+                    sub.getUser().getId(), sub.getPlan().getName(), premiereActivation));
+        }
     }
 
     private void handleSubscriptionCancelled(String subscriptionId) {
@@ -310,6 +395,19 @@ public class SubscriptionService {
                 .build();
 
         Customer customer = Customer.create(params);
+
+        // Persister le customerId pour que le webhook puisse retrouver l'abonnement
+        UserSubscription subToTag = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .orElse(existingSub);
+        if (subToTag == null) {
+            assignFreePlan(userId);
+            subToTag = subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE).orElse(null);
+        }
+        if (subToTag != null) {
+            subToTag.setStripeCustomerId(customer.getId());
+            subscriptionRepository.save(subToTag);
+        }
+
         return customer.getId();
     }
 }

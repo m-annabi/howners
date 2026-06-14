@@ -65,6 +65,7 @@ export class AdminDashboardComponent implements OnInit {
       case 'FREE': return 'var(--hw-gray-400)';
       case 'PRO': return 'var(--hw-primary-600)';
       case 'PREMIUM': return 'var(--hw-accent-500)';
+      case 'AGENCE': return 'var(--hw-gray-900)';
       default: return 'var(--hw-gray-300)';
     }
   }

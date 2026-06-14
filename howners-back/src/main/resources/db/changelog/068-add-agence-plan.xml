@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="068-1" author="claude">
+        <comment>Plan AGENCE : agences et SCI, tout illimité, multi-comptes, commission réduite</comment>
+        <insert tableName="subscription_plans">
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="AGENCE"/>
+            <column name="display_name" value="Agence"/>
+            <column name="monthly_price" valueNumeric="99.90"/>
+            <column name="annual_price" valueNumeric="999.00"/>
+            <column name="max_properties" valueNumeric="-1"/>
+            <column name="max_contracts_per_month" valueNumeric="-1"/>
+            <column name="max_rentals" valueNumeric="-1"/>
+            <column name="max_listings" valueNumeric="-1"/>
+            <column name="platform_fee_percent" valueNumeric="0.9"/>
+            <column name="features" value='{"documents": true, "messaging": true, "basic_reporting": true, "advanced_reporting": true, "esignature": true, "tenant_scoring": true, "document_encryption": true, "priority_support": true, "api_access": true, "tax_export": true, "advanced_dashboard": true, "multi_account": true}'/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -13,6 +13,7 @@ public record ReferralSummary(
     public record RefereeItem(
             String name,
             String status,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            LocalDateTime rewardedAt
     ) {}
 }

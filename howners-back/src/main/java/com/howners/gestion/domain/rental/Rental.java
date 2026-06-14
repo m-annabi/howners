@@ -65,6 +65,9 @@ public class Rental {
     @Column(name = "payment_day")
     private Integer paymentDay;
 
+    @Column(name = "assurance_expiration")
+    private LocalDate assuranceExpiration; // Échéance de l'attestation d'assurance habitation du locataire
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "application_id", unique = true)
     private Application application;

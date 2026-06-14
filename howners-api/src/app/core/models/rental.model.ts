@@ -26,6 +26,7 @@ export interface Rental {
   depositAmount?: number;
   charges?: number;
   paymentDay?: number;
+  assuranceExpiration?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -45,6 +46,7 @@ export interface CreateRentalRequest {
   depositAmount?: number;
   charges?: number;
   paymentDay?: number;
+  assuranceExpiration?: string;
 }
 
 export interface UpdateRentalRequest {
@@ -57,6 +59,7 @@ export interface UpdateRentalRequest {
   depositAmount?: number;
   charges?: number;
   paymentDay?: number;
+  assuranceExpiration?: string;
 }
 
 export const RENTAL_TYPE_LABELS: Record<RentalType, string> = {

@@ -8,7 +8,7 @@ This is a two-app monorepo for **Howners**, a rental-property management platfor
 
 - `howners-back/` — Spring Boot 4.0.2 / Java 21 REST API (Maven). Package root `com.howners.gestion`.
 - `howners-api/` — Angular 15 frontend (despite the name, this is the **frontend**, not an API).
-- `docker-compose.yml` — local infra: PostgreSQL 16, MinIO (S3), MailHog (SMTP capture).
+- `docker-compose.yml` — local infra: PostgreSQL 16, MinIO (S3), MailHog (SMTP capture). `docker-compose.prod.yml` is the production overlay.
 
 The backend serves on `:8080`, the frontend dev server on `:4200`. Backend exposes everything under `/api/...`; the frontend's `environment.ts` points at `http://localhost:8080/api`.
 
@@ -24,7 +24,7 @@ cd howners-api && npm install && npm start    # Angular CLI dev server on :4200
 
 `howners-back/start.sh` is a convenience wrapper that sources `.env` and runs `./mvnw spring-boot:run`. `restart-backend.sh` currently has real SMTP + DocuSign credentials inlined — never edit it to add new secrets, and never commit changes that propagate those values. Any new credentials belong in `.env`.
 
-For a step-by-step local bootstrap (services, default credentials, URLs to verify), see `SETUP_GUIDE.md` at the repo root — it complements the commands below.
+For a step-by-step local bootstrap (services, default credentials, URLs to verify), see `SETUP_GUIDE.md` at the repo root. Other top-level docs worth knowing: `OBSERVABILITY.md` (metrics/logging), `RGPD-AUDIT.md` (RGPD/audit obligations), `SECURITY-ROTATION.md` (secret rotation playbook), `NEXT-STEPS.md` (open roadmap items).
 
 ### Backend (`howners-back/`)
 
@@ -54,7 +54,7 @@ The API base URL is hardcoded in `src/environments/environment.ts` to `http://lo
 
 ### Database / migrations
 
-Schema is owned by **Liquibase** — `spring.jpa.hibernate.ddl-auto: none`. Never let Hibernate auto-generate DDL. Add a new changelog file under `howners-back/src/main/resources/db/changelog/` (next free number, currently `053-...`) and register it in `db.changelog-master.xml`. Numbers `017` is intentionally absent — keep the gap.
+Schema is owned by **Liquibase** — `spring.jpa.hibernate.ddl-auto: none`. Never let Hibernate auto-generate DDL. Add a new changelog file under `howners-back/src/main/resources/db/changelog/` using the next free number (latest is `066-...`) and register it in `db.changelog-master.xml`. Number `017` is intentionally absent — keep the gap.
 
 To reset the DB completely (destroys all data):
 
@@ -98,7 +98,7 @@ Key cross-cutting behaviours:
 Standard Angular module structure, all feature modules **lazy-loaded** from `app-routing.module.ts`:
 
 - `core/` — singletons: `auth/`, `guards/` (`AuthGuard`, `RoleGuard` — reads `data: { roles: [...] }` from routes), `interceptors/` (`auth.interceptor` attaches JWT, `error.interceptor` central error handling), `services/`, `models/`.
-- `features/<domain>/` — one lazy module per domain (auth, dashboard, properties, rentals, contracts, templates, profile, ratings, payments, invoices, receipts, expenses, financial, inventory, audit, tenant-search, tenant-discovery, listings, applications, messages, billing, public-sign).
+- `features/<domain>/` — one lazy module per domain (admin, applications, audit, auth, billing, contracts, dashboard, expenses, financial, inventory, invoices, landing, listings, messages, payments, profile, properties, public-sign, ratings, receipts, referral, rentals, templates, tenant-discovery, tenant-search) plus a `not-found` fallback route.
 - `shared/` — reusable components (`signature-pad`, `document-upload`, `document-list`, etc.) re-exported via `shared.module.ts`.
 
 Routing rules to respect when adding features:

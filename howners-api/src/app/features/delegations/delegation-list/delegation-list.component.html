@@ -1,0 +1,104 @@
+<app-page-header
+  title="Comptes délégués"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Comptes délégués'}]">
+</app-page-header>
+
+<div class="delegations">
+
+  <section class="hw-card delegations-invite">
+    <h3><i class="bi bi-person-plus"></i> Inviter un collaborateur</h3>
+    <p class="delegations-invite__hint">
+      Donnez un accès <strong>en lecture seule</strong> à votre compte (synthèse financière, biens, locations).
+      Le collaborateur doit déjà avoir un compte Howners. Réservé au plan Agence.
+    </p>
+
+    <form [formGroup]="inviteForm" (ngSubmit)="inviter()" class="delegations-invite__form">
+      <input type="email" formControlName="email" class="form-control"
+             placeholder="email@collaborateur.fr">
+      <button type="submit" class="hw-btn hw-btn--primary"
+              [disabled]="inviteForm.invalid || inviting">
+        <span *ngIf="inviting" class="spinner-border spinner-border-sm"></span>
+        Inviter
+      </button>
+    </form>
+
+    <div *ngIf="error" class="hw-alert hw-alert--danger">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    <div *ngIf="successMessage" class="hw-alert hw-alert--success">
+      <i class="bi bi-check-circle-fill"></i> {{ successMessage }}
+    </div>
+  </section>
+
+  <section class="delegations-section">
+    <h3>Mes délégations émises</h3>
+    <div *ngIf="loading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+    <div *ngIf="!loading && mesDelegations.length === 0" class="hw-card delegations-empty">
+      <i class="bi bi-people"></i>
+      <p>Aucune délégation. Invitez un collaborateur pour partager votre compte en lecture seule.</p>
+    </div>
+    <div *ngIf="!loading && mesDelegations.length > 0" class="hw-card" style="padding: 0; overflow: hidden;">
+      <table class="delegations-table">
+        <thead>
+          <tr>
+            <th>Collaborateur</th>
+            <th>Email</th>
+            <th>Statut</th>
+            <th>Depuis</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of mesDelegations">
+            <td>{{ d.delegueNom }}</td>
+            <td>{{ d.delegueEmail }}</td>
+            <td>
+              <span class="hw-badge" [class.hw-badge--success]="d.statut === 'ACTIVE'"
+                    [class.hw-badge--neutral]="d.statut !== 'ACTIVE'">
+                {{ d.statut === 'ACTIVE' ? 'Active' : 'Révoquée' }}
+              </span>
+            </td>
+            <td>{{ d.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <button *ngIf="d.statut === 'ACTIVE'" class="hw-btn hw-btn--secondary hw-btn--sm"
+                      (click)="revoquer(d)">
+                Révoquer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="delegations-section" *ngIf="delegationsRecues.length > 0">
+    <h3>Comptes partagés avec moi</h3>
+    <div class="hw-card" style="padding: 0; overflow: hidden;">
+      <table class="delegations-table">
+        <thead>
+          <tr>
+            <th>Compte</th>
+            <th>Email</th>
+            <th>Depuis</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of delegationsRecues">
+            <td>{{ d.agenceNom }}</td>
+            <td>{{ d.agenceEmail }}</td>
+            <td>{{ d.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <a class="hw-btn hw-btn--primary hw-btn--sm" [routerLink]="[d.id, 'apercu']">
+                <i class="bi bi-eye"></i> Consulter
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>

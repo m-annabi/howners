@@ -1,0 +1,41 @@
+<app-page-header
+  title="Aperçu du compte"
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Comptes délégués', route: '/delegations'}, {label: 'Aperçu'}]">
+</app-page-header>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+</div>
+
+<div *ngIf="!loading && apercu" class="apercu">
+
+  <div class="hw-alert hw-alert--info apercu__readonly">
+    <i class="bi bi-eye"></i>
+    Vue en lecture seule du compte de <strong>{{ apercu.agenceNom }}</strong> ({{ apercu.agenceEmail }}).
+  </div>
+
+  <div class="apercu__stats">
+    <app-stats-card label="Biens" [value]="apercu.totalProperties" icon="bi-building" color="primary"></app-stats-card>
+    <app-stats-card label="Locations actives" [value]="apercu.activeRentals" icon="bi-key" color="success"></app-stats-card>
+    <app-stats-card label="Revenus 12 mois" [value]="(apercu.finances.totalRevenue | number:'1.0-0') + ' €'" icon="bi-graph-up" color="primary"></app-stats-card>
+    <app-stats-card label="Résultat net 12 mois" [value]="(apercu.finances.netIncome | number:'1.0-0') + ' €'" icon="bi-wallet2"
+      [color]="apercu.finances.netIncome >= 0 ? 'success' : 'danger'"></app-stats-card>
+  </div>
+
+  <section class="hw-card apercu__chart">
+    <h3>Revenus mensuels</h3>
+    <div class="apercu__bars">
+      <div class="apercu__bar-item" *ngFor="let m of apercu.finances.monthlyBreakdown">
+        <div class="apercu__bar-track">
+          <div class="apercu__bar" [style.height.%]="getBarHeight(m.revenue)"></div>
+        </div>
+        <span class="apercu__bar-label">{{ m.month | slice:5:7 }}</span>
+      </div>
+    </div>
+  </section>
+
+</div>

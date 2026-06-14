@@ -31,5 +31,7 @@ public record UpdateRentalRequest(
 
         @Min(value = 1, message = "Payment day must be between 1 and 31")
         @Max(value = 31, message = "Payment day must be between 1 and 31")
-        Integer paymentDay
+        Integer paymentDay,
+
+        LocalDate assuranceExpiration
 ) {}

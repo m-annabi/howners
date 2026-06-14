@@ -78,6 +78,16 @@
         <div class="detail-section">
           <app-document-list [rentalId]="rental.id"></app-document-list>
         </div>
+
+        <!-- Révision de loyer IRL -->
+        <div class="detail-section">
+          <app-rent-revision-panel [rentalId]="rental.id"></app-rent-revision-panel>
+        </div>
+
+        <!-- Régularisation annuelle des charges -->
+        <div class="detail-section">
+          <app-charge-regularisation-panel [rentalId]="rental.id"></app-charge-regularisation-panel>
+        </div>
       </div>
 
       <div class="detail-sidebar">

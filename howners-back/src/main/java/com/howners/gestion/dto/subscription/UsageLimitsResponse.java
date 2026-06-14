@@ -16,5 +16,6 @@ public record UsageLimitsResponse(
         boolean canCreateListing,
         boolean hasESignature,
         boolean hasTenantScoring,
-        boolean hasDocumentEncryption
+        boolean hasDocumentEncryption,
+        boolean hasMultiAccount
 ) {}

@@ -65,7 +65,8 @@ public class User {
     private String stripeConnectAccountId;
 
     @Column(name = "stripe_connect_status", length = 40)
-    private String stripeConnectStatus;
+    @Builder.Default
+    private String stripeConnectStatus = "NONE";
 
     public String getFullName() {
         return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");

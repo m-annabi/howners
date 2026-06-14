@@ -24,6 +24,8 @@ public record PaymentResponse(
         String receiptUrl,
         LocalDate dueDate,
         LocalDateTime paidAt,
+        Integer relanceNiveau,
+        LocalDateTime derniereRelanceLe,
         LocalDateTime createdAt
 ) {
     public static PaymentResponse from(Payment p) {
@@ -42,6 +44,8 @@ public record PaymentResponse(
                 p.getReceiptUrl(),
                 p.getDueDate(),
                 p.getPaidAt(),
+                p.getRelanceNiveau(),
+                p.getDerniereRelanceLe(),
                 p.getCreatedAt()
         );
     }

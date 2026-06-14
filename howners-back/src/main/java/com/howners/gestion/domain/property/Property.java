@@ -82,6 +82,9 @@ public class Property {
     @Column(name = "dpe_rating", length = 1)
     private String dpeRating; // Diagnostic Performance Énergétique (A-G)
 
+    @Column(name = "dpe_date")
+    private java.time.LocalDate dpeDate; // Date de réalisation du DPE (validité 10 ans)
+
     @Column(name = "ges_rating", length = 1)
     private String gesRating; // Gaz à Effet de Serre (A-G)
 

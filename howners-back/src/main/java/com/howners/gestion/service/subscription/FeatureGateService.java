@@ -145,9 +145,10 @@ public class FeatureGateService {
                 plan.getMaxContractsPerMonth() == -1 || currentContracts < plan.getMaxContractsPerMonth(),
                 plan.getMaxRentals() == -1 || currentRentals < plan.getMaxRentals(),
                 plan.getMaxListings() == -1 || currentListings < plan.getMaxListings(),
-                hasFeature(userId, "e_signature"),
+                hasFeature(userId, "esignature"),
                 hasFeature(userId, "tenant_scoring"),
-                hasFeature(userId, "document_encryption")
+                hasFeature(userId, "document_encryption"),
+                hasFeature(userId, "multi_account")
         );
     }
 

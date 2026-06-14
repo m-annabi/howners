@@ -12,4 +12,6 @@ import java.util.UUID;
 public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, UUID> {
 
     Optional<SubscriptionPlan> findByName(PlanName name);
+
+    Optional<SubscriptionPlan> findByStripePriceIdMonthlyOrStripePriceIdAnnual(String priceIdMonthly, String priceIdAnnual);
 }

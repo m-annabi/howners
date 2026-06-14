@@ -2,6 +2,7 @@ package com.howners.gestion.service.email;
 
 import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
 import com.howners.gestion.dto.email.ContractExpiryEmailData;
+import com.howners.gestion.dto.email.GenericNotificationEmailData;
 import com.howners.gestion.dto.email.OnboardingReminderEmailData;
 import com.howners.gestion.dto.email.PaymentReminderEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
@@ -76,4 +77,10 @@ public interface EmailService {
      * Envoie un email d'alerte d'echeance de contrat (J-30) au bailleur
      */
     void sendContractExpiryWarningEmail(ContractExpiryEmailData data);
+
+    /**
+     * Envoie un email de notification générique (récompense parrainage, révision de loyer,
+     * régularisation de charges, relance d'impayé, rappels réglementaires…)
+     */
+    void sendNotificationEmail(GenericNotificationEmailData data);
 }

@@ -55,6 +55,11 @@
         </p>
         <p *ngIf="plan.monthlyPrice === 0" class="pricing-card__annual">Gratuit pour toujours</p>
 
+        <p *ngIf="plan.platformFeePercent != null" class="pricing-card__fee">
+          <i class="bi bi-credit-card"></i>
+          Commission sur loyers encaissés : {{ plan.platformFeePercent | number:'1.1-2' }}&nbsp;%
+        </p>
+
         <ul class="pricing-card__features">
           <li *ngFor="let feature of planFeatures[plan.name]" class="pricing-card__feature">
             <i class="bi bi-check-circle-fill"></i>

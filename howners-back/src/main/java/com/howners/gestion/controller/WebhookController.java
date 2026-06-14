@@ -94,10 +94,17 @@ public class WebhookController {
 
                     event.getDataObjectDeserializer().getObject().ifPresent(obj -> {
                         if (obj instanceof Subscription sub) {
+                            String priceId = null;
+                            if (sub.getItems() != null && sub.getItems().getData() != null
+                                    && !sub.getItems().getData().isEmpty()
+                                    && sub.getItems().getData().get(0).getPrice() != null) {
+                                priceId = sub.getItems().getData().get(0).getPrice().getId();
+                            }
                             subscriptionService.processSubscriptionWebhook(
                                     eventType,
                                     sub.getId(),
                                     sub.getCustomer(),
+                                    priceId,
                                     sub.getCurrentPeriodStart(),
                                     sub.getCurrentPeriodEnd()
                             );

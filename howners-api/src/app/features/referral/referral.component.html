@@ -14,7 +14,11 @@
     <div class="referral-hero__copy">
       <span class="referral-hero__pill"><i class="bi bi-stars"></i> Programme parrainage</span>
       <h2>Faites profiter Howners à vos contacts.</h2>
-      <p>Plus vous parrainez, plus votre patrimoine devient une force d'attraction. Partagez votre lien — chaque inscription via votre code apparaît ici.</p>
+      <p>Partagez votre lien — chaque inscription via votre code apparaît ici.</p>
+      <p class="referral-hero__reward">
+        <i class="bi bi-gift"></i>
+        <strong>1 mois de plan PRO offert</strong> pour vous et votre filleul dès son premier abonnement.
+      </p>
     </div>
 
     <div class="referral-hero__code">
@@ -63,6 +67,7 @@
             <th>Invité</th>
             <th>Statut</th>
             <th>Inscrit le</th>
+            <th>Récompense</th>
           </tr>
         </thead>
         <tbody>
@@ -75,6 +80,12 @@
               </span>
             </td>
             <td>{{ r.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span *ngIf="r.rewardedAt" class="badge bg-success">
+                <i class="bi bi-gift"></i> 1 mois PRO
+              </span>
+              <span *ngIf="!r.rewardedAt" class="text-muted">—</span>
+            </td>
           </tr>
         </tbody>
       </table>

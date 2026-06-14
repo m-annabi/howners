@@ -133,6 +133,11 @@ const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'delegations',
+    loadChildren: () => import('./features/delegations/delegations.module').then(m => m.DelegationsModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'sign',
     loadChildren: () => import('./features/public-sign/public-sign.module').then(m => m.PublicSignModule)
     // Pas d'AuthGuard - route publique

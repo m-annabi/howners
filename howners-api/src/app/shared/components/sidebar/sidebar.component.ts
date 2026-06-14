@@ -161,6 +161,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts', roles: ['OWNER', 'ADMIN', 'TENANT'] },
           { label: 'Dépenses', icon: 'bi-wallet2', route: '/expenses', roles: ['OWNER', 'ADMIN'] },
           { label: 'Synthèse', icon: 'bi-graph-up', route: '/financial', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Patrimoine', icon: 'bi-pie-chart', route: '/financial/patrimoine', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Export fiscal', icon: 'bi-file-earmark-spreadsheet', route: '/financial/fiscal-2044', roles: ['OWNER', 'ADMIN'] },
         ],
         roles: ['OWNER', 'ADMIN', 'TENANT']
       },
@@ -181,6 +183,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         title: 'CROISSANCE',
         items: [
           { label: 'Parrainage', icon: 'bi-gift', route: '/referral' },
+          { label: 'Comptes délégués', icon: 'bi-people-fill', route: '/delegations' },
         ],
         roles: ['OWNER', 'ADMIN']
       }

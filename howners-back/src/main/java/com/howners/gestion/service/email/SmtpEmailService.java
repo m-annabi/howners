@@ -2,6 +2,7 @@ package com.howners.gestion.service.email;
 
 import com.howners.gestion.dto.email.ApplicationReviewedEmailData;
 import com.howners.gestion.dto.email.ContractExpiryEmailData;
+import com.howners.gestion.dto.email.GenericNotificationEmailData;
 import com.howners.gestion.dto.email.OnboardingReminderEmailData;
 import com.howners.gestion.dto.email.PaymentReminderEmailData;
 import com.howners.gestion.dto.email.ReceiptEmailData;
@@ -369,6 +370,31 @@ public class SmtpEmailService implements EmailService {
             log.info("Contract expiry warning email sent successfully to: {}", data.recipientEmail());
         } catch (Exception e) {
             log.error("Failed to send contract expiry warning email to {}: {}", data.recipientEmail(), e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendNotificationEmail(GenericNotificationEmailData data) {
+        log.info("Sending notification email '{}' to: {}", data.subject(), data.recipientEmail());
+
+        try {
+            Context context = new Context();
+            context.setVariable("recipientName", data.recipientName());
+            context.setVariable("headline", data.headline());
+            context.setVariable("messageHtml", data.messageHtml());
+            context.setVariable("detailsHtml", data.detailsHtml());
+            context.setVariable("ctaLabel", data.ctaLabel());
+            context.setVariable("ctaUrl", data.ctaUrl());
+            context.setVariable("urgent", data.urgent());
+
+            String htmlContent = templateEngine.process("email/notification-generique", context);
+
+            sendHtmlEmail(data.recipientEmail(), data.subject(), htmlContent);
+
+            log.info("Notification email sent successfully to: {}", data.recipientEmail());
+        } catch (Exception e) {
+            // Notifications par email best-effort : ne jamais faire échouer le flux métier appelant.
+            log.error("Failed to send notification email to {}: {}", data.recipientEmail(), e.getMessage());
         }
     }
 

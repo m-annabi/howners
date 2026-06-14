@@ -20,6 +20,9 @@
         <button class="btn btn-outline-primary me-2" (click)="downloadPdf()" *ngIf="edl.documentId">
           <i class="bi bi-file-pdf"></i> Télécharger PDF
         </button>
+        <a class="btn btn-primary" [routerLink]="['/inventory', 'comparaison', rentalId]">
+          <i class="bi bi-arrows-angle-contract"></i> Comparer entrée/sortie
+        </a>
       </div>
     </div>
 

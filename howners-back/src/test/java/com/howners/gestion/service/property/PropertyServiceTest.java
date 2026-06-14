@@ -77,15 +77,15 @@ class PropertyServiceTest {
     }
 
     private CreatePropertyRequest createRequest(AddressDTO address, String name) {
-        // 22 params: name, propertyType, address, surfaceArea, bedrooms, bathrooms,
+        // 23 params: name, propertyType, address, surfaceArea, bedrooms, bathrooms,
         // description, condoFees, propertyTax, businessTax, homeInsurance, purchasePrice,
-        // dpeRating, gesRating, constructionYear, floorNumber, totalFloors,
+        // dpeRating, dpeDate, gesRating, constructionYear, floorNumber, totalFloors,
         // heatingType, hasParking, hasElevator, isFurnished, propertyCondition
         return new CreatePropertyRequest(
                 name, PropertyType.APARTMENT, address,
                 null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     // --- create ---
@@ -123,7 +123,7 @@ class PropertyServiceTest {
                 "Chalet Geneve", PropertyType.HOUSE, address,
                 null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
         when(propertyRepository.save(any(Property.class))).thenAnswer(inv -> {
@@ -178,7 +178,7 @@ class PropertyServiceTest {
                 null, null, newAddress,
                 null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         when(propertyRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
         when(propertyRepository.save(any(Property.class))).thenAnswer(inv -> inv.getArgument(0));

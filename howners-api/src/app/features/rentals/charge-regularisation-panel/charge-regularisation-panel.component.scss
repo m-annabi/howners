@@ -1,0 +1,54 @@
+.regul-panel {
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--hw-space-3);
+
+    h2 {
+      font-size: var(--hw-fs-lg);
+      margin: 0;
+
+      i {
+        color: var(--hw-primary-600);
+        margin-right: var(--hw-space-2);
+      }
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--hw-space-2);
+    align-items: center;
+  }
+
+  &__empty {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+  }
+}
+
+.regul-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--hw-fs-sm);
+
+  th, td {
+    padding: var(--hw-space-2) var(--hw-space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--hw-gray-100);
+  }
+
+  th {
+    color: var(--hw-gray-500);
+    font-weight: var(--hw-fw-medium);
+  }
+
+  &__solde--positif { color: var(--hw-danger); }
+  &__solde--negatif { color: var(--hw-success); }
+
+  &__actions {
+    display: flex;
+    gap: var(--hw-space-1);
+  }
+}

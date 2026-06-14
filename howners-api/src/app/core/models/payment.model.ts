@@ -29,6 +29,8 @@ export interface Payment {
   receiptUrl?: string;
   dueDate: string;
   paidAt?: string;
+  relanceNiveau: number;
+  derniereRelanceLe?: string;
   createdAt: string;
 }
 
