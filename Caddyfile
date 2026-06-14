@@ -1,0 +1,40 @@
+# Caddyfile — reverse proxy TLS pour Howners (prod)
+#
+# Caddy termine le TLS (certificats Let's Encrypt automatiques), redirige HTTP→HTTPS,
+# et transmet aux conteneurs internes `frontend` et `backend` (réseau Docker, non publiés
+# sur l'hôte). Variables fournies par le .env via docker-compose :
+#   APP_DOMAIN  = howners.com
+#   ACME_EMAIL  = admin@howners.com   (notifications d'expiration de certificat)
+{
+	email {$ACME_EMAIL}
+	# Décommenter pour tester sans consommer le quota Let's Encrypt :
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# --- Frontend Angular ---
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# HSTS (Caddy est le terminateur TLS : c'est ici qu'on impose le HTTPS strict)
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+	reverse_proxy frontend:80 {
+		header_up X-Forwarded-Proto https
+	}
+}
+
+# --- Backend API ---
+api.{$APP_DOMAIN} {
+	encode zstd gzip
+
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+	# Limite de corps alignée sur le multipart Spring (10 Mo + marge)
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy backend:8080 {
+		header_up X-Forwarded-Proto https
+	}
+}

@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  # Reverse proxy TLS — seul service exposé sur l'hôte (80/443).
+  # Cf. Caddyfile à la racine. TLS Let's Encrypt automatique.
+  caddy:
+    image: caddy:2-alpine
+    container_name: howners-caddy
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - howners-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ./howners-back
@@ -11,8 +32,8 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       MINIO_ENDPOINT: http://minio:9000
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -31,8 +52,8 @@ services:
       context: ./howners-api
       dockerfile: Dockerfile
     container_name: howners-frontend
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
@@ -99,6 +120,10 @@ volumes:
   postgres_data:
     driver: local
   minio_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
     driver: local
 
 networks:

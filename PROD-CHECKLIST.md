@@ -70,25 +70,18 @@ Voir `SECURITY-ROTATION.md` pour le détail. Ces secrets sont **définitivement 
 
 ## Phase 2 — 🔴 Infrastructure
 
-### 2.1 HTTPS + reverse proxy (BLOQUANT)
-`docker-compose.prod.yml` expose `:8080` et `:80` en direct, sans TLS. Le HSTS et la CSP
-sont déjà configurés côté Spring/nginx mais inutiles sans HTTPS terminé en amont.
+### 2.1 HTTPS + reverse proxy ✅ (config fournie)
+Le reverse proxy **Caddy** est intégré (`Caddyfile` + service `caddy` dans
+`docker-compose.prod.yml`). Caddy est le seul service exposé sur l'hôte (`80`/`443`) ;
+`backend` et `frontend` ne sont plus publiés (directive `expose`, réseau interne).
+TLS Let's Encrypt automatique, redirection HTTP→HTTPS, HSTS.
 
-- [ ] 🔴 Mettre un reverse proxy TLS devant (Caddy recommandé — TLS auto Let's Encrypt) :
-  - `howners.com` → conteneur `frontend:80`
-  - `api.howners.com` → conteneur `backend:8080`
-- [ ] 🔴 Ne plus publier `8080`/`80` sur l'hôte une fois le proxy en place (les laisser sur le réseau Docker interne)
-- [ ] 🟡 Renseigner l'A record DNS des deux domaines vers l'IP du serveur
-
-> Exemple de `Caddyfile` minimal :
-> ```
-> howners.com {
->     reverse_proxy frontend:80
-> }
-> api.howners.com {
->     reverse_proxy backend:8080
-> }
-> ```
+- [ ] 🔴 Renseigner `APP_DOMAIN` et `ACME_EMAIL` dans le `.env` (cf. `.env.example`)
+- [ ] 🔴 A records DNS : `APP_DOMAIN` **et** `api.APP_DOMAIN` → IP du serveur (les deux requis
+  pour l'émission des certificats)
+- [ ] 🟡 1er déploiement : décommenter `acme_ca …staging…` dans le `Caddyfile` pour tester
+  l'obtention de certificat sans épuiser le quota Let's Encrypt, puis recommenter
+- [ ] 🟡 Vérifier que les ports 80 et 443 sont ouverts sur le firewall/cloud du serveur
 
 ### 2.2 Frontend : URL d'API
 `environment.prod.ts` pointe en dur sur `https://api.howners.com/api`.
