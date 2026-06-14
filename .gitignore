@@ -1,6 +1,10 @@
 # Environment variables — never commit (use .env.example as a template instead)
 .env
+.env.*
 **/.env
+**/.env.*
+# Seule exception : le template neutre
+!.env.example
 !**/.env.example
 
 # IDE
