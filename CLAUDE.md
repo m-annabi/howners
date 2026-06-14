@@ -22,7 +22,7 @@ cd howners-back && ./mvnw spring-boot:run     # use the Maven wrapper, not syste
 cd howners-api && npm install && npm start    # Angular CLI dev server on :4200
 ```
 
-`howners-back/start.sh` is a convenience wrapper that sources `.env` and runs `./mvnw spring-boot:run`. `restart-backend.sh` currently has real SMTP + DocuSign credentials inlined — never edit it to add new secrets, and never commit changes that propagate those values. Any new credentials belong in `.env`.
+`howners-back/start.sh` is a convenience wrapper that sources `.env` and runs `./mvnw spring-boot:run`. **Never inline secrets in scripts or any tracked file** — all credentials (SMTP, DocuSign, Stripe…) belong in `.env`, which is gitignored. (A former `restart-backend.sh` that hardcoded credentials was purged from history after those secrets leaked; it is gitignored to prevent reintroduction. Use `start.sh`.)
 
 For a step-by-step local bootstrap (services, default credentials, URLs to verify), see `SETUP_GUIDE.md` at the repo root. Other top-level docs worth knowing: `OBSERVABILITY.md` (metrics/logging), `RGPD-AUDIT.md` (RGPD/audit obligations), `SECURITY-ROTATION.md` (secret rotation playbook), `NEXT-STEPS.md` (open roadmap items).
 
