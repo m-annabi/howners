@@ -50,10 +50,33 @@ BACKUP_DIR=/var/backups/howners ./scripts/db-restore.sh --verify-latest
 0 4 * * 0 BACKUP_DIR=/var/backups/howners /opt/howners/scripts/db-restore.sh --verify-latest >> /var/log/howners-backup.log 2>&1
 ```
 
+## Prix Stripe — `setup-stripe-prices.sh`
+
+Crée (idempotemment) les Produits + Prix Stripe pour les plans payants (PRO, PREMIUM,
+AGENCE) et écrit les `stripe_price_id_monthly` / `stripe_price_id_annual` en base — l'étape
+qui rend les abonnements vendables (le front lit ces price IDs pour ouvrir le Checkout).
+
+```bash
+# Aperçu sans rien créer (lit la base, n'appelle pas Stripe) :
+STRIPE_SECRET_KEY=sk_test_xxx ./scripts/setup-stripe-prices.sh --dry-run
+
+# Création réelle (clé LIVE) + écriture en base :
+STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh
+
+# Recréer même si déjà configuré :
+STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh --force
+```
+
+Idempotent : un plan déjà renseigné en base est ignoré (sauf `--force`) ; côté Stripe le
+Produit est réutilisé (id `howners_<plan>`) et un Prix actif au bon montant/intervalle
+n'est jamais dupliqué. `STRIPE_SECRET_KEY` peut aussi venir de `.env`. Le webhook prod
+(events checkout/subscription) reste à activer dans le Dashboard Stripe.
+
 ## À prévoir côté ops (hors scripts)
 
-- **Off-site** : ces dumps restent sur l'hôte. Pousser `$BACKUP_DIR` vers un stockage
-  distant (S3/MinIO bucket dédié, `rclone`, `aws s3 sync`) protège d'une perte de l'hôte.
+- **Off-site** : intégré à `db-backup.sh` — renseigner `BACKUP_RCLONE_REMOTE` **ou**
+  `BACKUP_S3_URI` (voir plus haut). Sans l'une de ces variables, les dumps restent sur
+  l'hôte et ne survivent pas à sa perte.
 - **Persistance des volumes** : `postgres_data` et `minio_data` (docker-compose.prod.yml)
   doivent être sur un disque persistant et inclus dans la stratégie de sauvegarde de l'hôte.
 - **Chiffrement** : si les dumps quittent l'hôte, les chiffrer (`age`, `gpg`) — ils

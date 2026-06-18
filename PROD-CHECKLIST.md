@@ -102,8 +102,9 @@ Voir `scripts/README.md`. Testés de bout en bout (dump → restauration scratch
   15 3 * * * BACKUP_DIR=/var/backups/howners /opt/howners/scripts/db-backup.sh >> /var/log/howners-backup.log 2>&1
   0  4 * * 0 BACKUP_DIR=/var/backups/howners /opt/howners/scripts/db-restore.sh --verify-latest >> /var/log/howners-backup.log 2>&1
   ```
-- [ ] 🔴 **Copie off-site** des dumps (S3/MinIO/`rclone`) — un backup sur le seul hôte ne
-  protège pas d'une perte de l'hôte
+- [x] **Copie off-site** intégrée à `db-backup.sh` (best-effort après chaque dump) — reste à
+  renseigner `BACKUP_RCLONE_REMOTE` **ou** `BACKUP_S3_URI` côté serveur (un backup sur le
+  seul hôte ne protège pas d'une perte de l'hôte)
 - [ ] 🟡 Brancher `BACKUP_HEALTHCHECK_URL` (healthchecks.io) pour être alerté si le backup ne tourne pas
 - [ ] 🟡 Vérifier la persistance des volumes `postgres_data` et `minio_data`
 - [ ] 🟡 Tester une **restauration** au moins une fois — `./scripts/db-restore.sh --verify-latest`
@@ -117,18 +118,19 @@ Voir `scripts/README.md`. Testés de bout en bout (dump → restauration scratch
 - [ ] 🔴 Créer le **webhook prod** Stripe → `https://api.howners.com/api/webhooks/stripe`,
   événements : `customer.subscription.*`, `payment_intent.succeeded`, `payment_intent.payment_failed`.
   Copier le signing secret dans `STRIPE_WEBHOOK_SECRET`.
-- [ ] 🟡 Créer les **Prices** des plans payants (mensuel + annuel) côté Stripe, puis renseigner
-  `stripe_price_id_monthly` / `stripe_price_id_annual` en base — **notamment le plan AGENCE**
-  (inséré par le changelog 068 avec des `stripe_price_id` à `NULL`) :
-  ```sql
-  UPDATE subscription_plans SET stripe_price_id_monthly='price_xxx', stripe_price_id_annual='price_yyy' WHERE name='AGENCE';
+- [ ] 🟡 Créer les **Prices** des plans payants (PRO, PREMIUM, AGENCE — mensuel + annuel) côté
+  Stripe et renseigner `stripe_price_id_*` en base. **Turnkey** via le script fourni (idempotent) :
+  ```bash
+  STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh --dry-run   # aperçu
+  STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh             # crée + écrit en base
   ```
 - [ ] 🟡 Activer Stripe Connect (Express) si l'encaissement des loyers est dans le scope du lancement
 - [ ] 🟡 Test de bout en bout : abonnement réel en mode test → vérifier conversion + récompense parrainage + email (MailHog/prod)
 
 ### 3.2 Données métier
-- [ ] 🟡 **Indices IRL 2025-2026** : le seed (changelog 071) s'arrête à T4 2024. Compléter via
-  `POST /api/irl-indices` (rôle ADMIN) avec les valeurs publiées sur insee.fr (série 001515333).
+- [x] **Indices IRL** : valeurs 2022→2026 T1 seedées et corrigées (changelogs 071 + 078,
+  vérifiées sur la table ANIL). Compléter les trimestres suivants via `POST /api/irl-indices`
+  (rôle ADMIN) au fil des publications INSEE (série 001515333).
   Sans ça, la révision de loyer échoue avec « indice manquant ».
 - [ ] 🟠 Vérifier/retirer les données seed de démo (`054`, `055`, `056`…) si présence non souhaitée en prod
 
@@ -207,8 +209,8 @@ docker compose -f docker-compose.prod.yml logs -f backend
 | 1 | Secrets compromis révoqués (Gmail, DocuSign) + historique purgé | ✅ fait | — |
 | 2 | Secrets de prod générés, `.env` hors Git | ✅ fait (infra) — reste à remplir Stripe/SMTP/domaine | toi |
 | 3 | HTTPS + reverse proxy (Caddy) | ✅ config faite — reste DNS (2 A records) | toi (DNS) |
-| 4 | Backups PostgreSQL + restauration testée | ✅ scripts faits & testés — reste cron + off-site | toi (serveur) |
-| 5 | Stripe live + webhook prod | ⛔ compte Stripe requis | toi |
+| 4 | Backups PostgreSQL + restauration testée | ✅ scripts faits & testés (off-site intégré) — reste cron + 1 var off-site | toi (serveur) |
+| 5 | Stripe live + webhook prod | ✅ création des Prices scriptée (`setup-stripe-prices.sh`) — reste clés live + webhook (compte Stripe) | toi |
 | 6 | SMTP réel fonctionnel | ⛔ compte fournisseur requis | toi |
 | 7 | Documents légaux relus par un juriste | ⛔ avocat requis | toi |
 
