@@ -89,8 +89,19 @@ TLS Let's Encrypt automatique, redirection HTTP→HTTPS, HSTS.
 - [ ] 🟡 Rebuild l'image frontend après modification
 
 ### 2.3 Images & registry
-La CI (`.github/workflows/ci.yml`) build les images mais ne les pousse pas.
-- [ ] 🟠 Configurer un registry (GHCR/DockerHub/ECR) et ajouter le `docker push` à la CI
+La CI (`.github/workflows/ci.yml`) build **et pousse** les images sur **GHCR** à chaque
+push sur `main` : `ghcr.io/m-annabi/howners-backend` et `…/howners-frontend`
+(tags `latest` + sha court). Sur les PR, les images sont buildées sans push (validation).
+
+- [x] CI pousse les images Docker (GHCR via `GITHUB_TOKEN`, `packages: write`)
+- [ ] 🔴 **Premier push** : GitHub crée les packages en **privé**. Sur le serveur de prod,
+  s'authentifier à GHCR pour les pull :
+  ```bash
+  echo "$GHCR_PAT" | docker login ghcr.io -u <user> --password-stdin   # PAT scope read:packages
+  ```
+  (ou rendre les packages publics : UI GitHub → Packages → Package settings.)
+- [ ] 🟡 Déployer depuis le registry : dans `docker-compose.prod.yml`, commenter `build:` et
+  décommenter `image: ghcr.io/m-annabi/howners-*:latest`, puis `docker compose pull && up -d`.
 - [ ] 🟠 (multi-instance) Externaliser le rate-limiting en Redis — actuellement en mémoire par instance
 
 ### 2.4 Sauvegardes

@@ -23,6 +23,9 @@ services:
     restart: unless-stopped
 
   backend:
+    # Build local par défaut. Pour déployer l'image construite par la CI (GHCR),
+    # commenter `build:` et décommenter `image:` ci-dessous, puis `docker compose pull`.
+    # image: ghcr.io/m-annabi/howners-backend:latest
     build:
       context: ./howners-back
       dockerfile: Dockerfile
@@ -48,6 +51,7 @@ services:
           memory: 1G
 
   frontend:
+    # image: ghcr.io/m-annabi/howners-frontend:latest   # cf. note sur le service backend
     build:
       context: ./howners-api
       dockerfile: Dockerfile

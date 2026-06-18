@@ -53,15 +53,50 @@ jobs:
         run: npx ng build
 
   docker:
-    name: Docker — Build Images
+    name: Docker — Build & Push
     runs-on: ubuntu-latest
     needs: [backend, frontend]
-    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write   # nécessaire pour pousser sur GHCR via GITHUB_TOKEN
+    strategy:
+      matrix:
+        include:
+          - image: howners-backend
+            context: ./howners-back
+          - image: howners-frontend
+            context: ./howners-api
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build backend image
-        run: docker build -t howners-backend:${{ github.sha }} ./howners-back
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build frontend image
-        run: docker build -t howners-frontend:${{ github.sha }} ./howners-api
+      # Connexion à GHCR uniquement lors d'un push (les PR ne poussent pas → pas de secret requis).
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          # Push seulement sur push to main ; sur PR on build pour valider le Dockerfile.
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
