@@ -41,18 +41,19 @@ juridique (génération de clauses potentiellement non conformes sans relecture 
 
 **Action** : faire reviewer les deux templates par un cabinet (Captain Contrat, Eurojuris, ou avocat indépendant immobilier). Coût ~500-1500 €.
 
-## #7 — Angular Universal (SSR)
+## #7 — Angular Universal (SSR) — ✅ FAIT (pre-rendering)
 
-**Quoi** : La landing publique `/` est en pur Angular SPA. Googlebot voit `<app-root></app-root>` vide avant que le JS bootstrappe le contenu. Mauvais pour le SEO.
+Pre-rendering `@nguniversal/builders` en place : la landing `/` est rendue en HTML statique
+à la build (`npm run prerender`), servie telle quelle par nginx (pas de SSR runtime / pas
+d'infra Node supplémentaire). Le `<app-root>` n'est plus vide pour les crawlers.
 
-**Pourquoi je n'ai pas livré** :
-- `ng add @angular/ssr` modifie ~30 fichiers (build, server.ts, polyfills, app.config.server.ts).
-- Sur Angular 15 (pas la version la plus à jour), `@angular/ssr` peut nécessiter un upgrade vers Angular 16+ d'abord — risque de casser des features actuelles.
-- À déployer ensuite via Node SSR worker (vs serve statique simple) → infra plus lourde.
+Correctifs SSR appliqués (globals navigateur) : `StorageService` (localStorage), 
+`InAppNotificationService` (polling désactivé en SSR), `LandingComponent` (DOCUMENT injecté).
+Le JSON-LD SoftwareApplication est inclus dans le HTML pré-rendu.
 
-**Alternative simple** : pré-rendering à la build via `@nguniversal/builders` pour les routes statiques (`/`, `/auth/login`, FAQ). Pas de SSR runtime, juste un HTML statique avec contenu pré-rempli, plus rapide à mettre en place.
-
-**Coût estimé** : 1-2 jours pour pre-rendering, 3-4 jours pour SSR complet.
+**Reste possible** : prérendre d'autres routes publiques (`/auth/login`, `/auth/register`) en
+les ajoutant à la liste `routes` du target `prerender` (angular.json) après avoir vérifié leur
+SSR-safety ; ou passer au SSR runtime (`serve:ssr`, déjà scaffoldé via `server.ts`).
 
 ## #11-15 — Stratégique (out of code scope)
 
