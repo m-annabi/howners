@@ -94,9 +94,22 @@ La CI (`.github/workflows/ci.yml`) build les images mais ne les pousse pas.
 - [ ] 🟠 (multi-instance) Externaliser le rate-limiting en Redis — actuellement en mémoire par instance
 
 ### 2.4 Sauvegardes
-- [ ] 🔴 Backup automatique quotidien de PostgreSQL (`pg_dump` + rétention)
+Scripts fournis : `scripts/db-backup.sh` (dump custom + intégrité + rétention) et
+`scripts/db-restore.sh` (restauration + mode `--verify-latest` non destructif).
+Voir `scripts/README.md`. Testés de bout en bout (dump → restauration scratch → 41 tables).
+
+- [x] Script de **backup** PostgreSQL (`pg_dump -Fc` + contrôle PGDMP + rétention/MIN_KEEP)
+- [x] Script de **restauration** + vérification non destructive (`--verify-latest`)
+- [ ] 🔴 Installer le **cron quotidien** sur le serveur (ligne dans `scripts/README.md`)
+  ```cron
+  15 3 * * * BACKUP_DIR=/var/backups/howners /opt/howners/scripts/db-backup.sh >> /var/log/howners-backup.log 2>&1
+  0  4 * * 0 BACKUP_DIR=/var/backups/howners /opt/howners/scripts/db-restore.sh --verify-latest >> /var/log/howners-backup.log 2>&1
+  ```
+- [ ] 🔴 **Copie off-site** des dumps (S3/MinIO/`rclone`) — un backup sur le seul hôte ne
+  protège pas d'une perte de l'hôte
+- [ ] 🟡 Brancher `BACKUP_HEALTHCHECK_URL` (healthchecks.io) pour être alerté si le backup ne tourne pas
 - [ ] 🟡 Vérifier la persistance des volumes `postgres_data` et `minio_data`
-- [ ] 🟡 Tester une **restauration** au moins une fois (un backup non testé n'existe pas)
+- [ ] 🟡 Tester une **restauration** au moins une fois — `./scripts/db-restore.sh --verify-latest`
 
 ---
 

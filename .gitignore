@@ -7,6 +7,12 @@
 !.env.example
 !**/.env.example
 
+# Sauvegardes base de données — ne jamais committer (contiennent les données clients)
+*.dump
+*.sql.gz
+backups/
+/var/backups/
+
 # IDE
 .vscode/
 .idea/
