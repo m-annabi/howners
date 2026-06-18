@@ -3,10 +3,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY . .
-RUN npx ng build --configuration=production
+# Prérend les routes publiques (landing) en HTML statique : meilleur SEO + paint.
+# La sortie est dans dist/howners-api/browser/ (le serveur SSR dans server/ n'est pas servi).
+RUN npm run prerender
 
 FROM nginx:1.25-alpine
-COPY --from=build /app/dist/howners-api /usr/share/nginx/html
+COPY --from=build /app/dist/howners-api/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 RUN chown -R nginx:nginx /usr/share/nginx/html
 EXPOSE 80

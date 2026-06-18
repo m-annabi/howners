@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { SeoService } from '../../core/services/seo.service';
@@ -12,7 +13,8 @@ export class LandingComponent implements OnInit {
   constructor(
     private router: Router,
     private auth: AuthService,
-    private seoService: SeoService
+    private seoService: SeoService,
+    @Inject(DOCUMENT) private document: Document
   ) {}
 
   ngOnInit(): void {
@@ -48,7 +50,7 @@ export class LandingComponent implements OnInit {
   }
 
   private injectJsonLd(): void {
-    const existing = document.getElementById('howners-jsonld');
+    const existing = this.document.getElementById('howners-jsonld');
     if (existing) existing.remove();
 
     const ld = {
@@ -74,10 +76,10 @@ export class LandingComponent implements OnInit {
       ]
     };
 
-    const script = document.createElement('script');
+    const script = this.document.createElement('script');
     script.id = 'howners-jsonld';
     script.type = 'application/ld+json';
     script.text = JSON.stringify(ld);
-    document.head.appendChild(script);
+    this.document.head.appendChild(script);
   }
 }

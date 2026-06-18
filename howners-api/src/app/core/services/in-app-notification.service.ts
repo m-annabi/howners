@@ -1,4 +1,5 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable, Subscription, interval, of } from 'rxjs';
 import { map, switchMap, catchError, filter } from 'rxjs/operators';
 import { InAppNotification, InAppNotificationType } from '../models/in-app-notification.model';
@@ -34,8 +35,13 @@ export class InAppNotificationService implements OnDestroy {
 
   constructor(
     private notificationCenterService: NotificationCenterService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    @Inject(PLATFORM_ID) platformId: Object
   ) {
+    // En SSR/prerender : pas de polling (un interval garderait l'app instable → render bloqué).
+    if (!isPlatformBrowser(platformId)) {
+      return;
+    }
     if (this.isAuthenticated()) {
       this.loadNotifications();
       this.loadUnreadCount();
