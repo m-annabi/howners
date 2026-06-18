@@ -13,41 +13,27 @@ Légende : 🔴 bloquant · 🟡 important · 🟠 à planifier
 
 ## Phase 0 — Pré-déploiement (code)
 
-- [x] Travail des 10 chantiers business committé et poussé (`13eda13` sur `origin/main`)
-- [ ] 🔴 `cd howners-back && ./mvnw clean test` → **132 tests verts**
-- [ ] 🔴 `cd howners-api && npm run build` → build prod sans erreur (warnings de budget tolérés)
+- [x] Travail des 10 chantiers business committé et poussé sur `origin/main`
+- [x] `cd howners-back && ./mvnw clean test` → **137 tests verts** (vérifié)
+- [x] `cd howners-api && npm run build` → build prod OK (vérifié)
 - [ ] 🟡 Relire le diff de `application-prod.yml` : `ddl-auto: none`, swagger désactivé, logs en WARN
-- [ ] 🟡 Confirmer qu'aucun `.env` n'est suivi par Git : `git ls-files | grep -E '\.env$'` → **vide**
+- [x] Aucun `.env` suivi par Git (`.gitignore` durci `.env.*`, vérifié)
 
 ---
 
 ## Phase 1 — 🔴 Sécurité : secrets (BLOQUANT)
 
-### 1.1 Révoquer les secrets compromis (historique Git)
-Voir `SECURITY-ROTATION.md` pour le détail. Ces secrets sont **définitivement exposés**.
+### 1.1 Révoquer les secrets compromis (historique Git) — ✅ FAIT
+Voir `SECURITY-ROTATION.md`. L'historique Git a aussi été purgé (`restart-backend.sh`
+retiré de toutes les branches via `git filter-repo` + force-push).
 
-- [ ] 🔴 **Gmail** : supprimer le mot de passe d'app `***REVOKED***` sur
-  https://myaccount.google.com/apppasswords. Idéalement migrer vers SendGrid/Brevo/Postmark.
-- [ ] 🔴 **DocuSign** : révoquer la RSA keypair + integration key compromise sur
-  https://account-d.docusign.com (Settings → Apps and Keys). La clé RSA permet de
-  signer des JWT d'impersonation → priorité absolue.
-- [ ] 🔴 Vérifier que les anciennes clés ne fonctionnent plus (procédure curl dans `SECURITY-ROTATION.md`)
+- [x] **Gmail** : mot de passe d'app révoqué (confirmé). Migrer vers un fournisseur transactionnel reste recommandé.
+- [x] **DocuSign** : RSA keypair + integration key révoquées (confirmé).
+- [x] Historique Git purgé des secrets (branches `main`, `Olivier`, `claude/…`). Résiduel : `refs/pull/1/head` (géré par GitHub, demander purge au support si besoin).
 
 ### 1.2 Générer les secrets de production
-- [ ] 🔴 `JWT_SECRET` — min 64 caractères, aléatoire :
-  ```bash
-  openssl rand -base64 64 | tr -d '\n'
-  ```
-  (`StartupConfigValidator` refuse de démarrer en prod si le secret par défaut est utilisé.)
-- [ ] 🔴 `POSTGRES_PASSWORD` et `MINIO_ROOT_PASSWORD` — forts et uniques :
-  ```bash
-  openssl rand -base64 32
-  ```
-- [ ] 🔴 Créer le `.env` de prod à partir de `.env.example`, **hors Git**, permissions `600` :
-  ```bash
-  cp .env.example .env && chmod 600 .env
-  # puis remplir chaque variable (cf. liste ci-dessous)
-  ```
+- [x] `JWT_SECRET` (72 ch.), `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD` générés dans `.env.prod` (chmod 600, gitignoré)
+- [ ] 🔴 Compléter `.env.prod` avec les valeurs **externes** : Stripe live, SMTP, domaine, CORS (cf. 1.3 + Phase 3)
 
 ### 1.3 Variables d'environnement à renseigner (`.env`)
 | Variable | Valeur prod |
@@ -216,10 +202,15 @@ docker compose -f docker-compose.prod.yml logs -f backend
 
 ## Récapitulatif des bloquants 🔴 avant ouverture publique
 
-1. Secrets compromis révoqués (Gmail, DocuSign)
-2. Secrets de prod générés, `.env` hors Git
-3. HTTPS + reverse proxy en place
-4. Backups PostgreSQL automatiques + restauration testée
-5. Stripe live + webhook prod configurés
-6. SMTP réel fonctionnel
-7. Documents légaux relus par un juriste
+| # | Bloquant | Statut | Qui |
+|---|---|---|---|
+| 1 | Secrets compromis révoqués (Gmail, DocuSign) + historique purgé | ✅ fait | — |
+| 2 | Secrets de prod générés, `.env` hors Git | ✅ fait (infra) — reste à remplir Stripe/SMTP/domaine | toi |
+| 3 | HTTPS + reverse proxy (Caddy) | ✅ config faite — reste DNS (2 A records) | toi (DNS) |
+| 4 | Backups PostgreSQL + restauration testée | ✅ scripts faits & testés — reste cron + off-site | toi (serveur) |
+| 5 | Stripe live + webhook prod | ⛔ compte Stripe requis | toi |
+| 6 | SMTP réel fonctionnel | ⛔ compte fournisseur requis | toi |
+| 7 | Documents légaux relus par un juriste | ⛔ avocat requis | toi |
+
+**Codable côté Howners : terminé.** Les bloquants restants sont des actions externes
+(DNS, serveur, comptes Stripe/SMTP, avocat) que le code ne peut pas déverrouiller.
