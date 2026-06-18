@@ -3,5 +3,7 @@
 export const environment = {
   production: true,
   apiUrl: 'https://api.howners.com/api',
-  wsUrl: 'https://api.howners.com'
+  wsUrl: 'https://api.howners.com',
+  // Renseigner le DSN Sentry du projet front au build (ou via substitution sed).
+  sentryDsn: ''
 };

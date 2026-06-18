@@ -148,7 +148,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        # prometheus est protégé par ADMIN dans SecurityConfig (/actuator/** hasRole ADMIN).
+        # En prod, le restreindre en plus à une IP interne via le reverse proxy / LB.
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: when-authorized
@@ -160,6 +162,13 @@ management:
     # useful signal of overall app health.
     mail:
       enabled: false
+
+# Observabilité Sentry — branché via l'appender Logback (logback-spring.xml).
+# No-op tant que SENTRY_DSN est vide. Cf. OBSERVABILITY.md.
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:dev}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
 
 # Howners-specific upload guards. The per-owner document quota is enforced in
 # DocumentService.uploadDocument — see SECURITY-ROTATION.md for prod guidance.

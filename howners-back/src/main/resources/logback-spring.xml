@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuration logback de Howners.
+
+  - Réutilise l'appender CONSOLE de Spring Boot (respecte `logging.pattern.console`
+    et `logging.level.*` définis dans application*.yml).
+  - Ajoute un appender Sentry qui remonte les logs ERROR comme événements et les
+    logs INFO comme breadcrumbs. Entièrement piloté par `sentry.dsn` :
+    si le DSN est vide (dev / CI), Sentry démarre désactivé → aucun envoi réseau.
+
+  Voir OBSERVABILITY.md pour le branchement (DSN, sample rate, environnement).
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty name="SENTRY_DSN" source="sentry.dsn" defaultValue=""/>
+    <springProperty name="SENTRY_ENV" source="sentry.environment" defaultValue="dev"/>
+
+    <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
+        <options>
+            <dsn>${SENTRY_DSN}</dsn>
+            <environment>${SENTRY_ENV}</environment>
+        </options>
+        <minimumEventLevel>ERROR</minimumEventLevel>
+        <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
+    </appender>
+
+    <!-- Le niveau réel du root est piloté par `logging.level.root`
+         (INFO en dev, WARN en prod) ; Spring Boot l'applique après ce fichier. -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="SENTRY"/>
+    </root>
+</configuration>

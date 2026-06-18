@@ -6,53 +6,48 @@ Spring Boot Actuator endpoints, available at `http://localhost:8080/actuator/*`:
 
 | Endpoint | Auth | Purpose |
 |---|---|---|
-| `/actuator/health` | public | liveness + readiness (`/health/liveness`, `/health/readiness`) |
-| `/actuator/info` | public | git commit (when `info.git.mode=simple` is in classpath) |
-| `/actuator/metrics` | public | JVM, HTTP, DB pool, Liquibase, etc. |
-| `/actuator/prometheus` | public | Prometheus scrape format |
+| `/actuator/health` | **public** | liveness + readiness (`/health/liveness`, `/health/readiness`) |
+| `/actuator/info` | **ADMIN** | git commit (when `info.git.mode=simple` is in classpath) |
+| `/actuator/metrics` | **ADMIN** | JVM, HTTP, DB pool, Liquibase, etc. |
+| `/actuator/prometheus` | **ADMIN** | Prometheus scrape format (micrometer registry) |
 
-The path matchers `permitAll` for `/actuator/**` in `SecurityConfig` so a Prometheus or Kubernetes probe can hit them without auth. **In prod**, lock `/actuator/prometheus` to an internal IP via the load balancer.
+`SecurityConfig` permits only `/actuator/health`, then gates the rest behind `hasRole("ADMIN")`
+(`/actuator/**`). Exposure is controlled by `management.endpoints.web.exposure.include` in
+`application.yml` (`health,info,metrics,prometheus`).
 
-## Sentry (backend) — to plug
+**In prod**, a Prometheus scraper hitting `/actuator/prometheus` must authenticate as ADMIN —
+prefer to additionally restrict it to an internal IP via the reverse proxy / load balancer, or
+scrape over the Docker-internal network only.
 
-Add to `howners-back/pom.xml`:
+## Sentry (backend) — wired ✅
 
-```xml
-<dependency>
-    <groupId>io.sentry</groupId>
-    <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
-    <version>7.x.x</version>
-</dependency>
-```
+Branché via l'**appender Logback** (`io.sentry:sentry-logback`), pas le starter Spring Boot.
+Raison : le starter cible l'auto-config Spring Boot 3.x ; l'appender Logback est indépendant de
+la version de Boot (ici 4.0.2) et ne dépend que de Logback (déjà présent).
 
-Set the DSN in `.env`:
+- Dépendance : `io.sentry:sentry-logback` (`${sentry.version}` dans `pom.xml`).
+- Config : `howners-back/src/main/resources/logback-spring.xml` — appender `SENTRY`
+  (ERROR → événements, INFO → breadcrumbs) ajouté à côté de la console.
+- Piloté par `application.yml` → `sentry.dsn / sentry.environment` (= `SENTRY_*` du `.env`).
+
+Activer en prod : renseigner dans `.env`
 ```
 SENTRY_DSN=https://your-key@sentry.io/your-project-id
-SENTRY_TRACES_SAMPLE_RATE=0.1   # 10% of transactions, adjust by traffic
-SENTRY_ENVIRONMENT=prod         # or staging, dev
+SENTRY_ENVIRONMENT=prod
+SENTRY_TRACES_SAMPLE_RATE=0.1
 ```
+DSN vide ⇒ Sentry démarre désactivé (aucun envoi réseau). C'est l'état par défaut en dev/CI.
 
-`application.yml` will pick them up automatically (Sentry starter reads `SENTRY_*`).
+## Sentry (frontend Angular) — wired ✅
 
-## Sentry (frontend Angular)
+Package `@sentry/angular-ivy@7` (compatible Angular 15 ; `@sentry/angular` v8 vise Angular 14+
+avec des APIs différentes).
 
-```bash
-cd howners-api
-npm install @sentry/angular
-```
-
-In `src/main.ts`:
-```ts
-import * as Sentry from '@sentry/angular';
-Sentry.init({
-  dsn: environment.sentryDsn,
-  environment: environment.production ? 'prod' : 'dev',
-  tracesSampleRate: 0.1,
-  integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
-});
-```
-
-Set `sentryDsn` in `src/environments/environment*.ts`.
+- `src/main.ts` : `Sentry.init(...)` exécuté **uniquement si** `environment.sentryDsn` est non vide.
+- `src/app/app.module.ts` : `ErrorHandler` Sentry fourni conditionnellement (DSN présent) ;
+  sinon le `ErrorHandler` Angular par défaut est conservé (logs console en dev).
+- `sentryDsn` (vide par défaut) dans `src/environments/environment*.ts` — renseigner le DSN du
+  projet front au build pour la prod.
 
 ## Datadog (alternative)
 

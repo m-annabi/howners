@@ -31,6 +31,7 @@
 		<jjwt.version>0.12.5</jjwt.version>
 		<aws.sdk.version>2.21.0</aws.sdk.version>
 		<itext.version>8.0.3</itext.version>
+		<sentry.version>7.18.0</sentry.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -48,6 +49,21 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!-- Observabilité : métriques Prometheus (endpoint ADMIN-gated) -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+
+		<!-- Observabilité : envoi des erreurs vers Sentry via Logback.
+		     Approche appender (pas le starter Spring) → indépendante de l'auto-config Boot 4.
+		     No-op si SENTRY_DSN absent. -->
+		<dependency>
+			<groupId>io.sentry</groupId>
+			<artifactId>sentry-logback</artifactId>
+			<version>${sentry.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -132,11 +132,14 @@ La CI (`.github/workflows/ci.yml`) build les images mais ne les pousse pas.
 
 Voir `OBSERVABILITY.md` pour les procédures détaillées.
 
-- [ ] 🟡 **Sentry** backend + frontend (free tier suffit pour démarrer)
+- [x] **Sentry câblé** backend (appender Logback) + frontend (`@sentry/angular-ivy`), gated sur DSN
+- [x] `/actuator/**` (hors `/health`) **réservé à ADMIN** en prod (vérifié : 401 sans auth)
+- [x] Métriques **Prometheus** exposées (`/actuator/prometheus`, ADMIN-gated)
+- [ ] 🟡 Créer les projets **Sentry** (back + front), renseigner `SENTRY_DSN` (.env) et
+  `sentryDsn` (`environment.prod.ts`). DSN vide ⇒ Sentry off (no-op).
 - [ ] 🟡 **Uptime monitoring** sur `https://api.howners.com/actuator/health` (UptimeRobot, etc.)
-- [ ] 🟡 Vérifier que `/actuator/**` (hors `/health`) reste **réservé à ADMIN** en prod
 - [ ] 🟠 Agrégation des logs (les conteneurs loggent sur stdout → brancher journald/CloudWatch/Loki)
-- [ ] 🟠 `/actuator/prometheus` sécurisé si scrapé par Prometheus
+- [ ] 🟠 Restreindre `/actuator/prometheus` à une IP interne via le reverse proxy si scrapé
 
 ---
 
