@@ -31,6 +31,12 @@ BACKUP_DIR="${BACKUP_DIR:-/var/backups/howners}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
 BACKUP_MIN_KEEP="${BACKUP_MIN_KEEP:-3}"
 BACKUP_HEALTHCHECK_URL="${BACKUP_HEALTHCHECK_URL:-}"
+# Copie off-site (un backup sur le seul hôte ne protège pas d'une perte de l'hôte).
+# Renseigner l'UN des deux :
+#   BACKUP_RCLONE_REMOTE  ex: "s3prod:howners-backups/db"   (rclone copy)
+#   BACKUP_S3_URI         ex: "s3://howners-backups/db/"     (aws s3 cp)
+BACKUP_RCLONE_REMOTE="${BACKUP_RCLONE_REMOTE:-}"
+BACKUP_S3_URI="${BACKUP_S3_URI:-}"
 ENV_FILE="${ENV_FILE:-$REPO_ROOT/.env}"
 
 log()  { printf '%s [db-backup] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
@@ -87,6 +93,31 @@ SIZE="$(wc -c < "$TMP" | tr -d ' ')"
 
 mv "$TMP" "$DEST"
 log "OK — $(du -h "$DEST" | cut -f1) ($SIZE octets). Vérification approfondie : scripts/db-restore.sh --verify-latest"
+
+# --- Copie off-site (best-effort : un échec n'invalide pas le backup local) ---
+if [ -n "$BACKUP_RCLONE_REMOTE" ]; then
+  if command -v rclone >/dev/null 2>&1; then
+    if rclone copy "$DEST" "$BACKUP_RCLONE_REMOTE" 2>&1; then
+      log "Off-site OK (rclone) → $BACKUP_RCLONE_REMOTE"
+    else
+      log "ATTENTION: copie off-site rclone échouée (backup local conservé)"
+    fi
+  else
+    log "ATTENTION: BACKUP_RCLONE_REMOTE défini mais 'rclone' introuvable"
+  fi
+elif [ -n "$BACKUP_S3_URI" ]; then
+  if command -v aws >/dev/null 2>&1; then
+    if aws s3 cp "$DEST" "$BACKUP_S3_URI" >/dev/null 2>&1; then
+      log "Off-site OK (aws s3) → $BACKUP_S3_URI"
+    else
+      log "ATTENTION: copie off-site S3 échouée (backup local conservé)"
+    fi
+  else
+    log "ATTENTION: BACKUP_S3_URI défini mais 'aws' introuvable"
+  fi
+else
+  log "Off-site non configuré (BACKUP_RCLONE_REMOTE / BACKUP_S3_URI vides) — backup local uniquement."
+fi
 
 # --- Rétention : purge > RETENTION_DAYS, en gardant toujours les MIN_KEEP plus récents ---
 n=0

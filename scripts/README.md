@@ -21,6 +21,12 @@ Variables (défauts) : `POSTGRES_CONTAINER` [howners-postgres] · `BACKUP_DIR`
 `BACKUP_HEALTHCHECK_URL` [] (ping de succès → dead-man switch, ex. healthchecks.io) ·
 `ENV_FILE` [`<repo>/.env`] d'où sont lus `POSTGRES_USER/DB/PASSWORD`.
 
+**Copie off-site** (recommandée — un backup sur le seul hôte ne protège pas d'une perte
+de l'hôte). Renseigner l'UN des deux ; la copie est best-effort (un échec n'invalide pas
+le backup local) :
+- `BACKUP_RCLONE_REMOTE` — ex. `s3prod:howners-backups/db` (nécessite `rclone` configuré)
+- `BACKUP_S3_URI` — ex. `s3://howners-backups/db/` (nécessite l'AWS CLI configurée)
+
 `BACKUP_MIN_KEEP` est un garde-fou : on conserve toujours les N dumps les plus récents,
 même au-delà de la rétention — ainsi un cron en panne ne purge jamais tout à zéro.
 
