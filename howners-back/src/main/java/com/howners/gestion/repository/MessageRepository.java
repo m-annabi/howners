@@ -21,6 +21,8 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     @Query("SELECT COUNT(m) FROM Message m WHERE m.recipient.id = :userId AND m.isRead = false")
     long countUnreadByRecipientId(@Param("userId") UUID userId);
 
+    List<Message> findBySenderId(UUID senderId);
+
     @Query(value = "SELECT DISTINCT ON (partner_id) * FROM (" +
            "SELECT m.*, CASE WHEN m.sender_id = :userId THEN m.recipient_id ELSE m.sender_id END AS partner_id " +
            "FROM messages m WHERE m.sender_id = :userId OR m.recipient_id = :userId" +

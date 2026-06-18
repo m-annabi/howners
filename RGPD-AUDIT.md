@@ -8,7 +8,7 @@ Vérifié manuellement contre `owner1@howners.test` :
 |---|---|---|
 | `GET /api/rgpd/export` | 200 — JSON | personalInfo, properties[], rentals[], contracts[], payments[], messages[], etc. |
 | `GET /api/rgpd/export/pdf` | 200 — PDF 1.8 KB | Rendu propre via iText |
-| `POST /api/rgpd/erasure` | défini | Anonymise `users.anonymized_at` + flag `is_anonymized` |
+| `POST /api/rgpd/erasure` | ✅ effectif | Pseudonymise le compte + **supprime les pièces PII sur S3** (+ efface les métadonnées de la ligne) + **conserve les documents à obligation légale** sous legal hold + **anonymise les messages émis** + trace la demande (`rgpd_requests`) |
 | `GET /api/rgpd/consent` | 200 — JSON | Liste `user_consents` enregistrés |
 | `POST /api/rgpd/consent` | 200 | Enregistre un nouveau consent |
 
@@ -23,19 +23,26 @@ L'export JSON ne télécharge **pas** les fichiers binaires stockés sur S3 (`do
 
 **Recommandation** : générer un ZIP `export-{userId}-{date}.zip` à la demande, avec JSON + tous les fichiers. Endpoint `/api/rgpd/export/archive` à ajouter.
 
-### 2. Effacement effectif
-`POST /api/rgpd/erasure` met `is_anonymized=true` mais **ne supprime pas** :
-- Les documents sur S3 (PII visibles : cartes d'identité, justificatifs de revenus…)
-- Les messages échangés
-- Les contrats signés (à garder pour valeur probante 5 ans après fin de bail, mais doivent être anonymisés)
+### 2. Effacement effectif — ✅ FAIT
+`POST /api/rgpd/erasure` (`RgpdService.anonymizeUser`) :
+- **Supprime les pièces personnelles (PII) sur S3** (`storageService.deleteFile`) et efface les
+  métadonnées de la ligne `documents` (le nom de fichier peut contenir du PII).
+- **Conserve** les documents à obligation légale sous `legal_hold` (exception art. 17-3) :
+  baux, factures, quittances, états des lieux, mises en demeure, signatures
+  (`DocumentRetentionPolicy`, testée).
+- **Anonymise les messages émis** par l'utilisateur (corps → « [Supprimé à la demande de
+  l'utilisateur] »). Les messages reçus (rédigés par des tiers) ne sont pas touchés.
+- Les noms dénormalisés (`payer_name`, `tenant_name`…) sont **calculés** via `getFullName()`
+  donc déjà couverts par la pseudonymisation du compte.
 
-**Recommandation** : après `erasure`, lancer un job async qui :
-- Supprime les documents S3 sauf ceux à conservation légale obligatoire (loi 89 = baux 5 ans, factures 10 ans)
-- Remplace les contenus de messages par "[Supprimé à la demande de l'utilisateur]"
-- Anonymise tous les `payer_name`, `tenant_name`, etc. dénormalisés
+> Reste possible : un véritable traitement **asynchrone** (job) si le volume de documents
+> par utilisateur devient important. Aujourd'hui l'effacement est synchrone et transactionnel.
 
-### 3. Délais légaux
-Le RGPD demande de répondre sous **1 mois** (extensible à 3 si justifié). Aucun tracking d'une "demande RGPD reçue le ___". Solution : table `rgpd_requests` avec `requested_at`, `completed_at`, `type` (EXPORT, ERASURE).
+### 3. Délais légaux — ✅ FAIT
+Table `rgpd_requests` (migration 077) : `type` (EXPORT/ERASURE), `status`
+(RECEIVED→COMPLETED), `requested_at`, `completed_at`, `details`. Chaque export et chaque
+effacement y est tracé. `RgpdRequestRepository.findByStatusAndRequestedAtBefore` permet de
+lister les demandes dépassant le délai légal d'1 mois (à brancher sur une alerte/supervision).
 
 ### 4. Consent UI manquant côté frontend
 Il n'y a pas d'écran `/profile/rgpd` qui :

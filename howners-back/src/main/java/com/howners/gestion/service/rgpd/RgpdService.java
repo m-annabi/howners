@@ -5,6 +5,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.howners.gestion.domain.audit.AuditAction;
 import com.howners.gestion.domain.audit.ConsentType;
 import com.howners.gestion.domain.audit.UserConsent;
+import com.howners.gestion.domain.rgpd.RgpdRequest;
+import com.howners.gestion.domain.rgpd.RgpdRequestStatus;
+import com.howners.gestion.domain.rgpd.RgpdRequestType;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.audit.ConsentRequest;
 import com.howners.gestion.dto.audit.ConsentResponse;
@@ -42,17 +45,20 @@ public class RgpdService {
     private final ContractRepository contractRepository;
     private final PaymentRepository paymentRepository;
     private final DocumentRepository documentRepository;
+    private final MessageRepository messageRepository;
+    private final RgpdRequestRepository rgpdRequestRepository;
     private final AuditService auditService;
     private final PdfService pdfService;
     private final StorageService storageService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserDataExportResponse exportUserData() {
         UUID userId = AuthService.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         auditService.logAction(AuditAction.DATA_EXPORT, "User", userId);
+        recordCompletedRequest(user, RgpdRequestType.EXPORT, "Export des données personnelles fourni.");
 
         var personalInfo = new UserDataExportResponse.UserInfo(
                 user.getEmail(),
@@ -130,7 +136,7 @@ public class RgpdService {
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public byte[] exportUserDataAsPdf() throws IOException {
         UserDataExportResponse data = exportUserData();
 
@@ -164,6 +170,9 @@ public class RgpdService {
         return pdfService.generatePdf(html.toString(), "Export RGPD");
     }
 
+    private static final String PII_DELETED = "[supprimé-rgpd]";
+    private static final String MESSAGE_SCRUBBED = "[Supprimé à la demande de l'utilisateur]";
+
     @Transactional
     public void anonymizeUser() {
         UUID userId = AuthService.getCurrentUserId();
@@ -174,7 +183,14 @@ public class RgpdService {
             throw new BusinessException("User already anonymized");
         }
 
-        // Replace PII with anonymized values
+        // 1. Trace la demande d'effacement (délai légal d'1 mois) dès sa réception.
+        RgpdRequest request = rgpdRequestRepository.save(RgpdRequest.builder()
+                .user(user)
+                .type(RgpdRequestType.ERASURE)
+                .status(RgpdRequestStatus.RECEIVED)
+                .build());
+
+        // 2. Pseudonymise les données personnelles du compte.
         String anonymizedHash = UUID.randomUUID().toString().substring(0, 8);
         user.setEmail("anonymized-" + anonymizedHash + "@deleted.howners.com");
         user.setFirstName("Anonyme");
@@ -186,23 +202,69 @@ public class RgpdService {
         user.setAnonymizedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        // Delete user's files from storage
-        try {
-            documentRepository.findByUploaderId(userId).forEach(doc -> {
-                if (doc.getFileKey() != null) {
-                    try {
-                        storageService.deleteFile(doc.getFileKey());
-                    } catch (Exception e) {
-                        log.warn("Failed to delete file {} for anonymized user: {}", doc.getFileKey(), e.getMessage());
-                    }
+        // 3. Documents : conscient de la conservation légale.
+        //    - Pièces personnelles (PII) → suppression du fichier S3 + effacement des
+        //      métadonnées de la ligne (le nom de fichier peut contenir du PII).
+        //    - Documents à obligation légale → conservés sous legal hold (exception art. 17-3).
+        int deleted = 0;
+        int retained = 0;
+        for (var doc : documentRepository.findByUploaderId(userId)) {
+            if (DocumentRetentionPolicy.isRetainedOnErasure(doc.getDocumentType())) {
+                doc.setLegalHold(true);
+                documentRepository.save(doc);
+                retained++;
+                continue;
+            }
+            if (doc.getFileKey() != null && !PII_DELETED.equals(doc.getFileKey())) {
+                try {
+                    storageService.deleteFile(doc.getFileKey());
+                } catch (Exception e) {
+                    log.warn("Échec suppression S3 du fichier {} (effacement RGPD) : {}",
+                            doc.getFileKey(), e.getMessage());
                 }
-            });
-        } catch (Exception e) {
-            log.error("Error deleting files for anonymized user {}: {}", userId, e.getMessage());
+            }
+            // Champs NOT NULL → placeholder ; le reste effacé. La ligne reste comme tombstone auditable.
+            doc.setFileName(PII_DELETED);
+            doc.setFilePath(PII_DELETED);
+            doc.setFileKey(PII_DELETED);
+            doc.setFileUrl(null);
+            doc.setDescription(null);
+            doc.setMetadata(null);
+            doc.setDocumentHash(null);
+            doc.setIsArchived(true);
+            documentRepository.save(doc);
+            deleted++;
         }
 
+        // 4. Messages émis par l'utilisateur : contenu anonymisé (les messages reçus,
+        //    rédigés par des tiers, ne sont pas touchés).
+        int scrubbedMessages = 0;
+        for (var message : messageRepository.findBySenderId(userId)) {
+            message.setSubject(null);
+            message.setBody(MESSAGE_SCRUBBED);
+            messageRepository.save(message);
+            scrubbedMessages++;
+        }
+
+        // 5. Clôture la demande + audit.
+        request.markCompleted(String.format(
+                "%d document(s) PII supprimé(s), %d conservé(s) (obligation légale), %d message(s) anonymisé(s)",
+                deleted, retained, scrubbedMessages));
+        rgpdRequestRepository.save(request);
+
         auditService.logAction(AuditAction.DATA_ERASURE, "User", userId);
-        log.info("User {} anonymized successfully", userId);
+        log.info("Utilisateur {} effacé (RGPD) — {} docs supprimés, {} conservés, {} messages anonymisés",
+                userId, deleted, retained, scrubbedMessages);
+    }
+
+    private void recordCompletedRequest(User user, RgpdRequestType type, String details) {
+        RgpdRequest request = RgpdRequest.builder()
+                .user(user)
+                .type(type)
+                .status(RgpdRequestStatus.RECEIVED)
+                .build();
+        request.markCompleted(details);
+        rgpdRequestRepository.save(request);
     }
 
     @Transactional
