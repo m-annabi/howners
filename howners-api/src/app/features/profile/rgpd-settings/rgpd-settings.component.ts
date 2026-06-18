@@ -24,6 +24,7 @@ export class RgpdSettingsComponent implements OnInit, OnDestroy {
   loading = false;
   exporting = false;
   exportingPdf = false;
+  exportingArchive = false;
   deleting = false;
 
   ConsentType = ConsentType;
@@ -105,6 +106,26 @@ export class RgpdSettingsComponent implements OnInit, OnDestroy {
       error: () => {
         this.exportingPdf = false;
         this.notificationService.error('Erreur lors de l\'export PDF');
+      }
+    });
+  }
+
+  exportArchive(): void {
+    this.exportingArchive = true;
+    this.rgpdService.exportArchive().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'export-rgpd.zip';
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exportingArchive = false;
+        this.notificationService.success('Archive ZIP téléchargée');
+      },
+      error: () => {
+        this.exportingArchive = false;
+        this.notificationService.error('Erreur lors de l\'export de l\'archive');
       }
     });
   }

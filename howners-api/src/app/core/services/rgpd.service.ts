@@ -20,6 +20,10 @@ export class RgpdService {
     return this.http.get(`${this.apiUrl}/export/pdf`, { responseType: 'blob' });
   }
 
+  exportArchive(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export/archive`, { responseType: 'blob' });
+  }
+
   requestErasure(): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/erasure`, {});
   }

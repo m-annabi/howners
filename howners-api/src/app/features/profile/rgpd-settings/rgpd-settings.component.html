@@ -32,14 +32,21 @@
     </div>
     <div class="card-body">
       <p>Conformément au RGPD, vous pouvez télécharger l'intégralité de vos données personnelles.</p>
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary" (click)="exportJson()" [disabled]="exporting">
-          {{ exporting ? 'Export en cours...' : 'Exporter en JSON' }}
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-primary" (click)="exportArchive()" [disabled]="exportingArchive">
+          {{ exportingArchive ? 'Préparation...' : 'Tout télécharger (archive ZIP)' }}
+        </button>
+        <button class="btn btn-outline-primary" (click)="exportJson()" [disabled]="exporting">
+          {{ exporting ? 'Export en cours...' : 'Données seules (JSON)' }}
         </button>
         <button class="btn btn-outline-primary" (click)="exportPdf()" [disabled]="exportingPdf">
-          {{ exportingPdf ? 'Export en cours...' : 'Exporter en PDF' }}
+          {{ exportingPdf ? 'Export en cours...' : 'Résumé (PDF)' }}
         </button>
       </div>
+      <small class="text-muted d-block mt-2">
+        L'archive ZIP inclut vos données structurées (JSON) et tous vos fichiers téléversés
+        (portabilité, art. 20 RGPD).
+      </small>
     </div>
   </div>
 

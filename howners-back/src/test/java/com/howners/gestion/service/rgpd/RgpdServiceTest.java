@@ -26,10 +26,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.io.ByteArrayInputStream;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -166,5 +171,55 @@ class RgpdServiceTest {
         assertThat(cap.getValue().getType()).isEqualTo(RgpdRequestType.EXPORT);
         assertThat(cap.getValue().getStatus()).isEqualTo(RgpdRequestStatus.COMPLETED);
         verify(auditService).logAction(eq(AuditAction.DATA_EXPORT), eq("User"), eq(userId));
+    }
+
+    @Test
+    void archive_zipContientJsonNoticeEtFichiers() throws Exception {
+        Document photo = doc(DocumentType.PHOTOS, "k-photo", "salon.png");
+        photo.setCreatedAt(LocalDateTime.now()); // exportUserData sérialise createdAt
+        when(propertyRepository.findByOwnerId(userId)).thenReturn(List.of());
+        when(rentalRepository.findByOwnerId(userId)).thenReturn(List.of());
+        when(contractRepository.findByOwnerId(userId)).thenReturn(List.of());
+        when(paymentRepository.findByPayerId(userId)).thenReturn(List.of());
+        when(userConsentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(documentRepository.findByUploaderId(userId)).thenReturn(List.of(photo));
+        when(storageService.downloadFile("k-photo")).thenReturn(new byte[]{1, 2, 3, 4});
+
+        byte[] zipBytes = rgpdService.exportUserDataAsArchive();
+
+        List<String> entries = new ArrayList<>();
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+            ZipEntry e;
+            while ((e = zis.getNextEntry()) != null) {
+                entries.add(e.getName());
+            }
+        }
+        assertThat(entries).contains("export.json", "LISEZMOI.txt");
+        assertThat(entries).anyMatch(n -> n.startsWith("documents/") && n.endsWith("_salon.png"));
+        verify(storageService).downloadFile("k-photo");
+    }
+
+    @Test
+    void archive_ignoreUnFichierIndisponibleSansEchouer() throws Exception {
+        Document cni = doc(DocumentType.ID_CARD, "k-cni", "cni.pdf");
+        cni.setCreatedAt(LocalDateTime.now());
+        when(propertyRepository.findByOwnerId(userId)).thenReturn(List.of());
+        when(rentalRepository.findByOwnerId(userId)).thenReturn(List.of());
+        when(contractRepository.findByOwnerId(userId)).thenReturn(List.of());
+        when(paymentRepository.findByPayerId(userId)).thenReturn(List.of());
+        when(userConsentRepository.findByUserId(userId)).thenReturn(List.of());
+        when(documentRepository.findByUploaderId(userId)).thenReturn(List.of(cni));
+        when(storageService.downloadFile("k-cni")).thenThrow(new RuntimeException("S3 indisponible"));
+
+        byte[] zipBytes = rgpdService.exportUserDataAsArchive();
+
+        List<String> entries = new ArrayList<>();
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+            ZipEntry e;
+            while ((e = zis.getNextEntry()) != null) entries.add(e.getName());
+        }
+        // L'archive est tout de même produite, sans le fichier manquant.
+        assertThat(entries).contains("export.json");
+        assertThat(entries).noneMatch(n -> n.startsWith("documents/"));
     }
 }

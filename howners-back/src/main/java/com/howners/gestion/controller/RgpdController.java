@@ -38,6 +38,15 @@ public class RgpdController {
                 .body(pdf);
     }
 
+    @GetMapping("/export/archive")
+    public ResponseEntity<byte[]> exportArchive() throws IOException {
+        byte[] zip = rgpdService.exportUserDataAsArchive();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=export-rgpd.zip")
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .body(zip);
+    }
+
     @PostMapping("/erasure")
     public ResponseEntity<Void> requestErasure() {
         rgpdService.anonymizeUser();

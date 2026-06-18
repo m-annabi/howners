@@ -1,6 +1,7 @@
 package com.howners.gestion.service.rgpd;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.howners.gestion.domain.audit.AuditAction;
 import com.howners.gestion.domain.audit.ConsentType;
@@ -27,11 +28,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -168,6 +173,64 @@ public class RgpdService {
         }
 
         return pdfService.generatePdf(html.toString(), "Export RGPD");
+    }
+
+    /**
+     * Archive ZIP de portabilité (art. 20 RGPD) : export.json + tous les fichiers
+     * téléversés par l'utilisateur (documents/) + une notice. Best-effort par fichier :
+     * un fichier indisponible est ignoré, sans faire échouer l'archive entière.
+     */
+    @Transactional
+    public byte[] exportUserDataAsArchive() throws IOException {
+        UserDataExportResponse data = exportUserData(); // construit les données + trace la demande EXPORT
+        UUID userId = AuthService.getCurrentUserId();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        // Dates en ISO-8601 (lisible/portable) plutôt qu'en tableau d'entiers.
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        byte[] jsonBytes = mapper.writeValueAsBytes(data);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(baos, StandardCharsets.UTF_8)) {
+            putEntry(zip, "LISEZMOI.txt", archiveReadme(data.exportDate()).getBytes(StandardCharsets.UTF_8));
+            putEntry(zip, "export.json", jsonBytes);
+
+            for (var doc : documentRepository.findByUploaderId(userId)) {
+                String key = doc.getFileKey();
+                if (key == null || PII_DELETED.equals(key)) continue;
+                byte[] content;
+                try {
+                    content = storageService.downloadFile(key);
+                } catch (Exception e) {
+                    log.warn("Export archive RGPD : fichier {} indisponible, ignoré ({})", key, e.getMessage());
+                    continue;
+                }
+                String base = doc.getFileName() != null ? doc.getFileName() : "document";
+                base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
+                if (base.isBlank()) base = "document";
+                putEntry(zip, "documents/" + doc.getId().toString().substring(0, 8) + "_" + base, content);
+            }
+        }
+        return baos.toByteArray();
+    }
+
+    private void putEntry(ZipOutputStream zip, String name, byte[] data) throws IOException {
+        zip.putNextEntry(new ZipEntry(name));
+        zip.write(data);
+        zip.closeEntry();
+    }
+
+    private String archiveReadme(String exportDate) {
+        return "Export de vos données personnelles — Howners\n"
+                + "=============================================\n\n"
+                + "Cette archive contient :\n"
+                + "  - export.json : l'ensemble de vos données structurées (profil, biens,\n"
+                + "    locations, contrats, paiements, documents, consentements).\n"
+                + "  - documents/  : les fichiers que vous avez téléversés (pièces, photos…).\n\n"
+                + "Générée le " + exportDate + " au titre de votre droit à la portabilité\n"
+                + "(article 20 du RGPD).\n";
     }
 
     private static final String PII_DELETED = "[supprimé-rgpd]";

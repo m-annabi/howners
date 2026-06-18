@@ -16,12 +16,12 @@ Implémentations à `RgpdController.java` + service dédié, tracé dans `audit_
 
 ## ⚠️ Trous à combler avant audit
 
-### 1. Documents (S3 / MinIO)
-L'export JSON ne télécharge **pas** les fichiers binaires stockés sur S3 (`documents.file_key`). Pour être pleinement portable (droit à la portabilité art. 20), il faudrait soit :
-- Inclure les URLs présignées dans le JSON (valable 7 jours, lisible par l'utilisateur).
-- Bundler les fichiers dans un ZIP qui contient JSON + PDFs + photos.
-
-**Recommandation** : générer un ZIP `export-{userId}-{date}.zip` à la demande, avec JSON + tous les fichiers. Endpoint `/api/rgpd/export/archive` à ajouter.
+### 1. Documents (S3 / MinIO) — ✅ FAIT
+Endpoint `GET /api/rgpd/export/archive` (`RgpdService.exportUserDataAsArchive`) : génère un
+ZIP contenant `export.json` (données structurées, dates ISO-8601), `documents/` (tous les
+fichiers téléversés, récupérés depuis S3) et une notice `LISEZMOI.txt`. Best-effort par
+fichier (un fichier indisponible est ignoré sans faire échouer l'archive). Bouton
+« Tout télécharger (archive ZIP) » sur `/profile/rgpd`. Droit à la portabilité (art. 20) couvert.
 
 ### 2. Effacement effectif — ✅ FAIT
 `POST /api/rgpd/erasure` (`RgpdService.anonymizeUser`) :
@@ -44,8 +44,12 @@ Table `rgpd_requests` (migration 077) : `type` (EXPORT/ERASURE), `status`
 effacement y est tracé. `RgpdRequestRepository.findByStatusAndRequestedAtBefore` permet de
 lister les demandes dépassant le délai légal d'1 mois (à brancher sur une alerte/supervision).
 
-### 4. Consent UI manquant côté frontend
-Il n'y a pas d'écran `/profile/rgpd` qui :
+### 4. Consent UI côté frontend — ✅ FAIT
+L'écran `/profile/rgpd` (`features/profile/rgpd-settings`) existe et est accessible via le
+menu utilisateur de la topbar (« Confidentialité ») :
+- Affiche et permet de basculer chaque consentement (traitement, marketing, analytics, tiers)
+- Boutons d'export (archive ZIP, JSON, PDF)
+- Zone de danger : effacement du compte avec double confirmation
 - Montre les consents donnés (marketing, partage avec partenaires, cookies non essentiels)
 - Permet de retirer un consent
 - Permet de demander l'export ou l'effacement avec UI claire et bouton de confirmation
