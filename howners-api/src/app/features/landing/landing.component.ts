@@ -27,7 +27,8 @@ export class LandingComponent implements OnInit {
       'Gérez vos biens, contrats, paiements et quittances en un seul endroit. ' +
       'Signature électronique, suivi des loyers, fiches locataires — sans tableurs.';
 
-    this.seoService.setMetaTags({ title, description, url: window.location.origin, type: 'website' });
+    // URL canonique de prod (pas window.location.origin : faux en dev, indéfini en prerender).
+    this.seoService.setMetaTags({ title, description, url: 'https://howners.fr/', type: 'website' });
     this.seoService.setCanonical('https://howners.fr/');
 
     // schema.org SoftwareApplication
