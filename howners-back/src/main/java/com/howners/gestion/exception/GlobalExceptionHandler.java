@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -142,6 +143,23 @@ public class GlobalExceptionHandler {
                 request.getDescription(false).replace("uri=", "")
         );
         
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(
+            NoResourceFoundException ex,
+            WebRequest request) {
+        // Route/ressource inexistante : 404 plutôt que le 500 du handler générique.
+        log.warn("Route introuvable: {}", ex.getMessage());
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                "Ressource ou route introuvable",
+                request.getDescription(false).replace("uri=", "")
+        );
+
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
