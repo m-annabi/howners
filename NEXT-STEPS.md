@@ -25,16 +25,11 @@ PaymentIntentCreateParams.builder()
   .build();
 ```
 
-## #3 — OpenAI live wiring
+## #3 — ~~OpenAI live wiring~~ — SUPPRIMÉ
 
-**Quoi** : `/api/ai/draft-lease` retourne du mock. Pour livrer la version GPT-4, il faut juste une clé `OPENAI_API_KEY`.
-
-**Pourquoi je n'ai pas livré** :
-- Pas de clé OpenAI à brancher en session.
-- Le prompt français pour la loi 89-462 doit être itéré 5-10 fois avec un avocat pour ne pas produire de clauses interdites. Sans validation, déployer = faire signer aux clients des contrats potentiellement non-conformes.
-- Coût : ~0,01 €/draft sur GPT-4o-mini. Acceptable mais doit être gated par plan (PRO+).
-
-**Quand ce sera fait** : `export OPENAI_API_KEY=sk-...` dans `.env` + 5 itérations de relecture des sorties par un juriste + ajouter un feature gate dans `FeatureGateService`.
+La fonctionnalité de brouillon de bail assisté par IA (`/api/ai/draft-lease`, `AiLeaseService`)
+a été **retirée** : jugée superflue, jamais exposée dans le frontend, et porteuse d'un risque
+juridique (génération de clauses potentiellement non conformes sans relecture d'avocat).
 
 ## #4 — Validation juridique des templates de contrat
 
@@ -73,9 +68,8 @@ PaymentIntentCreateParams.builder()
 
 1. **#4** — relecture juridique des templates (le plus risqué légalement)
 2. **#7** pre-rendering — gain SEO direct
-3. **#3** OpenAI live si tu veux différencier vs concurrence
-4. **#2** Stripe routing si modèle business prévoit du fee paiement
-5. **#11-15** quand un partenaire signe
+3. **#2** Stripe routing si modèle business prévoit du fee paiement
+4. **#11-15** quand un partenaire signe
 
 ## Documents produits cette session
 
