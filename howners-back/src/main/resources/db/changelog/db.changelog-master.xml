@@ -81,5 +81,6 @@
     <include file="db/changelog/075-add-dates-reglementaires.xml"/>
     <include file="db/changelog/076-create-edl-comparaisons.xml"/>
     <include file="db/changelog/077-create-rgpd-requests.xml"/>
+    <include file="db/changelog/078-fix-and-seed-irl-2024-2026.xml"/>
 
 </databaseChangeLog>

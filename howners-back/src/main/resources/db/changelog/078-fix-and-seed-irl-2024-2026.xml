@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!--
+      Valeurs IRL France métropole vérifiées sur la table autoritative ANIL
+      (https://www.anil.org/outils/indices-et-plafonds/tableau-de-lirl/), série INSEE 001515333.
+      Le seed initial (071) avait des valeurs T3/T4 2024 erronées — corrigées ici.
+    -->
+
+    <changeSet id="078-1" author="claude">
+        <comment>Correction des valeurs T3/T4 2024 (seed 071 erroné)</comment>
+        <update tableName="irl_indices">
+            <column name="valeur" valueNumeric="144.51"/>
+            <where>annee = 2024 AND trimestre = 3</where>
+        </update>
+        <update tableName="irl_indices">
+            <column name="valeur" valueNumeric="144.64"/>
+            <where>annee = 2024 AND trimestre = 4</where>
+        </update>
+    </changeSet>
+
+    <changeSet id="078-2" author="claude">
+        <comment>Seed IRL 2025 (T1–T4) et 2026 (T1)</comment>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2025"/><column name="trimestre" valueNumeric="1"/><column name="valeur" valueNumeric="145.47"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2025"/><column name="trimestre" valueNumeric="2"/><column name="valeur" valueNumeric="146.68"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2025"/><column name="trimestre" valueNumeric="3"/><column name="valeur" valueNumeric="145.77"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2025"/><column name="trimestre" valueNumeric="4"/><column name="valeur" valueNumeric="145.78"/></insert>
+        <insert tableName="irl_indices"><column name="annee" valueNumeric="2026"/><column name="trimestre" valueNumeric="1"/><column name="valeur" valueNumeric="146.60"/></insert>
+    </changeSet>
+
+</databaseChangeLog>
