@@ -1,7 +1,7 @@
 <div class="dashboard">
 
   <!-- ─── OWNER / ADMIN ─────────────────────────────────────────────────── -->
-  <ng-container *ngIf="!isTenant">
+  <ng-container>
 
     <!-- En-tête -->
     <div class="dashboard__header">
@@ -330,73 +330,6 @@
       <app-loading-skeleton *ngIf="analyticsLoading" type="card" [count]="2"></app-loading-skeleton>
     </ng-container>
 
-  </ng-container>
-
-  <!-- ─── TENANT ────────────────────────────────────────────────────────── -->
-  <ng-container *ngIf="isTenant">
-    <app-page-header
-      title="Tableau de bord"
-      [subtitle]="currentUser ? 'Bienvenue, ' + currentUser.firstName : ''">
-    </app-page-header>
-
-    <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
-    <div *ngIf="error" class="hw-alert hw-alert--danger">
-      <i class="bi bi-exclamation-triangle-fill"></i>
-      <span>{{ error }}</span>
-    </div>
-
-    <ng-container *ngIf="!loading && !error && stats">
-
-      <!-- KPIs locataire -->
-      <div class="widget-grid" style="margin-bottom:var(--hw-space-4)">
-        <app-stats-card *ngIf="stats.activeRentals > 0"
-          label="Location active" [value]="stats.activeRentals"
-          icon="bi-key" color="success" routerLink="/rentals" class="widget-sm">
-        </app-stats-card>
-        <app-stats-card *ngIf="stats.activeRentals > 0"
-          label="Loyer mensuel" [value]="(stats.monthlyRevenue || 0) + ' ' + (stats.currency || 'EUR')"
-          icon="bi-cash-stack" color="warning" routerLink="/payments" class="widget-sm">
-        </app-stats-card>
-        <app-stats-card
-          label="Messages non lus" [value]="stats.tenantInfo?.unreadMessages || 0"
-          icon="bi-chat-dots" color="danger" routerLink="/messages" class="widget-sm">
-        </app-stats-card>
-      </div>
-
-      <!-- Alertes -->
-      <div *ngIf="hasTenantAlerts" class="tenant-alerts">
-        <div *ngIf="stats.tenantInfo?.pendingApplications" class="hw-alert hw-alert--info">
-          <i class="bi bi-hourglass-split"></i>
-          <span>{{ stats.tenantInfo?.pendingApplications }} candidature{{ (stats.tenantInfo?.pendingApplications || 0) > 1 ? 's' : '' }} en cours</span>
-          <a routerLink="/applications" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left:auto">Voir</a>
-        </div>
-      </div>
-
-      <!-- Raccourcis locataire -->
-      <div class="widget-grid" style="margin-top:var(--hw-space-4)">
-        <a routerLink="/rentals" class="shortcut-widget hw-card hw-card--clickable">
-          <div class="hw-icon-circle hw-icon-circle--success"><i class="bi bi-key"></i></div>
-          <span class="shortcut-widget__label">Ma location</span>
-        </a>
-        <a routerLink="/payments" class="shortcut-widget hw-card hw-card--clickable">
-          <div class="hw-icon-circle hw-icon-circle--warning"><i class="bi bi-credit-card"></i></div>
-          <span class="shortcut-widget__label">Paiements</span>
-        </a>
-        <a routerLink="/messages" class="shortcut-widget hw-card hw-card--clickable">
-          <div class="hw-icon-circle hw-icon-circle--neutral"><i class="bi bi-chat-dots"></i></div>
-          <span class="shortcut-widget__label">Messages</span>
-        </a>
-        <a routerLink="/listings" class="shortcut-widget hw-card hw-card--clickable">
-          <div class="hw-icon-circle hw-icon-circle--primary"><i class="bi bi-search"></i></div>
-          <span class="shortcut-widget__label">Rechercher</span>
-        </a>
-        <a routerLink="/profile" class="shortcut-widget hw-card hw-card--clickable">
-          <div class="hw-icon-circle hw-icon-circle--info"><i class="bi bi-person"></i></div>
-          <span class="shortcut-widget__label">Mon profil</span>
-        </a>
-      </div>
-
-    </ng-container>
   </ng-container>
 
 </div>

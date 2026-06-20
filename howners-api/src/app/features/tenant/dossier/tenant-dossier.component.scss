@@ -1,0 +1,220 @@
+.dossier-page {
+  max-width: 720px;
+}
+
+// ── Barre de progression ────────────────────────────────────────────────────
+.dossier-progress {
+  padding: var(--hw-space-4);
+  margin-bottom: var(--hw-space-4);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--hw-space-3);
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-3);
+
+    > i {
+      font-size: 1.75rem;
+      color: var(--hw-primary-600);
+    }
+  }
+
+  &__label {
+    display: block;
+    font-weight: 600;
+    font-size: var(--hw-fs-base);
+    color: var(--hw-gray-900);
+  }
+
+  &__count {
+    display: block;
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    margin-top: 2px;
+  }
+
+  &__pct {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--hw-primary-600);
+
+    &--complete {
+      color: var(--hw-success);
+    }
+  }
+
+  &__bar {
+    height: 8px;
+    background: var(--hw-gray-100);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: var(--hw-primary-500);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+
+    &--complete {
+      background: var(--hw-success);
+    }
+  }
+
+  &__hint {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--hw-space-2);
+    margin-top: var(--hw-space-3);
+    margin-bottom: 0;
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+
+    i { flex-shrink: 0; margin-top: 2px; }
+  }
+}
+
+// ── Liste des pièces ────────────────────────────────────────────────────────
+.dossier-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-3);
+}
+
+.dossier-item {
+  padding: var(--hw-space-4);
+  border-left: 4px solid var(--hw-gray-200);
+  transition: border-color 0.2s;
+
+  &--done {
+    border-left-color: var(--hw-success);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--hw-space-3);
+    margin-bottom: var(--hw-space-3);
+  }
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--hw-radius);
+    background: var(--hw-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    color: var(--hw-primary-600);
+    flex-shrink: 0;
+  }
+
+  &--done &__icon {
+    background: #e8f5e9;
+    color: var(--hw-success);
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: var(--hw-fs-base);
+    color: var(--hw-gray-900);
+  }
+
+  &__desc {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    margin-top: 2px;
+  }
+
+  &__state {
+    flex-shrink: 0;
+  }
+
+  &__docs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--hw-space-2);
+    margin-bottom: var(--hw-space-3);
+    padding: var(--hw-space-2) var(--hw-space-3);
+    background: var(--hw-gray-50);
+    border-radius: var(--hw-radius);
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-3);
+  }
+
+  &__formats {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-gray-400);
+  }
+}
+
+// ── Fichier individuel ──────────────────────────────────────────────────────
+.dossier-doc {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-2);
+
+  &__icon {
+    color: var(--hw-primary-400);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    flex: 1;
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-700);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__size {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-gray-400);
+    white-space: nowrap;
+  }
+
+  &__action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: var(--hw-radius-sm);
+    color: var(--hw-gray-400);
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+
+    &:hover {
+      color: var(--hw-primary-600);
+      background: var(--hw-gray-100);
+    }
+
+    &--danger:hover {
+      color: var(--hw-danger);
+      background: #fdecea;
+    }
+  }
+}
+
+// ── Spinner dans le bouton ──────────────────────────────────────────────────
+.hw-btn--loading {
+  pointer-events: none;
+  opacity: 0.7;
+}

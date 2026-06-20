@@ -7,6 +7,10 @@
 
     <changeSet id="079-drop-discovery-rating-tables" author="howners">
         <!-- tenant_invitations dépend de tenant_search_profiles, doit être droppée en premier -->
+        <!-- onFail="MARK_RAN" : si les tables ont déjà été supprimées manuellement, on passe -->
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="tenant_invitations"/>
+        </preConditions>
         <dropTable tableName="tenant_invitations" cascadeConstraints="true"/>
         <dropTable tableName="tenant_search_profiles" cascadeConstraints="true"/>
         <dropTable tableName="tenant_ratings" cascadeConstraints="true"/>

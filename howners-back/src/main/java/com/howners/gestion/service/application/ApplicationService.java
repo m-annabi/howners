@@ -3,6 +3,8 @@ package com.howners.gestion.service.application;
 import com.howners.gestion.domain.application.Application;
 import com.howners.gestion.domain.application.ApplicationStatus;
 import com.howners.gestion.domain.audit.AuditAction;
+import com.howners.gestion.domain.document.Document;
+import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.listing.Listing;
 import com.howners.gestion.domain.listing.ListingStatus;
 import com.howners.gestion.domain.rental.Rental;
@@ -36,8 +38,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,6 +64,14 @@ public class ApplicationService {
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
 
+    private static final List<DocumentType> DOSSIER_REQUIRED_TYPES = List.of(
+            DocumentType.IDENTITY,
+            DocumentType.PROOF_OF_INCOME,
+            DocumentType.EMPLOYMENT_CONTRACT,
+            DocumentType.TAX_NOTICE,
+            DocumentType.PROOF_OF_RESIDENCE
+    );
+
     @Transactional
     public ApplicationResponse submit(CreateApplicationRequest request) {
         UUID currentUserId = AuthService.getCurrentUserId();
@@ -70,8 +85,23 @@ public class ApplicationService {
             throw new BadRequestException("Listing is not published");
         }
 
-        if (applicationRepository.existsByListingIdAndApplicantId(request.listingId(), currentUserId)) {
+        if (applicationRepository.existsByListingIdAndApplicantIdAndStatusNot(
+                request.listingId(), currentUserId, ApplicationStatus.WITHDRAWN)) {
             throw new BadRequestException("You have already applied to this listing");
+        }
+
+        // Vérifie que le dossier du locataire est complet avant de soumettre
+        List<Document> dossierDocs = documentRepository.findByUploaderIdAndDocumentTypeIn(
+                currentUserId, DOSSIER_REQUIRED_TYPES);
+        Set<DocumentType> uploadedTypes = dossierDocs.stream()
+                .map(Document::getDocumentType)
+                .collect(Collectors.toSet());
+        List<String> missing = DOSSIER_REQUIRED_TYPES.stream()
+                .filter(t -> !uploadedTypes.contains(t))
+                .map(DocumentType::name)
+                .toList();
+        if (!missing.isEmpty()) {
+            throw new BadRequestException("Dossier incomplet. Pièces manquantes : " + String.join(", ", missing));
         }
 
         Application application = Application.builder()
@@ -310,7 +340,17 @@ public class ApplicationService {
     }
 
     private ApplicationResponse toResponseWithDocuments(Application application) {
-        List<DocumentResponse> documents = documentRepository.findByApplicationId(application.getId())
+        // Documents explicitement liés à cette candidature
+        Map<UUID, Document> merged = new LinkedHashMap<>();
+        documentRepository.findByApplicationId(application.getId())
+                .forEach(d -> merged.put(d.getId(), d));
+
+        // Docs du dossier du candidat (toujours inclus pour que l'owner les voie)
+        documentRepository.findByUploaderIdAndDocumentTypeIn(
+                        application.getApplicant().getId(), DOSSIER_REQUIRED_TYPES)
+                .forEach(d -> merged.putIfAbsent(d.getId(), d));
+
+        List<DocumentResponse> documents = new ArrayList<>(merged.values())
                 .stream().map(documentService::toResponse).toList();
         return ApplicationResponse.from(application, documents);
     }

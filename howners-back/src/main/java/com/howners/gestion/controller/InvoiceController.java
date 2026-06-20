@@ -24,7 +24,7 @@ public class InvoiceController {
     private final InvoiceService invoiceService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
     public ResponseEntity<List<InvoiceResponse>> getAllInvoices() {
         return ResponseEntity.ok(invoiceService.findByCurrentUser());
     }

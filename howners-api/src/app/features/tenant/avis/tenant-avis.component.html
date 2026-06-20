@@ -1,0 +1,138 @@
+<div class="avis-page">
+
+  <app-page-header title="Mes avis" subtitle="Les évaluations laissées par vos propriétaires"></app-page-header>
+
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ── État vide ── -->
+    <div *ngIf="ratings.length === 0" class="hw-card avis-empty">
+      <div class="hw-icon-circle hw-icon-circle--lg hw-icon-circle--neutral mx-auto mb-3">
+        <i class="bi bi-star"></i>
+      </div>
+      <p class="fw-semibold">Aucun avis pour l'instant</p>
+      <p class="hw-text-sm hw-text-muted">Les propriétaires chez qui vous avez loué peuvent vous laisser une évaluation à la fin de votre location.</p>
+    </div>
+
+    <ng-container *ngIf="ratings.length > 0">
+
+      <!-- ── Synthèse ── -->
+      <div class="hw-card avis-summary mb-4">
+
+        <!-- Score global -->
+        <div class="avis-summary__top">
+          <div class="avis-score-block">
+            <div class="avis-score-block__value">{{ averageOverall | number:'1.1-1' }}</div>
+            <div class="avis-score-block__stars">
+              <i *ngFor="let s of stars" class="bi"
+                 [ngClass]="s <= averageOverall ? 'bi-star-fill' : (s - 0.5 <= averageOverall ? 'bi-star-half' : 'bi-star')">
+              </i>
+            </div>
+            <div class="hw-text-xs hw-text-muted">{{ ratings.length }} avis reçu{{ ratings.length > 1 ? 's' : '' }}</div>
+          </div>
+
+          <!-- Histogramme distribution -->
+          <div class="avis-distrib">
+            <div *ngFor="let s of [5,4,3,2,1]" class="avis-distrib__row">
+              <span class="avis-distrib__label hw-text-xs hw-text-muted">{{ s }}</span>
+              <i class="bi bi-star-fill avis-distrib__star"></i>
+              <div class="avis-distrib__bar">
+                <div class="avis-distrib__fill"
+                     [style.width.%]="distribution(s)"
+                     [class.avis-distrib__fill--good]="s >= 4"
+                     [class.avis-distrib__fill--ok]="s === 3"
+                     [class.avis-distrib__fill--bad]="s <= 2">
+                </div>
+              </div>
+              <span class="avis-distrib__pct hw-text-xs hw-text-muted">{{ distribution(s) | number:'1.0-0' }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barres par catégorie -->
+        <div class="avis-summary__divider"></div>
+        <div class="avis-cats">
+          <div class="avis-cat" *ngFor="let cat of [
+            { key: 'paymentRating',         label: 'Paiement du loyer', icon: 'bi-credit-card' },
+            { key: 'propertyRespectRating', label: 'Respect du bien',   icon: 'bi-house-check' },
+            { key: 'communicationRating',   label: 'Communication',     icon: 'bi-chat-dots' }
+          ]">
+            <i class="bi {{ cat.icon }} avis-cat__icon"></i>
+            <span class="hw-text-sm">{{ cat.label }}</span>
+            <div class="avis-cat__bar">
+              <div class="avis-cat__fill" [style.width.%]="(avgCategory(cat.key) / 5) * 100"
+                   [class.avis-cat__fill--good]="avgCategory(cat.key) >= 4"
+                   [class.avis-cat__fill--ok]="avgCategory(cat.key) >= 3 && avgCategory(cat.key) < 4"
+                   [class.avis-cat__fill--bad]="avgCategory(cat.key) < 3">
+              </div>
+            </div>
+            <span class="hw-text-sm fw-semibold avis-cat__score">{{ avgCategory(cat.key) | number:'1.1-1' }}/5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Liste des avis ── -->
+      <div class="avis-list-header mb-3">
+        <span class="hw-text-sm fw-semibold">{{ ratings.length }} avis</span>
+        <span class="hw-text-xs hw-text-muted" *ngIf="hasMore">· {{ visibleCount }} affichés</span>
+      </div>
+
+      <div class="avis-list">
+        <div *ngFor="let r of visibleRatings" class="hw-card avis-item">
+          <div class="avis-item__header">
+            <div class="avis-item__avatar">
+              {{ r.raterName.charAt(0).toUpperCase() }}
+            </div>
+            <div class="avis-item__meta">
+              <div class="fw-semibold">{{ r.raterName }}</div>
+              <div class="hw-text-xs hw-text-muted">
+                <span *ngIf="r.propertyName"><i class="bi bi-house"></i> {{ r.propertyName }} · </span>
+                {{ formatDate(r.createdAt) }}
+              </div>
+            </div>
+            <div class="avis-item__overall">
+              <span class="avis-item__overall-value">{{ r.overallRating | number:'1.1-1' }}</span>
+              <i class="bi bi-star-fill avis-star-gold"></i>
+            </div>
+          </div>
+
+          <!-- Notes par critère -->
+          <div class="avis-item__cats">
+            <div class="avis-item__cat"
+                 *ngFor="let cat of [
+                   { key: 'paymentRating',         label: 'Paiement',  icon: 'bi-credit-card' },
+                   { key: 'propertyRespectRating', label: 'Bien',      icon: 'bi-house-check' },
+                   { key: 'communicationRating',   label: 'Comm.',     icon: 'bi-chat-dots' }
+                 ]">
+              <i class="bi {{ cat.icon }} avis-item__cat-icon"></i>
+              <span class="hw-text-xs">{{ cat.label }}</span>
+              <div class="avis-item__cat-stars">
+                <i *ngFor="let s of stars" class="bi bi-star-fill"
+                   [style.color]="asAny(r)[cat.key] >= s ? '#F59E0B' : 'var(--hw-gray-200)'"
+                   style="font-size: 0.65rem">
+                </i>
+              </div>
+              <span class="hw-text-xs fw-semibold">{{ asAny(r)[cat.key] }}/5</span>
+            </div>
+          </div>
+
+          <p *ngIf="r.comment" class="avis-item__comment">
+            <i class="bi bi-quote avis-quote"></i>{{ r.comment }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Voir plus -->
+      <div *ngIf="hasMore" class="avis-more">
+        <button class="hw-btn hw-btn--secondary hw-btn--block" (click)="showMore()">
+          <i class="bi bi-chevron-down"></i>
+          Voir {{ remainingCount > 5 ? 5 : remainingCount }} avis de plus
+          <span class="hw-text-xs hw-text-muted">({{ remainingCount }} restant{{ remainingCount > 1 ? 's' : '' }})</span>
+        </button>
+      </div>
+
+    </ng-container>
+
+  </ng-container>
+</div>

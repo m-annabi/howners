@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ContractService } from '../../../core/services/contract.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SubscriptionService } from '../../../core/services/subscription.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import {
   Contract,
   ContractStatus,
@@ -34,13 +35,15 @@ export class ContractListComponent implements OnInit {
 
   usage: UsageLimits | null = null;
   showUpgradeModal = false;
+  isOwner = false;
 
   constructor(
     private contractService: ContractService,
     private subscriptionService: SubscriptionService,
     private router: Router,
     private route: ActivatedRoute,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public authService: AuthService
   ) {}
 
   get quotaLabel(): string {
@@ -71,6 +74,12 @@ export class ContractListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.authService.currentUser$.subscribe(user => {
+      const wasOwner = this.isOwner;
+      this.isOwner = user?.role === 'OWNER' || user?.role === 'ADMIN';
+      if (this.isOwner && !wasOwner) this.loadUsage();
+    });
+
     this.route.queryParams.subscribe(params => {
       const f = params['filter'];
       if (f === 'sent') this.selectedStatus = ContractStatus.SENT;
@@ -78,7 +87,6 @@ export class ContractListComponent implements OnInit {
       else if (Object.values(ContractStatus).includes(f)) this.selectedStatus = f;
     });
     this.loadContracts();
-    this.loadUsage();
   }
 
   sortIcon(col: string): string {
@@ -208,7 +216,7 @@ export class ContractListComponent implements OnInit {
   }
 
   createContract(): void {
-    if (this.usage && !this.usage.canCreateContract) {
+    if (this.isOwner && this.usage && !this.usage.canCreateContract) {
       this.showUpgradeModal = true;
       return;
     }

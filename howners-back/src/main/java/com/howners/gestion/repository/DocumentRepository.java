@@ -32,4 +32,6 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     List<Document> findByIsArchivedTrue();
 
     List<Document> findByApplicationId(UUID applicationId);
+
+    List<Document> findByUploaderIdAndDocumentTypeIn(UUID uploaderId, List<DocumentType> types);
 }

@@ -27,8 +27,8 @@
     </ng-container>
   </nav>
 
-  <!-- Plan Badge -->
-  <div class="sidebar__footer">
+  <!-- Plan Badge (owners only) -->
+  <div class="sidebar__footer" *ngIf="currentUser?.role === 'OWNER' || currentUser?.role === 'ADMIN'">
     <div class="sidebar__plan">
       <span class="sidebar__plan-badge" [ngClass]="'sidebar__plan-badge--' + userPlan.toLowerCase()">
         {{ userPlan }}

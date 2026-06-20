@@ -1,0 +1,117 @@
+<div class="dossier-page">
+
+  <app-page-header
+    title="Mon dossier"
+    subtitle="Pièces justificatives pour vos candidatures de location">
+  </app-page-header>
+
+  <!-- Chargement -->
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="5"></app-loading-skeleton>
+
+  <!-- Erreur globale -->
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+
+    <!-- ══ Barre de progression ══ -->
+    <div class="dossier-progress hw-card">
+      <div class="dossier-progress__header">
+        <div class="dossier-progress__status">
+          <i class="bi" [ngClass]="isComplete ? 'bi-check-circle-fill' : 'bi-folder2-open'"></i>
+          <div>
+            <span class="dossier-progress__label">
+              {{ isComplete ? 'Dossier complet !' : 'Dossier en cours' }}
+            </span>
+            <span class="dossier-progress__count">{{ completedCount }} / {{ totalCount }} pièces fournies</span>
+          </div>
+        </div>
+        <span class="dossier-progress__pct" [class.dossier-progress__pct--complete]="isComplete">
+          {{ completionPercent }}%
+        </span>
+      </div>
+      <div class="dossier-progress__bar">
+        <div class="dossier-progress__fill"
+             [style.width.%]="completionPercent"
+             [class.dossier-progress__fill--complete]="isComplete">
+        </div>
+      </div>
+      <p *ngIf="!isComplete" class="dossier-progress__hint">
+        <i class="bi bi-info-circle"></i>
+        Un dossier complet augmente vos chances d'acceptation et accélère le traitement de vos candidatures.
+      </p>
+    </div>
+
+    <!-- Erreur upload -->
+    <div *ngIf="uploadError" class="hw-alert hw-alert--danger" style="margin-bottom: var(--hw-space-3)">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ uploadError }}</span>
+      <button type="button" class="hw-btn hw-btn--sm hw-btn--ghost" style="margin-left:auto" (click)="uploadError = null">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- ══ Liste des pièces ══ -->
+    <div class="dossier-list">
+
+      <div *ngFor="let piece of pieces" class="dossier-item hw-card" [class.dossier-item--done]="piece.docs.length > 0">
+
+        <!-- En-tête de la pièce -->
+        <div class="dossier-item__header">
+          <div class="dossier-item__icon">
+            <i class="bi" [ngClass]="piece.icon"></i>
+          </div>
+          <div class="dossier-item__info">
+            <div class="dossier-item__title">{{ piece.label }}</div>
+            <div class="dossier-item__desc">{{ piece.description }}</div>
+          </div>
+          <div class="dossier-item__state">
+            <span *ngIf="piece.docs.length > 0" class="hw-badge hw-badge--success">
+              <i class="bi bi-check-lg"></i> Fourni
+            </span>
+            <span *ngIf="piece.docs.length === 0" class="hw-badge hw-badge--neutral">
+              Manquant
+            </span>
+          </div>
+        </div>
+
+        <!-- Documents déjà uploadés -->
+        <div *ngIf="piece.docs.length > 0" class="dossier-item__docs">
+          <div *ngFor="let doc of piece.docs" class="dossier-doc">
+            <i class="bi bi-file-earmark-fill dossier-doc__icon"></i>
+            <span class="dossier-doc__name" [title]="doc.fileName">{{ doc.fileName }}</span>
+            <span class="dossier-doc__size">{{ formatFileSize(doc.fileSize) }}</span>
+            <button class="dossier-doc__action" title="Télécharger" (click)="downloadDoc(doc)">
+              <i class="bi bi-download"></i>
+            </button>
+            <button class="dossier-doc__action dossier-doc__action--danger" title="Supprimer" (click)="removeDoc(piece, doc)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action upload -->
+        <div class="dossier-item__footer">
+          <label class="hw-btn hw-btn--sm"
+                 [class.hw-btn--outline]="piece.docs.length > 0"
+                 [class.hw-btn--primary]="piece.docs.length === 0"
+                 [class.hw-btn--loading]="piece.uploading">
+            <span *ngIf="piece.uploading" class="spinner-border spinner-border-sm"></span>
+            <i *ngIf="!piece.uploading" class="bi bi-upload"></i>
+            {{ piece.docs.length > 0 ? 'Ajouter un fichier' : 'Choisir un fichier' }}
+            <input type="file" class="d-none" accept=".pdf,.jpg,.jpeg,.png"
+                   [disabled]="piece.uploading"
+                   (change)="onFileSelected($event, piece)">
+          </label>
+          <span class="dossier-item__formats">PDF, JPG, PNG · max 10 Mo</span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</div>

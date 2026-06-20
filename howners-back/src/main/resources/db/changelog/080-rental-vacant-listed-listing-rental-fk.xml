@@ -8,6 +8,11 @@
     <changeSet id="080-rental-vacant-listed-listing-rental-fk" author="howners">
 
         <!-- Lier une annonce à une location (nullable pour compatibilité existante) -->
+        <!-- onFail="MARK_RAN" : si la colonne a déjà été ajoutée manuellement, on passe -->
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="listings" columnName="rental_id"/></not>
+        </preConditions>
+
         <addColumn tableName="listings">
             <column name="rental_id" type="UUID">
                 <constraints foreignKeyName="fk_listings_rental" references="rentals(id)" nullable="true"/>

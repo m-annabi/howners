@@ -1,0 +1,185 @@
+.tenant-dashboard {
+  max-width: 800px;
+
+  &__header {
+    margin-bottom: var(--hw-space-4);
+  }
+}
+
+// ── Carte principale (logement / paiement) ──────────────────────────────────
+.tenant-card {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  padding: var(--hw-space-4);
+  background: var(--hw-white);
+  border: 1px solid var(--hw-border);
+  border-radius: var(--hw-radius-lg);
+  margin-bottom: var(--hw-space-3);
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+
+  &:hover {
+    box-shadow: var(--hw-shadow-md);
+    border-color: var(--hw-primary-300);
+  }
+
+  &--rental {
+    border-left: 4px solid var(--hw-success);
+  }
+
+  &--warning {
+    border-left: 4px solid var(--hw-warning);
+  }
+
+  &--danger {
+    border-left: 4px solid var(--hw-danger);
+    background: #fff8f8;
+  }
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--hw-radius);
+    background: var(--hw-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    color: var(--hw-primary-700);
+  }
+
+  &--rental &__icon { background: #e8f5e9; color: var(--hw-success); }
+  &--warning &__icon { background: #fff8e1; color: var(--hw-warning); }
+  &--danger &__icon { background: #fdecea; color: var(--hw-danger); }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-gray-500);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+
+  &__title {
+    font-size: var(--hw-fs-base);
+    font-weight: 600;
+    color: var(--hw-gray-900);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    flex-wrap: wrap;
+  }
+
+  &__amount {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  &__amount-value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--hw-gray-900);
+  }
+
+  &__amount-label {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-gray-500);
+    font-weight: 500;
+
+    &.text-danger {
+      color: var(--hw-danger);
+      font-weight: 700;
+    }
+  }
+
+  &__chev {
+    color: var(--hw-gray-300);
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+}
+
+// ── Raccourcis ──────────────────────────────────────────────────────────────
+.tenant-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--hw-space-3);
+  margin-top: var(--hw-space-4);
+}
+
+.shortcut-widget {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--hw-space-2);
+  padding: var(--hw-space-3);
+  text-decoration: none;
+  text-align: center;
+  transition: box-shadow 0.15s, transform 0.1s;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &__label {
+    font-size: var(--hw-fs-sm);
+    font-weight: 500;
+    color: var(--hw-gray-700);
+  }
+}
+
+.shortcut-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--hw-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 100px;
+  padding: 1px 6px;
+  line-height: 1.4;
+}
+
+// ── État vide ───────────────────────────────────────────────────────────────
+.tenant-empty {
+  text-align: center;
+  padding: var(--hw-space-6) var(--hw-space-4);
+
+  &__icon {
+    font-size: 3rem;
+    color: var(--hw-gray-300);
+    margin-bottom: var(--hw-space-3);
+  }
+
+  h3 {
+    font-size: var(--hw-fs-lg);
+    font-weight: 600;
+    color: var(--hw-gray-700);
+    margin-bottom: var(--hw-space-2);
+  }
+
+  p {
+    color: var(--hw-gray-500);
+    margin-bottom: var(--hw-space-4);
+  }
+}

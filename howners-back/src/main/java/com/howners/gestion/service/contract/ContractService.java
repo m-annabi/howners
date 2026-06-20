@@ -275,7 +275,8 @@ public class ContractService {
 
         // Vérifier les permissions
         UUID ownerId = rental.getProperty().getOwner().getId();
-        if (!ownerId.equals(currentUserId) && !isAdmin(currentUserId)) {
+        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
+        if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId) && !isAdmin(currentUserId)) {
             throw new ForbiddenException("You are not authorized to view contracts for this rental");
         }
 

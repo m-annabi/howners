@@ -36,7 +36,11 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <h5 class="mb-1">{{ app.applicantName }}</h5>
+              <h5 class="mb-1">
+                <a [routerLink]="['/tenants', app.applicantId]" class="applicant-link">
+                  <i class="bi bi-person-circle me-1"></i>{{ app.applicantName }}
+                </a>
+              </h5>
               <p class="text-muted mb-1">
                 <i class="bi bi-envelope"></i> {{ app.applicantEmail }}
               </p>

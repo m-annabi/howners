@@ -15,6 +15,18 @@ const routes: Routes = [
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
   },
   {
+    path: 'tenant',
+    loadChildren: () => import('./features/tenant/tenant.module').then(m => m.TenantModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['TENANT'] }
+  },
+  {
+    path: 'tenants',
+    loadChildren: () => import('./features/tenants/tenants.module').then(m => m.TenantsModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
+  },
+  {
     path: 'dashboard',
     loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule),
     canActivate: [AuthGuard]

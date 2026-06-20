@@ -80,51 +80,46 @@
 
       <!-- Actions -->
       <div class="actions mb-3">
-        <button
-          class="btn btn-primary me-2"
-          (click)="downloadPdf()"
-        >
+        <button class="btn btn-primary me-2" (click)="downloadPdf()">
           📄 Télécharger le PDF
         </button>
 
-        <button
-          *ngIf="contract.status === ContractStatus.DRAFT"
-          class="btn btn-secondary me-2"
-          [routerLink]="['/contracts', contract.id, 'edit']"
-        >
-          <i class="bi bi-pencil me-1"></i> Modifier
-        </button>
+        <ng-container *ngIf="isOwner">
+          <button
+            *ngIf="contract.status === ContractStatus.DRAFT"
+            class="btn btn-secondary me-2"
+            [routerLink]="['/contracts', contract.id, 'edit']"
+          >
+            <i class="bi bi-pencil me-1"></i> Modifier
+          </button>
 
-        <!-- New Signature Button -->
-        <button
-          *ngIf="contract.status === ContractStatus.DRAFT"
-          class="btn btn-success me-2"
-          (click)="sendForSignature()"
-        >
-          ✍️ Envoyer pour signature
-        </button>
+          <button
+            *ngIf="contract.status === ContractStatus.DRAFT"
+            class="btn btn-success me-2"
+            (click)="sendForSignature()"
+          >
+            ✍️ Envoyer pour signature
+          </button>
 
-        <button
-          class="btn btn-warning me-2"
-          [routerLink]="['/contracts', contract.id, 'amendments']"
-        >
-          <i class="bi bi-file-earmark-plus"></i> Avenants
-        </button>
+          <button
+            class="btn btn-warning me-2"
+            [routerLink]="['/contracts', contract.id, 'amendments']"
+          >
+            <i class="bi bi-file-earmark-plus"></i> Avenants
+          </button>
 
-        <button
-          class="btn btn-info me-2"
-          (click)="loadVersions()"
-        >
-          📋 Voir les versions
-        </button>
+          <button class="btn btn-info me-2" (click)="loadVersions()">
+            📋 Voir les versions
+          </button>
 
-        <button
-          *ngIf="contract.status === ContractStatus.DRAFT"
-          class="btn btn-danger"
-          (click)="deleteContract()"
-        >
-          🗑️ Supprimer
-        </button>
+          <button
+            *ngIf="contract.status === ContractStatus.DRAFT"
+            class="btn btn-danger"
+            (click)="deleteContract()"
+          >
+            🗑️ Supprimer
+          </button>
+        </ng-container>
       </div>
 
       <!-- Liste des versions -->

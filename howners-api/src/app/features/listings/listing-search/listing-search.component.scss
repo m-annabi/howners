@@ -307,6 +307,131 @@
   }
 }
 
+// ── État vide ────────────────────────────────────────────────────────────────
+.listing-search__empty {
+  text-align: center;
+  padding: var(--hw-space-6) var(--hw-space-4);
+  color: var(--hw-gray-500);
+
+  > i {
+    font-size: 3rem;
+    color: var(--hw-gray-300);
+    display: block;
+    margin-bottom: var(--hw-space-3);
+  }
+
+  p { margin-bottom: var(--hw-space-4); }
+}
+
+// ── Grille de résultats ──────────────────────────────────────────────────────
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--hw-space-4);
+}
+
+// ── Carte annonce ────────────────────────────────────────────────────────────
+.listing-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  overflow: hidden;
+  transition: box-shadow 0.15s, transform 0.1s;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--hw-shadow-md);
+  }
+
+  &__photo {
+    position: relative;
+    height: 190px;
+    background: var(--hw-gray-100);
+    overflow: hidden;
+    border-radius: var(--hw-radius-lg) var(--hw-radius-lg) 0 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  &__no-photo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--hw-gray-300);
+  }
+
+  &__price-badge {
+    position: absolute;
+    bottom: var(--hw-space-2);
+    left: var(--hw-space-2);
+    background: var(--hw-primary-700);
+    color: #fff;
+    font-size: var(--hw-fs-sm);
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--hw-radius-full);
+
+    span {
+      font-weight: 400;
+      opacity: 0.85;
+    }
+
+    &--night {
+      background: var(--hw-accent-600);
+    }
+  }
+
+  &__body {
+    flex: 1;
+    padding: var(--hw-space-3);
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: var(--hw-fs-base);
+    color: var(--hw-gray-900);
+    margin-bottom: var(--hw-space-1);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__location {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    margin-bottom: var(--hw-space-2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    i { color: var(--hw-primary-500); font-size: 0.75rem; }
+  }
+
+  &__desc {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-600);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__footer {
+    padding: var(--hw-space-2) var(--hw-space-3) var(--hw-space-3);
+    border-top: 1px solid var(--hw-gray-100);
+  }
+}
+
 @keyframes spin {
   from { transform: rotate(0); }
   to   { transform: rotate(360deg); }

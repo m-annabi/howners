@@ -1,0 +1,177 @@
+<div class="tenant-profile-page">
+
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span>
+  </div>
+
+  <ng-container *ngIf="!loading && !error && tenant">
+
+    <app-page-header [title]="tenant.firstName + ' ' + tenant.lastName" subtitle="Fiche locataire">
+    </app-page-header>
+
+    <!-- ── Infos contact ── -->
+    <div class="hw-card tp-card mb-4">
+      <div class="tp-contact">
+        <div class="hw-icon-circle hw-icon-circle--lg hw-icon-circle--neutral tp-avatar">
+          <i class="bi bi-person-fill"></i>
+        </div>
+        <div class="tp-contact__info">
+          <div class="tp-contact__name">{{ tenant.firstName }} {{ tenant.lastName }}</div>
+          <div class="tp-contact__meta">
+            <span><i class="bi bi-envelope"></i> {{ tenant.email }}</span>
+            <span *ngIf="tenant.phone"><i class="bi bi-telephone"></i> {{ tenant.phone }}</span>
+          </div>
+        </div>
+        <div *ngIf="ratings.length > 0" class="tp-score">
+          <div class="tp-score__value">{{ averageOverall | number:'1.1-1' }}</div>
+          <div class="tp-score__stars">
+            <i *ngFor="let s of stars"
+               class="bi"
+               [ngClass]="s <= averageOverall ? 'bi-star-fill' : (s - 0.5 <= averageOverall ? 'bi-star-half' : 'bi-star')">
+            </i>
+          </div>
+          <div class="tp-score__count hw-text-xs hw-text-muted">{{ ratings.length }} avis</div>
+        </div>
+      </div>
+
+      <!-- Locations partagées -->
+      <div *ngIf="sharedRentals.length > 0" class="tp-rentals">
+        <div class="tp-rentals__title hw-text-xs hw-text-muted mb-2">Locations avec ce locataire</div>
+        <div class="tp-rental-chip" *ngFor="let r of sharedRentals">
+          <i class="bi bi-house"></i>
+          <span>{{ r.propertyName || 'Bien' }}</span>
+          <span class="hw-badge hw-badge--neutral ms-1">{{ r.status }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Note globale par catégorie ── -->
+    <div *ngIf="ratings.length > 0" class="hw-card tp-card mb-4">
+      <div class="tp-section-title">Synthèse des avis</div>
+      <div class="tp-cats">
+        <div class="tp-cat" *ngFor="let cat of [
+          { key: 'paymentRating',          label: 'Paiement du loyer',  icon: 'bi-credit-card' },
+          { key: 'propertyRespectRating',  label: 'Respect du bien',    icon: 'bi-house-check' },
+          { key: 'communicationRating',    label: 'Communication',      icon: 'bi-chat-dots' }
+        ]">
+          <i class="bi {{ cat.icon }} tp-cat__icon"></i>
+          <div class="tp-cat__label hw-text-sm">{{ cat.label }}</div>
+          <div class="tp-cat__bar">
+            <div class="tp-cat__fill"
+                 [style.width.%]="(avgCategory(cat.key) / 5) * 100"
+                 [class.tp-cat__fill--good]="avgCategory(cat.key) >= 4"
+                 [class.tp-cat__fill--ok]="avgCategory(cat.key) >= 3 && avgCategory(cat.key) < 4"
+                 [class.tp-cat__fill--bad]="avgCategory(cat.key) < 3">
+            </div>
+          </div>
+          <div class="tp-cat__score hw-text-sm">{{ avgCategory(cat.key) | number:'1.1-1' }}/5</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Liste des avis ── -->
+    <div class="tp-section-header mb-3">
+      <h3 class="tp-section-title">Avis ({{ ratings.length }})</h3>
+      <button *ngIf="canRate && !showForm" class="hw-btn hw-btn--primary hw-btn--sm" (click)="showForm = true">
+        <i class="bi bi-star"></i> Laisser un avis
+      </button>
+    </div>
+
+    <!-- Formulaire avis -->
+    <div *ngIf="showForm" class="hw-card tp-card mb-4">
+      <div class="tp-section-title mb-3">Votre avis</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+        <!-- Choix location si plusieurs -->
+        <div *ngIf="sharedRentals.length > 1" class="mb-4">
+          <label class="form-label">Location concernée</label>
+          <select class="form-select" formControlName="rentalId">
+            <option *ngFor="let r of sharedRentals" [value]="r.id"
+                    [disabled]="ratedRentalIds.has(r.id)">
+              {{ r.propertyName }} {{ ratedRentalIds.has(r.id) ? '(déjà noté)' : '' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Notes par catégorie -->
+        <div class="tp-rating-fields">
+          <div class="tp-rating-field" *ngFor="let cat of [
+            { key: 'paymentRating',         label: 'Paiement du loyer' },
+            { key: 'propertyRespectRating', label: 'Respect du bien' },
+            { key: 'communicationRating',   label: 'Communication' }
+          ]">
+            <label class="form-label">{{ cat.label }}</label>
+            <div class="tp-stars-input">
+              <button type="button" *ngFor="let s of stars"
+                      class="tp-star-btn"
+                      [class.tp-star-btn--active]="(form.get(cat.key)?.value || 0) >= s"
+                      (click)="setRating(cat.key, s)">
+                <i class="bi bi-star-fill"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commentaire -->
+        <div class="mb-4 mt-4">
+          <label class="form-label">Commentaire <span class="hw-text-xs hw-text-muted">(optionnel)</span></label>
+          <textarea class="form-control" rows="3" formControlName="comment"
+                    placeholder="Décrivez votre expérience avec ce locataire…"></textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="hw-btn hw-btn--primary"
+                  [disabled]="form.invalid || submitting">
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm"></span>
+            <i *ngIf="!submitting" class="bi bi-check-lg"></i>
+            {{ submitting ? 'Envoi…' : 'Publier l\'avis' }}
+          </button>
+          <button type="button" class="hw-btn hw-btn--ghost" (click)="showForm = false">Annuler</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Avis reçus -->
+    <div *ngIf="ratings.length === 0 && !showForm" class="hw-card tp-card tp-empty">
+      <div class="hw-icon-circle hw-icon-circle--neutral mx-auto mb-3">
+        <i class="bi bi-star"></i>
+      </div>
+      <p class="hw-text-muted">Aucun avis pour ce locataire.</p>
+      <button *ngIf="canRate" class="hw-btn hw-btn--primary hw-btn--sm" (click)="showForm = true">
+        <i class="bi bi-star"></i> Être le premier à noter
+      </button>
+    </div>
+
+    <div class="tp-reviews-list">
+      <div *ngFor="let r of ratings" class="hw-card tp-card tp-review">
+        <div class="tp-review__header">
+          <div class="hw-icon-circle hw-icon-circle--sm hw-icon-circle--neutral">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <div class="tp-review__meta">
+            <div class="fw-semibold">{{ r.raterName }}</div>
+            <div class="hw-text-xs hw-text-muted">
+              {{ r.propertyName ? r.propertyName + ' · ' : '' }}{{ formatDate(r.createdAt) }}
+            </div>
+          </div>
+          <div class="tp-review__score">
+            <span class="tp-overall-score">{{ r.overallRating | number:'1.1-1' }}</span>
+            <i class="bi bi-star-fill tp-star-gold"></i>
+          </div>
+        </div>
+
+        <div class="tp-review__cats">
+          <span class="tp-mini-cat"><i class="bi bi-credit-card"></i> {{ r.paymentRating }}/5</span>
+          <span class="tp-mini-cat"><i class="bi bi-house-check"></i> {{ r.propertyRespectRating }}/5</span>
+          <span class="tp-mini-cat"><i class="bi bi-chat-dots"></i> {{ r.communicationRating }}/5</span>
+        </div>
+
+        <p *ngIf="r.comment" class="tp-review__comment">{{ r.comment }}</p>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

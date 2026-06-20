@@ -1,0 +1,232 @@
+.avis-page { max-width: 640px; }
+
+// ── État vide ──────────────────────────────────────────────────────────────
+.avis-empty {
+  text-align: center;
+  padding: var(--hw-space-8, 3rem);
+}
+
+// ── Synthèse ───────────────────────────────────────────────────────────────
+.avis-summary { padding: var(--hw-space-5); }
+
+.avis-summary__top {
+  display: flex;
+  gap: var(--hw-space-6);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.avis-summary__divider {
+  border-top: var(--hw-border);
+  margin: var(--hw-space-4) 0;
+}
+
+// Score central
+.avis-score-block {
+  text-align: center;
+  min-width: 90px;
+
+  &__value {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--hw-gray-900);
+    line-height: 1;
+  }
+
+  &__stars {
+    color: #F59E0B;
+    font-size: 1rem;
+    margin: var(--hw-space-1) 0;
+    letter-spacing: 2px;
+  }
+}
+
+// Histogramme
+.avis-distrib {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-1);
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+  }
+
+  &__label { width: 10px; text-align: right; flex-shrink: 0; }
+
+  &__star {
+    font-size: 0.6rem;
+    color: #F59E0B;
+    flex-shrink: 0;
+  }
+
+  &__bar {
+    flex: 1;
+    height: 6px;
+    background: var(--hw-gray-100);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: var(--hw-primary-400);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+    &--good { background: var(--hw-success); }
+    &--ok   { background: var(--hw-warning); }
+    &--bad  { background: var(--hw-danger); }
+  }
+
+  &__pct { width: 28px; text-align: right; flex-shrink: 0; }
+}
+
+// Barres catégories
+.avis-cats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-2);
+}
+
+.avis-cat {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+
+  &__icon { color: var(--hw-primary-500); width: 16px; flex-shrink: 0; font-size: 0.85rem; }
+
+  > span:nth-child(2) { width: 140px; flex-shrink: 0; }
+
+  &__bar {
+    flex: 1;
+    height: 6px;
+    background: var(--hw-gray-100);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: var(--hw-primary-500);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+    &--good { background: var(--hw-success); }
+    &--ok   { background: var(--hw-warning); }
+    &--bad  { background: var(--hw-danger); }
+  }
+
+  &__score { width: 32px; text-align: right; flex-shrink: 0; }
+}
+
+// ── En-tête liste ──────────────────────────────────────────────────────────
+.avis-list-header {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-2);
+}
+
+// ── Liste des avis ─────────────────────────────────────────────────────────
+.avis-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-3);
+  margin-bottom: var(--hw-space-3);
+}
+
+.avis-item {
+  padding: var(--hw-space-4);
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--hw-space-3);
+    margin-bottom: var(--hw-space-3);
+  }
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--hw-radius-full);
+    background: var(--hw-primary-100);
+    color: var(--hw-primary-700);
+    font-weight: 700;
+    font-size: var(--hw-fs-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &__meta { flex: 1; min-width: 0; }
+
+  &__overall {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  &__overall-value {
+    font-weight: 700;
+    font-size: var(--hw-fs-lg);
+    color: var(--hw-gray-900);
+  }
+
+  &__cats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--hw-space-2);
+    padding: var(--hw-space-3);
+    background: var(--hw-gray-50);
+    border-radius: var(--hw-radius);
+    margin-bottom: var(--hw-space-3);
+  }
+
+  &__cat {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+  }
+
+  &__cat-icon {
+    color: var(--hw-gray-400);
+    width: 14px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  > span:nth-child(2) { width: 60px; flex-shrink: 0; }
+
+  &__cat-stars {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+  }
+
+  &__comment {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-600);
+    font-style: italic;
+    margin: 0;
+    line-height: 1.5;
+    position: relative;
+    padding-left: var(--hw-space-3);
+  }
+}
+
+.avis-star-gold { color: #F59E0B; font-size: 0.85rem; }
+
+.avis-quote {
+  color: var(--hw-primary-200);
+  font-size: 1.2rem;
+  margin-right: var(--hw-space-1);
+  vertical-align: middle;
+}
+
+// ── Voir plus ──────────────────────────────────────────────────────────────
+.avis-more {
+  margin-top: var(--hw-space-2);
+}

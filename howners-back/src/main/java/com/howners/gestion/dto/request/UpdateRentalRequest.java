@@ -1,6 +1,7 @@
 package com.howners.gestion.dto.request;
 
 import com.howners.gestion.domain.rental.RentalStatus;
+import com.howners.gestion.domain.rental.RentalType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -10,6 +11,8 @@ import java.time.LocalDate;
 
 public record UpdateRentalRequest(
         RentalStatus status,
+
+        RentalType rentalType,
 
         LocalDate startDate,
 

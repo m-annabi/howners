@@ -250,14 +250,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.userSub = this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      if (user?.role === 'TENANT') {
+        this.router.navigate(['/tenant/dashboard'], { replaceUrl: true });
+        return;
+      }
       this.loadStats();
-      if (user && user.role !== 'TENANT') {
-        this.showChecklist = true;
-        this.loadWidgetPreferences();
-        this.loadActionItems();
-        if (user.role === 'OWNER') {
-          this.loadAnalytics();
-        }
+      this.showChecklist = true;
+      this.loadWidgetPreferences();
+      this.loadActionItems();
+      if (user?.role === 'OWNER') {
+        this.loadAnalytics();
       }
     });
   }

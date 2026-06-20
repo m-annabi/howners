@@ -1,0 +1,211 @@
+.tenant-profile-page {
+  max-width: 680px;
+}
+
+.tp-card {
+  margin-bottom: var(--hw-space-4);
+}
+
+// ── Contact ──────────────────────────────────────────────────────────────
+.tp-contact {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--hw-space-4);
+  margin-bottom: var(--hw-space-4);
+}
+
+.tp-avatar { flex-shrink: 0; }
+
+.tp-contact__info { flex: 1; min-width: 0; }
+
+.tp-contact__name {
+  font-size: var(--hw-fs-lg);
+  font-weight: 700;
+  color: var(--hw-gray-900);
+  margin-bottom: var(--hw-space-1);
+}
+
+.tp-contact__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hw-space-3);
+  font-size: var(--hw-fs-sm);
+  color: var(--hw-gray-500);
+  i { margin-right: 4px; }
+}
+
+.tp-score {
+  text-align: center;
+  flex-shrink: 0;
+
+  &__value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--hw-gray-900);
+    line-height: 1;
+  }
+
+  &__stars {
+    color: #F59E0B;
+    font-size: 0.85rem;
+    margin: 4px 0;
+  }
+}
+
+// ── Locations partagées ───────────────────────────────────────────────────
+.tp-rentals {
+  border-top: var(--hw-border);
+  padding-top: var(--hw-space-3);
+}
+
+.tp-rental-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hw-space-2);
+  font-size: var(--hw-fs-sm);
+  color: var(--hw-gray-700);
+  background: var(--hw-gray-50);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-full);
+  padding: 4px var(--hw-space-3);
+  margin-right: var(--hw-space-2);
+  margin-bottom: var(--hw-space-2);
+  i { color: var(--hw-primary-500); }
+}
+
+// ── Section title ─────────────────────────────────────────────────────────
+.tp-section-title {
+  font-size: var(--hw-fs-base);
+  font-weight: 600;
+  color: var(--hw-gray-800);
+}
+
+.tp-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// ── Synthèse catégories ───────────────────────────────────────────────────
+.tp-cats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-3);
+  margin-top: var(--hw-space-3);
+}
+
+.tp-cat {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+
+  &__icon { color: var(--hw-primary-500); font-size: 1rem; width: 18px; flex-shrink: 0; }
+  &__label { width: 160px; flex-shrink: 0; }
+  &__bar {
+    flex: 1;
+    height: 8px;
+    background: var(--hw-gray-100);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  &__fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 0.4s ease;
+    background: var(--hw-primary-500);
+    &--good { background: var(--hw-success); }
+    &--ok   { background: var(--hw-warning); }
+    &--bad  { background: var(--hw-danger); }
+  }
+  &__score { width: 36px; text-align: right; flex-shrink: 0; }
+}
+
+// ── Saisie étoiles ────────────────────────────────────────────────────────
+.tp-rating-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-3);
+}
+
+.tp-rating-field { }
+
+.tp-stars-input {
+  display: flex;
+  gap: var(--hw-space-1);
+}
+
+.tp-star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: var(--hw-gray-300);
+  padding: 2px;
+  transition: color 0.1s;
+
+  &--active { color: #F59E0B; }
+  &:hover { color: #F59E0B; }
+}
+
+// ── Liste des avis ────────────────────────────────────────────────────────
+.tp-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-3);
+}
+
+.tp-review {
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--hw-space-3);
+    margin-bottom: var(--hw-space-3);
+  }
+
+  &__meta { flex: 1; min-width: 0; }
+
+  &__score {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  &__cats {
+    display: flex;
+    gap: var(--hw-space-3);
+    margin-bottom: var(--hw-space-2);
+  }
+
+  &__comment {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-600);
+    margin: 0;
+    padding-top: var(--hw-space-2);
+    border-top: var(--hw-border);
+    font-style: italic;
+  }
+}
+
+.tp-overall-score {
+  font-weight: 700;
+  font-size: var(--hw-fs-lg);
+  color: var(--hw-gray-900);
+}
+
+.tp-star-gold { color: #F59E0B; font-size: 0.9rem; }
+
+.tp-mini-cat {
+  font-size: var(--hw-fs-xs);
+  color: var(--hw-gray-500);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  i { color: var(--hw-primary-400); }
+}
+
+// ── État vide ─────────────────────────────────────────────────────────────
+.tp-empty {
+  text-align: center;
+  padding: var(--hw-space-6);
+}

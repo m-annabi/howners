@@ -123,6 +123,62 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   private buildSections(): void {
+    const isTenant = this.currentUser?.role === 'TENANT';
+
+    if (isTenant) {
+      this.sections = [
+        {
+          title: 'ANNONCES',
+          items: [
+            { label: 'Rechercher', icon: 'bi-search', route: '/listings' },
+            { label: 'Mes candidatures', icon: 'bi-send', route: '/applications' },
+          ]
+        },
+        {
+          title: 'PRINCIPAL',
+          items: [
+            { label: 'Mon espace', icon: 'bi-grid-1x2', route: '/tenant/dashboard' },
+          ]
+        },
+        {
+          title: 'MON LOGEMENT',
+          items: [
+            { label: 'Ma location', icon: 'bi-key', route: '/rentals' },
+            { label: 'Mon contrat', icon: 'bi-file-earmark-text', route: '/contracts' },
+            { label: 'États des lieux', icon: 'bi-clipboard-check', route: '/inventory' },
+          ]
+        },
+        {
+          title: 'FINANCES',
+          items: [
+            { label: 'Paiements', icon: 'bi-credit-card', route: '/payments' },
+            { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts' },
+            { label: 'Factures', icon: 'bi-receipt', route: '/invoices' },
+          ]
+        },
+        {
+          title: 'COMMUNICATION',
+          items: [
+            { label: 'Messages', icon: 'bi-chat-dots', route: '/messages' },
+          ]
+        },
+        {
+          title: 'MON DOSSIER',
+          items: [
+            { label: 'Mon dossier', icon: 'bi-folder2-open', route: '/tenant/dossier' },
+            { label: 'Mes avis', icon: 'bi-star', route: '/tenant/avis' },
+          ]
+        },
+        {
+          title: 'MON COMPTE',
+          items: [
+            { label: 'Mon profil', icon: 'bi-person', route: '/profile' },
+          ]
+        }
+      ];
+      return;
+    }
+
     this.sections = [
       {
         title: 'PRINCIPAL',
@@ -134,11 +190,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
         title: 'GESTION',
         items: [
           { label: 'Biens', icon: 'bi-building', route: '/properties', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Locations', icon: 'bi-key', route: '/rentals', roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT'] },
+          { label: 'Locations', icon: 'bi-key', route: '/rentals', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
+          { label: 'Locataires', icon: 'bi-people', route: '/tenants', roles: ['OWNER', 'ADMIN'] },
           { label: 'Contrats', icon: 'bi-file-earmark-text', route: '/contracts', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
           { label: 'États des lieux', icon: 'bi-clipboard-check', route: '/inventory', roles: ['OWNER', 'ADMIN'] },
         ],
-        roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT']
+        roles: ['OWNER', 'ADMIN', 'CONCIERGE']
       },
       {
         title: 'ANNONCES',
@@ -147,20 +204,20 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Mes annonces', icon: 'bi-megaphone', route: '/listings/my', roles: ['OWNER', 'ADMIN'] },
           { label: 'Candidatures', icon: 'bi-people', route: '/applications' },
         ],
-        roles: ['OWNER', 'ADMIN', 'CONCIERGE', 'TENANT']
+        roles: ['OWNER', 'ADMIN', 'CONCIERGE']
       },
       {
         title: 'FINANCES',
         items: [
-          { label: 'Paiements', icon: 'bi-credit-card', route: '/payments', roles: ['OWNER', 'ADMIN', 'TENANT'] },
-          { label: 'Factures', icon: 'bi-receipt', route: '/invoices', roles: ['OWNER', 'ADMIN', 'TENANT'] },
-          { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts', roles: ['OWNER', 'ADMIN', 'TENANT'] },
+          { label: 'Paiements', icon: 'bi-credit-card', route: '/payments', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Factures', icon: 'bi-receipt', route: '/invoices', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts', roles: ['OWNER', 'ADMIN'] },
           { label: 'Dépenses', icon: 'bi-wallet2', route: '/expenses', roles: ['OWNER', 'ADMIN'] },
           { label: 'Synthèse', icon: 'bi-graph-up', route: '/financial', roles: ['OWNER', 'ADMIN'] },
           { label: 'Patrimoine', icon: 'bi-pie-chart', route: '/financial/patrimoine', roles: ['OWNER', 'ADMIN'] },
           { label: 'Export fiscal', icon: 'bi-file-earmark-spreadsheet', route: '/financial/fiscal-2044', roles: ['OWNER', 'ADMIN'] },
         ],
-        roles: ['OWNER', 'ADMIN', 'TENANT']
+        roles: ['OWNER', 'ADMIN']
       },
       {
         title: 'COMMUNICATION',
@@ -168,7 +225,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Messages', icon: 'bi-chat-dots', route: '/messages' },
         ]
       },
-
       {
         title: 'CROISSANCE',
         items: [

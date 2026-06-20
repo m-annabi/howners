@@ -22,5 +22,7 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     boolean existsByListingIdAndApplicantId(UUID listingId, UUID applicantId);
 
+    boolean existsByListingIdAndApplicantIdAndStatusNot(UUID listingId, UUID applicantId, ApplicationStatus status);
+
     long countByListingIdAndStatus(UUID listingId, ApplicationStatus status);
 }

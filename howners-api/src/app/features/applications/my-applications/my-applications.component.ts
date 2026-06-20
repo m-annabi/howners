@@ -21,7 +21,8 @@ interface RequiredDocumentType {
 
 @Component({
   selector: 'app-my-applications',
-  templateUrl: './my-applications.component.html'
+  templateUrl: './my-applications.component.html',
+  styleUrls: ['./my-applications.component.scss']
 })
 export class MyApplicationsComponent implements OnInit, OnDestroy {
   applications: Application[] = [];

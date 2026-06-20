@@ -32,6 +32,9 @@ public interface RentalRepository extends JpaRepository<Rental, UUID> {
 
     boolean existsByApplicationId(UUID applicationId);
 
+    @Query("SELECT r FROM Rental r WHERE r.property.owner.id = :ownerId AND r.tenant.id = :tenantId")
+    List<Rental> findByOwnerIdAndTenantId(@Param("ownerId") UUID ownerId, @Param("tenantId") UUID tenantId);
+
     @Query("SELECT r FROM Rental r WHERE r.endDate = :targetDate AND r.status = 'ACTIVE'")
     List<Rental> findActiveRentalsEndingOn(@Param("targetDate") LocalDate targetDate);
 

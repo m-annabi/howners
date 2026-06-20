@@ -1,126 +1,145 @@
-<div class="container-fluid py-4">
-  <div class="row mb-3">
-    <div class="col">
-      <h2><i class="bi bi-send"></i> Candidater</h2>
+<div class="apply-page">
+
+  <!-- Chargement -->
+  <app-loading-skeleton *ngIf="state === 'loading'" type="card" [count]="3"></app-loading-skeleton>
+
+  <!-- Pas d'annonce -->
+  <div *ngIf="state === 'no-listing'" class="apply-empty hw-card">
+    <div class="hw-icon-circle hw-icon-circle--neutral mx-auto mb-3">
+      <i class="bi bi-exclamation-circle"></i>
     </div>
+    <p class="hw-text-muted mb-3">Annonce introuvable.</p>
+    <a routerLink="/listings" class="hw-btn hw-btn--secondary hw-btn--sm">
+      <i class="bi bi-arrow-left"></i> Retour aux annonces
+    </a>
   </div>
 
-  <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status"></div>
-  </div>
+  <ng-container *ngIf="state !== 'loading' && state !== 'no-listing'">
 
-  <div *ngIf="!loading" class="row">
-    <div class="col-lg-8">
-      <div *ngIf="listing" class="card shadow-sm mb-4">
-        <div class="card-body">
-          <h5>{{ listing.title }}</h5>
-          <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ listing.propertyCity }} - {{ listing.propertyName }}</p>
-          <span *ngIf="listing.pricePerMonth" class="badge bg-primary">
-            {{ listing.pricePerMonth | number:'1.0-0' }} EUR/mois
-          </span>
+    <app-page-header
+      title="Candidater"
+      subtitle="Votre dossier sera automatiquement joint à votre candidature">
+    </app-page-header>
+
+    <!-- ── Récap annonce ── -->
+    <div class="apply-listing hw-card" *ngIf="listing">
+      <div class="hw-icon-circle hw-icon-circle--primary">
+        <i class="bi bi-house-fill"></i>
+      </div>
+      <div class="apply-listing__body">
+        <div class="apply-listing__title">{{ listing.title }}</div>
+        <div class="apply-listing__location hw-text-muted hw-text-sm">
+          <i class="bi bi-geo-alt-fill"></i>
+          {{ listing.propertyCity }}<span *ngIf="listing.propertyPostalCode"> · {{ listing.propertyPostalCode }}</span>
+        </div>
+      </div>
+      <div *ngIf="listing.pricePerMonth" class="apply-listing__price">
+        <span class="apply-listing__price-value">{{ listing.pricePerMonth | number:'1.0-0' }} {{ listing.currency }}</span>
+        <span class="hw-text-xs hw-text-muted">/mois</span>
+      </div>
+    </div>
+
+    <!-- ══ DÉJÀ CANDIDATÉ ══ -->
+    <div *ngIf="state === 'already-applied'" class="hw-alert hw-alert--info mb-4">
+      <i class="bi bi-info-circle-fill"></i>
+      <div>
+        <div class="fw-semibold">Candidature déjà envoyée</div>
+        <div class="hw-text-sm">Vous avez déjà postulé pour cette annonce. Consultez vos candidatures pour suivre son avancement.</div>
+      </div>
+      <a routerLink="/applications" class="hw-btn hw-btn--secondary hw-btn--sm ms-auto">Mes candidatures</a>
+    </div>
+
+    <!-- ══ DOSSIER INCOMPLET ══ -->
+    <div *ngIf="state === 'incomplete'" class="hw-card apply-blocked">
+
+      <div class="apply-blocked__header">
+        <div class="hw-icon-circle hw-icon-circle--warning">
+          <i class="bi bi-shield-exclamation"></i>
+        </div>
+        <div>
+          <div class="apply-blocked__title">Dossier incomplet</div>
+          <div class="hw-text-sm hw-text-muted">
+            {{ completedCount }}/{{ dossierPieces.length }} pièces · il manque {{ missingPieces.length }} pièce{{ missingPieces.length > 1 ? 's' : '' }}
+          </div>
         </div>
       </div>
 
-      <!-- Etape 1: Soumission de la candidature -->
-      <form *ngIf="!applicationId" [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="card shadow-sm">
-          <div class="card-header">
-            <h5 class="mb-0">
-              <span class="badge bg-primary me-2">1</span> Votre candidature
-            </h5>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label for="coverLetter" class="form-label">Lettre de motivation</label>
-              <textarea id="coverLetter" class="form-control" formControlName="coverLetter" rows="6"
-                        placeholder="Presentez-vous et expliquez pourquoi vous etes interesse(e) par ce bien..."></textarea>
-            </div>
-            <div class="mb-3">
-              <label for="desiredMoveIn" class="form-label">Date d'emmenagement souhaitee</label>
-              <input id="desiredMoveIn" type="date" class="form-control" formControlName="desiredMoveIn">
-            </div>
-          </div>
-          <div class="card-footer d-flex gap-2">
-            <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting">
-              <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
-              <i class="bi bi-arrow-right"></i> Continuer
-            </button>
-            <a routerLink="/listings" class="btn btn-outline-secondary">Annuler</a>
+      <p class="hw-text-sm hw-text-muted mb-3">
+        Toutes les pièces sont obligatoires pour postuler. Ajoutez-les dans votre dossier puis revenez ici.
+      </p>
+
+      <ul class="apply-missing-list mb-4">
+        <li *ngFor="let p of missingPieces" class="apply-missing-item">
+          <i class="bi bi-x-circle-fill text-danger"></i>
+          <span class="hw-text-sm">{{ p.label }}</span>
+        </li>
+      </ul>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="hw-btn hw-btn--primary" (click)="goToDossier()">
+          <i class="bi bi-folder2-open"></i> Compléter mon dossier
+        </button>
+        <button class="hw-btn hw-btn--ghost" (click)="cancel()">Annuler</button>
+      </div>
+    </div>
+
+    <!-- ══ DOSSIER COMPLET → formulaire ══ -->
+    <ng-container *ngIf="state === 'ready' || state === 'submitting'">
+
+      <div class="hw-alert hw-alert--success mb-4">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>Dossier complet — toutes vos pièces seront jointes automatiquement.</span>
+      </div>
+
+      <div *ngIf="errorMessage" class="hw-alert hw-alert--danger mb-3">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="hw-card">
+
+        <div class="mb-4">
+          <label class="form-label">
+            <i class="bi bi-calendar3 me-1 text-primary"></i>
+            Date d'emménagement souhaitée
+            <span class="apply-optional">optionnel</span>
+          </label>
+          <input type="date" class="form-control" formControlName="desiredMoveIn">
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">
+            <i class="bi bi-chat-text me-1 text-primary"></i>
+            Message au propriétaire
+            <span class="apply-optional">optionnel</span>
+          </label>
+          <textarea
+            class="form-control"
+            formControlName="message"
+            rows="4"
+            placeholder="Présentez-vous brièvement ou posez une question…">
+          </textarea>
+          <div class="apply-counter" [class.apply-counter--limit]="messageLength >= MESSAGE_MAX">
+            {{ messageLength }}/{{ MESSAGE_MAX }}
           </div>
         </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="submit" class="hw-btn hw-btn--primary hw-btn--lg"
+                  [disabled]="state === 'submitting'">
+            <span *ngIf="state === 'submitting'" class="spinner-border spinner-border-sm"></span>
+            <i *ngIf="state !== 'submitting'" class="bi bi-send-fill"></i>
+            {{ state === 'submitting' ? 'Envoi en cours…' : 'Envoyer ma candidature' }}
+          </button>
+          <button type="button" class="hw-btn hw-btn--ghost" (click)="cancel()" [disabled]="state === 'submitting'">
+            Annuler
+          </button>
+        </div>
+
       </form>
 
-      <!-- Etape 2: Upload des documents du dossier -->
-      <div *ngIf="applicationId">
-        <div class="alert alert-success mb-4">
-          <i class="bi bi-check-circle"></i> Candidature soumise avec succes ! Completez maintenant votre dossier.
-        </div>
+    </ng-container>
 
-        <div class="card shadow-sm">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <span class="badge bg-primary me-2">2</span> Pieces du dossier
-            </h5>
-            <span class="badge" [class]="isComplete ? 'bg-success' : 'bg-warning text-dark'">
-              {{ uploadedCount }}/{{ totalRequired }} pieces
-            </span>
-          </div>
-          <div class="card-body">
-            <p class="text-muted mb-4">
-              Ajoutez les pieces justificatives de votre dossier de location. Formats acceptes : PDF, JPG, PNG (max 10 Mo).
-            </p>
+  </ng-container>
 
-            <div *ngIf="uploadError" class="alert alert-danger alert-dismissible fade show">
-              {{ uploadError }}
-              <button type="button" class="btn-close" (click)="uploadError = null"></button>
-            </div>
-
-            <div class="list-group">
-              <div *ngFor="let req of REQUIRED_DOCUMENTS" class="list-group-item">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-1">
-                      <i class="bi me-2" [class]="isTypeUploaded(req.type) ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"></i>
-                      <strong>{{ req.label }}</strong>
-                    </div>
-                    <small class="text-muted ms-4">{{ req.description }}</small>
-
-                    <!-- Documents uploades pour ce type -->
-                    <div *ngFor="let doc of getDocumentsForType(req.type)" class="ms-4 mt-2 d-flex align-items-center gap-2">
-                      <span class="badge bg-light text-dark">
-                        <i class="bi bi-file-earmark"></i> {{ doc.fileName }}
-                        <small class="text-muted">({{ formatFileSize(doc.fileSize) }})</small>
-                      </span>
-                      <button class="btn btn-outline-danger btn-sm py-0 px-1" (click)="removeDocument(doc)" title="Supprimer">
-                        <i class="bi bi-x"></i>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="ms-3">
-                    <label class="btn btn-outline-primary btn-sm" [class.disabled]="uploadingType === req.type">
-                      <span *ngIf="uploadingType === req.type" class="spinner-border spinner-border-sm me-1"></span>
-                      <i *ngIf="uploadingType !== req.type" class="bi bi-upload"></i>
-                      {{ isTypeUploaded(req.type) ? 'Ajouter' : 'Choisir' }}
-                      <input type="file" class="d-none" accept=".pdf,.jpg,.jpeg,.png"
-                             (change)="onFileSelected($event, req.type)"
-                             [disabled]="uploadingType === req.type">
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card-footer d-flex justify-content-between">
-            <span class="text-muted align-self-center">
-              <small *ngIf="!isComplete">Vous pourrez completer votre dossier plus tard depuis "Mes candidatures".</small>
-            </span>
-            <button class="btn btn-success" (click)="finish()">
-              <i class="bi bi-check-lg"></i> {{ isComplete ? 'Terminer' : 'Terminer plus tard' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>

@@ -43,6 +43,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   showSignaturePad = false;
   signing = false;
   currentUserId: string | null = null;
+  isOwner = false;
 
   // Signature Dialog
   showSignDialog = false;
@@ -76,6 +77,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
       this.currentUserId = user?.id || null;
+      this.isOwner = user?.role === 'OWNER' || user?.role === 'ADMIN';
     });
 
     const id = this.route.snapshot.paramMap.get('id');

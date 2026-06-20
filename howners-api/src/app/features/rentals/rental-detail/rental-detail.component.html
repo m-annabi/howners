@@ -9,7 +9,7 @@
   <div *ngIf="!loading && !error && rental" class="rental-detail">
     <div class="detail-header">
       <button (click)="goBack()" class="btn-back">← Retour</button>
-      <div class="detail-actions">
+      <div *ngIf="isOwner" class="detail-actions">
         <button (click)="editRental()" class="btn btn-primary">Modifier</button>
         <button (click)="deleteRental()" class="btn btn-danger">Supprimer</button>
       </div>
@@ -128,54 +128,67 @@
         <div class="sidebar-card">
           <h3>Actions</h3>
 
-          <!-- Publier en annonce (VACANT) -->
-          <button
-            *ngIf="rental.status === RentalStatus.VACANT"
-            class="action-btn action-btn--highlight"
-            (click)="openPublishModal()">
-            Publier en annonce
-          </button>
-
-          <!-- Programmer la sortie (ACTIVE) -->
-          <button
-            *ngIf="rental.status === RentalStatus.ACTIVE"
-            class="action-btn action-btn--danger"
-            (click)="openExitModal()">
-            Programmer la sortie
-          </button>
-
-          <!-- Confirmer la sortie (EXITING) -->
-          <button
-            *ngIf="rental.status === RentalStatus.EXITING"
-            class="action-btn action-btn--danger"
-            [disabled]="confirmExitLoading"
-            (click)="confirmExit()">
-            {{ confirmExitLoading ? 'Confirmation…' : 'Confirmer la sortie' }}
-          </button>
-
-          <!-- Contrat -->
-          <div class="contract-actions">
+          <ng-container *ngIf="isOwner">
+            <!-- Publier en annonce (VACANT) -->
             <button
-              *ngIf="!hasContract() && !loadingContracts"
-              class="action-btn"
-              (click)="openTemplateSelector()"
-              [disabled]="creatingContract">
-              <span *ngIf="!creatingContract">Générer un contrat</span>
-              <span *ngIf="creatingContract">Génération...</span>
+              *ngIf="rental.status === RentalStatus.VACANT"
+              class="action-btn action-btn--highlight"
+              (click)="openPublishModal()">
+              Publier en annonce
             </button>
+
+            <!-- Programmer la sortie (ACTIVE) -->
+            <button
+              *ngIf="rental.status === RentalStatus.ACTIVE"
+              class="action-btn action-btn--danger"
+              (click)="openExitModal()">
+              Programmer la sortie
+            </button>
+
+            <!-- Confirmer la sortie (EXITING) -->
+            <button
+              *ngIf="rental.status === RentalStatus.EXITING"
+              class="action-btn action-btn--danger"
+              [disabled]="confirmExitLoading"
+              (click)="confirmExit()">
+              {{ confirmExitLoading ? 'Confirmation…' : 'Confirmer la sortie' }}
+            </button>
+
+            <!-- Contrat -->
+            <div class="contract-actions">
+              <button
+                *ngIf="!hasContract() && !loadingContracts"
+                class="action-btn"
+                (click)="openTemplateSelector()"
+                [disabled]="creatingContract">
+                <span *ngIf="!creatingContract">Générer un contrat</span>
+                <span *ngIf="creatingContract">Génération...</span>
+              </button>
+              <button
+                *ngIf="hasContract()"
+                class="action-btn"
+                (click)="viewContract(getMainContract()!.id)">
+                Voir le contrat
+              </button>
+              <span *ngIf="loadingContracts" class="loading-text">Chargement...</span>
+            </div>
+
+            <button class="action-btn" [routerLink]="['/inventory', 'new', rental.id]">Nouvel état des lieux</button>
+            <button class="action-btn" (click)="viewPayments()">Voir les paiements</button>
+            <button class="action-btn" (click)="viewInvoices()">Voir les factures</button>
+            <button class="action-btn" (click)="viewStats()">Statistiques</button>
+          </ng-container>
+
+          <ng-container *ngIf="!isOwner">
             <button
               *ngIf="hasContract()"
               class="action-btn"
               (click)="viewContract(getMainContract()!.id)">
               Voir le contrat
             </button>
-            <span *ngIf="loadingContracts" class="loading-text">Chargement...</span>
-          </div>
-
-          <button class="action-btn" [routerLink]="['/inventory', 'new', rental.id]">Nouvel état des lieux</button>
-          <button class="action-btn" (click)="viewPayments()">Voir les paiements</button>
-          <button class="action-btn" (click)="viewInvoices()">Voir les factures</button>
-          <button class="action-btn" (click)="viewStats()">Statistiques</button>
+            <button class="action-btn" (click)="viewPayments()">Voir les paiements</button>
+            <button class="action-btn" [routerLink]="['/inventory']">États des lieux</button>
+          </ng-container>
         </div>
       </div>
     </div>

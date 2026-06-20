@@ -190,17 +190,14 @@
   </div>
 
   <!-- Loading -->
-  <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Chargement...</span>
-    </div>
-  </div>
+  <!-- Loading -->
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="6"></app-loading-skeleton>
 
   <!-- Empty -->
-  <div *ngIf="!loading && listings.length === 0" class="text-center py-5">
-    <i class="bi bi-house-slash display-1 text-muted"></i>
-    <p class="text-muted mt-3">Aucune annonce trouvée</p>
-    <button *ngIf="hasActiveFilters" class="btn btn-outline-primary" (click)="clearFilters()">
+  <div *ngIf="!loading && listings.length === 0" class="listing-search__empty">
+    <i class="bi bi-house-slash"></i>
+    <p>Aucune annonce trouvée</p>
+    <button *ngIf="hasActiveFilters" class="hw-btn hw-btn--outline" (click)="clearFilters()">
       Effacer les filtres
     </button>
   </div>
@@ -211,40 +208,44 @@
   </p>
 
   <!-- Cards -->
-  <div class="row" *ngIf="!loading">
-    <div class="col-md-6 col-lg-4 mb-4" *ngFor="let listing of listings">
-      <div class="card h-100 shadow-sm">
-        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-          <img *ngIf="listing.photos && listing.photos.length > 0"
-               [src]="listing.photos[0].fileUrl"
-               class="img-fluid"
-               style="max-height: 200px; object-fit: cover; width: 100%;"
-               [alt]="listing.title">
-          <i *ngIf="!listing.photos || listing.photos.length === 0"
-             class="bi bi-image display-1 text-muted"></i>
+  <div *ngIf="!loading" class="listing-grid">
+    <a *ngFor="let listing of listings"
+       [routerLink]="['/listings', listing.id]"
+       class="listing-card hw-card hw-card--clickable">
+
+      <!-- Photo -->
+      <div class="listing-card__photo">
+        <img *ngIf="listing.photos && listing.photos.length > 0"
+             [src]="listing.photos[0].fileUrl"
+             [alt]="listing.title">
+        <div *ngIf="!listing.photos || listing.photos.length === 0" class="listing-card__no-photo">
+          <i class="bi bi-image"></i>
         </div>
-        <div class="card-body">
-          <h5 class="card-title">{{ listing.title }}</h5>
-          <p class="text-muted mb-2">
-            <i class="bi bi-geo-alt"></i> {{ listing.propertyCity }}
-            <span *ngIf="listing.propertyPostalCode"> ({{ listing.propertyPostalCode }})</span>
-          </p>
-          <p class="card-text text-truncate">{{ listing.description }}</p>
-          <div class="d-flex gap-2">
-            <span *ngIf="listing.pricePerMonth" class="badge bg-primary">
-              {{ listing.pricePerMonth | number:'1.0-0' }} {{ listing.currency }}/mois
-            </span>
-            <span *ngIf="listing.pricePerNight" class="badge bg-info">
-              {{ listing.pricePerNight | number:'1.0-0' }} {{ listing.currency }}/nuit
-            </span>
-          </div>
-        </div>
-        <div class="card-footer bg-transparent">
-          <a [routerLink]="['/listings', listing.id]" class="btn btn-outline-primary btn-sm w-100">
-            <i class="bi bi-eye"></i> Voir l'annonce
-          </a>
-        </div>
+        <span *ngIf="listing.pricePerMonth" class="listing-card__price-badge">
+          {{ listing.pricePerMonth | number:'1.0-0' }} {{ listing.currency }}<span>/mois</span>
+        </span>
+        <span *ngIf="!listing.pricePerMonth && listing.pricePerNight" class="listing-card__price-badge listing-card__price-badge--night">
+          {{ listing.pricePerNight | number:'1.0-0' }} {{ listing.currency }}<span>/nuit</span>
+        </span>
       </div>
-    </div>
+
+      <!-- Infos -->
+      <div class="listing-card__body">
+        <div class="listing-card__title">{{ listing.title }}</div>
+        <div class="listing-card__location">
+          <i class="bi bi-geo-alt-fill"></i>
+          {{ listing.propertyCity }}<span *ngIf="listing.propertyPostalCode"> · {{ listing.propertyPostalCode }}</span>
+        </div>
+        <p class="listing-card__desc">{{ listing.description }}</p>
+      </div>
+
+      <div class="listing-card__footer">
+        <span class="hw-btn hw-btn--sm hw-btn--outline">
+          <i class="bi bi-eye"></i> Voir l'annonce
+        </span>
+      </div>
+
+    </a>
   </div>
+
 </div>

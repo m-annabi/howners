@@ -1,40 +1,44 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ApplicationService } from '../../../core/services/application.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { ListingService } from '../../../core/services/listing.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Listing } from '../../../core/models/listing.model';
-import { Document, DocumentType, DOCUMENT_TYPE_LABELS } from '../../../core/models/document.model';
+import { ApplicationStatus } from '../../../core/models/application.model';
+import { DocumentType } from '../../../core/models/document.model';
 
-interface RequiredDocument {
+interface DossierPieceStatus {
   type: DocumentType;
   label: string;
-  description: string;
+  present: boolean;
 }
+
+type PageState = 'loading' | 'no-listing' | 'already-applied' | 'incomplete' | 'ready' | 'submitting' | 'error';
 
 @Component({
   selector: 'app-application-form',
-  templateUrl: './application-form.component.html'
+  templateUrl: './application-form.component.html',
+  styleUrls: ['./application-form.component.scss']
 })
 export class ApplicationFormComponent implements OnInit {
-  form!: FormGroup;
+  state: PageState = 'loading';
   listing: Listing | null = null;
-  loading = true;
-  submitting = false;
+  dossierPieces: DossierPieceStatus[] = [];
+  form!: FormGroup;
+  errorMessage: string | null = null;
+  messageLength = 0;
+  readonly MESSAGE_MAX = 300;
 
-  // Etape 2: Upload des documents
-  applicationId: string | null = null;
-  uploadedDocuments: Document[] = [];
-  uploadingType: DocumentType | null = null;
-  uploadError: string | null = null;
-
-  readonly REQUIRED_DOCUMENTS: RequiredDocument[] = [
-    { type: DocumentType.IDENTITY, label: 'Piece d\'identite', description: 'CNI, passeport ou titre de sejour' },
-    { type: DocumentType.PROOF_OF_INCOME, label: 'Bulletins de salaire (3 derniers)', description: '3 derniers bulletins de salaire' },
-    { type: DocumentType.EMPLOYMENT_CONTRACT, label: 'Contrat de travail', description: 'Contrat de travail ou attestation employeur' },
-    { type: DocumentType.TAX_NOTICE, label: 'Avis d\'imposition', description: 'Dernier avis d\'imposition' },
-    { type: DocumentType.PROOF_OF_RESIDENCE, label: 'Justificatif de domicile', description: 'Facture recente ou quittance de loyer' },
+  private readonly REQUIRED_PIECES: { type: DocumentType; label: string }[] = [
+    { type: DocumentType.IDENTITY,            label: "Pièce d'identité" },
+    { type: DocumentType.PROOF_OF_INCOME,     label: 'Bulletins de salaire' },
+    { type: DocumentType.EMPLOYMENT_CONTRACT, label: 'Contrat de travail' },
+    { type: DocumentType.TAX_NOTICE,          label: "Avis d'imposition" },
+    { type: DocumentType.PROOF_OF_RESIDENCE,  label: 'Justificatif de domicile' },
   ];
 
   constructor(
@@ -43,117 +47,94 @@ export class ApplicationFormComponent implements OnInit {
     private router: Router,
     private applicationService: ApplicationService,
     private documentService: DocumentService,
-    private listingService: ListingService
+    private listingService: ListingService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      listingId: ['', Validators.required],
-      coverLetter: [''],
-      desiredMoveIn: [null]
+      desiredMoveIn: [null],
+      message: ['']
+    });
+
+    this.form.get('message')!.valueChanges.subscribe(v => {
+      this.messageLength = (v || '').length;
+      if (this.messageLength > this.MESSAGE_MAX) {
+        this.form.get('message')!.setValue((v as string).slice(0, this.MESSAGE_MAX), { emitEvent: false });
+        this.messageLength = this.MESSAGE_MAX;
+      }
     });
 
     const listingId = this.route.snapshot.queryParamMap.get('listingId');
-    if (listingId) {
-      this.form.patchValue({ listingId });
-      this.listingService.getListing(listingId).subscribe({
-        next: (listing) => {
-          this.listing = listing;
-          this.loading = false;
-        },
-        error: () => {
-          this.loading = false;
-          this.router.navigate(['/listings']);
-        }
-      });
-    } else {
-      this.loading = false;
-    }
-  }
-
-  onSubmit(): void {
-    if (this.form.invalid) return;
-
-    this.submitting = true;
-    this.applicationService.submit(this.form.value).subscribe({
-      next: (application) => {
-        this.submitting = false;
-        this.applicationId = application.id;
-      },
-      error: () => this.submitting = false
-    });
-  }
-
-  onFileSelected(event: Event, docType: DocumentType): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-
-    const file = input.files[0];
-
-    if (file.size > 10 * 1024 * 1024) {
-      this.uploadError = 'Le fichier ne doit pas depasser 10 Mo';
-      input.value = '';
+    if (!listingId) {
+      this.state = 'no-listing';
       return;
     }
 
-    this.uploadError = null;
-    this.uploadingType = docType;
+    forkJoin({
+      listing: this.listingService.getListing(listingId).pipe(catchError(() => of(null))),
+      docs: this.documentService.getMyDocuments().pipe(catchError(() => of([]))),
+      myApplications: this.applicationService.getMyApplications().pipe(catchError(() => of([])))
+    }).subscribe(({ listing, docs, myApplications }) => {
+      if (!listing) {
+        this.state = 'no-listing';
+        return;
+      }
+      this.listing = listing;
 
-    this.documentService.uploadDocument({
-      file,
-      documentType: docType,
-      applicationId: this.applicationId!
+      const activeApplication = myApplications.find(
+        a => a.listingId === listingId && a.status !== ApplicationStatus.WITHDRAWN
+      );
+      if (activeApplication) {
+        this.state = 'already-applied';
+        return;
+      }
+
+      const uploadedTypes = new Set(docs.map(d => d.documentType));
+      this.dossierPieces = this.REQUIRED_PIECES.map(p => ({
+        ...p,
+        present: uploadedTypes.has(p.type)
+      }));
+
+      this.state = this.dossierPieces.every(p => p.present) ? 'ready' : 'incomplete';
+    });
+  }
+
+  get missingPieces(): DossierPieceStatus[] {
+    return this.dossierPieces.filter(p => !p.present);
+  }
+
+  get completedCount(): number {
+    return this.dossierPieces.filter(p => p.present).length;
+  }
+
+  onSubmit(): void {
+    if (this.state !== 'ready') return;
+    this.state = 'submitting';
+    this.errorMessage = null;
+
+    const { desiredMoveIn, message } = this.form.value;
+    this.applicationService.submit({
+      listingId: this.listing!.id,
+      coverLetter: message?.trim() || undefined,
+      desiredMoveIn: desiredMoveIn || undefined
     }).subscribe({
-      next: (doc) => {
-        this.uploadedDocuments.push(doc);
-        this.uploadingType = null;
-        input.value = '';
-      },
-      error: () => {
-        this.uploadError = 'Erreur lors de l\'upload du document';
-        this.uploadingType = null;
-        input.value = '';
-      }
-    });
-  }
-
-  removeDocument(doc: Document): void {
-    this.documentService.deleteDocument(doc.id).subscribe({
       next: () => {
-        this.uploadedDocuments = this.uploadedDocuments.filter(d => d.id !== doc.id);
+        this.notificationService.success('Candidature envoyée avec succès !');
+        this.router.navigate(['/applications']);
       },
-      error: () => {
-        this.uploadError = 'Erreur lors de la suppression du document';
+      error: (err) => {
+        this.errorMessage = err.error?.message || "Erreur lors de l'envoi de la candidature.";
+        this.state = 'ready';
       }
     });
   }
 
-  getDocumentsForType(type: DocumentType): Document[] {
-    return this.uploadedDocuments.filter(d => d.documentType === type);
+  goToDossier(): void {
+    this.router.navigate(['/tenant/dossier']);
   }
 
-  isTypeUploaded(type: DocumentType): boolean {
-    return this.uploadedDocuments.some(d => d.documentType === type);
-  }
-
-  get uploadedCount(): number {
-    const uploadedTypes = new Set(this.uploadedDocuments.map(d => d.documentType));
-    return this.REQUIRED_DOCUMENTS.filter(r => uploadedTypes.has(r.type)).length;
-  }
-
-  get totalRequired(): number {
-    return this.REQUIRED_DOCUMENTS.length;
-  }
-
-  get isComplete(): boolean {
-    return this.uploadedCount === this.totalRequired;
-  }
-
-  finish(): void {
-    this.router.navigate(['/applications']);
-  }
-
-  formatFileSize(bytes: number): string {
-    return this.documentService.formatFileSize(bytes);
+  cancel(): void {
+    this.router.navigate(['/listings', this.listing?.id]);
   }
 }

@@ -1,19 +1,17 @@
 <app-page-header
   title="Mes Contrats"
   [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Contrats'}]"
-  [actions]="headerActions">
+  [actions]="isOwner ? headerActions : undefined">
 </app-page-header>
 
 <ng-template #headerActions>
-  <!-- Not disabled at saturation: the click opens the upgrade modal in createContract(). -->
-  <button class="hw-btn hw-btn--primary"
-          (click)="createContract()">
+  <button class="hw-btn hw-btn--primary" (click)="createContract()">
     <i class="bi bi-plus-lg"></i> Nouveau Contrat
   </button>
 </ng-template>
 
-<!-- Quota banner -->
-<div *ngIf="usage" class="quota-banner" [attr.data-tone]="quotaTone">
+<!-- Quota banner (owners only) -->
+<div *ngIf="isOwner && usage" class="quota-banner" [attr.data-tone]="quotaTone">
   <div class="quota-banner__head">
     <span class="quota-banner__plan">
       <i class="bi bi-stars"></i> {{ usage.planName }}
@@ -61,9 +59,9 @@
   *ngIf="!loading && !error && contracts.length === 0"
   icon="bi-file-earmark-text"
   title="Aucun contrat"
-  message="Créez votre premier contrat de location."
-  actionLabel="Nouveau contrat"
-  actionRoute="/contracts/new">
+  [message]="isOwner ? 'Créez votre premier contrat de location.' : 'Vos contrats apparaîtront ici.'"
+  [actionLabel]="isOwner ? 'Nouveau contrat' : undefined"
+  [actionRoute]="isOwner ? '/contracts/new' : undefined">
 </app-empty-state>
 
 <!-- No results -->
@@ -74,8 +72,8 @@
   message="Essayez d'autres termes ou changez de filtre.">
 </app-empty-state>
 
-<!-- Upgrade modal — quota atteint -->
-<div *ngIf="showUpgradeModal" class="upgrade-modal" (click)="closeUpgradeModal()">
+<!-- Upgrade modal — quota atteint (owners only) -->
+<div *ngIf="isOwner && showUpgradeModal" class="upgrade-modal" (click)="closeUpgradeModal()">
   <div class="upgrade-modal__dialog" (click)="$event.stopPropagation()">
     <button type="button" class="upgrade-modal__close" (click)="closeUpgradeModal()">
       <i class="bi bi-x-lg"></i>
@@ -130,7 +128,7 @@
         <th class="contract-table__col-version">Version</th>
         <th class="sortable" [class.sorted]="sortCol==='date'" (click)="sortOn('date')">Créé le <i class="bi" [ngClass]="sortIcon('date')"></i></th>
         <th class="contract-table__col-status sortable" [class.sorted]="sortCol==='status'" (click)="sortOn('status')">Statut <i class="bi" [ngClass]="sortIcon('status')"></i></th>
-        <th class="contract-table__col-actions"></th>
+        <th *ngIf="isOwner" class="contract-table__col-actions"></th>
       </tr>
     </thead>
     <tbody>
@@ -154,7 +152,7 @@
           <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
         </td>
 
-        <td class="contract-table__col-actions" (click)="$event.stopPropagation()">
+        <td *ngIf="isOwner" class="contract-table__col-actions" (click)="$event.stopPropagation()">
           <div class="row-actions">
             <button class="row-actions__btn"
                     (click)="viewContract(contract); $event.stopPropagation()"

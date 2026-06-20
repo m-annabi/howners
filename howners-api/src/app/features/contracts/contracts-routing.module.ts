@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { RoleGuard } from '../../core/guards/role.guard';
 import { ContractListComponent } from './contract-list/contract-list.component';
 import { ContractDetailComponent } from './contract-detail/contract-detail.component';
 import { ContractFormComponent } from './contract-form/contract-form.component';
@@ -15,19 +16,27 @@ const routes: Routes = [
   },
   {
     path: 'new',
-    component: ContractFormComponent
+    component: ContractFormComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
   },
   {
     path: 'customize',
-    component: ContractCustomizeComponent
+    component: ContractCustomizeComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
   },
   {
     path: 'signatures',
-    component: SignatureDashboardComponent
+    component: SignatureDashboardComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
   },
   {
     path: ':id/edit',
-    component: ContractCustomizeComponent
+    component: ContractCustomizeComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
   },
   {
     path: ':id',
@@ -35,11 +44,15 @@ const routes: Routes = [
   },
   {
     path: ':id/amendments',
-    component: AmendmentListComponent
+    component: AmendmentListComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
   },
   {
     path: ':id/amendments/new',
-    component: AmendmentFormComponent
+    component: AmendmentFormComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
   }
 ];
 

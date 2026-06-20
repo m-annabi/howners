@@ -1,0 +1,142 @@
+<div class="tenant-dashboard">
+
+  <!-- En-tête -->
+  <div class="tenant-dashboard__header">
+    <app-page-header
+      title="Mon espace"
+      [subtitle]="currentUser ? 'Bienvenue, ' + currentUser.firstName : ''">
+    </app-page-header>
+  </div>
+
+  <!-- Chargement -->
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+
+  <!-- Erreur -->
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+
+    <!-- ══ Aucune location ══ -->
+    <div *ngIf="!activeRental" class="tenant-empty">
+      <div class="tenant-empty__icon"><i class="bi bi-house-door"></i></div>
+      <h3>Pas encore de location active</h3>
+      <p>Recherchez un logement ou attendez qu'un propriétaire vous invite.</p>
+      <button class="hw-btn hw-btn--primary" (click)="navigateTo('/listings')">
+        <i class="bi bi-search"></i> Rechercher un logement
+      </button>
+    </div>
+
+    <ng-container *ngIf="activeRental">
+
+      <!-- ══ Carte location active ══ -->
+      <div class="tenant-card tenant-card--rental" (click)="navigateTo('/rentals/' + activeRental.id)">
+        <div class="tenant-card__icon">
+          <i class="bi bi-house-fill"></i>
+        </div>
+        <div class="tenant-card__body">
+          <div class="tenant-card__label">Mon logement</div>
+          <div class="tenant-card__title">{{ activeRental.propertyName }}</div>
+          <div class="tenant-card__meta">
+            <span class="hw-badge hw-badge--success" *ngIf="activeRental.status === RentalStatus.ACTIVE">Active</span>
+            <span class="hw-badge hw-badge--warning" *ngIf="activeRental.status === RentalStatus.EXITING">Sortie programmée</span>
+            <span *ngIf="activeRental.startDate">depuis le {{ formatDate(activeRental.startDate) }}</span>
+            <span *ngIf="activeRental.endDate"> · jusqu'au {{ formatDate(activeRental.endDate) }}</span>
+          </div>
+        </div>
+        <div class="tenant-card__amount">
+          <span class="tenant-card__amount-value">{{ formatAmount(activeRental.monthlyRent, activeRental.currency) }}</span>
+          <span class="tenant-card__amount-label">/ mois</span>
+        </div>
+        <i class="bi bi-chevron-right tenant-card__chev"></i>
+      </div>
+
+      <!-- ══ Prochain paiement ══ -->
+      <div *ngIf="nextPayment"
+           class="tenant-card"
+           [class.tenant-card--danger]="isPaymentLate"
+           [class.tenant-card--warning]="!isPaymentLate"
+           (click)="navigateTo('/payments')">
+        <div class="tenant-card__icon">
+          <i class="bi bi-credit-card-fill"></i>
+        </div>
+        <div class="tenant-card__body">
+          <div class="tenant-card__label">Prochain paiement</div>
+          <div class="tenant-card__title">
+            {{ isPaymentLate ? 'Paiement en retard' : 'Loyer à venir' }}
+          </div>
+          <div class="tenant-card__meta">
+            Échéance : {{ formatDate(nextPayment.dueDate) }}
+          </div>
+        </div>
+        <div class="tenant-card__amount">
+          <span class="tenant-card__amount-value">{{ formatAmount(nextPayment.amount, nextPayment.currency) }}</span>
+          <span class="tenant-card__amount-label" [class.text-danger]="isPaymentLate">
+            {{ isPaymentLate ? 'EN RETARD' : 'À payer' }}
+          </span>
+        </div>
+        <i class="bi bi-chevron-right tenant-card__chev"></i>
+      </div>
+
+      <div *ngIf="!nextPayment" class="hw-alert hw-alert--success" style="margin-bottom: var(--hw-space-4)">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>Aucun paiement en attente — vous êtes à jour !</span>
+      </div>
+
+      <!-- ══ Alertes ══ -->
+      <div *ngIf="unreadMessages > 0" class="hw-alert hw-alert--info" style="margin-bottom: var(--hw-space-3)">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span>{{ unreadMessages }} message{{ unreadMessages > 1 ? 's' : '' }} non lu{{ unreadMessages > 1 ? 's' : '' }}</span>
+        <button class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto" (click)="navigateTo('/messages')">Voir</button>
+      </div>
+
+      <div *ngIf="pendingApplications > 0" class="hw-alert hw-alert--warning" style="margin-bottom: var(--hw-space-3)">
+        <i class="bi bi-hourglass-split"></i>
+        <span>{{ pendingApplications }} candidature{{ pendingApplications > 1 ? 's' : '' }} en cours d'examen</span>
+        <button class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto" (click)="navigateTo('/applications')">Voir</button>
+      </div>
+
+    </ng-container>
+
+    <!-- ══ Raccourcis ══ -->
+    <div class="tenant-shortcuts">
+      <a routerLink="/listings" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--accent"><i class="bi bi-search"></i></div>
+        <span class="shortcut-widget__label">Rechercher</span>
+      </a>
+      <a routerLink="/payments" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--warning"><i class="bi bi-credit-card"></i></div>
+        <span class="shortcut-widget__label">Paiements</span>
+      </a>
+      <a routerLink="/messages" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--neutral"><i class="bi bi-chat-dots"></i></div>
+        <span class="shortcut-widget__label">Messages</span>
+        <span *ngIf="unreadMessages > 0" class="shortcut-badge">{{ unreadMessages }}</span>
+      </a>
+      <a *ngIf="activeRental" [routerLink]="'/rentals/' + activeRental.id" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--success"><i class="bi bi-key"></i></div>
+        <span class="shortcut-widget__label">Ma location</span>
+      </a>
+      <a routerLink="/receipts" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--info"><i class="bi bi-file-earmark-check"></i></div>
+        <span class="shortcut-widget__label">Quittances</span>
+      </a>
+      <a routerLink="/contracts" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--primary"><i class="bi bi-file-earmark-text"></i></div>
+        <span class="shortcut-widget__label">Mon contrat</span>
+      </a>
+      <a routerLink="/tenant/dossier" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--primary"><i class="bi bi-folder2-open"></i></div>
+        <span class="shortcut-widget__label">Mon dossier</span>
+      </a>
+      <a routerLink="/profile" class="shortcut-widget hw-card hw-card--clickable">
+        <div class="hw-icon-circle hw-icon-circle--neutral"><i class="bi bi-person"></i></div>
+        <span class="shortcut-widget__label">Mon profil</span>
+      </a>
+    </div>
+
+  </ng-container>
+
+</div>

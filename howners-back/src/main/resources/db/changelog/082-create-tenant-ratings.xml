@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="082-create-tenant-ratings" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="tenant_ratings"/></not>
+        </preConditions>
+
+        <createTable tableName="tenant_ratings">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tenant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rater_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rental_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+            <column name="payment_rating" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="property_respect_rating" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="communication_rating" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="overall_rating" type="NUMERIC(3,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comment" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="tenant_ratings" baseColumnNames="tenant_id"
+            constraintName="fk_tenant_ratings_tenant"
+            referencedTableName="users" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="tenant_ratings" baseColumnNames="rater_id"
+            constraintName="fk_tenant_ratings_rater"
+            referencedTableName="users" referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="tenant_ratings" baseColumnNames="rental_id"
+            constraintName="fk_tenant_ratings_rental"
+            referencedTableName="rentals" referencedColumnNames="id"/>
+
+        <createIndex indexName="idx_tenant_ratings_tenant_id" tableName="tenant_ratings">
+            <column name="tenant_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tenant_ratings_rater_rental" tableName="tenant_ratings" unique="true">
+            <column name="rater_id"/>
+            <column name="rental_id"/>
+        </createIndex>
+
+        <sql>
+            ALTER TABLE tenant_ratings ADD CONSTRAINT chk_payment_rating CHECK (payment_rating BETWEEN 1 AND 5);
+            ALTER TABLE tenant_ratings ADD CONSTRAINT chk_property_respect_rating CHECK (property_respect_rating BETWEEN 1 AND 5);
+            ALTER TABLE tenant_ratings ADD CONSTRAINT chk_communication_rating CHECK (communication_rating BETWEEN 1 AND 5);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

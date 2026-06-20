@@ -5,6 +5,7 @@ import { takeUntil } from 'rxjs/operators';
 import { RentalService } from '../rental.service';
 import { ContractService } from '../../../core/services/contract.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import { Rental, RentalStatus, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS } from '../../../core/models/rental.model';
 import { Contract } from '../../../core/models/contract.model';
 
@@ -43,16 +44,22 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
   RentalStatus = RentalStatus;
   rentalStatusLabels = RENTAL_STATUS_LABELS;
   rentalStatusColors = RENTAL_STATUS_COLORS;
+  isOwner = false;
 
   constructor(
     private rentalService: RentalService,
     private contractService: ContractService,
     private route: ActivatedRoute,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      this.isOwner = user?.role === 'OWNER' || user?.role === 'ADMIN';
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadRental(id);
