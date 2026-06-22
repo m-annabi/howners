@@ -128,16 +128,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
     if (isTenant) {
       this.sections = [
         {
+          title: 'PRINCIPAL',
+          items: [
+            { label: 'Mon espace', icon: 'bi-grid-1x2', route: '/tenant/dashboard' },
+          ]
+        },
+        {
           title: 'ANNONCES',
           items: [
             { label: 'Rechercher', icon: 'bi-search', route: '/listings' },
             { label: 'Mes candidatures', icon: 'bi-send', route: '/applications' },
-          ]
-        },
-        {
-          title: 'PRINCIPAL',
-          items: [
-            { label: 'Mon espace', icon: 'bi-grid-1x2', route: '/tenant/dashboard' },
           ]
         },
         {
@@ -163,16 +163,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
           ]
         },
         {
-          title: 'MON DOSSIER',
-          items: [
-            { label: 'Mon dossier', icon: 'bi-folder2-open', route: '/tenant/dossier' },
-            { label: 'Mes avis', icon: 'bi-star', route: '/tenant/avis' },
-          ]
-        },
-        {
           title: 'MON COMPTE',
           items: [
             { label: 'Mon profil', icon: 'bi-person', route: '/profile' },
+            { label: 'Mon dossier', icon: 'bi-folder2-open', route: '/tenant/dossier' },
+            { label: 'Mes avis', icon: 'bi-star', route: '/tenant/avis' },
           ]
         }
       ];

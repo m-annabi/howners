@@ -67,10 +67,14 @@ export class InAppNotificationService implements OnDestroy {
   loadNotifications(): void {
     this.notificationCenterService.getNotifications(0, 30).pipe(
       map(page => page.content.map(n => this.toInAppNotification(n))),
-      catchError(() => of([] as InAppNotification[]))
+      catchError(() => of(null))
     ).subscribe(notifications => {
-      this.subject.next(notifications);
-      this.countSubject.next(notifications.filter(n => !n.isRead).length);
+      if (notifications === null) return;
+      // Conserver les notifications locales (ex: messages WebSocket) non présentes en base
+      const local = this.subject.value.filter(n => n.id.startsWith('local-'));
+      const merged = [...local, ...notifications];
+      this.subject.next(merged);
+      this.countSubject.next(merged.filter(n => !n.isRead).length);
     });
   }
 
@@ -79,8 +83,9 @@ export class InAppNotificationService implements OnDestroy {
    */
   loadUnreadCount(): void {
     this.notificationCenterService.getUnreadCount().pipe(
-      catchError(() => of({ count: 0 }))
+      catchError(() => of(null))
     ).subscribe(result => {
+      if (result === null) return;
       this.countSubject.next(result.count);
     });
   }
