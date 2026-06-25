@@ -72,6 +72,27 @@ Produit est réutilisé (id `howners_<plan>`) et un Prix actif au bon montant/in
 n'est jamais dupliqué. `STRIPE_SECRET_KEY` peut aussi venir de `.env`. Le webhook prod
 (events checkout/subscription) reste à activer dans le Dashboard Stripe.
 
+## Secrets — `manage-secrets.sh`
+
+Générer, roter et valider les secrets, en complément de `SECURITY-ROTATION.md` (playbook)
+et de `StartupConfigValidator` (le backend refuse de démarrer en prod sur un secret faible).
+
+```bash
+# Générer des secrets forts à coller dans .env.prod (valeurs neuves, jamais committées) :
+./scripts/manage-secrets.sh generate all
+
+# Roter une variable (secret neuf + backup, refuse d'écrire dans un fichier git-tracké) :
+./scripts/manage-secrets.sh rotate POSTGRES_PASSWORD .env.prod
+
+# Contrôler un fichier d'env sans afficher les valeurs (manquant / faible / exemple / court) :
+./scripts/manage-secrets.sh doctor .env.prod
+```
+
+Le script n'**affiche jamais** la valeur d'un secret existant (`doctor` ne montre que
+longueur + verdict) et refuse d'écrire dans un fichier suivi par git. Stripe/SMTP/webhook
+ne se génèrent pas (ils viennent des fournisseurs). Après une rotation : redémarrer le
+backend et **révoquer** l'ancienne valeur côté service si c'était une clé externe.
+
 ## À prévoir côté ops (hors scripts)
 
 - **Off-site** : intégré à `db-backup.sh` — renseigner `BACKUP_RCLONE_REMOTE` **ou**

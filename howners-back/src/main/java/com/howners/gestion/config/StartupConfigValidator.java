@@ -25,6 +25,16 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
     private final StorageProperties storageProperties;
     private final Environment environment;
 
+    // Fragments trahissant une valeur d'exemple laissée en place (rejetés en prod).
+    private static final List<String> PLACEHOLDER_MARKERS = List.of(
+            "changeme", "change-me", "change-this", "placeholder", "example",
+            "your-", "xxxxx", "todo", "a-changer", "secret-in-production");
+    // Valeurs par défaut connues (docker-compose / .env.example) — interdites en prod.
+    private static final List<String> WEAK_DB_PASSWORDS = List.of(
+            "howners_pass", "postgres", "password", "admin", "root");
+    private static final List<String> WEAK_MINIO_SECRETS = List.of(
+            "minioadmin123", "minioadmin", "password");
+
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("Validating application configuration...");
@@ -36,6 +46,9 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
         warnings.addAll(validateDocuSignConfig());  // DocuSign is optional
         warnings.addAll(validateEmailConfig());     // Email is optional
         errors.addAll(validateStorageConfig());
+        if (isProd()) {
+            errors.addAll(validateProductionSecrets());  // secrets forts obligatoires en prod
+        }
 
         if (!warnings.isEmpty()) {
             log.warn("⚠️  Optional configuration incomplete (some features may not be available):\n  - " + String.join("\n  - ", warnings));
@@ -169,6 +182,63 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
         }
 
         return errors;
+    }
+
+    /**
+     * En profil prod : refuse de démarrer si un secret sensible est manquant, trop court,
+     * ou laissé sur une valeur par défaut / d'exemple. Complète les validations ci-dessus.
+     */
+    private List<String> validateProductionSecrets() {
+        List<String> errors = new ArrayList<>();
+
+        // Mot de passe PostgreSQL
+        String dbPassword = environment.getProperty("spring.datasource.password");
+        if (isBlank(dbPassword)) {
+            errors.add("POSTGRES_PASSWORD is missing");
+        } else if (WEAK_DB_PASSWORDS.contains(dbPassword.toLowerCase()) || looksLikePlaceholder(dbPassword)) {
+            errors.add("POSTGRES_PASSWORD uses a default/example value — set a strong unique secret for production");
+        } else if (dbPassword.length() < 12) {
+            errors.add("POSTGRES_PASSWORD is too short (< 12 chars) for production");
+        }
+
+        // Secret MinIO/S3 (le cas 'manquant' est déjà couvert par validateStorageConfig)
+        String s3Secret = storageProperties.getS3() != null ? storageProperties.getS3().getSecretKey() : null;
+        if (!isBlank(s3Secret)) {
+            if (WEAK_MINIO_SECRETS.contains(s3Secret.toLowerCase()) || looksLikePlaceholder(s3Secret)) {
+                errors.add("MINIO_ROOT_PASSWORD uses the default/example value — set a strong unique secret for production");
+            } else if (s3Secret.length() < 12) {
+                errors.add("MINIO_ROOT_PASSWORD is too short (< 12 chars) for production");
+            }
+        }
+
+        // Stripe : une clé de test en prod est une erreur de configuration
+        String stripeKey = environment.getProperty("stripe.api-key");
+        if (!isBlank(stripeKey) && stripeKey.startsWith("sk_test_")) {
+            errors.add("STRIPE_SECRET_KEY is a TEST key (sk_test_…) — use a live key (sk_live_…) in production");
+        }
+
+        // JWT : longueur/format déjà validés ; on rejette en plus les valeurs d'exemple
+        String jwtSecret = environment.getProperty("jwt.secret");
+        if (!isBlank(jwtSecret) && looksLikePlaceholder(jwtSecret)) {
+            errors.add("JWT_SECRET uses a placeholder/example value — generate a strong unique secret for production");
+        }
+
+        if (errors.isEmpty()) {
+            log.info("✅ Production secrets validated (no default/placeholder values)");
+        }
+        return errors;
+    }
+
+    private boolean isProd() {
+        return Arrays.asList(environment.getActiveProfiles()).contains("prod");
+    }
+
+    private boolean looksLikePlaceholder(String value) {
+        if (value == null) {
+            return false;
+        }
+        String v = value.toLowerCase();
+        return PLACEHOLDER_MARKERS.stream().anyMatch(v::contains);
     }
 
     private boolean isBlank(String str) {

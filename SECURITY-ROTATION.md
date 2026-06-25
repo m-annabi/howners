@@ -2,6 +2,11 @@
 
 Le fichier `howners-back/restart-backend.sh` a été versionné dans Git avec des secrets en clair entre `74017f3` (initial commit) et `f5xxxxx` (commit de rotation). **Ils sont définitivement exposés dans l'historique** — `git filter-repo` ne suffit pas si le repo a été poussé publiquement, il faut les considérer compromis.
 
+> **Outillage** : `scripts/manage-secrets.sh` génère / rote / valide les secrets
+> (`generate all`, `rotate <VAR> <envfile>`, `doctor <envfile>`). En prod,
+> `StartupConfigValidator` refuse de démarrer si un secret est manquant, trop court ou
+> laissé sur une valeur d'exemple. Voir `scripts/README.md`.
+
 ## À révoquer dès que possible
 
 ### 1. Gmail (compte annabimountassar@gmail.com)
