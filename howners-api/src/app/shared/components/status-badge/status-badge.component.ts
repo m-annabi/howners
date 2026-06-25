@@ -27,10 +27,13 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
     TERMINATED: { label: 'Résilié', icon: 'bi-x-circle-fill', color: 'danger' },
   },
   rental: {
+    VACANT: { label: 'Libre', icon: 'bi-door-open', color: 'neutral' },
+    LISTED: { label: 'En annonce', icon: 'bi-megaphone', color: 'info' },
+    PENDING: { label: 'Contrat en attente', icon: 'bi-clock', color: 'warning' },
     ACTIVE: { label: 'Active', icon: 'bi-check-circle-fill', color: 'success' },
-    PENDING: { label: 'En attente', icon: 'bi-clock', color: 'warning' },
-    ENDED: { label: 'Terminée', icon: 'bi-calendar-x', color: 'neutral' },
-    CANCELLED: { label: 'Annulée', icon: 'bi-x-circle', color: 'neutral' },
+    EXITING: { label: 'Sortie programmée', icon: 'bi-box-arrow-right', color: 'warning' },
+    TERMINATED: { label: 'Terminée', icon: 'bi-calendar-x', color: 'neutral' },
+    CANCELLED: { label: 'Annulée', icon: 'bi-x-circle', color: 'danger' },
   },
   invoice: {
     PAID: { label: 'Payée', icon: 'bi-check-circle-fill', color: 'success' },

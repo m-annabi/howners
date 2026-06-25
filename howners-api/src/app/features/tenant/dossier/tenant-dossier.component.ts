@@ -115,6 +115,9 @@ export class TenantDossierComponent implements OnInit {
   }
 
   removeDoc(piece: DossierPiece, doc: Document): void {
+    if (!confirm(`Supprimer « ${doc.fileName} » de votre dossier ?`)) {
+      return;
+    }
     this.documentService.deleteDocument(doc.id).subscribe({
       next: () => {
         piece.docs = piece.docs.filter(d => d.id !== doc.id);

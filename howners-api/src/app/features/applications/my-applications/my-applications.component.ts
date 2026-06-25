@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApplicationService } from '../../../core/services/application.service';
 import { DocumentService } from '../../../core/services/document.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import {
   Application,
   ApplicationStatus,
@@ -58,7 +59,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private applicationService: ApplicationService,
     private documentService: DocumentService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -103,7 +105,10 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
   withdraw(id: string): void {
     if (confirm('Retirer cette candidature ?')) {
       this.applicationService.withdraw(id).subscribe({
-        next: () => this.loadApplications(),
+        next: () => {
+          this.notificationService.success('Candidature retirée');
+          this.loadApplications();
+        },
         error: (err) => {
           this.error = err.error?.message || 'Erreur lors du retrait de la candidature';
         }
@@ -165,6 +170,9 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         this.submitting = false;
         this.reviewingId = null;
         this.reviewNotes = '';
+        this.notificationService.success(
+          status === ApplicationStatus.REJECTED ? 'Candidature refusée' : 'Candidature mise à jour'
+        );
         this.loadApplications();
       },
       error: (err) => {

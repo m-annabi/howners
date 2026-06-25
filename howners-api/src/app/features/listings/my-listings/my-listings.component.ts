@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ListingService } from '../../../core/services/listing.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { Listing, ListingStatus, LISTING_STATUS_LABELS, LISTING_STATUS_COLORS } from '../../../core/models/listing.model';
 
 @Component({
@@ -14,7 +15,10 @@ export class MyListingsComponent implements OnInit {
   statusLabels = LISTING_STATUS_LABELS;
   statusColors = LISTING_STATUS_COLORS;
 
-  constructor(private listingService: ListingService) {}
+  constructor(
+    private listingService: ListingService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.loadListings();
@@ -37,21 +41,36 @@ export class MyListingsComponent implements OnInit {
 
   publish(id: string): void {
     this.listingService.publishListing(id).subscribe({
-      next: () => this.loadListings(),
+      next: () => {
+        this.notificationService.success('Annonce publiée');
+        this.loadListings();
+      },
       error: () => this.error = 'Erreur lors de la publication'
     });
   }
 
   pause(id: string): void {
+    if (!confirm('Mettre cette annonce en pause ? Elle ne sera plus visible publiquement.')) {
+      return;
+    }
     this.listingService.pauseListing(id).subscribe({
-      next: () => this.loadListings(),
+      next: () => {
+        this.notificationService.success('Annonce mise en pause');
+        this.loadListings();
+      },
       error: () => this.error = 'Erreur lors de la mise en pause'
     });
   }
 
   close(id: string): void {
+    if (!confirm('Fermer cette annonce ? Elle n\'acceptera plus de candidatures.')) {
+      return;
+    }
     this.listingService.closeListing(id).subscribe({
-      next: () => this.loadListings(),
+      next: () => {
+        this.notificationService.success('Annonce fermée');
+        this.loadListings();
+      },
       error: () => this.error = 'Erreur lors de la fermeture'
     });
   }
@@ -59,7 +78,10 @@ export class MyListingsComponent implements OnInit {
   delete(id: string): void {
     if (confirm('Supprimer cette annonce ?')) {
       this.listingService.deleteListing(id).subscribe({
-        next: () => this.loadListings(),
+        next: () => {
+          this.notificationService.success('Annonce supprimée');
+          this.loadListings();
+        },
         error: () => this.error = 'Erreur lors de la suppression'
       });
     }

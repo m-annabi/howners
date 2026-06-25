@@ -11,6 +11,7 @@ const PAGE_SIZE = 5;
 })
 export class TenantAvisComponent implements OnInit {
   loading = true;
+  error: string | null = null;
   ratings: TenantRating[] = [];
   visibleCount = PAGE_SIZE;
   readonly stars = [1, 2, 3, 4, 5];
@@ -20,7 +21,7 @@ export class TenantAvisComponent implements OnInit {
   ngOnInit(): void {
     this.ratingService.getMyRatings().subscribe({
       next: (r) => { this.ratings = r; this.loading = false; },
-      error: () => { this.loading = false; }
+      error: () => { this.error = 'Impossible de charger vos avis pour le moment.'; this.loading = false; }
     });
   }
 
