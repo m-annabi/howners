@@ -12,8 +12,7 @@ Disallow: /invoices
 Disallow: /receipts
 Disallow: /expenses
 Disallow: /financial
-Disallow: /tenant-discovery
-Disallow: /tenant-search
+Disallow: /tenant
 Disallow: /applications
 Disallow: /messages
 Disallow: /profile

@@ -54,7 +54,7 @@ The API base URL is hardcoded in `src/environments/environment.ts` to `http://lo
 
 ### Database / migrations
 
-Schema is owned by **Liquibase** — `spring.jpa.hibernate.ddl-auto: none`. Never let Hibernate auto-generate DDL. Add a new changelog file under `howners-back/src/main/resources/db/changelog/` using the next free number (latest is `066-...`) and register it in `db.changelog-master.xml`. Number `017` is intentionally absent — keep the gap.
+Schema is owned by **Liquibase** — `spring.jpa.hibernate.ddl-auto: none`. Never let Hibernate auto-generate DDL. Add a new changelog file under `howners-back/src/main/resources/db/changelog/` using the next free number (latest is `082-...`) and register it in `db.changelog-master.xml`. Number `017` is intentionally absent — keep the gap.
 
 To reset the DB completely (destroys all data):
 

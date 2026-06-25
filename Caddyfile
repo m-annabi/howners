@@ -29,9 +29,10 @@ api.{$APP_DOMAIN} {
 
 	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 
-	# Limite de corps alignée sur le multipart Spring (10 Mo + marge)
+	# Doit rester >= Spring max-request-size (25 Mo) sinon le proxy tronque une
+	# requête multipart que l'app accepterait (413 au proxy au lieu d'une erreur applicative).
 	request_body {
-		max_size 12MB
+		max_size 26MB
 	}
 
 	reverse_proxy backend:8080 {

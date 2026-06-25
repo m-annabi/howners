@@ -227,6 +227,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Comptes délégués', icon: 'bi-people-fill', route: '/delegations' },
         ],
         roles: ['OWNER', 'ADMIN']
+      },
+      {
+        title: 'ADMINISTRATION',
+        items: [
+          { label: 'Administration', icon: 'bi-shield-lock', route: '/admin', roles: ['ADMIN'] },
+          { label: 'Journal d’audit', icon: 'bi-clock-history', route: '/audit', roles: ['ADMIN'] },
+        ],
+        roles: ['ADMIN']
       }
     ];
   }

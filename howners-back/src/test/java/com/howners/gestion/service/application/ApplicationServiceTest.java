@@ -18,9 +18,12 @@ import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ApplicationRepository;
 import com.howners.gestion.repository.DocumentRepository;
 import com.howners.gestion.repository.ListingRepository;
+import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.security.UserPrincipal;
 import com.howners.gestion.service.document.DocumentService;
+import com.howners.gestion.service.email.EmailService;
+import com.howners.gestion.service.notification.NotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +42,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +55,9 @@ class ApplicationServiceTest {
     @Mock private DocumentRepository documentRepository;
     @Mock private DocumentService documentService;
     @Mock private com.howners.gestion.service.audit.AuditService auditService;
+    @Mock private RentalRepository rentalRepository;
+    @Mock private EmailService emailService;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private ApplicationService applicationService;
@@ -113,6 +121,17 @@ class ApplicationServiceTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
+    // Dossier complet (5 pièces requises) — submit() refuse une candidature au dossier incomplet.
+    private List<Document> completeDossierDocs() {
+        return List.of(
+                DocumentType.IDENTITY,
+                DocumentType.PROOF_OF_INCOME,
+                DocumentType.EMPLOYMENT_CONTRACT,
+                DocumentType.TAX_NOTICE,
+                DocumentType.PROOF_OF_RESIDENCE
+        ).stream().map(t -> Document.builder().id(UUID.randomUUID()).documentType(t).build()).toList();
+    }
+
     // --- submit ---
 
     @Test
@@ -122,7 +141,10 @@ class ApplicationServiceTest {
 
         when(userRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
-        when(applicationRepository.existsByListingIdAndApplicantId(listing.getId(), tenantId)).thenReturn(false);
+        when(applicationRepository.existsByListingIdAndApplicantIdAndStatusNot(
+                listing.getId(), tenantId, ApplicationStatus.WITHDRAWN)).thenReturn(false);
+        when(documentRepository.findByUploaderIdAndDocumentTypeIn(eq(tenantId), anyList()))
+                .thenReturn(completeDossierDocs());
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
             Application app = inv.getArgument(0);
             app.setId(UUID.randomUUID());
@@ -146,7 +168,8 @@ class ApplicationServiceTest {
 
         when(userRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
-        when(applicationRepository.existsByListingIdAndApplicantId(listing.getId(), tenantId)).thenReturn(true);
+        when(applicationRepository.existsByListingIdAndApplicantIdAndStatusNot(
+                listing.getId(), tenantId, ApplicationStatus.WITHDRAWN)).thenReturn(true);
 
         assertThatThrownBy(() -> applicationService.submit(request))
                 .isInstanceOf(BadRequestException.class)
