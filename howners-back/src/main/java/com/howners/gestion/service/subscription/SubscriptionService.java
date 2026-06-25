@@ -10,10 +10,13 @@ import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.repository.UserSubscriptionRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Coupon;
 import com.stripe.model.Customer;
 import com.stripe.model.Subscription;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.CouponCreateParams;
 import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.SubscriptionUpdateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -168,8 +172,10 @@ public class SubscriptionService {
      * Récompense de parrainage : 1 mois de plan PRO offert.
      * - Utilisateur en FREE (ou sans abonnement) : bascule sur PRO pour 1 mois.
      * - Abonnement payant non géré par Stripe : prolonge la période d'1 mois.
-     * - Abonnement Stripe actif : pas de modification côté Stripe en V1 (le coupon
-     *   Stripe sera traité dans une itération ultérieure) — retourne false.
+     * - Abonnement Stripe actif : applique un coupon 100 % sur la prochaine échéance
+     *   (la facturation réelle reste pilotée par Stripe ; la période locale est
+     *   resynchronisée par le webhook customer.subscription.updated).
+     * Retourne false si la récompense n'a pas pu être appliquée.
      */
     @Transactional
     public boolean offrirMoisPro(UUID userId) {
@@ -181,8 +187,7 @@ public class SubscriptionService {
                 .orElse(null);
 
         if (current != null && current.getStripeSubscriptionId() != null) {
-            log.warn("Récompense parrainage non appliquée automatiquement pour {} (abonnement Stripe actif) — TODO coupon Stripe", userId);
-            return false;
+            return appliquerCouponMoisOffert(current, userId);
         }
 
         if (current != null && current.getPlan() != null && current.getPlan().getName() != PlanName.FREE) {
@@ -215,6 +220,39 @@ public class SubscriptionService {
         subscriptionRepository.save(reward);
         log.info("Récompense parrainage : 1 mois PRO offert à {}", userId);
         return true;
+    }
+
+    /**
+     * Applique un coupon Stripe 100 % à usage unique sur la prochaine échéance de
+     * l'abonnement : le prochain prélèvement est offert (= 1 mois gratuit).
+     */
+    private boolean appliquerCouponMoisOffert(UserSubscription current, UUID userId) {
+        if (!isStripeConfigured()) {
+            log.warn("Récompense parrainage non appliquée pour {} : Stripe non configuré", userId);
+            return false;
+        }
+        try {
+            Coupon coupon = Coupon.create(CouponCreateParams.builder()
+                    .setPercentOff(new BigDecimal("100"))
+                    .setDuration(CouponCreateParams.Duration.ONCE)
+                    .setName("Parrainage - 1 mois offert")
+                    .setMaxRedemptions(1L)
+                    .build());
+
+            Subscription stripeSub = Subscription.retrieve(current.getStripeSubscriptionId());
+            stripeSub.update(SubscriptionUpdateParams.builder()
+                    .addDiscount(SubscriptionUpdateParams.Discount.builder()
+                            .setCoupon(coupon.getId())
+                            .build())
+                    .build());
+
+            log.info("Récompense parrainage : coupon 100 % (1 mois) appliqué à l'abonnement Stripe {} de {}",
+                    current.getStripeSubscriptionId(), userId);
+            return true;
+        } catch (StripeException e) {
+            log.error("Échec de l'application du coupon parrainage Stripe pour {} : {}", userId, e.getMessage());
+            return false;
+        }
     }
 
     @Transactional

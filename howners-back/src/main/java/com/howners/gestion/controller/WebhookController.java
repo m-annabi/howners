@@ -4,11 +4,13 @@ import com.howners.gestion.exception.esignature.WebhookValidationException;
 import com.howners.gestion.service.contract.ContractESignatureService;
 import com.howners.gestion.service.payment.PaymentService;
 import com.howners.gestion.service.subscription.SubscriptionService;
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.Subscription;
 import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,9 @@ public class WebhookController {
     private final ContractESignatureService esignatureService;
     private final PaymentService paymentService;
     private final SubscriptionService subscriptionService;
+
+    @Value("${stripe.webhook-secret:}")
+    private String stripeWebhookSecret;
 
     /**
      * Webhook DocuSign
@@ -85,43 +90,57 @@ public class WebhookController {
             @RequestHeader(value = "Stripe-Signature", required = false) String signature) {
         log.info("Received Stripe webhook");
 
+        // Signature vérifiée AVANT tout traitement (un payload non signé est rejeté en prod).
+        final Event event;
         try {
-            // Route subscription-related events to SubscriptionService
-            if (payload.contains("customer.subscription.")) {
-                try {
-                    Event event = Event.GSON.fromJson(payload, Event.class);
-                    String eventType = event.getType();
+            event = constructStripeEvent(payload, signature);
+        } catch (SignatureVerificationException e) {
+            log.error("Stripe webhook signature verification failed", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
+        }
 
-                    event.getDataObjectDeserializer().getObject().ifPresent(obj -> {
-                        if (obj instanceof Subscription sub) {
-                            String priceId = null;
-                            if (sub.getItems() != null && sub.getItems().getData() != null
-                                    && !sub.getItems().getData().isEmpty()
-                                    && sub.getItems().getData().get(0).getPrice() != null) {
-                                priceId = sub.getItems().getData().get(0).getPrice().getId();
-                            }
-                            subscriptionService.processSubscriptionWebhook(
-                                    eventType,
-                                    sub.getId(),
-                                    sub.getCustomer(),
-                                    priceId,
-                                    sub.getCurrentPeriodStart(),
-                                    sub.getCurrentPeriodEnd()
-                            );
+        try {
+            // Événements d'abonnement -> SubscriptionService (à partir d'un événement vérifié)
+            if (event.getType() != null && event.getType().startsWith("customer.subscription.")) {
+                event.getDataObjectDeserializer().getObject().ifPresent(obj -> {
+                    if (obj instanceof Subscription sub) {
+                        String priceId = null;
+                        if (sub.getItems() != null && sub.getItems().getData() != null
+                                && !sub.getItems().getData().isEmpty()
+                                && sub.getItems().getData().get(0).getPrice() != null) {
+                            priceId = sub.getItems().getData().get(0).getPrice().getId();
                         }
-                    });
-                } catch (Exception subEx) {
-                    log.error("Error processing subscription webhook: {}", subEx.getMessage());
-                }
+                        subscriptionService.processSubscriptionWebhook(
+                                event.getType(),
+                                sub.getId(),
+                                sub.getCustomer(),
+                                priceId,
+                                sub.getCurrentPeriodStart(),
+                                sub.getCurrentPeriodEnd()
+                        );
+                    }
+                });
             }
 
-            // Process payment events
+            // Événements de paiement (processStripeWebhook revérifie la signature)
             paymentService.processStripeWebhook(payload, signature);
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
             log.error("Error processing Stripe webhook", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Webhook processing failed");
         }
+    }
+
+    /**
+     * Construit l'événement Stripe en vérifiant la signature quand un secret est
+     * configuré ; en l'absence de secret (dev local) on retombe sur un parsing simple,
+     * comme {@code PaymentService.processStripeWebhook}.
+     */
+    private Event constructStripeEvent(String payload, String signature) throws SignatureVerificationException {
+        if (stripeWebhookSecret != null && !stripeWebhookSecret.isBlank()) {
+            return Webhook.constructEvent(payload, signature, stripeWebhookSecret);
+        }
+        return Event.GSON.fromJson(payload, Event.class);
     }
 
     /**
