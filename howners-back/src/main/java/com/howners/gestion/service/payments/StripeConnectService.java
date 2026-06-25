@@ -121,4 +121,26 @@ public class StripeConnectService {
                 null
         );
     }
+
+    /**
+     * Met à jour le statut Connect d'un bailleur depuis un webhook account.updated
+     * (synchro en push, sans attendre que le bailleur consulte sa page).
+     */
+    @Transactional
+    public void processAccountUpdate(String accountId, Boolean chargesEnabled, Boolean payoutsEnabled) {
+        if (accountId == null) {
+            return;
+        }
+        userRepository.findByStripeConnectAccountId(accountId).ifPresent(user -> {
+            boolean charges = Boolean.TRUE.equals(chargesEnabled);
+            boolean payouts = Boolean.TRUE.equals(payoutsEnabled);
+            String newStatus = (charges && payouts) ? "COMPLETED" : "PENDING";
+            if (!newStatus.equals(user.getStripeConnectStatus())) {
+                user.setStripeConnectStatus(newStatus);
+                userRepository.save(user);
+                log.info("Statut Connect du compte {} mis à jour en {} pour l'utilisateur {}",
+                        accountId, newStatus, user.getId());
+            }
+        });
+    }
 }

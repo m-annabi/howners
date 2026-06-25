@@ -3,8 +3,10 @@ package com.howners.gestion.controller;
 import com.howners.gestion.exception.esignature.WebhookValidationException;
 import com.howners.gestion.service.contract.ContractESignatureService;
 import com.howners.gestion.service.payment.PaymentService;
+import com.howners.gestion.service.payments.StripeConnectService;
 import com.howners.gestion.service.subscription.SubscriptionService;
 import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.Account;
 import com.stripe.model.Event;
 import com.stripe.model.Subscription;
 import com.stripe.net.Webhook;
@@ -27,6 +29,7 @@ public class WebhookController {
     private final ContractESignatureService esignatureService;
     private final PaymentService paymentService;
     private final SubscriptionService subscriptionService;
+    private final StripeConnectService stripeConnectService;
 
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
@@ -98,6 +101,16 @@ public class WebhookController {
                                 sub.getCurrentPeriodStart(),
                                 sub.getCurrentPeriodEnd()
                         );
+                    }
+                });
+            }
+
+            // Statut des comptes Connect (bailleurs) -> StripeConnectService
+            if ("account.updated".equals(event.getType())) {
+                event.getDataObjectDeserializer().getObject().ifPresent(obj -> {
+                    if (obj instanceof Account account) {
+                        stripeConnectService.processAccountUpdate(
+                                account.getId(), account.getChargesEnabled(), account.getPayoutsEnabled());
                     }
                 });
             }
