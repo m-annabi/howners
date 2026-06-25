@@ -5,7 +5,8 @@ import { Listing, ListingStatus, LISTING_STATUS_LABELS, LISTING_STATUS_COLORS } 
 
 @Component({
   selector: 'app-my-listings',
-  templateUrl: './my-listings.component.html'
+  templateUrl: './my-listings.component.html',
+  styleUrls: ['./my-listings.component.scss']
 })
 export class MyListingsComponent implements OnInit {
   listings: Listing[] = [];

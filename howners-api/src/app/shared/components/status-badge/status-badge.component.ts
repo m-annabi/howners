@@ -51,10 +51,10 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
     CANCELLED: { label: 'Annulée', icon: 'bi-dash-circle', color: 'neutral' },
   },
   listing: {
-    ACTIVE: { label: 'Active', icon: 'bi-check-circle-fill', color: 'success' },
-    DRAFT: { label: 'Brouillon', icon: 'bi-pencil', color: 'warning' },
+    DRAFT: { label: 'Brouillon', icon: 'bi-pencil', color: 'neutral' },
+    PUBLISHED: { label: 'Publiée', icon: 'bi-check-circle-fill', color: 'success' },
+    PAUSED: { label: 'En pause', icon: 'bi-pause-circle', color: 'warning' },
     CLOSED: { label: 'Fermée', icon: 'bi-x-circle', color: 'neutral' },
-    RENTED: { label: 'Louée', icon: 'bi-house-check-fill', color: 'info' },
   },
   inventory: {
     DRAFT: { label: 'Brouillon', icon: 'bi-pencil', color: 'warning' },
