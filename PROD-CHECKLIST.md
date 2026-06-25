@@ -52,6 +52,32 @@ retiré de toutes les branches via `git filter-repo` + force-push).
 | `FRONTEND_URL` | `https://howners.com` |
 | `CORS_ALLOWED_ORIGINS` | `https://howners.com` (domaine prod exact, pas de `*`) |
 
+### 1.4 Clés à renseigner — checklist par source (tout dans `.env.prod`, chmod 600)
+
+**✅ Déjà générés** (créés dans `.env.prod` ; régénérables via `./scripts/manage-secrets.sh generate all`) :
+`JWT_SECRET`, `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD`.
+
+**🔴 À obtenir depuis un compte externe :**
+- [ ] **Stripe** (dashboard.stripe.com → Developers → API keys) : `STRIPE_SECRET_KEY=sk_live_…`,
+  `STRIPE_PUBLIC_KEY=pk_live_…`, et `STRIPE_WEBHOOK_SECRET=whsec_…` (après création du webhook, cf. §3.1).
+- [ ] **SMTP** (Brevo / Mailgun / SendGrid / OVH…) : `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`,
+  `SMTP_PASSWORD`, `SMTP_AUTH=true`, `SMTP_STARTTLS=true`, `EMAIL_FROM`.
+
+**🟡 Config de ton infra (tes valeurs) :** `APP_DOMAIN`, `ACME_EMAIL`, `BACKEND_URL`,
+`FRONTEND_URL`, `CORS_ALLOWED_ORIGINS`.
+
+**⚪ Optionnel (se désactive proprement si vide) :**
+- [ ] **DocuSign** (sinon signature canvas in-app) : `DOCUSIGN_INTEGRATION_KEY`, `DOCUSIGN_USER_ID`,
+  `DOCUSIGN_ACCOUNT_ID`, `DOCUSIGN_PRIVATE_KEY`, `DOCUSIGN_IMPERSONATED_USER_GUID`, `DOCUSIGN_WEBHOOK_SECRET`.
+- [ ] **Sentry backend** : `SENTRY_DSN`. **Sentry frontend** : `sentryDsn` dans
+  `howners-api/src/environments/environment.prod.ts` (seul secret hors `.env.prod`).
+
+**❌ À ignorer (legacy, non utilisés) :** `YOUSIGN_API_KEY`, `SENDGRID_API_KEY` — laisser vides.
+
+Après remplissage : `./scripts/manage-secrets.sh doctor .env.prod` (vérifie sans afficher les
+valeurs), puis redémarrer le backend. En prod, le démarrage **échoue** si un secret est
+manquant/faible ou si `STRIPE_SECRET_KEY` est une clé `sk_test_`.
+
 ---
 
 ## Phase 2 — 🔴 Infrastructure
