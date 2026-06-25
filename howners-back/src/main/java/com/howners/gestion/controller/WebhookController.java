@@ -60,26 +60,6 @@ public class WebhookController {
     }
 
     /**
-     * Webhook HelloSign (futur)
-     *
-     * POST /api/webhooks/hellosign
-     */
-    @PostMapping("/hellosign")
-    public ResponseEntity<Void> handleHelloSignWebhook(
-            @RequestBody String payload,
-            @RequestHeader(value = "X-HelloSign-Signature", required = false) String signature) {
-        log.info("Received HelloSign webhook");
-
-        try {
-            esignatureService.processWebhook("hellosign", payload, signature);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("Failed to process HelloSign webhook", e);
-            return ResponseEntity.ok().build();
-        }
-    }
-
-    /**
      * Webhook Stripe (si déjà utilisé dans l'application)
      *
      * POST /api/webhooks/stripe

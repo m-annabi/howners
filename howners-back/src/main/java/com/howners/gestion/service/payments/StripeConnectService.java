@@ -26,7 +26,8 @@ import java.util.UUID;
  *  - Configurer les conditions de service et fournir la couverture juridique
  *    (RGPD, DSP2, agrément ACPR si modèle d'agent prestataire de services
  *    de paiement).
- *  - Définir la commission (platform fee) — non implémentée ici.
+ *  - La commission (platform fee) est appliquée à l'encaissement du loyer dans
+ *    PaymentService (montant dégressif par plan via PlatformFeeService).
  *
  * Sans clé Stripe configurée, les endpoints retournent un état "NONE" et
  * une URL d'onboarding factice (utile pour tester le flow UI).
