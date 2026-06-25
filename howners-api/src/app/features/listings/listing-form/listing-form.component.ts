@@ -14,7 +14,8 @@ import {
 
 @Component({
   selector: 'app-listing-form',
-  templateUrl: './listing-form.component.html'
+  templateUrl: './listing-form.component.html',
+  styleUrls: ['./listing-form.component.scss']
 })
 export class ListingFormComponent implements OnInit {
   form!: FormGroup;

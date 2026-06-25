@@ -10,7 +10,8 @@ import { Role } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-listing-detail',
-  templateUrl: './listing-detail.component.html'
+  templateUrl: './listing-detail.component.html',
+  styleUrls: ['./listing-detail.component.scss']
 })
 export class ListingDetailComponent implements OnInit, OnDestroy {
   private userSub?: Subscription;
