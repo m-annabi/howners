@@ -1,19 +1,38 @@
-<div class="container py-5">
-  <div class="text-center">
-    <div class="mb-4">
-      <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
-    </div>
-    <h2>Paiement réussi !</h2>
-    <p class="text-muted fs-5 mt-3">
-      Votre abonnement a été activé avec succès. Vous pouvez maintenant profiter de toutes les fonctionnalités de votre plan.
-    </p>
-    <div class="d-flex gap-3 justify-content-center mt-4">
-      <a routerLink="/billing" class="btn btn-primary">
-        <i class="bi bi-credit-card"></i> Voir mon abonnement
-      </a>
-      <a routerLink="/dashboard" class="btn btn-outline-primary">
-        <i class="bi bi-speedometer2"></i> Tableau de bord
-      </a>
-    </div>
+<div class="checkout-success">
+  <div class="hw-card checkout-success__card" [ngSwitch]="state">
+
+    <ng-container *ngSwitchCase="'checking'">
+      <div class="checkout-success__icon checkout-success__icon--info">
+        <span class="spinner-border"></span>
+      </div>
+      <h2>Confirmation de votre abonnement…</h2>
+      <p class="hw-text-muted">Nous activons votre accès, un instant.</p>
+    </ng-container>
+
+    <ng-container *ngSwitchCase="'activated'">
+      <div class="checkout-success__icon checkout-success__icon--success">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <h2>Abonnement {{ planName }} activé !</h2>
+      <p class="hw-text-muted">Merci. Votre nouvel accès est disponible immédiatement.</p>
+      <div class="checkout-success__actions">
+        <a routerLink="/dashboard" class="hw-btn hw-btn--primary">Aller au tableau de bord</a>
+        <a routerLink="/billing" class="hw-btn hw-btn--ghost">Gérer mon abonnement</a>
+      </div>
+    </ng-container>
+
+    <ng-container *ngSwitchCase="'pending'">
+      <div class="checkout-success__icon checkout-success__icon--info">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+      <h2>Paiement reçu</h2>
+      <p class="hw-text-muted">
+        Votre abonnement sera activé dans un instant. Si rien ne change, actualisez la page de facturation.
+      </p>
+      <div class="checkout-success__actions">
+        <a routerLink="/billing" class="hw-btn hw-btn--primary">Voir mon abonnement</a>
+      </div>
+    </ng-container>
+
   </div>
 </div>

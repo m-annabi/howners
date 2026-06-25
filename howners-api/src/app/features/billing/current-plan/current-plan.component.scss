@@ -1,0 +1,30 @@
+.current-plan__title {
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--hw-border, #e5e7eb);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.current-plan__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--hw-primary-600, #1e3a5f);
+}
+
+.usage-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--hw-border-light, #eef0f2);
+  overflow: hidden;
+
+  &__fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--hw-success, #4caf50);
+    transition: width 0.3s ease;
+
+    &--warn { background: var(--hw-warning, #ff9800); }
+    &--danger { background: var(--hw-danger, #f44336); }
+  }
+}

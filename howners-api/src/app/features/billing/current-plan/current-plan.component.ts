@@ -4,7 +4,8 @@ import { UserSubscription, UsageLimits, PLAN_COLORS } from '../../../core/models
 
 @Component({
   selector: 'app-current-plan',
-  templateUrl: './current-plan.component.html'
+  templateUrl: './current-plan.component.html',
+  styleUrls: ['./current-plan.component.scss']
 })
 export class CurrentPlanComponent implements OnInit {
   subscription: UserSubscription | null = null;
