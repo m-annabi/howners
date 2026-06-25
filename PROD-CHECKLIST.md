@@ -115,27 +115,33 @@ Voir `scripts/README.md`. Testés de bout en bout (dump → restauration scratch
 
 ### 3.1 Stripe (live)
 
-**Déjà câblé côté code** (rien à développer) : Checkout abonnement (redirection), webhook
-`/api/webhooks/stripe` à **signature vérifiée**, routage Connect du loyer (`application_fee`
-dégressif par plan + `transfer_data`), et récompense de parrainage des abonnés Stripe (coupon
-100 % sur la prochaine échéance = 1 mois offert).
+**Déjà câblé côté code** (rien à développer) : Checkout abonnement (redirection) ; webhook
+`/api/webhooks/stripe` à **signature vérifiée** (abonnements + paiements + `account.updated`
+Connect) ; routage Connect du loyer (`application_fee` dégressif par plan + `transfer_data`) ;
+synchro **automatique du statut Connect** des bailleurs ; récompense de parrainage des abonnés
+Stripe (coupon 100 % sur la prochaine échéance) ; page de succès qui **confirme l'activation
+réelle** (sonde l'abonnement, n'affirme plus le succès en aveugle). Couvert par 10 tests.
 
-Actions (compte / serveur) :
-- [ ] 🔴 Renseigner les clés **live** dans `.env` : `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`,
-  `STRIPE_PLATFORM_FEE_PERCENT` (repli ; la commission réelle est dégressive par plan).
-- [ ] 🔴 Créer le **webhook prod** → `https://api.<DOMAINE>/api/webhooks/stripe`, événements :
-  `customer.subscription.created/updated/deleted`, `checkout.session.completed`,
-  `payment_intent.succeeded`, `payment_intent.payment_failed`. Copier le signing secret dans
-  `STRIPE_WEBHOOK_SECRET` (sans lui, les webhooks signés sont rejetés en 400).
-- [ ] 🟡 Créer les **Prices** (PRO, PREMIUM, AGENCE — mensuel + annuel) et renseigner
-  `stripe_price_id_*` en base. **Turnkey** (idempotent) :
-  ```bash
-  STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh --dry-run   # aperçu
-  STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh             # crée + écrit en base
-  ```
-- [ ] 🟡 Activer **Stripe Connect (Express)** si l'encaissement des loyers est dans le scope du lancement.
-- [ ] 🟡 **Tester en mode TEST d'abord** (cartes `4242…`) : abonnement bout-en-bout + un parrainage
-  (vérifier que le coupon apparaît sur l'abonnement Stripe), puis basculer en live et redémarrer le backend.
+**Procédure go-live (dans l'ordre)** :
+1. [ ] 🔴 Activer le compte Stripe en **live** (vérification entreprise + IBAN).
+2. [ ] 🔴 Renseigner dans `.env` : `STRIPE_SECRET_KEY=sk_live_…`, `STRIPE_PUBLIC_KEY=pk_live_…`,
+   `STRIPE_PLATFORM_FEE_PERCENT` (repli ; commission réelle dégressive par plan).
+3. [ ] 🟡 Créer les **Prices** (PRO, PREMIUM, AGENCE — mensuel + annuel) → `stripe_price_id_*`
+   en base, via le script idempotent :
+   ```bash
+   STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh --dry-run   # aperçu
+   STRIPE_SECRET_KEY=sk_live_xxx ./scripts/setup-stripe-prices.sh             # crée + écrit en base
+   ```
+4. [ ] 🔴 Créer le **webhook prod** → `https://api.<DOMAINE>/api/webhooks/stripe`, événements :
+   `customer.subscription.created/updated/deleted`, `checkout.session.completed`,
+   `payment_intent.succeeded`, `payment_intent.payment_failed`, **`account.updated`** (Connect).
+   Copier le signing secret dans `STRIPE_WEBHOOK_SECRET` (sans lui, les webhooks signés sont rejetés en 400).
+5. [ ] 🟡 Si encaissement des loyers : activer **Stripe Connect (Express)** dans le Dashboard.
+   Les bailleurs s'onboardent depuis `/billing` ; leur statut se met à jour seul via `account.updated`.
+6. [ ] 🟡 **Tester en mode TEST d'abord** (clés `sk_test_`, cartes `4242…`) : abonnement
+   bout-en-bout (→ page de succès « activé »), un parrainage (coupon visible sur l'abonnement),
+   un loyer Connect. Puis basculer en live et **redémarrer le backend**.
+   > En prod, `StartupConfigValidator` refuse de démarrer si `STRIPE_SECRET_KEY` est une clé `sk_test_`.
 
 ### 3.2 Données métier
 - [x] **Indices IRL** : valeurs 2022→2026 T1 seedées et corrigées (changelogs 071 + 078,
@@ -220,7 +226,7 @@ docker compose -f docker-compose.prod.yml logs -f backend
 | 2 | Secrets de prod générés, `.env` hors Git | ✅ fait (infra) — reste à remplir Stripe/SMTP/domaine | toi |
 | 3 | HTTPS + reverse proxy (Caddy) | ✅ config faite — reste DNS (2 A records) | toi (DNS) |
 | 4 | Backups PostgreSQL + restauration testée | ✅ scripts faits & testés (off-site intégré) — reste cron + 1 var off-site | toi (serveur) |
-| 5 | Stripe live + webhook prod | ✅ code complet (Checkout, webhook signé, Connect, coupon parrainage, script Prices) — reste clés live + webhook + Prices (compte Stripe) | toi |
+| 5 | Stripe live + webhook prod | ✅ code complet & testé (Checkout, webhook signé, Connect + statut auto, coupon parrainage, page succès, script Prices, 10 tests) — reste clés live + webhook + Prices (compte Stripe) | toi |
 | 6 | SMTP réel fonctionnel | ⛔ compte fournisseur requis | toi |
 | 7 | Documents légaux relus par un juriste | ⛔ avocat requis | toi |
 
