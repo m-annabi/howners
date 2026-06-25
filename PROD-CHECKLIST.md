@@ -35,7 +35,7 @@ retiré de toutes les branches via `git filter-repo` + force-push).
 - [x] `JWT_SECRET` (72 ch.), `POSTGRES_PASSWORD`, `MINIO_ROOT_PASSWORD` générés dans `.env.prod` (chmod 600, gitignoré)
 - [ ] 🔴 Compléter `.env.prod` avec les valeurs **externes** : Stripe live, SMTP, domaine, CORS (cf. 1.3 + Phase 3)
 
-### 1.3 Variables d'environnement à renseigner (`.env`)
+### 1.3 Variables d'environnement à renseigner (`.env.prod` — lu par `docker-compose.prod.yml`)
 | Variable | Valeur prod |
 |---|---|
 | `SPRING_PROFILES_ACTIVE` | `prod` |
@@ -62,7 +62,7 @@ Le reverse proxy **Caddy** est intégré (`Caddyfile` + service `caddy` dans
 `backend` et `frontend` ne sont plus publiés (directive `expose`, réseau interne).
 TLS Let's Encrypt automatique, redirection HTTP→HTTPS, HSTS.
 
-- [ ] 🔴 Renseigner `APP_DOMAIN` et `ACME_EMAIL` dans le `.env` (cf. `.env.example`)
+- [ ] 🔴 Renseigner `APP_DOMAIN` et `ACME_EMAIL` dans `.env.prod` (cf. `.env.example`)
 - [ ] 🔴 A records DNS : `APP_DOMAIN` **et** `api.APP_DOMAIN` → IP du serveur (les deux requis
   pour l'émission des certificats)
 - [ ] 🟡 1er déploiement : décommenter `acme_ca …staging…` dans le `Caddyfile` pour tester
@@ -124,7 +124,7 @@ réelle** (sonde l'abonnement, n'affirme plus le succès en aveugle). Couvert pa
 
 **Procédure go-live (dans l'ordre)** :
 1. [ ] 🔴 Activer le compte Stripe en **live** (vérification entreprise + IBAN).
-2. [ ] 🔴 Renseigner dans `.env` : `STRIPE_SECRET_KEY=sk_live_…`, `STRIPE_PUBLIC_KEY=pk_live_…`,
+2. [ ] 🔴 Renseigner dans `.env.prod` : `STRIPE_SECRET_KEY=sk_live_…`, `STRIPE_PUBLIC_KEY=pk_live_…`,
    `STRIPE_PLATFORM_FEE_PERCENT` (repli ; commission réelle dégressive par plan).
 3. [ ] 🟡 Créer les **Prices** (PRO, PREMIUM, AGENCE — mensuel + annuel) → `stripe_price_id_*`
    en base, via le script idempotent :
@@ -163,7 +163,7 @@ Voir `OBSERVABILITY.md` pour les procédures détaillées.
 - [x] **Sentry câblé** backend (appender Logback) + frontend (`@sentry/angular-ivy`), gated sur DSN
 - [x] `/actuator/**` (hors `/health`) **réservé à ADMIN** en prod (vérifié : 401 sans auth)
 - [x] Métriques **Prometheus** exposées (`/actuator/prometheus`, ADMIN-gated)
-- [ ] 🟡 Créer les projets **Sentry** (back + front), renseigner `SENTRY_DSN` (.env) et
+- [ ] 🟡 Créer les projets **Sentry** (back + front), renseigner `SENTRY_DSN` (`.env.prod`) et
   `sentryDsn` (`environment.prod.ts`). DSN vide ⇒ Sentry off (no-op).
 - [ ] 🟡 **Uptime monitoring** sur `https://api.howners.com/actuator/health` (UptimeRobot, etc.)
 - [ ] 🟠 Agrégation des logs (les conteneurs loggent sur stdout → brancher journald/CloudWatch/Loki)
@@ -187,10 +187,11 @@ Voir `OBSERVABILITY.md` pour les procédures détaillées.
 
 ### 6.1 Déployer
 ```bash
-# Sur le serveur, avec le .env de prod en place
-docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml ps          # tous "healthy"
-docker compose -f docker-compose.prod.yml logs -f backend
+# Sur le serveur, avec .env.prod en place (chmod 600). TOUJOURS passer --env-file .env.prod
+# pour que l'interpolation ${VAR} (postgres/minio/domaine) lise bien .env.prod.
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.prod -f docker-compose.prod.yml ps          # tous "healthy"
+docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
 # Attendre "Started HownersApplication" + validation StartupConfigValidator OK
 ```
 
@@ -210,8 +211,8 @@ docker compose -f docker-compose.prod.yml logs -f backend
 - [ ] Procédure de rollback documentée :
   ```bash
   # Revenir à l'image précédente
-  docker compose -f docker-compose.prod.yml down
-  git checkout <commit-précédent> && docker compose -f docker-compose.prod.yml up -d --build
+  docker compose --env-file .env.prod -f docker-compose.prod.yml down
+  git checkout <commit-précédent> && docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
   ```
 - [ ] ⚠️ Les migrations Liquibase ne sont **pas auto-réversibles** : prévoir un backup DB
   **avant** chaque déploiement (Phase 2.4) et un rollback SQL manuel si nécessaire.

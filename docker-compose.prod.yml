@@ -1,12 +1,19 @@
 version: '3.8'
 
+# Secrets prod lus depuis .env.prod (gitignoré). Les services utilisent .env.prod via
+# `env_file`, MAIS l'interpolation ${VAR} (postgres/minio/domaine) est résolue par Compose
+# depuis son fichier d'env par défaut. Lancer en passant explicitement --env-file pour que
+# TOUT lise .env.prod :
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml pull   # si images GHCR
+
 services:
   # Reverse proxy TLS — seul service exposé sur l'hôte (80/443).
   # Cf. Caddyfile à la racine. TLS Let's Encrypt automatique.
   caddy:
     image: caddy:2-alpine
     container_name: howners-caddy
-    env_file: .env
+    env_file: .env.prod
     ports:
       - "80:80"
       - "443:443"
@@ -30,7 +37,7 @@ services:
       context: ./howners-back
       dockerfile: Dockerfile
     container_name: howners-backend
-    env_file: .env
+    env_file: .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
