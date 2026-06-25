@@ -44,11 +44,11 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
     CANCELLED: { label: 'Annulée', icon: 'bi-x-circle', color: 'neutral' },
   },
   application: {
-    PENDING: { label: 'En attente', icon: 'bi-clock', color: 'warning' },
+    SUBMITTED: { label: 'Soumise', icon: 'bi-send', color: 'info' },
     UNDER_REVIEW: { label: 'En cours d\'examen', icon: 'bi-eye', color: 'info' },
     ACCEPTED: { label: 'Acceptée', icon: 'bi-check-circle-fill', color: 'success' },
     REJECTED: { label: 'Refusée', icon: 'bi-x-circle-fill', color: 'danger' },
-    CANCELLED: { label: 'Annulée', icon: 'bi-dash-circle', color: 'neutral' },
+    WITHDRAWN: { label: 'Retirée', icon: 'bi-dash-circle', color: 'neutral' },
   },
   listing: {
     DRAFT: { label: 'Brouillon', icon: 'bi-pencil', color: 'neutral' },
