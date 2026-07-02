@@ -181,6 +181,37 @@
   }
 }
 
+// --- Liste clé/valeur (écrans de détail) ---
+.hw-kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--hw-space-2) var(--hw-space-4);
+  font-size: var(--hw-fs-base);
+
+  dt {
+    color: var(--hw-gray-600);
+    font-weight: var(--hw-fw-medium);
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--hw-gray-900);
+    word-break: break-word;
+  }
+}
+
+// Grille 2 colonnes pour blocs de détail (repasse en 1 colonne sur mobile)
+.hw-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--hw-space-6);
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
 // --- Alerts ---
 .hw-alert {
   display: flex;

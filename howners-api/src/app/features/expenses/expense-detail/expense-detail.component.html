@@ -1,40 +1,46 @@
-<div class="container mt-4">
-  <button class="btn btn-secondary mb-3" (click)="goBack()">&larr; Retour à la liste</button>
+<button class="hw-btn hw-btn--sm hw-btn--ghost mb-3" (click)="goBack()">
+  <i class="bi bi-arrow-left"></i> Retour à la liste
+</button>
 
-  <div *ngIf="loading" class="alert alert-info">Chargement de la dépense...</div>
-  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+<app-loading-skeleton *ngIf="loading" type="card" [count]="1"></app-loading-skeleton>
 
-  <div *ngIf="!loading && !error && expense" class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h3>Dépense - {{ categoryLabels[expense.category] }}</h3>
-      <span class="badge bg-primary">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</span>
+<div *ngIf="!loading && error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<div *ngIf="!loading && !error && expense" class="hw-card">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <h3 class="mb-0">Dépense — {{ categoryLabels[expense.category] }}</h3>
+    <span class="hw-badge hw-badge--neutral">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</span>
+  </div>
+
+  <div class="hw-detail-grid mb-4">
+    <div>
+      <h5 class="hw-section-title">Informations</h5>
+      <dl class="hw-kv">
+        <dt>Catégorie</dt><dd>{{ categoryLabels[expense.category] }}</dd>
+        <dt>Description</dt><dd>{{ expense.description || '—' }}</dd>
+        <dt>Montant</dt><dd>{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</dd>
+        <dt>Propriété</dt><dd>{{ expense.propertyName || '—' }}</dd>
+      </dl>
     </div>
 
-    <div class="card-body">
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <h5>Informations</h5>
-          <table class="table table-borderless">
-            <tr><td><strong>Catégorie:</strong></td><td>{{ categoryLabels[expense.category] }}</td></tr>
-            <tr><td><strong>Description:</strong></td><td>{{ expense.description || '-' }}</td></tr>
-            <tr><td><strong>Montant:</strong></td><td>{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</td></tr>
-            <tr><td><strong>Propriété:</strong></td><td>{{ expense.propertyName || '-' }}</td></tr>
-          </table>
-        </div>
-
-        <div class="col-md-6">
-          <h5>Dates</h5>
-          <table class="table table-borderless">
-            <tr><td><strong>Date dépense:</strong></td><td>{{ expense.expenseDate | date:'dd/MM/yyyy' }}</td></tr>
-            <tr><td><strong>Créée le:</strong></td><td>{{ expense.createdAt | date:'dd/MM/yyyy HH:mm' }}</td></tr>
-          </table>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="btn btn-primary me-2" (click)="editExpense()">Modifier</button>
-        <button class="btn btn-danger" (click)="deleteExpense()">Supprimer</button>
-      </div>
+    <div>
+      <h5 class="hw-section-title">Dates</h5>
+      <dl class="hw-kv">
+        <dt>Date dépense</dt><dd>{{ expense.expenseDate | date:'dd/MM/yyyy' }}</dd>
+        <dt>Créée le</dt><dd>{{ expense.createdAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+      </dl>
     </div>
+  </div>
+
+  <div class="d-flex gap-2 flex-wrap">
+    <button class="hw-btn hw-btn--primary" (click)="editExpense()">
+      <i class="bi bi-pencil"></i> Modifier
+    </button>
+    <button class="hw-btn hw-btn--ghost" (click)="deleteExpense()">
+      <i class="bi bi-trash"></i> Supprimer
+    </button>
   </div>
 </div>

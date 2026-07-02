@@ -13,6 +13,7 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
     LATE: { label: 'En retard', icon: 'bi-exclamation-triangle-fill', color: 'danger' },
     OVERDUE: { label: 'Impayé', icon: 'bi-x-circle-fill', color: 'danger' },
     FAILED: { label: 'Échoué', icon: 'bi-x-circle-fill', color: 'danger' },
+    REFUNDED: { label: 'Remboursé', icon: 'bi-arrow-counterclockwise', color: 'info' },
     CANCELLED: { label: 'Annulé', icon: 'bi-dash-circle', color: 'neutral' },
     PARTIAL: { label: 'Partiel', icon: 'bi-circle-half', color: 'info' },
   },
