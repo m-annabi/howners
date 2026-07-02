@@ -19,7 +19,7 @@ public final class AccountingDtos {
     public record ConfigureActivityRequest(
             LocalDate startDate,
             BigDecimal openingCash,
-            BigDecimal apportInitial) {}
+            String siret) {}
 
     public record CreateAssetRequest(
             AssetType type,
@@ -31,10 +31,10 @@ public final class AccountingDtos {
 
     public record ActivityResponse(
             UUID id, String jurisdiction, String regime, LocalDate startDate,
-            BigDecimal openingCash, BigDecimal apportInitial, boolean active) {
+            BigDecimal openingCash, String siret, boolean active) {
         public static ActivityResponse from(FiscalActivity a) {
             return new ActivityResponse(a.getId(), a.getJurisdiction().name(), a.getRegime().name(),
-                    a.getStartDate(), a.getOpeningCash(), a.getApportInitial(), Boolean.TRUE.equals(a.getActive()));
+                    a.getStartDate(), a.getOpeningCash(), a.getSiret(), Boolean.TRUE.equals(a.getActive()));
         }
     }
 
@@ -59,6 +59,7 @@ public final class AccountingDtos {
             BigDecimal amortissementDiffereCumul,
             BigDecimal resultatComptable,
             BigDecimal resultatFiscal,
+            BigDecimal deficitAnterieurImpute,
             BigDecimal deficitReportable,
             BigDecimal vncImmobilisations,
             BigDecimal tresorerie,
@@ -67,7 +68,8 @@ public final class AccountingDtos {
             BigDecimal dettesEmprunt,
             BigDecimal totalActif,
             BigDecimal totalPassif,
-            List<AmortLineResponse> amortissements) {
+            List<AmortLineResponse> amortissements,
+            List<String> avertissements) {
         public static ResultResponse from(LmnpResult r) {
             List<AmortLineResponse> lignes = r.lignesAmortissement().stream()
                     .map(l -> new AmortLineResponse(l.asset().getType().getLabel() + " — " + l.asset().getLabel(),
@@ -76,8 +78,10 @@ public final class AccountingDtos {
             return new ResultResponse(r.year(), r.recettes(), r.chargesParPoste(), r.totalCharges(),
                     r.resultatAvantAmortissement(), r.dotationComptable(), r.amortissementDeductible(),
                     r.amortissementDiffereCumul(), r.resultatComptable(), r.resultatFiscal(),
-                    r.deficitReportable(), r.vncImmobilisations(), r.tresorerie(), r.capitalExploitant(),
-                    r.reportANouveau(), r.dettesEmprunt(), r.totalActif(), r.totalPassif(), lignes);
+                    r.deficitAnterieurImpute(), r.deficitReportable(),
+                    r.vncImmobilisations(), r.tresorerie(), r.capitalExploitant(),
+                    r.reportANouveau(), r.dettesEmprunt(), r.totalActif(), r.totalPassif(), lignes,
+                    r.avertissements());
         }
     }
 
@@ -117,4 +121,8 @@ public final class AccountingDtos {
                     l.getProperty() != null ? l.getProperty().getId() : null);
         }
     }
+
+    /** Une ligne de l'échéancier annuel d'un emprunt. */
+    public record LoanYearResponse(int year, BigDecimal interest, BigDecimal capital,
+                                   BigDecimal insurance, BigDecimal crdEnd) {}
 }

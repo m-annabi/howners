@@ -70,13 +70,19 @@ public class LoanScheduleService {
     public LoanYear forYear(Loan loan, int year) {
         LoanYear y = yearlyBreakdown(loan).get(year);
         if (y != null) return y;
-        // Avant le début : CRD = principal ; après la fin : CRD = 0.
-        BigDecimal crd = year < loan.getStartDate().getYear() ? loan.getPrincipal() : BigDecimal.ZERO;
-        return new LoanYear(year, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, crd);
+        // Avant le déblocage comme après la fin, il n'y a ni flux ni dette au bilan.
+        return new LoanYear(year, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
     /** Capital restant dû à la fin de l'année (pour le bilan). */
     public BigDecimal crdEnd(Loan loan, int year) {
         return forYear(loan, year).crdEnd();
+    }
+
+    /** Échéancier annuel complet, trié par exercice. */
+    public java.util.List<LoanYear> schedule(Loan loan) {
+        return yearlyBreakdown(loan).values().stream()
+                .sorted(java.util.Comparator.comparingInt(LoanYear::year))
+                .toList();
     }
 }

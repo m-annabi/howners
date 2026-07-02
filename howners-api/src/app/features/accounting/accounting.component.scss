@@ -12,3 +12,15 @@
   border-top: 1px solid var(--hw-border, #e5e7eb);
   padding-top: var(--hw-space-3, 0.75rem);
 }
+
+.acc-warnings {
+  border-left: 4px solid var(--hw-warning, #f59e0b);
+
+  ul { padding-left: 1.25rem; }
+  li { margin-bottom: 0.25rem; }
+}
+
+.acc-schedule {
+  background: var(--hw-surface-alt, #f9fafb);
+  padding: var(--hw-space-3, 0.75rem);
+}

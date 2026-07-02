@@ -19,11 +19,12 @@ public record LmnpResult(
         BigDecimal resultatAvantAmortissement,
         BigDecimal dotationComptable,     // annuités de l'exercice (comptable)
         BigDecimal amortissementDeductible, // fraction fiscalement déduite (règle non-déficit)
-        BigDecimal amortissementDiffereGenere, // reporté au titre de l'exercice
+        BigDecimal amortissementDiffereGenere, // excédent reporté au titre de l'exercice
         BigDecimal amortissementDiffereCumul,  // stock d'amortissements différés en fin d'exercice
         BigDecimal resultatComptable,     // recettes - charges - dotation comptable
-        BigDecimal resultatFiscal,        // base imposable (après règle non-déficit)
-        BigDecimal deficitReportable,     // déficit BIC reportable (10 ans)
+        BigDecimal resultatFiscal,        // base imposable (après non-déficit et déficits antérieurs)
+        BigDecimal deficitAnterieurImpute, // déficits BIC antérieurs imputés sur l'exercice
+        BigDecimal deficitReportable,     // déficits BIC restant reportables (10 ans)
         // Bilan simplifié
         BigDecimal immobilisationsBrutes,
         BigDecimal amortissementsCumules,
@@ -33,7 +34,9 @@ public record LmnpResult(
         BigDecimal reportANouveau,
         BigDecimal dettesEmprunt,       // capital restant dû des emprunts (passif)
         // Détail amortissements (par immobilisation, pour le tableau)
-        List<AssetAmortLine> lignesAmortissement
+        List<AssetAmortLine> lignesAmortissement,
+        // Points d'attention (biens non classés meublé/nu, seuil LMP, double déduction…)
+        List<String> avertissements
 ) implements FiscalResult {
 
     public record AssetAmortLine(AmortizableAsset asset, BigDecimal base, BigDecimal annuite,

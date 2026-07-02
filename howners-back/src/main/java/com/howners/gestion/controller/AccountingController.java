@@ -77,6 +77,11 @@ public class AccountingController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/loans/{id}/schedule")
+    public ResponseEntity<List<LoanYearResponse>> loanSchedule(@PathVariable UUID id) {
+        return ResponseEntity.ok(accountingService.loanSchedule(id));
+    }
+
     @GetMapping("/result")
     public ResponseEntity<ResultResponse> result(@RequestParam int year) {
         return ResponseEntity.ok(accountingService.preview(year));

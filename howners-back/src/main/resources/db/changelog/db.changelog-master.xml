@@ -90,5 +90,6 @@
     <include file="db/changelog/084-accounting-lmnp.xml"/>
     <include file="db/changelog/085-asset-source.xml"/>
     <include file="db/changelog/086-loans.xml"/>
+    <include file="db/changelog/087-accounting-fiscal-fixes.xml"/>
 
 </databaseChangeLog>

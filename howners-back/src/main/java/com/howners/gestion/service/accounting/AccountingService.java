@@ -39,6 +39,7 @@ public class AccountingService {
     private final FiscalActivityRepository activityRepository;
     private final AmortizableAssetRepository assetRepository;
     private final com.howners.gestion.repository.LoanRepository loanRepository;
+    private final LoanScheduleService loanScheduleService;
     private final PropertyRepository propertyRepository;
     private final com.howners.gestion.repository.ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
@@ -64,7 +65,14 @@ public class AccountingService {
                         .jurisdiction(FiscalJurisdiction.FR).regime(FiscalRegime.LMNP_REEL).build());
         activity.setStartDate(req.startDate());
         activity.setOpeningCash(req.openingCash());
-        activity.setApportInitial(req.apportInitial());
+        if (req.siret() != null && !req.siret().isBlank()) {
+            String siret = req.siret().replaceAll("\\s", "");
+            if (!siret.matches("\\d{9}|\\d{14}"))
+                throw new BadRequestException("Le SIRET doit comporter 14 chiffres (ou 9 pour un SIREN).");
+            activity.setSiret(siret);
+        } else {
+            activity.setSiret(null);
+        }
         activity.setActive(true);
         return ActivityResponse.from(activityRepository.save(activity));
     }
@@ -249,6 +257,18 @@ public class AccountingService {
         if (!loan.getActivity().getId().equals(activity.getId()))
             throw new ForbiddenException("Cet emprunt ne vous appartient pas.");
         loanRepository.delete(loan);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanYearResponse> loanSchedule(UUID loanId) {
+        FiscalActivity activity = requireActivity();
+        com.howners.gestion.domain.accounting.Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Loan", "id", loanId.toString()));
+        if (!loan.getActivity().getId().equals(activity.getId()))
+            throw new ForbiddenException("Cet emprunt ne vous appartient pas.");
+        return loanScheduleService.schedule(loan).stream()
+                .map(y -> new LoanYearResponse(y.year(), y.interest(), y.capital(), y.insurance(), y.crdEnd()))
+                .toList();
     }
 
     @Transactional(readOnly = true)

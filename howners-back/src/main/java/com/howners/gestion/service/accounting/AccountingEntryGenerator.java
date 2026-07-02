@@ -18,14 +18,16 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Génère les écritures comptables en partie double d'un exercice à partir des
- * événements existants (loyers encaissés, dépenses, dotations aux amortissements) et
- * d'une écriture d'à-nouveau. Aucune saisie manuelle : la balance qui en résulte
- * alimente le bilan et le FEC, cohérents par construction (total débit = total crédit).
+ * événements existants (loyers et provisions encaissés, dépenses, emprunts, dotations
+ * aux amortissements) et d'une écriture d'à-nouveau. Aucune saisie manuelle : la
+ * balance qui en résulte alimente le bilan et le FEC, cohérents par construction.
+ * Seuls les biens meublés entrent dans le périmètre (les nus relèvent de la 2044).
  */
 @Service
 @RequiredArgsConstructor
@@ -70,38 +72,51 @@ public class AccountingEntryGenerator {
         BigDecimal amortCumulOuverture = year > startYear
                 ? assets.stream().map(a -> amortizationService.cumul(a, year - 1)).reduce(BigDecimal.ZERO, BigDecimal::add)
                 : BigDecimal.ZERO;
+        List<Loan> loans = loanRepository.findByActivityId(activity.getId());
+        BigDecimal detteInitiale = loans.stream()
+                .filter(l -> l.getStartDate().getYear() <= startYear)
+                .map(l -> l.getStartDate().getYear() == startYear
+                        ? l.getPrincipal() : loanScheduleService.crdEnd(l, startYear - 1))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         LmnpResult veille = year > startYear ? lmnpResultService.compute(activity, year - 1) : null;
         BigDecimal tresorerieOuverture = veille != null ? veille.tresorerie() : nz(activity.getOpeningCash());
-        BigDecimal capital = veille != null ? veille.capitalExploitant() : capital(activity, immoBrutes);
+        BigDecimal capital = veille != null ? veille.capitalExploitant()
+                : nz(activity.getOpeningCash()).add(immoBrutes).subtract(detteInitiale);
         BigDecimal report = veille != null ? veille.reportANouveau().add(veille.resultatComptable()) : BigDecimal.ZERO;
 
         if (immoBrutes.signum() > 0) an(entries, opening, "211", "Immobilisations", immoBrutes, BigDecimal.ZERO);
         if (tresorerieOuverture.signum() != 0) an(entries, opening, "512", "Banque", tresorerieOuverture.max(BigDecimal.ZERO), tresorerieOuverture.signum() < 0 ? tresorerieOuverture.abs() : BigDecimal.ZERO);
         if (amortCumulOuverture.signum() > 0) an(entries, opening, "2811", "Amortissements", BigDecimal.ZERO, amortCumulOuverture);
-        if (capital.signum() != 0) an(entries, opening, "108", "Compte de l'exploitant", BigDecimal.ZERO, capital);
+        if (capital.signum() != 0) an(entries, opening, "108", "Compte de l'exploitant", capital.signum() < 0 ? capital.abs() : BigDecimal.ZERO, capital.signum() > 0 ? capital : BigDecimal.ZERO);
         if (report.signum() != 0) an(entries, opening, "110", "Report à nouveau", report.signum() < 0 ? report.abs() : BigDecimal.ZERO, report.signum() > 0 ? report : BigDecimal.ZERO);
 
-        // Emprunts : capital restant dû à l'ouverture (passif)
-        List<Loan> loans = loanRepository.findByActivityId(activity.getId());
-        BigDecimal crdOuverture = loans.stream()
-                .map(l -> year > startYear ? loanScheduleService.crdEnd(l, year - 1) : l.getPrincipal())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Emprunts : capital restant dû à l'ouverture (passif). Les emprunts débloqués en
+        // cours d'activité n'apparaissent qu'à compter de leur déblocage (écriture dédiée).
+        BigDecimal crdOuverture = year > startYear
+                ? loans.stream().map(l -> loanScheduleService.crdEnd(l, year - 1)).reduce(BigDecimal.ZERO, BigDecimal::add)
+                : detteInitiale;
         if (crdOuverture.signum() > 0) an(entries, opening, "164", "Emprunts", BigDecimal.ZERO, crdOuverture);
 
-        // 2. Loyers encaissés (journal de ventes)
+        // 2. Loyers et provisions pour charges encaissés (journal de ventes) — biens meublés
         for (Payment p : paymentRepository.findByOwnerId(ownerId)) {
-            if (p.getStatus() != PaymentStatus.PAID || p.getPaymentType() != PaymentType.RENT
-                    || p.getPaidAt() == null || p.getPaidAt().getYear() != year) continue;
+            if (p.getStatus() != PaymentStatus.PAID || p.getPaidAt() == null || p.getPaidAt().getYear() != year) continue;
+            if (p.getPaymentType() != PaymentType.RENT && p.getPaymentType() != PaymentType.CHARGES) continue;
+            if (!LmnpResultService.estMeuble(p.getRental().getProperty())) continue;
+            boolean rent = p.getPaymentType() == PaymentType.RENT;
             LocalDate d = p.getPaidAt().toLocalDate();
-            String ref = "LOY-" + p.getId().toString().substring(0, 8);
-            entries.add(new JournalEntry(d, "VE", "Ventes", ref, d, "512", "Banque", "Loyer encaissé", p.getAmount(), BigDecimal.ZERO));
-            entries.add(new JournalEntry(d, "VE", "Ventes", ref, d, "706", "Loyers", "Loyer encaissé", BigDecimal.ZERO, p.getAmount()));
+            String ref = (rent ? "LOY-" : "CHG-") + p.getId().toString().substring(0, 8);
+            String libelle = rent ? "Loyer encaissé" : "Provisions pour charges encaissées";
+            entries.add(new JournalEntry(d, "VE", "Ventes", ref, d, "512", "Banque", libelle, p.getAmount(), BigDecimal.ZERO));
+            entries.add(new JournalEntry(d, "VE", "Ventes", ref, d,
+                    rent ? "706" : "708", rent ? "Loyers" : "Charges refacturées", libelle, BigDecimal.ZERO, p.getAmount()));
         }
 
-        // 3. Dépenses déductibles (journal d'achats)
+        // 3. Dépenses déductibles (journal d'achats) — hors immobilisées et hors biens nus
         for (Expense e : expenseRepository.findByOwnerId(ownerId)) {
             if (e.getExpenseDate() == null || e.getExpenseDate().getYear() != year) continue;
             if (e.getCategory() == ExpenseCategory.FURNISHING || e.getCategory() == ExpenseCategory.RENOVATION) continue;
+            if (e.getProperty() != null && !LmnpResultService.estMeuble(e.getProperty())) continue;
             LocalDate d = e.getExpenseDate();
             String ref = "DEP-" + e.getId().toString().substring(0, 8);
             String compte = chargeAccount(e.getCategory());
@@ -109,7 +124,15 @@ public class AccountingEntryGenerator {
             entries.add(new JournalEntry(d, "AC", "Achats", ref, d, "512", "Banque", nzLib(e.getDescription()), BigDecimal.ZERO, e.getAmount()));
         }
 
-        // 3b. Remboursements d'emprunt (capital + intérêts + assurance)
+        // 3b. Déblocage des emprunts souscrits en cours d'activité (entrée de trésorerie)
+        for (Loan l : loans) {
+            if (l.getStartDate().getYear() != year || year <= startYear) continue;
+            String ref = "EMP-" + l.getId().toString().substring(0, 8);
+            entries.add(new JournalEntry(l.getStartDate(), "OD", "Emprunts", ref, l.getStartDate(), "512", "Banque", "Déblocage " + l.getLabel(), l.getPrincipal(), BigDecimal.ZERO));
+            entries.add(new JournalEntry(l.getStartDate(), "OD", "Emprunts", ref, l.getStartDate(), "164", "Emprunts", "Déblocage " + l.getLabel(), BigDecimal.ZERO, l.getPrincipal()));
+        }
+
+        // 3c. Remboursements d'emprunt (capital + intérêts + assurance)
         LocalDate echeance = LocalDate.of(year, 12, 31);
         for (Loan l : loans) {
             var ly = loanScheduleService.forYear(l, year);
@@ -132,19 +155,15 @@ public class AccountingEntryGenerator {
             entries.add(new JournalEntry(cloture, "OD", "Opérations diverses", ref, cloture, "2811", "Amortissements", a.getLabel(), BigDecimal.ZERO, annuite));
         }
 
+        // Le FEC exige un classement chronologique des écritures validées.
+        entries.sort(Comparator.comparing(JournalEntry::date)
+                .thenComparing(JournalEntry::journalCode)
+                .thenComparing(JournalEntry::pieceRef));
         return entries;
     }
 
     private void an(List<JournalEntry> entries, LocalDate d, String compte, String lib, BigDecimal debit, BigDecimal credit) {
         entries.add(new JournalEntry(d, "AN", "À-nouveaux", "AN-" + d.getYear(), d, compte, lib, "Report à nouveau", debit, credit));
-    }
-
-    private BigDecimal capital(FiscalActivity activity, BigDecimal immoBrutes) {
-        BigDecimal apport = nz(activity.getApportInitial());
-        if (apport.signum() != 0) return apport;
-        BigDecimal principal = loanRepository.findByActivityId(activity.getId()).stream()
-                .map(Loan::getPrincipal).reduce(BigDecimal.ZERO, BigDecimal::add);
-        return nz(activity.getOpeningCash()).add(immoBrutes).subtract(principal);
     }
 
     private static BigDecimal nz(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }

@@ -14,8 +14,8 @@ import java.util.UUID;
 /**
  * Activité fiscale d'un bailleur (une par propriétaire, régime + juridiction).
  * En LMNP, la déclaration BIC est portée au niveau du foyer : l'activité regroupe
- * l'ensemble des biens meublés du propriétaire. Le bilan d'ouverture (apport +
- * trésorerie initiale) sert à équilibrer le premier exercice.
+ * l'ensemble des biens meublés du propriétaire. La trésorerie d'ouverture sert au
+ * bilan du premier exercice ; le capital de l'exploitant est dérivé (jamais saisi).
  */
 @Entity
 @Table(name = "fiscal_activities", uniqueConstraints = {
@@ -54,9 +54,9 @@ public class FiscalActivity {
     @Column(name = "opening_cash", precision = 12, scale = 2)
     private BigDecimal openingCash;
 
-    /** Apport initial de l'exploitant (compte 108) — bilan d'ouverture. */
-    @Column(name = "apport_initial", precision = 12, scale = 2)
-    private BigDecimal apportInitial;
+    /** SIRET de l'activité de loueur en meublé (2031, nom réglementaire du FEC). */
+    @Column(name = "siret", length = 14)
+    private String siret;
 
     @Column(name = "active", nullable = false)
     @Builder.Default

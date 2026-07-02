@@ -9,7 +9,7 @@ export interface FiscalActivity {
   regime: string;
   startDate: string;
   openingCash: number | null;
-  apportInitial: number | null;
+  siret: string | null;
   active: boolean;
 }
 
@@ -54,6 +54,14 @@ export interface Loan {
   propertyId: string | null;
 }
 
+export interface LoanYear {
+  year: number;
+  interest: number;
+  capital: number;
+  insurance: number;
+  crdEnd: number;
+}
+
 export interface LmnpResult {
   year: number;
   recettes: number;
@@ -65,6 +73,7 @@ export interface LmnpResult {
   amortissementDiffereCumul: number;
   resultatComptable: number;
   resultatFiscal: number;
+  deficitAnterieurImpute: number;
   deficitReportable: number;
   vncImmobilisations: number;
   tresorerie: number;
@@ -74,6 +83,7 @@ export interface LmnpResult {
   totalActif: number;
   totalPassif: number;
   amortissements: AmortLine[];
+  avertissements: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -86,7 +96,7 @@ export class AccountingService {
     return this.http.get<FiscalActivity | null>(`${this.base}/activity`);
   }
 
-  configureActivity(body: { startDate: string; openingCash?: number; apportInitial?: number }): Observable<FiscalActivity> {
+  configureActivity(body: { startDate: string; openingCash?: number; siret?: string }): Observable<FiscalActivity> {
     return this.http.post<FiscalActivity>(`${this.base}/activity`, body);
   }
 
@@ -120,6 +130,10 @@ export class AccountingService {
 
   deleteLoan(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/loans/${id}`);
+  }
+
+  loanSchedule(id: string): Observable<LoanYear[]> {
+    return this.http.get<LoanYear[]>(`${this.base}/loans/${id}/schedule`);
   }
 
   result(year: number): Observable<LmnpResult> {

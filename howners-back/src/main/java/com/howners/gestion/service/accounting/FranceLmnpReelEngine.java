@@ -54,7 +54,7 @@ public class FranceLmnpReelEngine implements FiscalEngine {
         }
         byte[] fec = fecExportService.generate(activity, year, entryGenerator.generate(activity, year));
         docs.add(new GeneratedDocument("FEC " + year,
-                "FEC-" + year + ".txt", "text/plain", fec));
+                fecExportService.fileName(activity, year), "text/plain", fec));
         return docs;
     }
 }

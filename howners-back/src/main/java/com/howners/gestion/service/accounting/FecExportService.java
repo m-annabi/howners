@@ -13,8 +13,9 @@ import java.util.List;
 
 /**
  * Fichier des Écritures Comptables (FEC) au format normalisé DGFiP : 18 colonnes,
- * séparateur pipe, dates en AAAAMMJJ, montants avec virgule décimale. Généré à partir
- * des écritures auto-produites — total débit = total crédit par construction.
+ * séparateur pipe, dates en AAAAMMJJ, montants avec virgule décimale, écritures
+ * numérotées séquentiellement par journal. Généré à partir des écritures
+ * auto-produites — total débit = total crédit par construction.
  */
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,18 @@ public class FecExportService {
 
     private static final DateTimeFormatter FEC_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final String SEP = "|";
+
+    /**
+     * Nom réglementaire : {SIREN}FEC{date de clôture AAAAMMJJ}.txt quand le SIREN est
+     * connu (9 premiers chiffres du SIRET), sinon un nom lisible de repli.
+     */
+    public String fileName(FiscalActivity activity, int year) {
+        String siret = activity.getSiret();
+        if (siret != null && siret.length() >= 9) {
+            return siret.substring(0, 9) + "FEC" + year + "1231.txt";
+        }
+        return "FEC-" + year + ".txt";
+    }
 
     public byte[] generate(FiscalActivity activity, int year, List<JournalEntry> entries) {
         StringBuilder sb = new StringBuilder();
@@ -33,12 +46,13 @@ public class FecExportService {
                 "ValidDate", "Montantdevise", "Idevise")).append("\n");
 
         LocalDate cloture = LocalDate.of(year, 12, 31);
-        int num = 1;
+        java.util.Map<String, Integer> numParJournal = new java.util.HashMap<>();
         for (JournalEntry e : entries) {
+            int num = numParJournal.merge(e.journalCode(), 1, Integer::sum);
             sb.append(String.join(SEP,
                     e.journalCode(),
                     e.journalLib(),
-                    String.valueOf(num++),
+                    e.journalCode() + "-" + num,
                     e.date().format(FEC_DATE),
                     e.compteNum(),
                     e.compteLib(),

@@ -40,6 +40,10 @@ import java.util.UUID;
  * locataire ou non déductibles : exclues, listées en annexe.
  *
  * Revenus ligne 211 = loyers ENCAISSÉS (paidAt) sur l'année civile, hors charges (type RENT).
+ *
+ * Périmètre : la 2044 ne concerne que la location NUE. Les biens marqués meublés
+ * (isFurnished = true) relèvent du BIC LMNP (module comptable) et sont exclus ici ;
+ * les biens non classés sont inclus avec un avertissement dans le PDF.
  */
 @Service
 @RequiredArgsConstructor
@@ -85,6 +89,8 @@ public class ExportFiscal2044Service {
         BigDecimal totalCharges = BigDecimal.ZERO;
 
         for (Property property : propertyRepository.findByOwnerId(ownerId)) {
+            // Bien meublé → BIC LMNP (module comptable), pas revenus fonciers.
+            if (Boolean.TRUE.equals(property.getIsFurnished())) continue;
             BigDecimal revenus = paymentRepository.sumPaidRentByPropertyAndPeriod(
                     property.getId(), debut.atStartOfDay(), fin.atStartOfDay());
 
@@ -214,8 +220,11 @@ public class ExportFiscal2044Service {
                     Document d'aide généré par Howners : il ne remplace pas la déclaration officielle et ne constitue
                     pas un conseil fiscal. Vérifiez l'éligibilité de chaque dépense (les travaux de construction,
                     reconstruction ou agrandissement ne sont pas déductibles, ligne 224). Les charges récupérables
-                    sur le locataire ne sont pas déductibles et sont exclues de ce document. En cas de doute,
-                    rapprochez-vous d'un expert-comptable ou des services fiscaux.
+                    sur le locataire ne sont pas déductibles et sont exclues de ce document. Les biens marqués
+                    meublés relèvent du BIC (LMNP) et sont exclus de cette 2044 ; les biens dont le caractère
+                    meublé n'est pas renseigné y figurent — classez chaque bien pour éviter tout double emploi
+                    avec le module comptable LMNP. En cas de doute, rapprochez-vous d'un expert-comptable ou
+                    des services fiscaux.
                 </p>
                 """.formatted(
                 declaration.annee(),

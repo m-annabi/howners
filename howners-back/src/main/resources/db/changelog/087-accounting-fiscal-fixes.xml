@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- SIRET de l'activité LMNP (obligatoire sur la 2031, nom du FEC) -->
+    <changeSet id="087-fiscal-activity-siret" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="fiscal_activities" columnName="siret"/></not>
+        </preConditions>
+        <addColumn tableName="fiscal_activities">
+            <column name="siret" type="VARCHAR(14)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- L'apport initial saisi manuellement pouvait déséquilibrer le bilan :
+         le capital de l'exploitant est désormais toujours dérivé
+         (trésorerie d'ouverture + immobilisations − emprunts initiaux). -->
+    <changeSet id="087-drop-apport-initial" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="fiscal_activities" columnName="apport_initial"/>
+        </preConditions>
+        <dropColumn tableName="fiscal_activities" columnName="apport_initial"/>
+    </changeSet>
+
+</databaseChangeLog>

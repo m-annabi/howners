@@ -67,12 +67,16 @@ class LmnpResultServiceTest {
     }
 
     private Expense charge(String amount, ExpenseCategory cat) {
+        return charge(amount, cat, 2024);
+    }
+
+    private Expense charge(String amount, ExpenseCategory cat, int year) {
         return Expense.builder().amount(new BigDecimal(amount)).category(cat)
-                .expenseDate(LocalDate.of(2024, 6, 1)).property(property).build();
+                .expenseDate(LocalDate.of(year, 6, 1)).property(property).build();
     }
 
     private void stub(BigDecimal recettes, List<Expense> charges, List<AmortizableAsset> assets) {
-        when(paymentRepository.sumPaidRentByPropertyAndPeriod(eq(property.getId()), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(paymentRepository.sumPaidRentAndChargesByPropertyAndPeriod(eq(property.getId()), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(recettes);
         when(expenseRepository.findByOwnerId(ownerId)).thenReturn(charges);
         when(assetRepository.findByActivityId(activity.getId())).thenReturn(assets);
@@ -104,6 +108,7 @@ class LmnpResultServiceTest {
 
         assertThat(r.resultatAvantAmortissement()).isEqualByComparingTo("3000");
         assertThat(r.amortissementDeductible()).isEqualByComparingTo("3000.00");
+        assertThat(r.amortissementDiffereGenere()).isEqualByComparingTo("2000.00");
         assertThat(r.amortissementDiffereCumul()).isEqualByComparingTo("2000.00");
         assertThat(r.resultatFiscal()).isEqualByComparingTo("0.00");
     }
@@ -132,6 +137,49 @@ class LmnpResultServiceTest {
     }
 
     @Test
+    void bienNu_exclu_duBicLmnp() {
+        Property nu = Property.builder().id(UUID.randomUUID()).name("Nu")
+                .owner(activity.getOwner()).isFurnished(false).build();
+        when(propertyRepository.findByOwnerId(ownerId)).thenReturn(List.of(property, nu));
+        // Chaque bien rapporterait 5000 : seul le meublé doit compter.
+        when(paymentRepository.sumPaidRentAndChargesByPropertyAndPeriod(any(UUID.class), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(new BigDecimal("5000"));
+        Expense chargeNu = Expense.builder().amount(new BigDecimal("1000"))
+                .category(ExpenseCategory.MAINTENANCE).expenseDate(LocalDate.of(2024, 6, 1)).property(nu).build();
+        when(expenseRepository.findByOwnerId(ownerId)).thenReturn(
+                List.of(charge("2000", ExpenseCategory.MAINTENANCE), chargeNu));
+        when(assetRepository.findByActivityId(activity.getId())).thenReturn(List.of());
+
+        LmnpResult r = service.compute(activity, 2024);
+
+        assertThat(r.recettes()).isEqualByComparingTo("5000");   // un seul bien interrogé
+        assertThat(r.totalCharges()).isEqualByComparingTo("2000"); // charge du bien nu exclue
+    }
+
+    @Test
+    void deficitsAnterieurs_imputes_surBeneficesSuivants() {
+        // 2024 : recettes 1000, charges 4000 -> déficit 3000. 2025 : recettes 10000, charges 2000 -> brut 8000.
+        when(paymentRepository.sumPaidRentAndChargesByPropertyAndPeriod(eq(property.getId()), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenAnswer(inv -> {
+                    LocalDateTime from = inv.getArgument(1);
+                    return from.getYear() == 2024 ? new BigDecimal("1000") : new BigDecimal("10000");
+                });
+        when(expenseRepository.findByOwnerId(ownerId)).thenReturn(List.of(
+                charge("4000", ExpenseCategory.MAINTENANCE, 2024),
+                charge("2000", ExpenseCategory.MAINTENANCE, 2025)));
+        when(assetRepository.findByActivityId(activity.getId())).thenReturn(List.of());
+
+        LmnpResult r2024 = service.compute(activity, 2024);
+        assertThat(r2024.resultatFiscal()).isEqualByComparingTo("-3000");
+        assertThat(r2024.deficitReportable()).isEqualByComparingTo("3000");
+
+        LmnpResult r2025 = service.compute(activity, 2025);
+        assertThat(r2025.deficitAnterieurImpute()).isEqualByComparingTo("3000");
+        assertThat(r2025.resultatFiscal()).isEqualByComparingTo("5000"); // 8000 - 3000
+        assertThat(r2025.deficitReportable()).isEqualByComparingTo("0");
+    }
+
+    @Test
     void empruntInteretsDeductibles_capitalExclu_etBilanEquilibre() {
         // Emprunt 100 000 € sur 20 ans à 2 %, assurance 30 €/mois.
         Loan loan = Loan.builder().principal(new BigDecimal("100000")).annualRate(new BigDecimal("2.000"))
@@ -151,5 +199,41 @@ class LmnpResultServiceTest {
                 .isLessThan(new BigDecimal("100000"));
         // Le bilan reste équilibré malgré la dette.
         assertThat(r.totalActif()).isEqualByComparingTo(r.totalPassif());
+    }
+
+    @Test
+    void empruntDebloqueEnCoursActivite_entreEnTresorerie_etBilanEquilibre() {
+        // Activité depuis 2024 ; emprunt travaux débloqué en 2026.
+        Loan loan = Loan.builder().principal(new BigDecimal("50000")).annualRate(new BigDecimal("3.000"))
+                .durationMonths(120).startDate(LocalDate.of(2026, 1, 1)).label("Prêt travaux").build();
+        stub(new BigDecimal("6000"), List.of(), List.of());
+        when(loanRepository.findByActivityId(activity.getId())).thenReturn(List.of(loan));
+
+        // Avant le déblocage : aucune dette, aucun intérêt, bilan équilibré.
+        LmnpResult r2025 = service.compute(activity, 2025);
+        assertThat(r2025.dettesEmprunt()).isEqualByComparingTo("0");
+        assertThat(r2025.chargesParPoste()).doesNotContainKey("Intérêts d'emprunt");
+        assertThat(r2025.totalActif()).isEqualByComparingTo(r2025.totalPassif());
+
+        // Année du déblocage : dette au passif, capital entré en trésorerie, bilan équilibré.
+        LmnpResult r2026 = service.compute(activity, 2026);
+        assertThat(r2026.dettesEmprunt()).isGreaterThan(BigDecimal.ZERO);
+        assertThat(r2026.chargesParPoste()).containsKey("Intérêts d'emprunt");
+        assertThat(r2026.tresorerie()).isGreaterThan(r2025.tresorerie()); // injection du capital
+        assertThat(r2026.totalActif()).isEqualByComparingTo(r2026.totalPassif());
+    }
+
+    @Test
+    void avertissements_seuilLmp_bienNonClasse_etEmprunt() {
+        Loan loan = Loan.builder().principal(new BigDecimal("10000")).annualRate(new BigDecimal("2.000"))
+                .durationMonths(60).startDate(LocalDate.of(2024, 1, 1)).label("Prêt").build();
+        stub(new BigDecimal("25000"), List.of(), List.of()); // > 23 000 €
+        when(loanRepository.findByActivityId(activity.getId())).thenReturn(List.of(loan));
+
+        LmnpResult r = service.compute(activity, 2024);
+
+        assertThat(r.avertissements()).hasSize(3); // bien non classé + seuil LMP + emprunt
+        assertThat(String.join(" ", r.avertissements()))
+                .contains("23 000").contains("non classés").contains("deux fois");
     }
 }

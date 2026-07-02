@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult, Loan } from '../../core/services/accounting.service';
+import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult, Loan, LoanYear } from '../../core/services/accounting.service';
 import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
@@ -19,7 +19,7 @@ export class AccountingComponent implements OnInit {
   importing = false;
 
   // Formulaire activité
-  activityForm = { startDate: '', openingCash: null as number | null };
+  activityForm = { startDate: '', openingCash: null as number | null, siret: '' };
   // Formulaire immobilisation
   assetTypes = [
     { value: 'BATIMENT', label: 'Immeuble (bâti)' },
@@ -31,6 +31,9 @@ export class AccountingComponent implements OnInit {
   // Formulaire emprunt
   loanForm = { label: '', principal: null as number | null, annualRate: null as number | null, durationMonths: null as number | null, startDate: '', insuranceMonthly: null as number | null };
   addingLoan = false;
+  // Échéancier déplié
+  expandedLoanId: string | null = null;
+  loanSchedule: LoanYear[] = [];
 
   constructor(private accounting: AccountingService, private notify: NotificationService) {}
 
@@ -45,6 +48,14 @@ export class AccountingComponent implements OnInit {
 
   get bilanEquilibre(): boolean {
     return !!this.result && Math.abs(this.result.totalActif - this.result.totalPassif) < 0.05;
+  }
+
+  get minYear(): number {
+    return this.activity ? new Date(this.activity.startDate).getFullYear() : 2000;
+  }
+
+  get maxYear(): number {
+    return new Date().getFullYear();
   }
 
   load(): void {
@@ -100,8 +111,18 @@ export class AccountingComponent implements OnInit {
   deleteLoan(l: Loan): void {
     if (!confirm(`Supprimer l'emprunt « ${l.label} » ?`)) return;
     this.accounting.deleteLoan(l.id).subscribe({
-      next: () => { this.loadAssets(); this.compute(); },
+      next: () => { if (this.expandedLoanId === l.id) this.expandedLoanId = null; this.loadAssets(); this.compute(); },
       error: () => this.notify.error('Erreur lors de la suppression')
+    });
+  }
+
+  toggleSchedule(l: Loan): void {
+    if (this.expandedLoanId === l.id) { this.expandedLoanId = null; this.loanSchedule = []; return; }
+    this.expandedLoanId = l.id;
+    this.loanSchedule = [];
+    this.accounting.loanSchedule(l.id).subscribe({
+      next: (s) => this.loanSchedule = s,
+      error: () => { this.expandedLoanId = null; this.notify.error('Erreur lors du chargement de l\'échéancier'); }
     });
   }
 
@@ -132,10 +153,11 @@ export class AccountingComponent implements OnInit {
     if (!this.activityForm.startDate) { this.notify.error('Renseignez la date de début d\'activité.'); return; }
     this.accounting.configureActivity({
       startDate: this.activityForm.startDate,
-      openingCash: this.activityForm.openingCash ?? undefined
+      openingCash: this.activityForm.openingCash ?? undefined,
+      siret: this.activityForm.siret?.trim() || undefined
     }).subscribe({
       next: (a) => { this.activity = a; this.notify.success('Activité configurée'); this.loadAssets(); this.compute(); },
-      error: () => this.notify.error('Erreur lors de la configuration')
+      error: (e) => this.notify.error(e.error?.message || 'Erreur lors de la configuration')
     });
   }
 
@@ -167,6 +189,7 @@ export class AccountingComponent implements OnInit {
 
   compute(): void {
     if (!this.activity) { this.loading = false; return; }
+    this.year = Math.min(Math.max(this.year, this.minYear), this.maxYear);
     this.loading = true;
     this.accounting.result(this.year).subscribe({
       next: (r) => { this.result = r; this.loading = false; },

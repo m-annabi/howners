@@ -120,6 +120,25 @@ class ExportFiscal2044ServiceTest {
     }
 
     @Test
+    void bienMeuble_exclu_desRevenusFonciers() {
+        Property meuble = new Property();
+        meuble.setId(UUID.randomUUID());
+        meuble.setOwner(property.getOwner());
+        meuble.setName("Meublé");
+        meuble.setIsFurnished(true); // relève du BIC LMNP, pas de la 2044
+        when(propertyRepository.findByOwnerId(ownerId)).thenReturn(List.of(property, meuble));
+        when(paymentRepository.sumPaidRentByPropertyAndPeriod(any(), any(), any()))
+                .thenReturn(new BigDecimal("9600.00"));
+        when(expenseRepository.findByPropertyId(any())).thenReturn(List.of());
+
+        Declaration2044Response declaration = exportService.genererDeclaration(2025);
+
+        assertThat(declaration.biens()).hasSize(1);
+        assertThat(declaration.biens().get(0).nom()).isEqualTo("Appartement Paris");
+        assertThat(declaration.totalRevenusBruts()).isEqualByComparingTo("9600.00");
+    }
+
+    @Test
     void refuseSansFeatureTaxExport() {
         when(featureGateService.hasFeature(ownerId, "tax_export")).thenReturn(false);
 

@@ -11,13 +11,18 @@
   <h5 class="hw-section-title">Configurer votre activité LMNP</h5>
   <p class="hw-text-muted">Renseignez la date de début d'activité et votre trésorerie d'ouverture (apport) pour équilibrer le premier bilan.</p>
   <div class="row">
-    <div class="col-md-5 mb-3">
+    <div class="col-md-4 mb-3">
       <label class="form-label">Début d'activité *</label>
       <input type="date" class="form-control" [(ngModel)]="activityForm.startDate">
     </div>
     <div class="col-md-4 mb-3">
       <label class="form-label">Trésorerie d'ouverture (€)</label>
       <input type="number" class="form-control" [(ngModel)]="activityForm.openingCash" placeholder="0">
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">SIRET</label>
+      <input type="text" class="form-control" [(ngModel)]="activityForm.siret" placeholder="14 chiffres" maxlength="14">
+      <small class="hw-text-muted">Obligatoire sur la 2031 ; donne son nom réglementaire au FEC.</small>
     </div>
   </div>
   <button class="hw-btn hw-btn--primary" (click)="saveActivity()">Configurer</button>
@@ -28,8 +33,11 @@
   <div class="hw-card acc-bar">
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <label class="mb-0"><strong>Exercice</strong></label>
-      <input type="number" class="form-control acc-year" [(ngModel)]="year" (change)="compute()">
-      <span class="hw-text-muted hw-text-sm">Début d'activité : {{ activity.startDate | date:'dd/MM/yyyy' }}</span>
+      <input type="number" class="form-control acc-year" [(ngModel)]="year" [min]="minYear" [max]="maxYear" (change)="compute()">
+      <span class="hw-text-muted hw-text-sm">
+        Début d'activité : {{ activity.startDate | date:'dd/MM/yyyy' }}
+        <ng-container *ngIf="activity.siret"> · SIRET {{ activity.siret }}</ng-container>
+      </span>
       <button class="hw-btn hw-btn--primary ms-auto" (click)="downloadLiasse()" [disabled]="downloading">
         <span *ngIf="downloading" class="spinner-border spinner-border-sm me-1"></span>
         <i class="bi bi-download"></i> Télécharger la liasse (PDF + FEC)
@@ -47,8 +55,12 @@
           <dt>Charges déductibles</dt><dd>{{ result.totalCharges | number:'1.2-2' }} €</dd>
           <dt>Résultat avant amortissements</dt><dd>{{ result.resultatAvantAmortissement | number:'1.2-2' }} €</dd>
           <dt>Amortissements déductibles</dt><dd>{{ result.amortissementDeductible | number:'1.2-2' }} €</dd>
+          <dt *ngIf="result.deficitAnterieurImpute">Déficits antérieurs imputés</dt>
+          <dd *ngIf="result.deficitAnterieurImpute">−{{ result.deficitAnterieurImpute | number:'1.2-2' }} €</dd>
           <dt><strong>Résultat fiscal (BIC)</strong></dt><dd><strong>{{ result.resultatFiscal | number:'1.2-2' }} €</strong></dd>
           <dt>Amortissements différés reportés</dt><dd>{{ result.amortissementDiffereCumul | number:'1.2-2' }} €</dd>
+          <dt *ngIf="result.deficitReportable">Déficits BIC reportables</dt>
+          <dd *ngIf="result.deficitReportable">{{ result.deficitReportable | number:'1.2-2' }} €</dd>
         </dl>
       </div>
     </div>
@@ -70,6 +82,14 @@
         </span>
       </div>
     </div>
+  </div>
+
+  <!-- Points d'attention -->
+  <div class="hw-card mb-4 acc-warnings" *ngIf="result && result.avertissements && result.avertissements.length > 0">
+    <h5 class="hw-section-title"><i class="bi bi-exclamation-triangle"></i> Points d'attention</h5>
+    <ul class="mb-0">
+      <li *ngFor="let note of result.avertissements" class="hw-text-sm">{{ note }}</li>
+    </ul>
   </div>
 
   <!-- Suggestions depuis les dépenses / biens -->
@@ -158,15 +178,39 @@
       <table class="hw-table">
         <thead><tr><th>Libellé</th><th class="text-end">Capital</th><th class="text-end">Taux</th><th class="text-end">Durée</th><th>Déblocage</th><th class="text-end">Assurance/mois</th><th></th></tr></thead>
         <tbody>
-          <tr *ngFor="let l of loans">
-            <td>{{ l.label }}</td>
-            <td class="text-end">{{ l.principal | number:'1.2-2' }} €</td>
-            <td class="text-end">{{ l.annualRate | number:'1.2-3' }} %</td>
-            <td class="text-end">{{ l.durationMonths }} mois</td>
-            <td>{{ l.startDate | date:'dd/MM/yyyy' }}</td>
-            <td class="text-end">{{ (l.insuranceMonthly || 0) | number:'1.2-2' }} €</td>
-            <td><button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteLoan(l)" title="Supprimer"><i class="bi bi-trash"></i></button></td>
-          </tr>
+          <ng-container *ngFor="let l of loans">
+            <tr>
+              <td>{{ l.label }}</td>
+              <td class="text-end">{{ l.principal | number:'1.2-2' }} €</td>
+              <td class="text-end">{{ l.annualRate | number:'1.2-3' }} %</td>
+              <td class="text-end">{{ l.durationMonths }} mois</td>
+              <td>{{ l.startDate | date:'dd/MM/yyyy' }}</td>
+              <td class="text-end">{{ (l.insuranceMonthly || 0) | number:'1.2-2' }} €</td>
+              <td class="text-nowrap">
+                <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="toggleSchedule(l)" title="Échéancier">
+                  <i class="bi" [class.bi-chevron-down]="expandedLoanId !== l.id" [class.bi-chevron-up]="expandedLoanId === l.id"></i>
+                </button>
+                <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteLoan(l)" title="Supprimer"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            <tr *ngIf="expandedLoanId === l.id">
+              <td colspan="7" class="acc-schedule">
+                <p *ngIf="loanSchedule.length === 0" class="hw-text-muted hw-text-sm mb-0">Chargement de l'échéancier…</p>
+                <table class="hw-table" *ngIf="loanSchedule.length > 0">
+                  <thead><tr><th>Année</th><th class="text-end">Intérêts (déductibles)</th><th class="text-end">Assurance (déductible)</th><th class="text-end">Capital remboursé</th><th class="text-end">Capital restant dû</th></tr></thead>
+                  <tbody>
+                    <tr *ngFor="let y of loanSchedule">
+                      <td>{{ y.year }}</td>
+                      <td class="text-end">{{ y.interest | number:'1.2-2' }} €</td>
+                      <td class="text-end">{{ y.insurance | number:'1.2-2' }} €</td>
+                      <td class="text-end">{{ y.capital | number:'1.2-2' }} €</td>
+                      <td class="text-end">{{ y.crdEnd | number:'1.2-2' }} €</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>

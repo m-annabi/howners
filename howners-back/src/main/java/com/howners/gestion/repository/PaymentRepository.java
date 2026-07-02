@@ -56,4 +56,8 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.rental.property.id = :propertyId AND p.paymentType = 'RENT' AND p.status = 'PAID' AND p.paidAt >= :from AND p.paidAt < :to")
     BigDecimal sumPaidRentByPropertyAndPeriod(@Param("propertyId") UUID propertyId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    /** Recettes BIC (LMNP) : loyers + provisions pour charges encaissés (charges comprises). */
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.rental.property.id = :propertyId AND p.paymentType IN ('RENT', 'CHARGES') AND p.status = 'PAID' AND p.paidAt >= :from AND p.paidAt < :to")
+    BigDecimal sumPaidRentAndChargesByPropertyAndPeriod(@Param("propertyId") UUID propertyId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }
