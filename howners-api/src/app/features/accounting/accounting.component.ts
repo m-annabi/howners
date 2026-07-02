@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AccountingService, AmortizableAsset, FiscalActivity, LmnpResult } from '../../core/services/accounting.service';
+import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult } from '../../core/services/accounting.service';
 import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
@@ -11,9 +11,11 @@ export class AccountingComponent implements OnInit {
   loading = true;
   activity: FiscalActivity | null = null;
   assets: AmortizableAsset[] = [];
+  suggestions: AssetSuggestion[] = [];
   result: LmnpResult | null = null;
   year = new Date().getFullYear() - 1;
   downloading = false;
+  importing = false;
 
   // Formulaire activité
   activityForm = { startDate: '', openingCash: null as number | null };
@@ -63,6 +65,30 @@ export class AccountingComponent implements OnInit {
 
   loadAssets(): void {
     this.accounting.listAssets().subscribe(a => this.assets = a);
+    this.accounting.suggestions().subscribe(s => this.suggestions = s);
+  }
+
+  importSuggestion(s: AssetSuggestion): void {
+    this.importAll([s]);
+  }
+
+  importAllSuggestions(): void {
+    this.importAll(this.suggestions);
+  }
+
+  private importAll(list: AssetSuggestion[]): void {
+    if (list.length === 0) return;
+    this.importing = true;
+    const items = list.map(s => ({ sourceType: s.sourceType, sourceId: s.sourceId, durationYears: s.durationYears }));
+    this.accounting.importSuggestions(items).subscribe({
+      next: (created) => {
+        this.importing = false;
+        this.notify.success(`${created.length} immobilisation(s) importée(s)`);
+        this.loadAssets();
+        this.compute();
+      },
+      error: () => { this.importing = false; this.notify.error('Erreur lors de l\'import'); }
+    });
   }
 
   saveActivity(): void {

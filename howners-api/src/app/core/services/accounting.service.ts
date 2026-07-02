@@ -24,6 +24,17 @@ export interface AmortizableAsset {
   propertyId: string | null;
 }
 
+export interface AssetSuggestion {
+  sourceType: string;
+  sourceId: string;
+  type: string;
+  typeLabel: string;
+  label: string;
+  base: number;
+  startDate: string;
+  durationYears: number;
+}
+
 export interface AmortLine {
   immobilisation: string;
   base: number;
@@ -77,6 +88,14 @@ export class AccountingService {
 
   deleteAsset(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/assets/${id}`);
+  }
+
+  suggestions(): Observable<AssetSuggestion[]> {
+    return this.http.get<AssetSuggestion[]>(`${this.base}/assets/suggestions`);
+  }
+
+  importSuggestions(items: { sourceType: string; sourceId: string; durationYears?: number }[]): Observable<AmortizableAsset[]> {
+    return this.http.post<AmortizableAsset[]>(`${this.base}/assets/import`, { items });
   }
 
   result(year: number): Observable<LmnpResult> {

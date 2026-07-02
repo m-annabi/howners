@@ -88,5 +88,6 @@
     <include file="db/changelog/082-create-tenant-ratings.xml"/>
     <include file="db/changelog/083-add-user-address.xml"/>
     <include file="db/changelog/084-accounting-lmnp.xml"/>
+    <include file="db/changelog/085-asset-source.xml"/>
 
 </databaseChangeLog>

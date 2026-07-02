@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- Traçage de l'origine d'une immobilisation (dépense ou bien) pour importer depuis
+         les dépenses existantes sans créer de doublon. -->
+    <changeSet id="085-asset-source" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="amortizable_assets" columnName="source_expense_id"/></not>
+        </preConditions>
+        <addColumn tableName="amortizable_assets">
+            <column name="source_expense_id" type="UUID"/>
+            <column name="source_property_id" type="UUID"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

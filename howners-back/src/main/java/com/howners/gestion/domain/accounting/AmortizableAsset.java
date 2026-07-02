@@ -55,6 +55,14 @@ public class AmortizableAsset {
     @Column(name = "duration_years", nullable = false)
     private Integer durationYears;
 
+    /** Dépense d'origine si l'immobilisation a été importée depuis une dépense (anti-doublon). */
+    @Column(name = "source_expense_id")
+    private UUID sourceExpenseId;
+
+    /** Bien d'origine si l'immobilisation a été dérivée d'un bien (bâti / frais d'acquisition). */
+    @Column(name = "source_property_id")
+    private UUID sourcePropertyId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

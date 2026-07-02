@@ -51,6 +51,16 @@ public class AccountingController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/assets/suggestions")
+    public ResponseEntity<List<AssetSuggestion>> suggestions() {
+        return ResponseEntity.ok(accountingService.suggestAssets());
+    }
+
+    @PostMapping("/assets/import")
+    public ResponseEntity<List<AssetResponse>> importSuggestions(@RequestBody ImportSuggestionsRequest req) {
+        return ResponseEntity.ok(accountingService.importSuggestions(req));
+    }
+
     @GetMapping("/result")
     public ResponseEntity<ResultResponse> result(@RequestParam int year) {
         return ResponseEntity.ok(accountingService.preview(year));

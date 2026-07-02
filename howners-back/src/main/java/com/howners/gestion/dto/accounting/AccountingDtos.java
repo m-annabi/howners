@@ -82,4 +82,19 @@ public final class AccountingDtos {
 
     public record AmortLineResponse(String immobilisation, BigDecimal base, BigDecimal annuite,
                                     BigDecimal cumul, BigDecimal vnc) {}
+
+    /** Immobilisation suggérée à partir d'une dépense ou d'un bien existant. */
+    public record AssetSuggestion(
+            String sourceType,   // EXPENSE | PROPERTY_BUILDING | PROPERTY_FEES
+            UUID sourceId,
+            AssetType type,
+            String typeLabel,
+            String label,
+            BigDecimal base,
+            LocalDate startDate,
+            int durationYears) {}
+
+    public record ImportSuggestionsRequest(List<ImportItem> items) {}
+
+    public record ImportItem(String sourceType, UUID sourceId, Integer durationYears) {}
 }

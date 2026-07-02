@@ -1,6 +1,7 @@
 package com.howners.gestion.service.accounting;
 
 import com.howners.gestion.domain.accounting.AmortizableAsset;
+import com.howners.gestion.domain.accounting.AssetType;
 import com.howners.gestion.domain.accounting.FiscalActivity;
 import com.howners.gestion.domain.accounting.FiscalJurisdiction;
 import com.howners.gestion.domain.accounting.FiscalRegime;
@@ -38,6 +39,7 @@ public class AccountingService {
     private final FiscalActivityRepository activityRepository;
     private final AmortizableAssetRepository assetRepository;
     private final PropertyRepository propertyRepository;
+    private final com.howners.gestion.repository.ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
     private final FiscalEngineResolver engineResolver;
     private final FeatureGateService featureGateService;
@@ -103,8 +105,17 @@ public class AccountingService {
         AmortizableAsset asset = AmortizableAsset.builder()
                 .activity(activity).property(property).type(req.type())
                 .label(req.label() != null ? req.label() : req.type().getLabel())
-                .base(req.base()).startDate(req.startDate()).durationYears(duration).build();
+                .base(req.base()).startDate(effectiveStart(activity, req.startDate())).durationYears(duration).build();
         return AssetResponse.from(assetRepository.save(asset));
+    }
+
+    /**
+     * L'amortissement démarre à la mise en location : une immobilisation acquise avant le
+     * début d'activité est amortie à partir du début d'activité (évite un amortissement
+     * antérieur à l'apport, qui déséquilibrerait le bilan).
+     */
+    private java.time.LocalDate effectiveStart(FiscalActivity activity, java.time.LocalDate date) {
+        return date != null && date.isBefore(activity.getStartDate()) ? activity.getStartDate() : date;
     }
 
     @Transactional
@@ -115,6 +126,89 @@ public class AccountingService {
         if (!asset.getActivity().getId().equals(activity.getId()))
             throw new ForbiddenException("Cette immobilisation ne vous appartient pas.");
         assetRepository.delete(asset);
+    }
+
+    /** Immobilisations suggérées à partir des dépenses et biens existants (hors déjà importées). */
+    @Transactional(readOnly = true)
+    public List<AssetSuggestion> suggestAssets() {
+        FiscalActivity activity = requireActivity();
+        UUID ownerId = activity.getOwner().getId();
+        List<AmortizableAsset> existing = assetRepository.findByActivityId(activity.getId());
+
+        java.util.Set<UUID> importedExpenses = existing.stream()
+                .map(AmortizableAsset::getSourceExpenseId).filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.Set<String> importedProperty = existing.stream()
+                .filter(a -> a.getSourcePropertyId() != null)
+                .map(a -> a.getSourcePropertyId() + "|" + a.getType().name())
+                .collect(java.util.stream.Collectors.toSet());
+
+        List<AssetSuggestion> out = new java.util.ArrayList<>();
+
+        // Depuis les dépenses (mobilier / travaux)
+        for (var e : expenseRepository.findByOwnerId(ownerId)) {
+            AssetType type = switch (e.getCategory()) {
+                case FURNISHING -> AssetType.MOBILIER;
+                case RENOVATION -> AssetType.TRAVAUX;
+                default -> null;
+            };
+            if (type == null || e.getExpenseDate() == null || e.getAmount() == null) continue;
+            if (importedExpenses.contains(e.getId())) continue;
+            String label = e.getDescription() != null && !e.getDescription().isBlank()
+                    ? e.getDescription() : type.getLabel();
+            out.add(new AssetSuggestion("EXPENSE", e.getId(), type, type.getLabel(),
+                    label, e.getAmount(), e.getExpenseDate(), type.getDefaultDurationYears()));
+        }
+
+        // Depuis les biens (bâti + frais d'acquisition)
+        for (Property p : propertyRepository.findByOwnerId(ownerId)) {
+            if (p.getAcquisitionDate() == null) continue;
+            if (p.getPurchasePrice() != null && !importedProperty.contains(p.getId() + "|BATIMENT")) {
+                java.math.BigDecimal land = p.getLandValue() != null ? p.getLandValue() : java.math.BigDecimal.ZERO;
+                java.math.BigDecimal bati = p.getPurchasePrice().subtract(land);
+                if (bati.signum() > 0) {
+                    out.add(new AssetSuggestion("PROPERTY_BUILDING", p.getId(), AssetType.BATIMENT,
+                            AssetType.BATIMENT.getLabel(), "Bâti — " + p.getName(), bati,
+                            p.getAcquisitionDate(), AssetType.BATIMENT.getDefaultDurationYears()));
+                }
+            }
+            if (p.getNotaryFees() != null && p.getNotaryFees().signum() > 0
+                    && !importedProperty.contains(p.getId() + "|FRAIS")) {
+                out.add(new AssetSuggestion("PROPERTY_FEES", p.getId(), AssetType.FRAIS,
+                        AssetType.FRAIS.getLabel(), "Frais d'acquisition — " + p.getName(), p.getNotaryFees(),
+                        p.getAcquisitionDate(), AssetType.FRAIS.getDefaultDurationYears()));
+            }
+        }
+        return out;
+    }
+
+    /** Crée les immobilisations correspondant aux suggestions retenues (valeurs re-dérivées côté serveur). */
+    @Transactional
+    public List<AssetResponse> importSuggestions(ImportSuggestionsRequest request) {
+        FiscalActivity activity = requireActivity();
+        if (request == null || request.items() == null || request.items().isEmpty())
+            throw new BadRequestException("Aucune immobilisation à importer.");
+
+        List<AssetSuggestion> suggestions = suggestAssets();
+        List<AssetResponse> created = new java.util.ArrayList<>();
+        for (ImportItem item : request.items()) {
+            AssetSuggestion s = suggestions.stream()
+                    .filter(x -> x.sourceType().equals(item.sourceType()) && x.sourceId().equals(item.sourceId()))
+                    .findFirst().orElse(null);
+            if (s == null) continue; // déjà importée ou source disparue
+            int duration = item.durationYears() != null && item.durationYears() > 0
+                    ? item.durationYears() : s.durationYears();
+            AmortizableAsset asset = AmortizableAsset.builder()
+                    .activity(activity).type(s.type()).label(s.label()).base(s.base())
+                    .startDate(effectiveStart(activity, s.startDate())).durationYears(duration).build();
+            if ("EXPENSE".equals(s.sourceType())) asset.setSourceExpenseId(s.sourceId());
+            else {
+                asset.setSourcePropertyId(s.sourceId());
+                propertyRepository.findById(s.sourceId()).ifPresent(asset::setProperty);
+            }
+            created.add(AssetResponse.from(assetRepository.save(asset)));
+        }
+        return created;
     }
 
     @Transactional(readOnly = true)

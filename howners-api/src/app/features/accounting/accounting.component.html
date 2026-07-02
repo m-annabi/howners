@@ -69,6 +69,35 @@
     </div>
   </div>
 
+  <!-- Suggestions depuis les dépenses / biens -->
+  <div class="hw-card mb-4" *ngIf="suggestions.length > 0">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="hw-section-title mb-0" style="border:none;padding:0;">
+        <i class="bi bi-magic"></i> Immobilisations détectées ({{ suggestions.length }})
+      </h5>
+      <button class="hw-btn hw-btn--sm hw-btn--primary" (click)="importAllSuggestions()" [disabled]="importing">
+        <span *ngIf="importing" class="spinner-border spinner-border-sm me-1"></span>
+        Tout importer
+      </button>
+    </div>
+    <p class="hw-text-muted hw-text-sm">Dérivées de vos dépenses (mobilier, travaux) et de vos biens (bâti, frais d'acquisition). Vérifiez avant d'importer.</p>
+    <div style="overflow-x:auto;">
+      <table class="hw-table">
+        <thead><tr><th>Type</th><th>Libellé</th><th class="text-end">Base</th><th>Mise en service</th><th>Durée</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let s of suggestions">
+            <td>{{ s.typeLabel }}</td>
+            <td>{{ s.label }}</td>
+            <td class="text-end">{{ s.base | number:'1.2-2' }} €</td>
+            <td>{{ s.startDate | date:'dd/MM/yyyy' }}</td>
+            <td>{{ s.durationYears }} ans</td>
+            <td><button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="importSuggestion(s)" [disabled]="importing" title="Importer"><i class="bi bi-plus-lg"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Immobilisations -->
   <div class="hw-card mb-4">
     <h5 class="hw-section-title">Immobilisations amortissables</h5>
