@@ -78,16 +78,11 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="onClose()">
+        <button type="button" class="hw-btn hw-btn--ghost" (click)="onClose()">
           <i class="bi bi-x-circle"></i> Annuler
         </button>
-        <button
-          type="button"
-          class="btn btn-success"
-          (click)="onSign()"
-          [disabled]="!canSign()"
-        >
-          <i class="bi bi-check-circle"></i> Signer le Contrat
+        <button type="button" class="hw-btn hw-btn--primary" (click)="onSign()" [disabled]="!canSign()">
+          <i class="bi bi-check-circle"></i> Signer le contrat
         </button>
       </div>
     </div>

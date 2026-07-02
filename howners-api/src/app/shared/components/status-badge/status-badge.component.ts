@@ -20,6 +20,7 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
   contract: {
     ACTIVE: { label: 'Actif', icon: 'bi-check-circle-fill', color: 'success' },
     SIGNED: { label: 'Signé', icon: 'bi-pen-fill', color: 'success' },
+    SENT: { label: 'Envoyé', icon: 'bi-send', color: 'info' },
     DRAFT: { label: 'Brouillon', icon: 'bi-pencil', color: 'warning' },
     PENDING: { label: 'En attente', icon: 'bi-clock', color: 'warning' },
     PENDING_SIGNATURE: { label: 'Signature en attente', icon: 'bi-clock', color: 'warning' },
@@ -66,6 +67,15 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
   edl: {
     ENTREE: { label: 'Entrée', icon: 'bi-arrow-down-circle-fill', color: 'success' },
     SORTIE: { label: 'Sortie', icon: 'bi-arrow-up-circle-fill', color: 'warning' },
+  },
+  signature: {
+    PENDING: { label: 'En attente', icon: 'bi-clock', color: 'neutral' },
+    SENT: { label: 'Envoyé', icon: 'bi-send', color: 'info' },
+    VIEWED: { label: 'Consulté', icon: 'bi-eye', color: 'info' },
+    SIGNED: { label: 'Signé', icon: 'bi-check-circle-fill', color: 'success' },
+    DECLINED: { label: 'Refusé', icon: 'bi-x-circle-fill', color: 'danger' },
+    CANCELLED: { label: 'Annulé', icon: 'bi-dash-circle', color: 'neutral' },
+    EXPIRED: { label: 'Expiré', icon: 'bi-calendar-x', color: 'warning' },
   },
   expense: {
     PENDING: { label: 'En attente', icon: 'bi-clock', color: 'warning' },

@@ -1,207 +1,125 @@
-<div class="container mt-4">
-  <!-- Bouton retour -->
-  <button class="btn btn-secondary mb-3" (click)="goBack()">
-    ← Retour à la liste
-  </button>
+<button class="hw-btn hw-btn--sm hw-btn--ghost mb-3" (click)="goBack()">
+  <i class="bi bi-arrow-left"></i> Retour à la liste
+</button>
 
-  <!-- Messages -->
-  <div *ngIf="loading" class="alert alert-info">
-    Chargement du contrat...
-  </div>
+<app-loading-skeleton *ngIf="loading" type="card" [count]="1"></app-loading-skeleton>
 
-  <div *ngIf="error" class="alert alert-danger">
-    {{ error }}
-  </div>
-
-  <!-- Détails du contrat -->
-  <div *ngIf="!loading && !error && contract" class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h3>Contrat {{ contract.contractNumber }}</h3>
-      <span
-        class="badge"
-        [style.background-color]="getStatusColor(contract.status)"
-      >
-        {{ getStatusLabel(contract.status) }}
-      </span>
-    </div>
-
-    <div class="card-body">
-      <!-- Informations principales -->
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <h5>Informations générales</h5>
-          <table class="table table-borderless">
-            <tr>
-              <td><strong>Numéro:</strong></td>
-              <td>{{ contract.contractNumber }}</td>
-            </tr>
-            <tr>
-              <td><strong>Propriété:</strong></td>
-              <td>{{ contract.rentalPropertyName }}</td>
-            </tr>
-            <tr>
-              <td><strong>Locataire:</strong></td>
-              <td>{{ contract.tenantFullName }}</td>
-            </tr>
-            <tr>
-              <td><strong>Version actuelle:</strong></td>
-              <td>{{ contract.currentVersion }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div class="col-md-6">
-          <h5>Dates</h5>
-          <table class="table table-borderless">
-            <tr>
-              <td><strong>Créé le:</strong></td>
-              <td>{{ contract.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-            </tr>
-            <tr *ngIf="contract.sentAt">
-              <td><strong>Envoyé le:</strong></td>
-              <td>{{ contract.sentAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-            </tr>
-            <tr *ngIf="contract.signedAt">
-              <td><strong>Signé le:</strong></td>
-              <td>{{ contract.signedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-            </tr>
-            <tr *ngIf="contract.updatedAt">
-              <td><strong>Mis à jour le:</strong></td>
-              <td>{{ contract.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-            </tr>
-          </table>
-        </div>
-      </div>
-
-      <!-- E-Signature Status (DocuSign - deprecated, hidden) -->
-      <div *ngIf="false && signatureRequest" class="card mb-4 border-primary">
-        <!-- DocuSign integration disabled -->
-      </div>
-
-      <!-- Actions -->
-      <div class="actions mb-3">
-        <button class="btn btn-primary me-2" (click)="downloadPdf()">
-          📄 Télécharger le PDF
-        </button>
-
-        <ng-container *ngIf="isOwner">
-          <button
-            *ngIf="contract.status === ContractStatus.DRAFT"
-            class="btn btn-secondary me-2"
-            [routerLink]="['/contracts', contract.id, 'edit']"
-          >
-            <i class="bi bi-pencil me-1"></i> Modifier
-          </button>
-
-          <button
-            *ngIf="contract.status === ContractStatus.DRAFT"
-            class="btn btn-success me-2"
-            (click)="sendForSignature()"
-          >
-            ✍️ Envoyer pour signature
-          </button>
-
-          <button
-            class="btn btn-warning me-2"
-            [routerLink]="['/contracts', contract.id, 'amendments']"
-          >
-            <i class="bi bi-file-earmark-plus"></i> Avenants
-          </button>
-
-          <button class="btn btn-info me-2" (click)="loadVersions()">
-            📋 Voir les versions
-          </button>
-
-          <button
-            *ngIf="contract.status === ContractStatus.DRAFT"
-            class="btn btn-danger"
-            (click)="deleteContract()"
-          >
-            🗑️ Supprimer
-          </button>
-        </ng-container>
-      </div>
-
-      <!-- Liste des versions -->
-      <div *ngIf="showVersions && versions.length > 0" class="versions mt-4">
-        <h5>Historique des versions</h5>
-        <div class="table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Version</th>
-                <th>Créée par</th>
-                <th>Date de création</th>
-                <th>Hash</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let version of versions">
-                <td>{{ version.version }}</td>
-                <td>{{ version.createdByName }}</td>
-                <td>{{ version.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td>
-                  <code class="small">{{ version.documentHash.substring(0, 16) }}...</code>
-                </td>
-                <td>
-                  <a
-                    [href]="version.documentUrl"
-                    target="_blank"
-                    class="btn btn-sm btn-outline-primary"
-                  >
-                    Télécharger
-                  </a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Section signature -->
-      <div class="signatures-section mt-4">
-        <h5>Signatures</h5>
-
-        <!-- Afficher les signatures existantes -->
-        <div *ngIf="signatures.length > 0" class="mb-3">
-          <div class="alert alert-success" *ngFor="let signature of signatures">
-            <strong>✓ Signé par:</strong> {{ signature.signerFullName }}<br>
-            <strong>Date:</strong> {{ signature.signedAt | date: 'dd/MM/yyyy HH:mm' }}<br>
-            <strong>IP:</strong> {{ signature.ipAddress }}
-          </div>
-        </div>
-
-        <!-- Message si déjà signé -->
-        <div *ngIf="hasUserSigned()" class="alert alert-info">
-          Vous avez déjà signé ce contrat.
-        </div>
-
-        <!-- Bouton pour signer (nouveau dialogue) -->
-        <div *ngIf="canSign()">
-          <button class="btn btn-success" (click)="openSignDialog()">
-            ✍️ Signer le contrat
-          </button>
-        </div>
-
-        <!-- Message si pas de signature possible -->
-        <div
-          *ngIf="!canSign() && !hasUserSigned() && contract.status !== ContractStatus.SENT"
-          class="alert alert-warning"
-        >
-          Le contrat doit être en statut "Envoyé" pour être signé.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Contract Sign Dialog -->
-  <app-contract-sign-dialog
-    *ngIf="contract"
-    [show]="showSignDialog"
-    [contractTitle]="contract.contractNumber"
-    [contractContent]="contractContent"
-    (close)="closeSignDialog()"
-    (sign)="handleSign($event)"
-  ></app-contract-sign-dialog>
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
 </div>
+
+<div *ngIf="!loading && !error && contract" class="hw-card">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <h3 class="mb-0">Contrat {{ contract.contractNumber }}</h3>
+    <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
+  </div>
+
+  <div class="hw-detail-grid mb-4">
+    <div>
+      <h5 class="hw-section-title">Informations générales</h5>
+      <dl class="hw-kv">
+        <dt>Numéro</dt><dd>{{ contract.contractNumber }}</dd>
+        <dt>Propriété</dt><dd>{{ contract.rentalPropertyName }}</dd>
+        <dt>Locataire</dt><dd>{{ contract.tenantFullName }}</dd>
+        <dt>Version actuelle</dt><dd>{{ contract.currentVersion }}</dd>
+      </dl>
+    </div>
+
+    <div>
+      <h5 class="hw-section-title">Dates</h5>
+      <dl class="hw-kv">
+        <dt>Créé le</dt><dd>{{ contract.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        <ng-container *ngIf="contract.sentAt"><dt>Envoyé le</dt><dd>{{ contract.sentAt | date: 'dd/MM/yyyy HH:mm' }}</dd></ng-container>
+        <ng-container *ngIf="contract.signedAt"><dt>Signé le</dt><dd>{{ contract.signedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></ng-container>
+        <ng-container *ngIf="contract.updatedAt"><dt>Mis à jour le</dt><dd>{{ contract.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</dd></ng-container>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="d-flex gap-2 flex-wrap mb-4">
+    <button class="hw-btn hw-btn--primary" (click)="downloadPdf()">
+      <i class="bi bi-download"></i> Télécharger le PDF
+    </button>
+
+    <ng-container *ngIf="isOwner">
+      <button *ngIf="contract.status === ContractStatus.DRAFT" class="hw-btn hw-btn--outline" [routerLink]="['/contracts', contract.id, 'edit']">
+        <i class="bi bi-pencil"></i> Modifier
+      </button>
+      <button *ngIf="contract.status === ContractStatus.DRAFT" class="hw-btn hw-btn--primary" (click)="sendForSignature()">
+        <i class="bi bi-pen"></i> Envoyer pour signature
+      </button>
+      <button class="hw-btn hw-btn--ghost" [routerLink]="['/contracts', contract.id, 'amendments']">
+        <i class="bi bi-file-earmark-plus"></i> Avenants
+      </button>
+      <button class="hw-btn hw-btn--ghost" (click)="loadVersions()">
+        <i class="bi bi-clock-history"></i> Voir les versions
+      </button>
+      <button *ngIf="contract.status === ContractStatus.DRAFT" class="hw-btn hw-btn--ghost" (click)="deleteContract()">
+        <i class="bi bi-trash"></i> Supprimer
+      </button>
+    </ng-container>
+  </div>
+
+  <!-- Historique des versions -->
+  <div *ngIf="showVersions && versions.length > 0" class="mb-4">
+    <h5 class="hw-section-title">Historique des versions</h5>
+    <div class="hw-card" style="padding: 0; overflow-x: auto;">
+      <table class="hw-table">
+        <thead>
+          <tr><th>Version</th><th>Créée par</th><th>Date</th><th>Hash</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let version of versions">
+            <td>{{ version.version }}</td>
+            <td>{{ version.createdByName }}</td>
+            <td>{{ version.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td><code class="hw-text-sm">{{ version.documentHash.substring(0, 16) }}…</code></td>
+            <td><a [href]="version.documentUrl" target="_blank" class="hw-btn hw-btn--sm hw-btn--ghost">Télécharger</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Signatures -->
+  <div>
+    <h5 class="hw-section-title">Signatures</h5>
+
+    <div *ngIf="signatures.length > 0" class="mb-3">
+      <div class="hw-alert hw-alert--success mb-2" *ngFor="let signature of signatures">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>
+          <strong>Signé par :</strong> {{ signature.signerFullName }} —
+          {{ signature.signedAt | date: 'dd/MM/yyyy HH:mm' }} (IP : {{ signature.ipAddress }})
+        </span>
+      </div>
+    </div>
+
+    <div *ngIf="hasUserSigned()" class="hw-alert hw-alert--info">
+      <i class="bi bi-info-circle-fill"></i>
+      <span>Vous avez déjà signé ce contrat.</span>
+    </div>
+
+    <div *ngIf="canSign()">
+      <button class="hw-btn hw-btn--primary" (click)="openSignDialog()">
+        <i class="bi bi-pen"></i> Signer le contrat
+      </button>
+    </div>
+
+    <div *ngIf="!canSign() && !hasUserSigned() && contract.status !== ContractStatus.SENT" class="hw-alert hw-alert--warning">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>Le contrat doit être en statut « Envoyé » pour être signé.</span>
+    </div>
+  </div>
+</div>
+
+<app-contract-sign-dialog
+  *ngIf="contract"
+  [show]="showSignDialog"
+  [contractTitle]="contract.contractNumber"
+  [contractContent]="contractContent"
+  (close)="closeSignDialog()"
+  (sign)="handleSign($event)">
+</app-contract-sign-dialog>

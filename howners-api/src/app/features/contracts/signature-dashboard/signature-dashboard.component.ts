@@ -9,7 +9,8 @@ import {
 
 @Component({
   selector: 'app-signature-dashboard',
-  templateUrl: './signature-dashboard.component.html'
+  templateUrl: './signature-dashboard.component.html',
+  styleUrls: ['./signature-dashboard.component.scss']
 })
 export class SignatureDashboardComponent implements OnInit {
   dashboard: SignatureTrackingDashboard | null = null;
