@@ -74,11 +74,39 @@ public class PdfService {
             html.append("<h1>").append(escapeHtml(title)).append("</h1>");
         }
 
-        // Ajouter le contenu HTML tel quel (provient de Quill)
-        html.append(content);
+        // Le contenu peut être du HTML (éditeur Quill, ou builders internes) OU du texte
+        // brut avec des retours à la ligne (templates seedés). En HTML, les \n et espaces
+        // multiples sont réduits à un seul espace ; on convertit donc le texte brut en HTML.
+        html.append(looksLikeHtml(content) ? content : plainTextToHtml(content));
 
         html.append("</body></html>");
         return html.toString();
+    }
+
+    /**
+     * Détecte si le contenu est déjà du HTML structuré (présence d'au moins une balise
+     * de bloc ou de saut de ligne). Sinon on le traite comme du texte brut.
+     */
+    private boolean looksLikeHtml(String content) {
+        if (content == null) return true; // rien à convertir
+        return content.matches("(?is).*<(p|div|br|table|h[1-6]|ul|ol|li)\\b.*");
+    }
+
+    /**
+     * Convertit un texte brut en HTML : chaque bloc séparé par une ligne vide devient un
+     * &lt;p&gt;, et les retours à la ligne simples deviennent des &lt;br/&gt;.
+     */
+    private String plainTextToHtml(String content) {
+        if (content == null || content.isEmpty()) return "";
+        String normalized = content.replace("\r\n", "\n").replace("\r", "\n");
+        StringBuilder out = new StringBuilder();
+        for (String block : normalized.split("\n[ \t]*\n")) {
+            String trimmed = block.strip();
+            if (trimmed.isEmpty()) continue;
+            String escaped = escapeHtml(trimmed).replace("\n", "<br/>");
+            out.append("<p>").append(escaped).append("</p>");
+        }
+        return out.toString();
     }
 
     /**

@@ -222,13 +222,13 @@ public class EtatDesLieuxService {
             html.append("<h3>Clés</h3>");
             html.append("<p>Nombre de clés : <strong>").append(edl.getKeysCount()).append("</strong></p>");
             if (edl.getKeysDescription() != null) {
-                html.append("<p>Description : ").append(edl.getKeysDescription()).append("</p>");
+                html.append("<p>Description : ").append(nl2br(edl.getKeysDescription())).append("</p>");
             }
         }
 
         if (edl.getGeneralComments() != null) {
             html.append("<h3>Commentaires généraux</h3>");
-            html.append("<p>").append(edl.getGeneralComments()).append("</p>");
+            html.append("<p>").append(nl2br(edl.getGeneralComments())).append("</p>");
         }
 
         html.append("<div style='margin-top: 60px;'>");
@@ -244,5 +244,12 @@ public class EtatDesLieuxService {
         html.append("</div>");
 
         return html.toString();
+    }
+
+    /** Échappe le HTML d'un champ libre et convertit les retours à la ligne en &lt;br/&gt;. */
+    private String nl2br(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                   .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>");
     }
 }

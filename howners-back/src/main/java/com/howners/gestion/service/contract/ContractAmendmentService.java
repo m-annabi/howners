@@ -172,7 +172,12 @@ public class ContractAmendmentService {
         html.append("<hr/>");
 
         html.append("<h3>Objet de l'avenant</h3>");
-        html.append("<p>").append(amendment.getReason()).append("</p>");
+        html.append("<p>").append(nl2br(amendment.getReason())).append("</p>");
+
+        if (amendment.getChanges() != null && !amendment.getChanges().isBlank()) {
+            html.append("<h3>Détails des modifications</h3>");
+            html.append("<p>").append(nl2br(amendment.getChanges())).append("</p>");
+        }
 
         if (amendment.getPreviousRent() != null && amendment.getNewRent() != null) {
             html.append("<h3>Modification du loyer</h3>");
@@ -194,5 +199,12 @@ public class ContractAmendmentService {
         html.append("</div>");
 
         return html.toString();
+    }
+
+    /** Échappe le HTML d'un champ libre et convertit les retours à la ligne en &lt;br/&gt;. */
+    private String nl2br(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                   .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>");
     }
 }
