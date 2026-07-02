@@ -31,7 +31,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['']
+      phone: [''],
+      addressLine1: [''],
+      addressLine2: [''],
+      postalCode: [''],
+      city: [''],
+      country: ['']
     });
   }
 
@@ -59,7 +64,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
-            phone: user.phone || ''
+            phone: user.phone || '',
+            addressLine1: user.addressLine1 || '',
+            addressLine2: user.addressLine2 || '',
+            postalCode: user.postalCode || '',
+            city: user.city || '',
+            country: user.country || ''
           });
         },
         error: () => {
@@ -78,7 +88,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
-            phone: user.phone || ''
+            phone: user.phone || '',
+            addressLine1: user.addressLine1 || '',
+            addressLine2: user.addressLine2 || '',
+            postalCode: user.postalCode || '',
+            city: user.city || '',
+            country: user.country || ''
           });
         },
         error: () => {

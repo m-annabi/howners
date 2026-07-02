@@ -18,5 +18,20 @@ public record UpdateProfileRequest(
     String email,
 
     @Size(max = 20, message = "Phone number must not exceed 20 characters")
-    String phone
+    String phone,
+
+    @Size(max = 255, message = "Address must not exceed 255 characters")
+    String addressLine1,
+
+    @Size(max = 255, message = "Address must not exceed 255 characters")
+    String addressLine2,
+
+    @Size(max = 20, message = "Postal code must not exceed 20 characters")
+    String postalCode,
+
+    @Size(max = 120, message = "City must not exceed 120 characters")
+    String city,
+
+    @Size(max = 80, message = "Country must not exceed 80 characters")
+    String country
 ) {}

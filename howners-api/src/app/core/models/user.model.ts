@@ -11,6 +11,11 @@ export interface User {
   firstName: string;
   lastName: string;
   phone?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
   role: Role;
   enabled: boolean;
   createdAt: string;

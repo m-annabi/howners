@@ -2,6 +2,7 @@ package com.howners.gestion.service.inventory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.inventory.EdlComparaison;
@@ -421,6 +422,23 @@ public class EdlComparisonService {
                     piece.degradee() ? "Dégradation constatée" : (piece.nonComparable() ? "Non comparable" : "")));
         }
 
+        StringBuilder blocCompteurs = new StringBuilder();
+        if (diff.compteurs() != null && !diff.compteurs().isEmpty()) {
+            blocCompteurs.append("<h3 style=\"margin-top: 20px;\">Relevés des compteurs</h3>");
+            blocCompteurs.append("<table style=\"width: 100%;\"><tr>")
+                    .append("<th style=\"padding: 6px; text-align: left;\">Compteur</th>")
+                    .append("<th style=\"padding: 6px; text-align: left;\">Entrée</th>")
+                    .append("<th style=\"padding: 6px; text-align: left;\">Sortie</th></tr>");
+            for (var c : diff.compteurs()) {
+                blocCompteurs.append(String.format(
+                        "<tr><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px;\">%s</td></tr>",
+                        c.type(),
+                        c.releveEntree() != null ? c.releveEntree() : "—",
+                        c.releveSortie() != null ? c.releveSortie() : "—"));
+            }
+            blocCompteurs.append("</table>");
+        }
+
         StringBuilder lignesRetenues = new StringBuilder();
         for (var retenue : diff.retenues()) {
             lignesRetenues.append(String.format(
@@ -439,12 +457,12 @@ public class EdlComparisonService {
 
                 <table style="width: 100%%; border: none; margin-bottom: 20px;">
                     <tr>
-                        <td style="border: none; width: 50%%; vertical-align: top;"><strong>Bailleur :</strong><br/>%s</td>
-                        <td style="border: none; width: 50%%; vertical-align: top;"><strong>Locataire :</strong><br/>%s</td>
+                        <td style="border: none; width: 50%%; vertical-align: top;"><strong>Bailleur :</strong><br/>%s%s</td>
+                        <td style="border: none; width: 50%%; vertical-align: top;"><strong>Locataire :</strong><br/>%s%s</td>
                     </tr>
                 </table>
 
-                <p><strong>Bien :</strong> %s</p>
+                <p><strong>Bien :</strong> %s — %s</p>
 
                 <h3 style="margin-top: 20px;">État des pièces</h3>
                 <table style="width: 100%%;">
@@ -456,6 +474,8 @@ public class EdlComparisonService {
                     </tr>
                     %s
                 </table>
+
+                %s
 
                 <h3 style="margin-top: 20px;">Retenues sur le dépôt de garantie</h3>
                 <table style="width: 100%%;">
@@ -487,10 +507,12 @@ public class EdlComparisonService {
                 """.formatted(
                 diff.dateEntree() != null ? diff.dateEntree().format(FR_DATE) : "—",
                 diff.dateSortie() != null ? diff.dateSortie().format(FR_DATE) : "—",
-                owner.getFullName(),
-                tenant != null ? tenant.getFullName() : "N/A",
-                property.getName(),
+                owner.getFullName(), PdfFormat.blocAdresse(owner),
+                tenant != null ? tenant.getFullName() : "Locataire non renseigné",
+                tenant != null ? PdfFormat.blocAdresse(tenant) : "",
+                property.getName(), PdfFormat.adressePostale(property),
                 lignesPieces,
+                blocCompteurs,
                 lignesRetenues,
                 diff.totalRetenues(),
                 diff.depositAmount() != null ? diff.depositAmount() : BigDecimal.ZERO,

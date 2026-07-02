@@ -63,6 +63,11 @@ public class TenantService {
         if (request.phone() != null && !request.phone().isBlank()) {
             user.setPhone(request.phone());
         }
+        user.setAddressLine1(request.addressLine1());
+        user.setAddressLine2(request.addressLine2());
+        user.setPostalCode(request.postalCode());
+        user.setCity(request.city());
+        user.setCountry(request.country());
 
         user = userRepository.save(user);
         log.info("Tenant profile updated: {}", user.getEmail());

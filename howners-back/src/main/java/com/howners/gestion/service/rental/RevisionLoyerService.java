@@ -1,5 +1,6 @@
 package com.howners.gestion.service.rental;
 
+import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.notification.NotificationType;
@@ -366,10 +367,11 @@ public class RevisionLoyerService {
         User owner = property.getOwner();
         User tenant = rental.getTenant();
 
-        String adresse = String.format("%s, %s %s",
-                property.getAddressLine1() != null ? property.getAddressLine1() : "",
-                property.getPostalCode() != null ? property.getPostalCode() : "",
-                property.getCity() != null ? property.getCity() : "");
+        String adresse = PdfFormat.adressePostale(property);
+        java.math.BigDecimal ancien = revision.getAncienLoyer();
+        java.math.BigDecimal nouveau = revision.getNouveauLoyer();
+        double variationPct = (ancien != null && ancien.doubleValue() != 0)
+                ? (nouveau.doubleValue() - ancien.doubleValue()) / ancien.doubleValue() * 100 : 0;
 
         return """
                 <div style="text-align: center; margin-bottom: 30px;">
@@ -380,10 +382,10 @@ public class RevisionLoyerService {
                 <table style="width: 100%%; border: none; margin-bottom: 20px;">
                     <tr>
                         <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Bailleur :</strong><br/>%s
+                            <strong>Bailleur :</strong><br/>%s%s
                         </td>
                         <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Locataire :</strong><br/>%s
+                            <strong>Locataire :</strong><br/>%s%s
                         </td>
                     </tr>
                 </table>
@@ -401,8 +403,9 @@ public class RevisionLoyerService {
                 <table style="margin-top: 20px; width: 90%%; margin-left: auto; margin-right: auto;">
                     <tr><td style="padding: 8px;"><strong>Indice de référence (ancien)</strong></td><td style="padding: 8px; text-align: right;">IRL %d-T%d : %.2f</td></tr>
                     <tr><td style="padding: 8px;"><strong>Indice de référence (nouveau)</strong></td><td style="padding: 8px; text-align: right;">IRL %d-T%d : %.2f</td></tr>
-                    <tr><td style="padding: 8px;"><strong>Loyer actuel (hors charges)</strong></td><td style="padding: 8px; text-align: right;">%.2f €</td></tr>
-                    <tr style="border-top: 2px solid #333;"><td style="padding: 8px;"><strong>Nouveau loyer (hors charges)</strong></td><td style="padding: 8px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                    <tr><td style="padding: 8px;"><strong>Loyer actuel (hors charges)</strong></td><td style="padding: 8px; text-align: right;">%s</td></tr>
+                    <tr style="border-top: 2px solid #333;"><td style="padding: 8px;"><strong>Nouveau loyer (hors charges)</strong></td><td style="padding: 8px; text-align: right;"><strong>%s</strong></td></tr>
+                    <tr><td style="padding: 8px;"><strong>Variation</strong></td><td style="padding: 8px; text-align: right;">%+.2f %%</td></tr>
                     <tr><td style="padding: 8px;"><strong>Date d'effet</strong></td><td style="padding: 8px; text-align: right;">%s</td></tr>
                 </table>
 
@@ -417,16 +420,18 @@ public class RevisionLoyerService {
                     (article 17-1, loi n° 89-462 du 6 juillet 1989).
                 </p>
                 """.formatted(
-                owner.getFullName(),
-                tenant != null ? tenant.getFullName() : "N/A",
+                owner.getFullName(), PdfFormat.blocAdresse(owner),
+                tenant != null ? tenant.getFullName() : "Locataire non renseigné",
+                tenant != null ? PdfFormat.blocAdresse(tenant) : "",
                 adresse,
                 LocalDate.now().format(FR_DATE),
                 revision.getIndiceAncien().getAnnee(), revision.getIndiceAncien().getTrimestre(),
                 revision.getIndiceAncien().getValeur(),
                 revision.getIndiceNouveau().getAnnee(), revision.getIndiceNouveau().getTrimestre(),
                 revision.getIndiceNouveau().getValeur(),
-                revision.getAncienLoyer(),
-                revision.getNouveauLoyer(),
+                PdfFormat.montant(ancien),
+                PdfFormat.montant(nouveau),
+                variationPct,
                 revision.getDateEffet().format(FR_DATE),
                 owner.getFullName());
     }

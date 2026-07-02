@@ -1,6 +1,7 @@
 package com.howners.gestion.util;
 
 import com.howners.gestion.domain.property.Property;
+import com.howners.gestion.domain.user.User;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -45,6 +46,31 @@ public final class PdfFormat {
         append(sb, cpVille.isEmpty() ? null : cpVille);
         append(sb, property.getCountry());
         return sb.length() == 0 ? "—" : sb.toString();
+    }
+
+    /**
+     * Adresse postale d'un utilisateur (bailleur/locataire), null-safe.
+     * Renvoie null si l'utilisateur n'a renseigné aucune adresse (l'appelant peut alors
+     * masquer le bloc plutôt qu'afficher un tiret).
+     */
+    public static String adressePostale(User user) {
+        if (user == null) return null;
+        StringBuilder sb = new StringBuilder();
+        append(sb, user.getAddressLine1());
+        append(sb, user.getAddressLine2());
+        String cpVille = (safe(user.getPostalCode()) + " " + safe(user.getCity())).trim();
+        append(sb, cpVille.isEmpty() ? null : cpVille);
+        append(sb, user.getCountry());
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    /**
+     * Suffixe HTML « &lt;br/&gt;adresse » (grisé) si l'utilisateur a une adresse, sinon
+     * chaîne vide — pour insérer proprement l'adresse sous le nom d'une partie.
+     */
+    public static String blocAdresse(User user) {
+        String addr = adressePostale(user);
+        return addr != null ? "<br/><span style=\"color:#555;\">" + addr + "</span>" : "";
     }
 
     private static void append(StringBuilder sb, String part) {

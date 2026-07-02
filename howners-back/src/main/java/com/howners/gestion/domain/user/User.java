@@ -37,6 +37,19 @@ public class User {
 
     private String phone;
 
+    @Column(name = "address_line1")
+    private String addressLine1;
+
+    @Column(name = "address_line2")
+    private String addressLine2;
+
+    @Column(name = "postal_code")
+    private String postalCode;
+
+    private String city;
+
+    private String country;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

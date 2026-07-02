@@ -12,6 +12,11 @@ public record UserResponse(
         String firstName,
         String lastName,
         String phone,
+        String addressLine1,
+        String addressLine2,
+        String postalCode,
+        String city,
+        String country,
         Role role,
         Boolean enabled,
         LocalDateTime createdAt
@@ -23,6 +28,11 @@ public record UserResponse(
                 user.getFirstName(),
                 user.getLastName(),
                 user.getPhone(),
+                user.getAddressLine1(),
+                user.getAddressLine2(),
+                user.getPostalCode(),
+                user.getCity(),
+                user.getCountry(),
                 user.getRole(),
                 user.getEnabled(),
                 user.getCreatedAt()

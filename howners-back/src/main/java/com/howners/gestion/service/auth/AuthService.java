@@ -148,6 +148,11 @@ public class AuthService {
         user.setLastName(request.lastName());
         user.setEmail(request.email());
         user.setPhone(request.phone());
+        user.setAddressLine1(request.addressLine1());
+        user.setAddressLine2(request.addressLine2());
+        user.setPostalCode(request.postalCode());
+        user.setCity(request.city());
+        user.setCountry(request.country());
 
         user = userRepository.save(user);
         return UserResponse.from(user);

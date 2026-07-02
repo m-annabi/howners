@@ -263,11 +263,11 @@ public class ReceiptService {
                     <tr>
                         <td style="border: none; width: 50%%; vertical-align: top;">
                             <strong>Bailleur :</strong><br/>
-                            %s<br/>
+                            %s%s
                         </td>
                         <td style="border: none; width: 50%%; vertical-align: top;">
                             <strong>Locataire :</strong><br/>
-                            %s<br/>
+                            %s%s
                         </td>
                     </tr>
                 </table>
@@ -289,9 +289,17 @@ public class ReceiptService {
                 <p class="legal-note">
                     Cette quittance annule tous les reçus qui auraient pu être établis précédemment en cas de paiement partiel du loyer. Elle ne préjuge pas de l'existence d'une dette locative antérieure.
                 </p>
-                """.formatted(receiptNumber, ownerName, tenantName, address, ownerName, tenantName,
+                """.formatted(receiptNumber,
+                ownerName, adresseHtml(owner), tenantName, adresseHtml(tenant),
+                address, ownerName, tenantName,
                 periodStart.format(FR_DATE), periodEnd.format(FR_DATE),
                 rentAmount, chargesAmount, totalAmount, paidDate,
                 ville.isEmpty() ? "—" : ville, LocalDate.now().format(FR_DATE));
+    }
+
+    /** Suffixe HTML « <br/>adresse » si l'utilisateur a une adresse, sinon vide. */
+    private String adresseHtml(User user) {
+        String addr = PdfFormat.adressePostale(user);
+        return addr != null ? "<br/><span style=\"color:#555;\">" + addr + "</span>" : "";
     }
 }

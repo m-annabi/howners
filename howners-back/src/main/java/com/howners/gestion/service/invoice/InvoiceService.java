@@ -205,10 +205,10 @@ public class InvoiceService {
                 <table style="border: none; margin-bottom: 16px;">
                     <tr>
                         <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Émetteur (bailleur) :</strong><br/>%s
+                            <strong>Émetteur (bailleur) :</strong><br/>%s%s
                         </td>
                         <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Destinataire (locataire) :</strong><br/>%s
+                            <strong>Destinataire (locataire) :</strong><br/>%s%s
                         </td>
                     </tr>
                 </table>
@@ -235,7 +235,9 @@ public class InvoiceService {
                 """.formatted(
                 invoice.getInvoiceNumber(),
                 owner.getFullName(),
+                PdfFormat.blocAdresse(owner),
                 tenant != null ? tenant.getFullName() : "Locataire non renseigné",
+                tenant != null ? PdfFormat.blocAdresse(tenant) : "",
                 property.getName(),
                 PdfFormat.adressePostale(property),
                 invoice.getIssueDate().format(FR_DATE),

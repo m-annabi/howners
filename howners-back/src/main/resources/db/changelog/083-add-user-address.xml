@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- Adresse postale du bailleur/locataire — requise pour les documents légaux
+         (quittance, mise en demeure, courrier de révision). Nullable : les comptes
+         existants n'ont pas d'adresse tant qu'ils ne la renseignent pas dans leur profil. -->
+    <changeSet id="083-add-user-address" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="users" columnName="address_line1"/></not>
+        </preConditions>
+
+        <addColumn tableName="users">
+            <column name="address_line1" type="VARCHAR(255)"/>
+            <column name="address_line2" type="VARCHAR(255)"/>
+            <column name="postal_code" type="VARCHAR(20)"/>
+            <column name="city" type="VARCHAR(120)"/>
+            <column name="country" type="VARCHAR(80)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
