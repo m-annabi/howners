@@ -8,7 +8,8 @@ import { Message, CreateMessageRequest } from '../../../core/models/message.mode
 
 @Component({
   selector: 'app-conversation-detail',
-  templateUrl: './conversation-detail.component.html'
+  templateUrl: './conversation-detail.component.html',
+  styleUrls: ['./conversation-detail.component.scss']
 })
 export class ConversationDetailComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;

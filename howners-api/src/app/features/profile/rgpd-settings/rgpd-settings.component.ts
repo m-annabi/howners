@@ -13,8 +13,10 @@ import {
   selector: 'app-rgpd-settings',
   templateUrl: './rgpd-settings.component.html',
   styles: [`
-    .consent-toggle { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
-    .danger-zone { border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-top: 20px; }
+    .consent-toggle { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--hw-gray-100, #eee); }
+    .danger-zone { border: 1px solid var(--hw-danger, #dc3545); border-radius: var(--hw-radius-lg, 8px); padding: 20px; margin-top: 20px; }
+    .danger-btn { background: var(--hw-danger, #dc3545); color: #fff; }
+    .danger-btn:hover:not(:disabled) { filter: brightness(0.93); }
   `]
 })
 export class RgpdSettingsComponent implements OnInit, OnDestroy {

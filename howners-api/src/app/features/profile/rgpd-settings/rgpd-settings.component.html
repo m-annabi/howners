@@ -1,64 +1,45 @@
-<div class="container mt-4">
-  <h2 class="mb-4">Confidentialité & RGPD</h2>
+<app-page-header title="Confidentialité & RGPD" [breadcrumbs]="[{label: 'Profil', route: '/profile'}, {label: 'Confidentialité'}]"></app-page-header>
 
-  <!-- Consentements -->
-  <div class="card mb-4">
-    <div class="card-header">
-      <h5>Gestion des consentements</h5>
-    </div>
-    <div class="card-body">
-      <div *ngIf="loading" class="alert alert-info">Chargement...</div>
-
-      <div *ngFor="let type of allConsentTypes" class="consent-toggle">
-        <div>
-          <strong>{{ consentLabels[type] }}</strong>
-        </div>
-        <div class="form-check form-switch">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            [checked]="isConsentGranted(type)"
-            (change)="toggleConsent(type)"
-          >
-        </div>
-      </div>
+<!-- Consentements -->
+<div class="hw-card mb-4">
+  <h5 class="hw-section-title">Gestion des consentements</h5>
+  <div *ngIf="loading" class="hw-text-sm hw-text-muted">Chargement…</div>
+  <div *ngFor="let type of allConsentTypes" class="consent-toggle">
+    <div><strong>{{ consentLabels[type] }}</strong></div>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" [checked]="isConsentGranted(type)" (change)="toggleConsent(type)">
     </div>
   </div>
+</div>
 
-  <!-- Export des données -->
-  <div class="card mb-4">
-    <div class="card-header">
-      <h5>Export de vos données</h5>
-    </div>
-    <div class="card-body">
-      <p>Conformément au RGPD, vous pouvez télécharger l'intégralité de vos données personnelles.</p>
-      <div class="d-flex gap-2 flex-wrap">
-        <button class="btn btn-primary" (click)="exportArchive()" [disabled]="exportingArchive">
-          {{ exportingArchive ? 'Préparation...' : 'Tout télécharger (archive ZIP)' }}
-        </button>
-        <button class="btn btn-outline-primary" (click)="exportJson()" [disabled]="exporting">
-          {{ exporting ? 'Export en cours...' : 'Données seules (JSON)' }}
-        </button>
-        <button class="btn btn-outline-primary" (click)="exportPdf()" [disabled]="exportingPdf">
-          {{ exportingPdf ? 'Export en cours...' : 'Résumé (PDF)' }}
-        </button>
-      </div>
-      <small class="text-muted d-block mt-2">
-        L'archive ZIP inclut vos données structurées (JSON) et tous vos fichiers téléversés
-        (portabilité, art. 20 RGPD).
-      </small>
-    </div>
-  </div>
-
-  <!-- Zone de danger -->
-  <div class="danger-zone">
-    <h5 class="text-danger">Suppression du compte</h5>
-    <p>
-      Cette action est <strong>irréversible</strong>. Toutes vos données personnelles seront anonymisées
-      et vos fichiers supprimés. Votre compte sera désactivé définitivement.
-    </p>
-    <button class="btn btn-danger" (click)="requestErasure()" [disabled]="deleting">
-      {{ deleting ? 'Suppression en cours...' : 'Supprimer mon compte' }}
+<!-- Export -->
+<div class="hw-card mb-4">
+  <h5 class="hw-section-title">Export de vos données</h5>
+  <p>Conformément au RGPD, vous pouvez télécharger l'intégralité de vos données personnelles.</p>
+  <div class="d-flex gap-2 flex-wrap">
+    <button class="hw-btn hw-btn--primary" (click)="exportArchive()" [disabled]="exportingArchive">
+      {{ exportingArchive ? 'Préparation…' : 'Tout télécharger (archive ZIP)' }}
+    </button>
+    <button class="hw-btn hw-btn--outline" (click)="exportJson()" [disabled]="exporting">
+      {{ exporting ? 'Export en cours…' : 'Données seules (JSON)' }}
+    </button>
+    <button class="hw-btn hw-btn--outline" (click)="exportPdf()" [disabled]="exportingPdf">
+      {{ exportingPdf ? 'Export en cours…' : 'Résumé (PDF)' }}
     </button>
   </div>
+  <small class="hw-text-muted d-block mt-2">
+    L'archive ZIP inclut vos données structurées (JSON) et tous vos fichiers téléversés (portabilité, art. 20 RGPD).
+  </small>
+</div>
+
+<!-- Zone de danger -->
+<div class="danger-zone">
+  <h5 class="text-danger">Suppression du compte</h5>
+  <p>
+    Cette action est <strong>irréversible</strong>. Toutes vos données personnelles seront anonymisées
+    et vos fichiers supprimés. Votre compte sera désactivé définitivement.
+  </p>
+  <button class="hw-btn danger-btn" (click)="requestErasure()" [disabled]="deleting">
+    {{ deleting ? 'Suppression en cours…' : 'Supprimer mon compte' }}
+  </button>
 </div>

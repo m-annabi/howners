@@ -28,17 +28,16 @@
   </div>
 
   <!-- Messages -->
-  <div *ngIf="loading" class="alert alert-info alert-sm">
-    Chargement...
-  </div>
+  <div *ngIf="loading" class="hw-text-sm hw-text-muted">Chargement…</div>
 
-  <div *ngIf="error" class="alert alert-danger alert-sm">
-    {{ error }}
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
   </div>
 
   <!-- Liste des variables -->
   <div *ngIf="!loading && !error" class="variables-list">
-    <div *ngIf="filteredVariables.length === 0" class="alert alert-warning alert-sm">
+    <div *ngIf="filteredVariables.length === 0" class="hw-text-sm hw-text-muted">
       Aucune variable trouvée.
     </div>
 

@@ -6,7 +6,8 @@ import { Conversation } from '../../../core/models/message.model';
 
 @Component({
   selector: 'app-conversation-list',
-  templateUrl: './conversation-list.component.html'
+  templateUrl: './conversation-list.component.html',
+  styleUrls: ['./conversation-list.component.scss']
 })
 export class ConversationListComponent implements OnInit, OnDestroy {
   conversations: Conversation[] = [];
