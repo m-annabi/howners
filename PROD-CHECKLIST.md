@@ -14,8 +14,11 @@ Légende : 🔴 bloquant · 🟡 important · 🟠 à planifier
 ## Phase 0 — Pré-déploiement (code)
 
 - [x] Travail des 10 chantiers business committé et poussé sur `origin/main`
-- [x] `cd howners-back && ./mvnw clean test` → **137 tests verts** (vérifié)
+- [x] `cd howners-back && ./mvnw clean test` → **198 tests verts** (vérifié)
 - [x] `cd howners-api && npm run build` → build prod OK (vérifié)
+- [x] Module comptable **LMNP réel** (bilan, compte de résultat, amortissements, emprunts,
+  FEC, liasse PDF avec cases 2031/2033/2042-C-PRO) livré et testé — **gated plan PRO**
+  (`tax_export`). Migrations `084`→`087`.
 - [ ] 🟡 Relire le diff de `application-prod.yml` : `ddl-auto: none`, swagger désactivé, logs en WARN
 - [x] Aucun `.env` suivi par Git (`.gitignore` durci `.env.*`, vérifié)
 
@@ -223,12 +226,16 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
 
 ### 6.2 Vérifications post-déploiement
 - [ ] `curl https://api.howners.com/actuator/health` → `{"status":"UP"}`
-- [ ] Migrations Liquibase 067→076 appliquées :
+- [ ] Migrations Liquibase appliquées jusqu'à **`087`** (dernière en date) :
   ```sql
-  SELECT id FROM databasechangelog WHERE id LIKE '07%' ORDER BY orderexecuted DESC LIMIT 10;
+  SELECT id FROM databasechangelog ORDER BY orderexecuted DESC LIMIT 12;
+  -- doit inclure 084→087 (module comptable LMNP, immobilisations, emprunts, SIRET)
   ```
 - [ ] `https://howners.com` se charge en HTTPS (cadenas valide, pas de mixed content)
 - [ ] Inscription d'un compte test → login → création d'un bien (parcours golden path)
+- [ ] 🟠 (si offre PRO active) Module comptable : compte PRO → configurer l'activité (SIRET) →
+  ajouter un emprunt → télécharger la liasse (bilan équilibré, FEC `{SIREN}FEC{AAAAMMJJ}.txt`
+  débit = crédit)
 - [ ] Un email transactionnel arrive réellement
 - [ ] CORS : le front prod appelle l'API sans erreur cross-origin
 - [ ] Headers de sécurité présents : `curl -I https://howners.com` → HSTS, CSP, X-Frame-Options
@@ -242,6 +249,11 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
   ```
 - [ ] ⚠️ Les migrations Liquibase ne sont **pas auto-réversibles** : prévoir un backup DB
   **avant** chaque déploiement (Phase 2.4) et un rollback SQL manuel si nécessaire.
+- [ ] ⚠️ **Migration `087`** : elle *supprime* la colonne `fiscal_activities.apport_initial`.
+  Un rollback du **code** à un commit antérieur à `add7699` échouerait au démarrage (l'ancienne
+  entité lit cette colonne). Impact quasi nul (module comptable neuf, gated PRO, sans données
+  réelles), mais pour rollback : soit garder le schéma `087`, soit restaurer le backup DB pris
+  avant déploiement.
 
 ---
 
