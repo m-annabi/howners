@@ -3,12 +3,14 @@ package com.howners.gestion.service.accounting;
 import com.howners.gestion.domain.accounting.AmortizableAsset;
 import com.howners.gestion.domain.accounting.AssetType;
 import com.howners.gestion.domain.accounting.FiscalActivity;
+import com.howners.gestion.domain.accounting.Loan;
 import com.howners.gestion.domain.expense.Expense;
 import com.howners.gestion.domain.expense.ExpenseCategory;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.repository.AmortizableAssetRepository;
 import com.howners.gestion.repository.ExpenseRepository;
+import com.howners.gestion.repository.LoanRepository;
 import com.howners.gestion.repository.PaymentRepository;
 import com.howners.gestion.repository.PropertyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +39,7 @@ class LmnpResultServiceTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private ExpenseRepository expenseRepository;
     @Mock private AmortizableAssetRepository assetRepository;
+    @Mock private LoanRepository loanRepository;
 
     private LmnpResultService service;
 
@@ -47,7 +50,7 @@ class LmnpResultServiceTest {
     @BeforeEach
     void setUp() {
         service = new LmnpResultService(propertyRepository, paymentRepository, expenseRepository,
-                assetRepository, new AmortizationService());
+                assetRepository, new AmortizationService(), loanRepository, new LoanScheduleService());
         ownerId = UUID.randomUUID();
         User owner = User.builder().id(ownerId).email("o@test.com").firstName("O").lastName("W").build();
         property = Property.builder().id(UUID.randomUUID()).name("Bien").owner(owner).build();
@@ -126,5 +129,27 @@ class LmnpResultServiceTest {
         LmnpResult r = service.compute(activity, 2024);
 
         assertThat(r.totalCharges()).isEqualByComparingTo("2000"); // FURNISHING exclu
+    }
+
+    @Test
+    void empruntInteretsDeductibles_capitalExclu_etBilanEquilibre() {
+        // Emprunt 100 000 € sur 20 ans à 2 %, assurance 30 €/mois.
+        Loan loan = Loan.builder().principal(new BigDecimal("100000")).annualRate(new BigDecimal("2.000"))
+                .durationMonths(240).startDate(LocalDate.of(2024, 1, 1))
+                .insuranceMonthly(new BigDecimal("30")).label("Prêt acquisition").build();
+        stub(new BigDecimal("12000"), List.of(charge("2000", ExpenseCategory.INSURANCE)), List.of());
+        when(loanRepository.findByActivityId(activity.getId())).thenReturn(List.of(loan));
+
+        LmnpResult r = service.compute(activity, 2024);
+
+        // Les intérêts et l'assurance sont des charges déductibles ; le capital ne l'est pas.
+        assertThat(r.chargesParPoste()).containsKey("Intérêts d'emprunt");
+        assertThat(r.chargesParPoste().get("Intérêts d'emprunt")).isGreaterThan(BigDecimal.ZERO);
+        assertThat(r.chargesParPoste().get("Assurance emprunteur")).isEqualByComparingTo("360"); // 30 × 12
+        // Capital restant dû reporté au passif, inférieur au principal (une année remboursée).
+        assertThat(r.dettesEmprunt()).isGreaterThan(BigDecimal.ZERO)
+                .isLessThan(new BigDecimal("100000"));
+        // Le bilan reste équilibré malgré la dette.
+        assertThat(r.totalActif()).isEqualByComparingTo(r.totalPassif());
     }
 }

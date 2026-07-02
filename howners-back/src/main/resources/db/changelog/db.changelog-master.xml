@@ -89,5 +89,6 @@
     <include file="db/changelog/083-add-user-address.xml"/>
     <include file="db/changelog/084-accounting-lmnp.xml"/>
     <include file="db/changelog/085-asset-source.xml"/>
+    <include file="db/changelog/086-loans.xml"/>
 
 </databaseChangeLog>

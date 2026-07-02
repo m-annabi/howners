@@ -61,6 +61,22 @@ public class AccountingController {
         return ResponseEntity.ok(accountingService.importSuggestions(req));
     }
 
+    @GetMapping("/loans")
+    public ResponseEntity<List<LoanResponse>> listLoans() {
+        return ResponseEntity.ok(accountingService.listLoans());
+    }
+
+    @PostMapping("/loans")
+    public ResponseEntity<LoanResponse> addLoan(@RequestBody CreateLoanRequest req) {
+        return ResponseEntity.ok(accountingService.addLoan(req));
+    }
+
+    @DeleteMapping("/loans/{id}")
+    public ResponseEntity<Void> deleteLoan(@PathVariable UUID id) {
+        accountingService.deleteLoan(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/result")
     public ResponseEntity<ResultResponse> result(@RequestParam int year) {
         return ResponseEntity.ok(accountingService.preview(year));

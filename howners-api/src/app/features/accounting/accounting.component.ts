@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult } from '../../core/services/accounting.service';
+import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult, Loan } from '../../core/services/accounting.service';
 import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
@@ -12,6 +12,7 @@ export class AccountingComponent implements OnInit {
   activity: FiscalActivity | null = null;
   assets: AmortizableAsset[] = [];
   suggestions: AssetSuggestion[] = [];
+  loans: Loan[] = [];
   result: LmnpResult | null = null;
   year = new Date().getFullYear() - 1;
   downloading = false;
@@ -27,6 +28,9 @@ export class AccountingComponent implements OnInit {
     { value: 'FRAIS', label: "Frais d'acquisition" }
   ];
   assetForm = { type: 'MOBILIER', label: '', base: null as number | null, startDate: '', durationYears: null as number | null };
+  // Formulaire emprunt
+  loanForm = { label: '', principal: null as number | null, annualRate: null as number | null, durationMonths: null as number | null, startDate: '', insuranceMonthly: null as number | null };
+  addingLoan = false;
 
   constructor(private accounting: AccountingService, private notify: NotificationService) {}
 
@@ -66,6 +70,39 @@ export class AccountingComponent implements OnInit {
   loadAssets(): void {
     this.accounting.listAssets().subscribe(a => this.assets = a);
     this.accounting.suggestions().subscribe(s => this.suggestions = s);
+    this.accounting.listLoans().subscribe(l => this.loans = l);
+  }
+
+  addLoan(): void {
+    const f = this.loanForm;
+    if (!f.principal || !f.annualRate || !f.durationMonths || !f.startDate) {
+      this.notify.error('Capital, taux, durée et date de déblocage sont requis.'); return;
+    }
+    this.addingLoan = true;
+    this.accounting.addLoan({
+      label: f.label || undefined,
+      principal: f.principal,
+      annualRate: f.annualRate,
+      durationMonths: f.durationMonths,
+      startDate: f.startDate,
+      insuranceMonthly: f.insuranceMonthly ?? undefined
+    }).subscribe({
+      next: () => {
+        this.addingLoan = false;
+        this.notify.success('Emprunt ajouté');
+        this.loanForm = { label: '', principal: null, annualRate: null, durationMonths: null, startDate: '', insuranceMonthly: null };
+        this.loadAssets(); this.compute();
+      },
+      error: (e) => { this.addingLoan = false; this.notify.error(e.error?.message || 'Erreur lors de l\'ajout'); }
+    });
+  }
+
+  deleteLoan(l: Loan): void {
+    if (!confirm(`Supprimer l'emprunt « ${l.label} » ?`)) return;
+    this.accounting.deleteLoan(l.id).subscribe({
+      next: () => { this.loadAssets(); this.compute(); },
+      error: () => this.notify.error('Erreur lors de la suppression')
+    });
   }
 
   importSuggestion(s: AssetSuggestion): void {

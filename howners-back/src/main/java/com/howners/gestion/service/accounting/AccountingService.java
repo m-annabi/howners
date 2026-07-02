@@ -38,6 +38,7 @@ public class AccountingService {
 
     private final FiscalActivityRepository activityRepository;
     private final AmortizableAssetRepository assetRepository;
+    private final com.howners.gestion.repository.LoanRepository loanRepository;
     private final PropertyRepository propertyRepository;
     private final com.howners.gestion.repository.ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
@@ -209,6 +210,45 @@ public class AccountingService {
             created.add(AssetResponse.from(assetRepository.save(asset)));
         }
         return created;
+    }
+
+    // --- Emprunts ---
+
+    @Transactional(readOnly = true)
+    public List<LoanResponse> listLoans() {
+        FiscalActivity activity = requireActivity();
+        return loanRepository.findByActivityId(activity.getId()).stream().map(LoanResponse::from).toList();
+    }
+
+    @Transactional
+    public LoanResponse addLoan(CreateLoanRequest req) {
+        FiscalActivity activity = requireActivity();
+        if (req.principal() == null || req.annualRate() == null || req.durationMonths() == null || req.startDate() == null)
+            throw new BadRequestException("Capital, taux, durée et date sont requis.");
+        Property property = null;
+        if (req.propertyId() != null) {
+            property = propertyRepository.findById(req.propertyId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Property", "id", req.propertyId().toString()));
+            if (!property.getOwner().getId().equals(activity.getOwner().getId()))
+                throw new ForbiddenException("Ce bien ne vous appartient pas.");
+        }
+        com.howners.gestion.domain.accounting.Loan loan = com.howners.gestion.domain.accounting.Loan.builder()
+                .activity(activity).property(property)
+                .label(req.label() != null && !req.label().isBlank() ? req.label() : "Emprunt")
+                .principal(req.principal()).annualRate(req.annualRate())
+                .durationMonths(req.durationMonths()).startDate(req.startDate())
+                .insuranceMonthly(req.insuranceMonthly()).build();
+        return LoanResponse.from(loanRepository.save(loan));
+    }
+
+    @Transactional
+    public void deleteLoan(UUID loanId) {
+        FiscalActivity activity = requireActivity();
+        com.howners.gestion.domain.accounting.Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new ResourceNotFoundException("Loan", "id", loanId.toString()));
+        if (!loan.getActivity().getId().equals(activity.getId()))
+            throw new ForbiddenException("Cet emprunt ne vous appartient pas.");
+        loanRepository.delete(loan);
     }
 
     @Transactional(readOnly = true)

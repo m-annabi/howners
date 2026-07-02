@@ -43,6 +43,17 @@ export interface AmortLine {
   vnc: number;
 }
 
+export interface Loan {
+  id: string;
+  label: string;
+  principal: number;
+  annualRate: number;
+  durationMonths: number;
+  startDate: string;
+  insuranceMonthly: number | null;
+  propertyId: string | null;
+}
+
 export interface LmnpResult {
   year: number;
   recettes: number;
@@ -59,6 +70,7 @@ export interface LmnpResult {
   tresorerie: number;
   capitalExploitant: number;
   reportANouveau: number;
+  dettesEmprunt: number;
   totalActif: number;
   totalPassif: number;
   amortissements: AmortLine[];
@@ -96,6 +108,18 @@ export class AccountingService {
 
   importSuggestions(items: { sourceType: string; sourceId: string; durationYears?: number }[]): Observable<AmortizableAsset[]> {
     return this.http.post<AmortizableAsset[]>(`${this.base}/assets/import`, { items });
+  }
+
+  listLoans(): Observable<Loan[]> {
+    return this.http.get<Loan[]>(`${this.base}/loans`);
+  }
+
+  addLoan(body: { label?: string; principal: number; annualRate: number; durationMonths: number; startDate: string; insuranceMonthly?: number; propertyId?: string }): Observable<Loan> {
+    return this.http.post<Loan>(`${this.base}/loans`, body);
+  }
+
+  deleteLoan(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/loans/${id}`);
   }
 
   result(year: number): Observable<LmnpResult> {

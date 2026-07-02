@@ -2,11 +2,13 @@ package com.howners.gestion.service.accounting;
 
 import com.howners.gestion.domain.accounting.AmortizableAsset;
 import com.howners.gestion.domain.accounting.FiscalActivity;
+import com.howners.gestion.domain.accounting.Loan;
 import com.howners.gestion.domain.expense.Expense;
 import com.howners.gestion.domain.expense.ExpenseCategory;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.repository.AmortizableAssetRepository;
 import com.howners.gestion.repository.ExpenseRepository;
+import com.howners.gestion.repository.LoanRepository;
 import com.howners.gestion.repository.PaymentRepository;
 import com.howners.gestion.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,8 @@ public class LmnpResultService {
     private final ExpenseRepository expenseRepository;
     private final AmortizableAssetRepository assetRepository;
     private final AmortizationService amortizationService;
+    private final LoanRepository loanRepository;
+    private final LoanScheduleService loanScheduleService;
 
     /** Catégories immobilisées (amorties, donc PAS charges de l'exercice). */
     private static final Map<ExpenseCategory, Boolean> CAPITALISEES = Map.of(
@@ -65,16 +69,19 @@ public class LmnpResultService {
         if (targetYear < startYear) {
             BigDecimal z = BigDecimal.ZERO;
             return new LmnpResult(targetYear, z, Map.of(), z, z, z, z, z, z, z, z, z,
-                    z, z, z, z, z, z, List.of());
+                    z, z, z, z, z, z, z, List.of());
         }
+
+        List<Loan> loans = loanRepository.findByActivityId(activity.getId());
+        BigDecimal totalPrincipal = loans.stream().map(Loan::getPrincipal).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal openingCash = nz(activity.getOpeningCash());
         BigDecimal baseImmo = assets.stream().map(AmortizableAsset::getBase)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        // Apport en nature (immobilisations) + apport en numéraire (trésorerie d'ouverture).
+        // Apport en nature (immobilisations) + numéraire − emprunts (financés par la dette).
         BigDecimal capitalExploitant = nz(activity.getApportInitial());
         if (capitalExploitant.signum() == 0) {
-            capitalExploitant = openingCash.add(baseImmo);
+            capitalExploitant = openingCash.add(baseImmo).subtract(totalPrincipal);
         }
 
         // Cumuls séquentiels
@@ -85,8 +92,20 @@ public class LmnpResultService {
 
         LmnpResult result = null;
         for (int y = startYear; y <= targetYear; y++) {
+            final int exercice = y;
             BigDecimal recettes = recettes(properties, y);
             Map<String, BigDecimal> chargesParPoste = charges(allExpenses, y);
+
+            // Charges financières déductibles : intérêts d'emprunt + assurance emprunteur.
+            BigDecimal loanInterest = loans.stream().map(l -> loanScheduleService.forYear(l, exercice).interest())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal loanInsurance = loans.stream().map(l -> loanScheduleService.forYear(l, exercice).insurance())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal loanCapital = loans.stream().map(l -> loanScheduleService.forYear(l, exercice).capital())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (loanInterest.signum() > 0) chargesParPoste.merge("Intérêts d'emprunt", loanInterest, BigDecimal::add);
+            if (loanInsurance.signum() > 0) chargesParPoste.merge("Assurance emprunteur", loanInsurance, BigDecimal::add);
+
             BigDecimal totalCharges = chargesParPoste.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal resultatAvantAmort = recettes.subtract(totalCharges);
@@ -107,12 +126,16 @@ public class LmnpResultService {
                 deficitCumul = deficitCumul.add(resultatFiscalBrut.abs());
             }
 
-            tresorerie = tresorerie.add(recettes).subtract(totalCharges);
+            // Le capital remboursé n'est pas une charge mais sort de la trésorerie.
+            tresorerie = tresorerie.add(recettes).subtract(totalCharges).subtract(loanCapital);
 
             if (y == targetYear) {
                 BigDecimal immoBrutes = baseImmo;
                 BigDecimal amortCumules = assets.stream()
                         .map(a -> amortizationService.cumul(a, targetYear))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal dettes = loans.stream()
+                        .map(l -> loanScheduleService.crdEnd(l, targetYear))
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 List<LmnpResult.AssetAmortLine> lignes = assets.stream()
                         .map(a -> new LmnpResult.AssetAmortLine(a, a.getBase(),
@@ -126,7 +149,7 @@ public class LmnpResultService {
                         amortDiffereGenere, // stock d'amortissements différés en fin d'exercice
                         resultatComptable, resultatFiscal, deficitCumul,
                         immoBrutes, amortCumules, immoBrutes.subtract(amortCumules),
-                        tresorerie, capitalExploitant, reportANouveau, lignes);
+                        tresorerie, capitalExploitant, reportANouveau, dettes, lignes);
             }
 
             // Report vers l'exercice suivant

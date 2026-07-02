@@ -31,6 +31,7 @@ public record LmnpResult(
         BigDecimal tresorerie,
         BigDecimal capitalExploitant,
         BigDecimal reportANouveau,
+        BigDecimal dettesEmprunt,       // capital restant dû des emprunts (passif)
         // Détail amortissements (par immobilisation, pour le tableau)
         List<AssetAmortLine> lignesAmortissement
 ) implements FiscalResult {
@@ -43,6 +44,6 @@ public record LmnpResult(
     }
 
     public BigDecimal totalPassif() {
-        return capitalExploitant.add(reportANouveau).add(resultatComptable);
+        return capitalExploitant.add(reportANouveau).add(resultatComptable).add(dettesEmprunt);
     }
 }

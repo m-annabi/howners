@@ -2,6 +2,7 @@ package com.howners.gestion.service.accounting;
 
 import com.howners.gestion.domain.accounting.AmortizableAsset;
 import com.howners.gestion.domain.accounting.FiscalActivity;
+import com.howners.gestion.domain.accounting.Loan;
 import com.howners.gestion.domain.expense.Expense;
 import com.howners.gestion.domain.expense.ExpenseCategory;
 import com.howners.gestion.domain.payment.Payment;
@@ -9,6 +10,7 @@ import com.howners.gestion.domain.payment.PaymentStatus;
 import com.howners.gestion.domain.payment.PaymentType;
 import com.howners.gestion.repository.AmortizableAssetRepository;
 import com.howners.gestion.repository.ExpenseRepository;
+import com.howners.gestion.repository.LoanRepository;
 import com.howners.gestion.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,8 @@ public class AccountingEntryGenerator {
     private final AmortizableAssetRepository assetRepository;
     private final AmortizationService amortizationService;
     private final LmnpResultService lmnpResultService;
+    private final LoanRepository loanRepository;
+    private final LoanScheduleService loanScheduleService;
 
     /** Une écriture (une ligne du FEC / du journal). */
     public record JournalEntry(LocalDate date, String journalCode, String journalLib,
@@ -77,6 +81,13 @@ public class AccountingEntryGenerator {
         if (capital.signum() != 0) an(entries, opening, "108", "Compte de l'exploitant", BigDecimal.ZERO, capital);
         if (report.signum() != 0) an(entries, opening, "110", "Report à nouveau", report.signum() < 0 ? report.abs() : BigDecimal.ZERO, report.signum() > 0 ? report : BigDecimal.ZERO);
 
+        // Emprunts : capital restant dû à l'ouverture (passif)
+        List<Loan> loans = loanRepository.findByActivityId(activity.getId());
+        BigDecimal crdOuverture = loans.stream()
+                .map(l -> year > startYear ? loanScheduleService.crdEnd(l, year - 1) : l.getPrincipal())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (crdOuverture.signum() > 0) an(entries, opening, "164", "Emprunts", BigDecimal.ZERO, crdOuverture);
+
         // 2. Loyers encaissés (journal de ventes)
         for (Payment p : paymentRepository.findByOwnerId(ownerId)) {
             if (p.getStatus() != PaymentStatus.PAID || p.getPaymentType() != PaymentType.RENT
@@ -98,6 +109,19 @@ public class AccountingEntryGenerator {
             entries.add(new JournalEntry(d, "AC", "Achats", ref, d, "512", "Banque", nzLib(e.getDescription()), BigDecimal.ZERO, e.getAmount()));
         }
 
+        // 3b. Remboursements d'emprunt (capital + intérêts + assurance)
+        LocalDate echeance = LocalDate.of(year, 12, 31);
+        for (Loan l : loans) {
+            var ly = loanScheduleService.forYear(l, year);
+            if (ly.capital().signum() <= 0 && ly.interest().signum() <= 0) continue;
+            String ref = "EMP-" + l.getId().toString().substring(0, 8);
+            BigDecimal total = ly.capital().add(ly.interest()).add(ly.insurance());
+            if (ly.capital().signum() > 0) entries.add(new JournalEntry(echeance, "OD", "Emprunts", ref, echeance, "164", "Emprunts", "Remboursement capital " + l.getLabel(), ly.capital(), BigDecimal.ZERO));
+            if (ly.interest().signum() > 0) entries.add(new JournalEntry(echeance, "OD", "Emprunts", ref, echeance, "66116", "Intérêts d'emprunt", "Intérêts " + l.getLabel(), ly.interest(), BigDecimal.ZERO));
+            if (ly.insurance().signum() > 0) entries.add(new JournalEntry(echeance, "OD", "Emprunts", ref, echeance, "6162", "Assurance emprunteur", "Assurance " + l.getLabel(), ly.insurance(), BigDecimal.ZERO));
+            entries.add(new JournalEntry(echeance, "OD", "Emprunts", ref, echeance, "512", "Banque", "Échéance " + l.getLabel(), BigDecimal.ZERO, total));
+        }
+
         // 4. Dotations aux amortissements (opérations diverses, à la clôture)
         LocalDate cloture = LocalDate.of(year, 12, 31);
         for (AmortizableAsset a : assets) {
@@ -117,7 +141,10 @@ public class AccountingEntryGenerator {
 
     private BigDecimal capital(FiscalActivity activity, BigDecimal immoBrutes) {
         BigDecimal apport = nz(activity.getApportInitial());
-        return apport.signum() != 0 ? apport : nz(activity.getOpeningCash()).add(immoBrutes);
+        if (apport.signum() != 0) return apport;
+        BigDecimal principal = loanRepository.findByActivityId(activity.getId()).stream()
+                .map(Loan::getPrincipal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return nz(activity.getOpeningCash()).add(immoBrutes).subtract(principal);
     }
 
     private static BigDecimal nz(BigDecimal v) { return v != null ? v : BigDecimal.ZERO; }

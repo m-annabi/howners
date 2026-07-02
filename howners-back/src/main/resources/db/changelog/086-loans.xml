@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- Emprunts (intérêts déductibles LMNP) -->
+    <changeSet id="086-loans" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="loans"/></not>
+        </preConditions>
+        <createTable tableName="loans">
+            <column name="id" type="UUID"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="activity_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_loan_activity" references="fiscal_activities(id)"/>
+            </column>
+            <column name="property_id" type="UUID">
+                <constraints foreignKeyName="fk_loan_property" references="properties(id)"/>
+            </column>
+            <column name="label" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="principal" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+            <column name="annual_rate" type="NUMERIC(6,3)"><constraints nullable="false"/></column>
+            <column name="duration_months" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="start_date" type="DATE"><constraints nullable="false"/></column>
+            <column name="insurance_monthly" type="NUMERIC(10,2)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

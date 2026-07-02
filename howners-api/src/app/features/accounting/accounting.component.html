@@ -60,7 +60,10 @@
           <dt>Immobilisations (VNC)</dt><dd>{{ result.vncImmobilisations | number:'1.2-2' }} €</dd>
           <dt>Trésorerie</dt><dd>{{ result.tresorerie | number:'1.2-2' }} €</dd>
           <dt><strong>Total actif</strong></dt><dd><strong>{{ result.totalActif | number:'1.2-2' }} €</strong></dd>
-          <dt>Capital / report / résultat</dt><dd>{{ result.totalPassif | number:'1.2-2' }} €</dd>
+          <dt>Capital / report / résultat</dt><dd>{{ (result.totalPassif - result.dettesEmprunt) | number:'1.2-2' }} €</dd>
+          <dt *ngIf="result.dettesEmprunt">Emprunts (capital restant dû)</dt>
+          <dd *ngIf="result.dettesEmprunt">{{ result.dettesEmprunt | number:'1.2-2' }} €</dd>
+          <dt><strong>Total passif</strong></dt><dd><strong>{{ result.totalPassif | number:'1.2-2' }} €</strong></dd>
         </dl>
         <span class="hw-badge" [class.hw-badge--success]="bilanEquilibre" [class.hw-badge--danger]="!bilanEquilibre">
           {{ bilanEquilibre ? 'Bilan équilibré' : 'Bilan déséquilibré' }}
@@ -143,6 +146,62 @@
       </div>
       <div class="col-md-1 mb-2">
         <button class="hw-btn hw-btn--primary hw-btn--block" (click)="addAsset()"><i class="bi bi-plus-lg"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emprunts -->
+  <div class="hw-card mb-4">
+    <h5 class="hw-section-title">Emprunts</h5>
+    <p class="hw-text-muted hw-text-sm">Seuls les intérêts et l'assurance emprunteur sont déductibles ; le remboursement du capital ne l'est pas (il diminue la dette au passif).</p>
+    <div *ngIf="loans.length > 0" style="overflow-x: auto;">
+      <table class="hw-table">
+        <thead><tr><th>Libellé</th><th class="text-end">Capital</th><th class="text-end">Taux</th><th class="text-end">Durée</th><th>Déblocage</th><th class="text-end">Assurance/mois</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let l of loans">
+            <td>{{ l.label }}</td>
+            <td class="text-end">{{ l.principal | number:'1.2-2' }} €</td>
+            <td class="text-end">{{ l.annualRate | number:'1.2-3' }} %</td>
+            <td class="text-end">{{ l.durationMonths }} mois</td>
+            <td>{{ l.startDate | date:'dd/MM/yyyy' }}</td>
+            <td class="text-end">{{ (l.insuranceMonthly || 0) | number:'1.2-2' }} €</td>
+            <td><button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteLoan(l)" title="Supprimer"><i class="bi bi-trash"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p *ngIf="loans.length === 0" class="hw-text-muted hw-text-sm">Aucun emprunt. Ajoutez votre prêt d'acquisition pour déduire les intérêts.</p>
+
+    <div class="row mt-3 align-items-end acc-asset-form">
+      <div class="col-md-3 mb-2">
+        <label class="form-label">Libellé</label>
+        <input type="text" class="form-control" [(ngModel)]="loanForm.label" placeholder="Ex : Prêt acquisition">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Capital (€) *</label>
+        <input type="number" class="form-control" [(ngModel)]="loanForm.principal">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Taux annuel (%) *</label>
+        <input type="number" step="0.001" class="form-control" [(ngModel)]="loanForm.annualRate">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Durée (mois) *</label>
+        <input type="number" class="form-control" [(ngModel)]="loanForm.durationMonths">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Déblocage *</label>
+        <input type="date" class="form-control" [(ngModel)]="loanForm.startDate">
+      </div>
+      <div class="col-md-1 mb-2">
+        <label class="form-label">Assur./mois</label>
+        <input type="number" class="form-control" [(ngModel)]="loanForm.insuranceMonthly" placeholder="0">
+      </div>
+      <div class="col-md-12 mb-2 mt-2">
+        <button class="hw-btn hw-btn--primary" (click)="addLoan()" [disabled]="addingLoan">
+          <span *ngIf="addingLoan" class="spinner-border spinner-border-sm me-1"></span>
+          <i class="bi bi-plus-lg"></i> Ajouter l'emprunt
+        </button>
       </div>
     </div>
   </div>

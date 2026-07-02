@@ -89,6 +89,9 @@ public class LmnpDocumentService {
         h.append(row("Capital de l'exploitant", r.capitalExploitant(), false));
         h.append(row("Report à nouveau", r.reportANouveau(), false));
         h.append(row("Résultat de l'exercice", r.resultatComptable(), false));
+        if (r.dettesEmprunt() != null && r.dettesEmprunt().signum() != 0) {
+            h.append(row("Emprunts (capital restant dû)", r.dettesEmprunt(), false));
+        }
         h.append(row("<strong>Total passif</strong>", r.totalPassif(), true));
         h.append("</table>");
         if (r.totalActif().subtract(r.totalPassif()).abs().compareTo(new BigDecimal("0.05")) > 0) {

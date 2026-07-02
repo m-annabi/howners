@@ -64,6 +64,7 @@ public final class AccountingDtos {
             BigDecimal tresorerie,
             BigDecimal capitalExploitant,
             BigDecimal reportANouveau,
+            BigDecimal dettesEmprunt,
             BigDecimal totalActif,
             BigDecimal totalPassif,
             List<AmortLineResponse> amortissements) {
@@ -76,7 +77,7 @@ public final class AccountingDtos {
                     r.resultatAvantAmortissement(), r.dotationComptable(), r.amortissementDeductible(),
                     r.amortissementDiffereCumul(), r.resultatComptable(), r.resultatFiscal(),
                     r.deficitReportable(), r.vncImmobilisations(), r.tresorerie(), r.capitalExploitant(),
-                    r.reportANouveau(), r.totalActif(), r.totalPassif(), lignes);
+                    r.reportANouveau(), r.dettesEmprunt(), r.totalActif(), r.totalPassif(), lignes);
         }
     }
 
@@ -97,4 +98,23 @@ public final class AccountingDtos {
     public record ImportSuggestionsRequest(List<ImportItem> items) {}
 
     public record ImportItem(String sourceType, UUID sourceId, Integer durationYears) {}
+
+    public record CreateLoanRequest(
+            String label,
+            BigDecimal principal,
+            BigDecimal annualRate,
+            Integer durationMonths,
+            LocalDate startDate,
+            BigDecimal insuranceMonthly,
+            UUID propertyId) {}
+
+    public record LoanResponse(
+            UUID id, String label, BigDecimal principal, BigDecimal annualRate,
+            Integer durationMonths, LocalDate startDate, BigDecimal insuranceMonthly, UUID propertyId) {
+        public static LoanResponse from(com.howners.gestion.domain.accounting.Loan l) {
+            return new LoanResponse(l.getId(), l.getLabel(), l.getPrincipal(), l.getAnnualRate(),
+                    l.getDurationMonths(), l.getStartDate(), l.getInsuranceMonthly(),
+                    l.getProperty() != null ? l.getProperty().getId() : null);
+        }
+    }
 }
