@@ -1,0 +1,125 @@
+<app-page-header
+  title="Comptabilité LMNP"
+  subtitle="Location meublée non professionnelle — régime réel"
+  [breadcrumbs]="[{label: 'Finances'}, {label: 'Comptabilité'}]">
+</app-page-header>
+
+<app-loading-skeleton *ngIf="loading" type="card" [count]="2"></app-loading-skeleton>
+
+<!-- Configuration de l'activité (si absente) -->
+<div *ngIf="!loading && !activity" class="hw-card acc-setup">
+  <h5 class="hw-section-title">Configurer votre activité LMNP</h5>
+  <p class="hw-text-muted">Renseignez la date de début d'activité et votre trésorerie d'ouverture (apport) pour équilibrer le premier bilan.</p>
+  <div class="row">
+    <div class="col-md-5 mb-3">
+      <label class="form-label">Début d'activité *</label>
+      <input type="date" class="form-control" [(ngModel)]="activityForm.startDate">
+    </div>
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Trésorerie d'ouverture (€)</label>
+      <input type="number" class="form-control" [(ngModel)]="activityForm.openingCash" placeholder="0">
+    </div>
+  </div>
+  <button class="hw-btn hw-btn--primary" (click)="saveActivity()">Configurer</button>
+</div>
+
+<ng-container *ngIf="!loading && activity">
+  <!-- Barre exercice -->
+  <div class="hw-card acc-bar">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <label class="mb-0"><strong>Exercice</strong></label>
+      <input type="number" class="form-control acc-year" [(ngModel)]="year" (change)="compute()">
+      <span class="hw-text-muted hw-text-sm">Début d'activité : {{ activity.startDate | date:'dd/MM/yyyy' }}</span>
+      <button class="hw-btn hw-btn--primary ms-auto" (click)="downloadLiasse()" [disabled]="downloading">
+        <span *ngIf="downloading" class="spinner-border spinner-border-sm me-1"></span>
+        <i class="bi bi-download"></i> Télécharger la liasse (PDF + FEC)
+      </button>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="result">
+    <!-- Résultat -->
+    <div class="col-lg-6 mb-4">
+      <div class="hw-card h-100">
+        <h5 class="hw-section-title">Résultat fiscal {{ result.year }}</h5>
+        <dl class="hw-kv">
+          <dt>Recettes locatives</dt><dd>{{ result.recettes | number:'1.2-2' }} €</dd>
+          <dt>Charges déductibles</dt><dd>{{ result.totalCharges | number:'1.2-2' }} €</dd>
+          <dt>Résultat avant amortissements</dt><dd>{{ result.resultatAvantAmortissement | number:'1.2-2' }} €</dd>
+          <dt>Amortissements déductibles</dt><dd>{{ result.amortissementDeductible | number:'1.2-2' }} €</dd>
+          <dt><strong>Résultat fiscal (BIC)</strong></dt><dd><strong>{{ result.resultatFiscal | number:'1.2-2' }} €</strong></dd>
+          <dt>Amortissements différés reportés</dt><dd>{{ result.amortissementDiffereCumul | number:'1.2-2' }} €</dd>
+        </dl>
+      </div>
+    </div>
+    <!-- Bilan -->
+    <div class="col-lg-6 mb-4">
+      <div class="hw-card h-100">
+        <h5 class="hw-section-title">Bilan au 31/12/{{ result.year }}</h5>
+        <dl class="hw-kv">
+          <dt>Immobilisations (VNC)</dt><dd>{{ result.vncImmobilisations | number:'1.2-2' }} €</dd>
+          <dt>Trésorerie</dt><dd>{{ result.tresorerie | number:'1.2-2' }} €</dd>
+          <dt><strong>Total actif</strong></dt><dd><strong>{{ result.totalActif | number:'1.2-2' }} €</strong></dd>
+          <dt>Capital / report / résultat</dt><dd>{{ result.totalPassif | number:'1.2-2' }} €</dd>
+        </dl>
+        <span class="hw-badge" [class.hw-badge--success]="bilanEquilibre" [class.hw-badge--danger]="!bilanEquilibre">
+          {{ bilanEquilibre ? 'Bilan équilibré' : 'Bilan déséquilibré' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Immobilisations -->
+  <div class="hw-card mb-4">
+    <h5 class="hw-section-title">Immobilisations amortissables</h5>
+    <div *ngIf="assets.length > 0" style="overflow-x: auto;">
+      <table class="hw-table">
+        <thead><tr><th>Type</th><th>Libellé</th><th class="text-end">Base</th><th>Mise en service</th><th>Durée</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let a of assets">
+            <td>{{ a.typeLabel }}</td>
+            <td>{{ a.label }}</td>
+            <td class="text-end">{{ a.base | number:'1.2-2' }} €</td>
+            <td>{{ a.startDate | date:'dd/MM/yyyy' }}</td>
+            <td>{{ a.durationYears }} ans</td>
+            <td><button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteAsset(a)" title="Supprimer"><i class="bi bi-trash"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p *ngIf="assets.length === 0" class="hw-text-muted hw-text-sm">Aucune immobilisation. Ajoutez le bien, le mobilier et les travaux à amortir.</p>
+
+    <div class="row mt-3 align-items-end acc-asset-form">
+      <div class="col-md-3 mb-2">
+        <label class="form-label">Type</label>
+        <select class="form-select" [(ngModel)]="assetForm.type">
+          <option *ngFor="let t of assetTypes" [value]="t.value">{{ t.label }}</option>
+        </select>
+      </div>
+      <div class="col-md-3 mb-2">
+        <label class="form-label">Libellé</label>
+        <input type="text" class="form-control" [(ngModel)]="assetForm.label" placeholder="Ex : Appartement Paris 11">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Base (€) *</label>
+        <input type="number" class="form-control" [(ngModel)]="assetForm.base">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Mise en service *</label>
+        <input type="date" class="form-control" [(ngModel)]="assetForm.startDate">
+      </div>
+      <div class="col-md-1 mb-2">
+        <label class="form-label">Durée</label>
+        <input type="number" class="form-control" [(ngModel)]="assetForm.durationYears" placeholder="auto">
+      </div>
+      <div class="col-md-1 mb-2">
+        <button class="hw-btn hw-btn--primary hw-btn--block" (click)="addAsset()"><i class="bi bi-plus-lg"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <p class="hw-text-muted hw-text-sm">
+    Document d'aide : reportez ces montants sur votre déclaration (formulaires 2031 / 2033) ou remettez la liasse à votre comptable.
+    Il ne remplace pas un conseil comptable.
+  </p>
+</ng-container>

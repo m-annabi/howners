@@ -1,0 +1,93 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface FiscalActivity {
+  id: string;
+  jurisdiction: string;
+  regime: string;
+  startDate: string;
+  openingCash: number | null;
+  apportInitial: number | null;
+  active: boolean;
+}
+
+export interface AmortizableAsset {
+  id: string;
+  type: string;
+  typeLabel: string;
+  label: string;
+  base: number;
+  startDate: string;
+  durationYears: number;
+  propertyId: string | null;
+}
+
+export interface AmortLine {
+  immobilisation: string;
+  base: number;
+  annuite: number;
+  cumul: number;
+  vnc: number;
+}
+
+export interface LmnpResult {
+  year: number;
+  recettes: number;
+  chargesParPoste: { [poste: string]: number };
+  totalCharges: number;
+  resultatAvantAmortissement: number;
+  dotationComptable: number;
+  amortissementDeductible: number;
+  amortissementDiffereCumul: number;
+  resultatComptable: number;
+  resultatFiscal: number;
+  deficitReportable: number;
+  vncImmobilisations: number;
+  tresorerie: number;
+  capitalExploitant: number;
+  reportANouveau: number;
+  totalActif: number;
+  totalPassif: number;
+  amortissements: AmortLine[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class AccountingService {
+  private readonly base = `${environment.apiUrl}/accounting`;
+
+  constructor(private http: HttpClient) {}
+
+  getActivity(): Observable<FiscalActivity | null> {
+    return this.http.get<FiscalActivity | null>(`${this.base}/activity`);
+  }
+
+  configureActivity(body: { startDate: string; openingCash?: number; apportInitial?: number }): Observable<FiscalActivity> {
+    return this.http.post<FiscalActivity>(`${this.base}/activity`, body);
+  }
+
+  listAssets(): Observable<AmortizableAsset[]> {
+    return this.http.get<AmortizableAsset[]>(`${this.base}/assets`);
+  }
+
+  addAsset(body: { type: string; label: string; base: number; startDate: string; durationYears?: number; propertyId?: string }): Observable<AmortizableAsset> {
+    return this.http.post<AmortizableAsset>(`${this.base}/assets`, body);
+  }
+
+  deleteAsset(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/assets/${id}`);
+  }
+
+  result(year: number): Observable<LmnpResult> {
+    return this.http.get<LmnpResult>(`${this.base}/result?year=${year}`);
+  }
+
+  liasseUrl(year: number): string {
+    return `${this.base}/liasse?year=${year}`;
+  }
+
+  downloadLiasse(year: number): Observable<Blob> {
+    return this.http.get(`${this.base}/liasse?year=${year}`, { responseType: 'blob' });
+  }
+}

@@ -210,6 +210,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Dépenses', icon: 'bi-wallet2', route: '/expenses', roles: ['OWNER', 'ADMIN'] },
           { label: 'Synthèse', icon: 'bi-graph-up', route: '/financial', roles: ['OWNER', 'ADMIN'] },
           { label: 'Patrimoine', icon: 'bi-pie-chart', route: '/financial/patrimoine', roles: ['OWNER', 'ADMIN'] },
+          { label: 'Comptabilité', icon: 'bi-calculator', route: '/accounting', roles: ['OWNER', 'ADMIN'] },
           { label: 'Export fiscal', icon: 'bi-file-earmark-spreadsheet', route: '/financial/fiscal-2044', roles: ['OWNER', 'ADMIN'] },
         ],
         roles: ['OWNER', 'ADMIN']

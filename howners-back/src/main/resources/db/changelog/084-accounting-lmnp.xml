@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- Champs fiscaux du bien nécessaires à l'amortissement LMNP -->
+    <changeSet id="084-1-property-fiscal-fields" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="properties" columnName="acquisition_date"/></not>
+        </preConditions>
+        <addColumn tableName="properties">
+            <column name="acquisition_date" type="DATE"/>
+            <column name="land_value" type="NUMERIC(12,2)"/>
+            <column name="notary_fees" type="NUMERIC(12,2)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Activité fiscale (une par propriétaire) -->
+    <changeSet id="084-2-fiscal-activities" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="fiscal_activities"/></not>
+        </preConditions>
+        <createTable tableName="fiscal_activities">
+            <column name="id" type="UUID"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_fiscal_activity_owner" references="users(id)"/>
+            </column>
+            <column name="jurisdiction" type="VARCHAR(20)" defaultValue="FR"><constraints nullable="false"/></column>
+            <column name="regime" type="VARCHAR(30)" defaultValue="LMNP_REEL"><constraints nullable="false"/></column>
+            <column name="start_date" type="DATE"><constraints nullable="false"/></column>
+            <column name="opening_cash" type="NUMERIC(12,2)"/>
+            <column name="apport_initial" type="NUMERIC(12,2)"/>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+        <addUniqueConstraint tableName="fiscal_activities" columnNames="owner_id" constraintName="uq_fiscal_activity_owner"/>
+    </changeSet>
+
+    <!-- Immobilisations amortissables -->
+    <changeSet id="084-3-amortizable-assets" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="amortizable_assets"/></not>
+        </preConditions>
+        <createTable tableName="amortizable_assets">
+            <column name="id" type="UUID"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="activity_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_asset_activity" references="fiscal_activities(id)"/>
+            </column>
+            <column name="property_id" type="UUID">
+                <constraints foreignKeyName="fk_asset_property" references="properties(id)"/>
+            </column>
+            <column name="type" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="label" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="base" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+            <column name="start_date" type="DATE"><constraints nullable="false"/></column>
+            <column name="duration_years" type="INTEGER"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

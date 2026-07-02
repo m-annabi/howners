@@ -78,6 +78,15 @@ public class Property {
     @Column(name = "purchase_price", precision = 12, scale = 2)
     private BigDecimal purchasePrice; // Prix d'achat pour calcul de rentabilité
 
+    @Column(name = "acquisition_date")
+    private java.time.LocalDate acquisitionDate; // Date d'acquisition (base amortissement LMNP)
+
+    @Column(name = "land_value", precision = 12, scale = 2)
+    private BigDecimal landValue; // Valeur du terrain (non amortissable)
+
+    @Column(name = "notary_fees", precision = 12, scale = 2)
+    private BigDecimal notaryFees; // Frais d'acquisition (notaire, droits)
+
     // Informations techniques
     @Column(name = "dpe_rating", length = 1)
     private String dpeRating; // Diagnostic Performance Énergétique (A-G)

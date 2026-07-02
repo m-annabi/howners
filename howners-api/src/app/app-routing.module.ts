@@ -86,6 +86,12 @@ const routes: Routes = [
     data: { roles: ['OWNER', 'ADMIN'] }
   },
   {
+    path: 'accounting',
+    loadChildren: () => import('./features/accounting/accounting.module').then(m => m.AccountingModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN'] }
+  },
+  {
     path: 'inventory',
     loadChildren: () => import('./features/inventory/inventory.module').then(m => m.InventoryModule),
     canActivate: [AuthGuard]
