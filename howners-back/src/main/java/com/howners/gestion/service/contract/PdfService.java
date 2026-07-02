@@ -53,19 +53,26 @@ public class PdfService {
         StringBuilder html = new StringBuilder();
         html.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>");
         html.append("<style>");
-        html.append("body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.5; margin: 40px; color: #333; }");
-        html.append("h1 { font-size: 16pt; text-align: center; margin-bottom: 20px; color: #000; }");
-        html.append("h2 { font-size: 13pt; margin-top: 15px; margin-bottom: 8px; color: #000; }");
-        html.append("h3 { font-size: 11pt; margin-top: 12px; margin-bottom: 6px; color: #000; }");
+        // Page A4 avec marges homogènes + pied de page paginé (numéro de page).
+        html.append("@page { size: A4; margin: 2cm 2cm 2.4cm 2cm;");
+        html.append("  @bottom-center { content: 'Page ' counter(page) ' / ' counter(pages); font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #999; } }");
+        html.append("body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.5; color: #333; }");
+        html.append("h1 { font-size: 17pt; text-align: center; margin: 0 0 6px; color: #1E3A5F; }");
+        html.append("h2 { font-size: 13pt; margin: 16px 0 8px; color: #1E3A5F; border-bottom: 1px solid #E5E7EB; padding-bottom: 3px; }");
+        html.append("h3 { font-size: 11pt; margin: 12px 0 6px; color: #1E3A5F; }");
         html.append("p { margin: 4px 0; text-align: justify; }");
         html.append("ul, ol { margin: 5px 0; padding-left: 20px; }");
         html.append("li { margin: 2px 0; }");
         html.append("strong, b { font-weight: bold; }");
         html.append("em, i { font-style: italic; }");
         html.append("u { text-decoration: underline; }");
-        html.append("table { width: 100%; border-collapse: collapse; margin: 10px 0; }");
-        html.append("td, th { border: 1px solid #ccc; padding: 5px 8px; }");
-        html.append(".title { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 20px; }");
+        html.append("table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 9.5pt; }");
+        html.append("th { background: #F3F4F6; text-align: left; font-weight: bold; color: #374151; }");
+        html.append("td, th { border: 1px solid #D1D5DB; padding: 6px 9px; }");
+        html.append(".title { font-size: 17pt; font-weight: bold; text-align: center; margin-bottom: 20px; }");
+        html.append(".doc-footer { margin-top: 36px; padding-top: 8px; border-top: 1px solid #E5E7EB; font-size: 8pt; color: #9CA3AF; text-align: center; }");
+        html.append(".text-right { text-align: right; }");
+        html.append(".legal-note { font-size: 8.5pt; color: #6B7280; font-style: italic; margin-top: 20px; }");
         html.append("</style>");
         html.append("</head><body>");
 
@@ -78,6 +85,11 @@ public class PdfService {
         // brut avec des retours à la ligne (templates seedés). En HTML, les \n et espaces
         // multiples sont réduits à un seul espace ; on convertit donc le texte brut en HTML.
         html.append(looksLikeHtml(content) ? content : plainTextToHtml(content));
+
+        // Pied de page commun à tous les documents (traçabilité).
+        html.append("<div class=\"doc-footer\">Document généré par Howners le ")
+            .append(java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+            .append(" — howners.fr</div>");
 
         html.append("</body></html>");
         return html.toString();

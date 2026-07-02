@@ -153,18 +153,18 @@ public class RgpdService {
         html.append("<p><strong>Date d'export :</strong> ").append(data.exportDate()).append("</p>");
 
         html.append("<h2>Informations personnelles</h2>");
-        html.append("<table><tr><td>Email</td><td>").append(data.personalInfo().email()).append("</td></tr>");
-        html.append("<tr><td>Prénom</td><td>").append(data.personalInfo().firstName()).append("</td></tr>");
-        html.append("<tr><td>Nom</td><td>").append(data.personalInfo().lastName()).append("</td></tr>");
-        html.append("<tr><td>Téléphone</td><td>").append(data.personalInfo().phone()).append("</td></tr>");
-        html.append("<tr><td>Rôle</td><td>").append(data.personalInfo().role()).append("</td></tr>");
-        html.append("<tr><td>Inscrit le</td><td>").append(data.personalInfo().createdAt()).append("</td></tr></table>");
+        html.append("<table><tr><td>Email</td><td>").append(rgpdVal(data.personalInfo().email())).append("</td></tr>");
+        html.append("<tr><td>Prénom</td><td>").append(rgpdVal(data.personalInfo().firstName())).append("</td></tr>");
+        html.append("<tr><td>Nom</td><td>").append(rgpdVal(data.personalInfo().lastName())).append("</td></tr>");
+        html.append("<tr><td>Téléphone</td><td>").append(rgpdVal(data.personalInfo().phone())).append("</td></tr>");
+        html.append("<tr><td>Rôle</td><td>").append(rgpdVal(data.personalInfo().role())).append("</td></tr>");
+        html.append("<tr><td>Inscrit le</td><td>").append(rgpdVal(data.personalInfo().createdAt())).append("</td></tr></table>");
 
-        html.append("<h2>Propriétés (").append(data.properties().size()).append(")</h2>");
-        html.append("<h2>Locations (").append(data.rentals().size()).append(")</h2>");
-        html.append("<h2>Contrats (").append(data.contracts().size()).append(")</h2>");
-        html.append("<h2>Paiements (").append(data.payments().size()).append(")</h2>");
-        html.append("<h2>Documents (").append(data.documents().size()).append(")</h2>");
+        appendRecords(html, "Propriétés", data.properties());
+        appendRecords(html, "Locations", data.rentals());
+        appendRecords(html, "Contrats", data.contracts());
+        appendRecords(html, "Paiements", data.payments());
+        appendRecords(html, "Documents", data.documents());
 
         html.append("<h2>Consentements</h2>");
         for (ConsentResponse consent : data.consents()) {
@@ -172,7 +172,32 @@ public class RgpdService {
                     .append(consent.granted() ? "Accordé" : "Refusé").append("</p>");
         }
 
-        return pdfService.generatePdf(html.toString(), "Export RGPD");
+        return pdfService.generatePdf(html.toString(), null);
+    }
+
+    /** Énumère une liste d'enregistrements (art. 15 RGPD : droit d'accès complet). */
+    private void appendRecords(StringBuilder html, String title, java.util.List<java.util.Map<String, Object>> records) {
+        html.append("<h2>").append(title).append(" (").append(records.size()).append(")</h2>");
+        if (records.isEmpty()) {
+            html.append("<p><em>Aucun enregistrement.</em></p>");
+            return;
+        }
+        int i = 1;
+        for (java.util.Map<String, Object> rec : records) {
+            html.append("<table><tr><th colspan='2'>").append(title).append(" n°").append(i++).append("</th></tr>");
+            for (java.util.Map.Entry<String, Object> e : rec.entrySet()) {
+                html.append("<tr><td style='width:35%'>").append(rgpdVal(e.getKey()))
+                    .append("</td><td>").append(rgpdVal(e.getValue())).append("</td></tr>");
+            }
+            html.append("</table>");
+        }
+    }
+
+    private String rgpdVal(Object value) {
+        if (value == null) return "—";
+        String s = String.valueOf(value);
+        if (s.isBlank() || "null".equals(s)) return "—";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /**

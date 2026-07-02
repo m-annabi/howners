@@ -3,6 +3,7 @@ package com.howners.gestion.service.receipt;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.payment.Payment;
+import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.payment.PaymentStatus;
 import com.howners.gestion.domain.receipt.Receipt;
 import com.howners.gestion.domain.rental.Rental;
@@ -243,15 +244,13 @@ public class ReceiptService {
         var property = rental.getProperty();
 
         String ownerName = owner.getFullName();
-        String tenantName = tenant != null ? tenant.getFullName() : "N/A";
-        String address = String.format("%s, %s %s",
-                property.getAddressLine1() != null ? property.getAddressLine1() : "",
-                property.getPostalCode() != null ? property.getPostalCode() : "",
-                property.getCity() != null ? property.getCity() : "");
+        String tenantName = tenant != null ? tenant.getFullName() : "Locataire non renseigné";
+        String address = PdfFormat.adressePostale(property);
+        String ville = property.getCity() != null && !property.getCity().isBlank() ? property.getCity() : "";
 
-        String rentAmount = String.format("%.2f", rental.getMonthlyRent());
-        String chargesAmount = rental.getCharges() != null ? String.format("%.2f", rental.getCharges()) : "0.00";
-        String totalAmount = String.format("%.2f", payment.getAmount());
+        String rentAmount = PdfFormat.montant(rental.getMonthlyRent());
+        String chargesAmount = PdfFormat.montant(rental.getCharges());
+        String totalAmount = PdfFormat.montant(payment.getAmount());
         String paidDate = payment.getPaidAt() != null ? payment.getPaidAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : LocalDate.now().format(FR_DATE);
 
         return """
@@ -277,19 +276,22 @@ public class ReceiptService {
 
                 <p style="margin-top: 15px;">Je soussigné(e), <strong>%s</strong>, propriétaire du logement désigné ci-dessus, déclare avoir reçu de <strong>%s</strong> la somme indiquée ci-dessous, en paiement du loyer et des charges du logement pour la période du <strong>%s</strong> au <strong>%s</strong>.</p>
 
-                <table style="margin-top: 20px; width: 80%%; margin-left: auto; margin-right: auto;">
-                    <tr><td style="padding: 8px;"><strong>Loyer</strong></td><td style="padding: 8px; text-align: right;">%s €</td></tr>
-                    <tr><td style="padding: 8px;"><strong>Charges</strong></td><td style="padding: 8px; text-align: right;">%s €</td></tr>
-                    <tr style="border-top: 2px solid #333;"><td style="padding: 8px;"><strong>Total</strong></td><td style="padding: 8px; text-align: right;"><strong>%s €</strong></td></tr>
+                <table style="margin-top: 20px; width: 70%%; margin-left: auto; margin-right: auto;">
+                    <tr><td><strong>Loyer</strong></td><td class="text-right">%s</td></tr>
+                    <tr><td><strong>Charges</strong></td><td class="text-right">%s</td></tr>
+                    <tr><td><strong>Total réglé</strong></td><td class="text-right"><strong>%s</strong></td></tr>
                 </table>
 
-                <p style="margin-top: 25px;">Date du paiement : <strong>%s</strong></p>
+                <p style="margin-top: 25px;">Cette quittance vaut preuve du paiement pour la période indiquée. Date du paiement : <strong>%s</strong>.</p>
 
-                <p style="margin-top: 30px; font-size: 9pt; color: #666; font-style: italic;">
+                <p style="margin-top: 30px;">Fait à %s, le %s.</p>
+
+                <p class="legal-note">
                     Cette quittance annule tous les reçus qui auraient pu être établis précédemment en cas de paiement partiel du loyer. Elle ne préjuge pas de l'existence d'une dette locative antérieure.
                 </p>
                 """.formatted(receiptNumber, ownerName, tenantName, address, ownerName, tenantName,
                 periodStart.format(FR_DATE), periodEnd.format(FR_DATE),
-                rentAmount, chargesAmount, totalAmount, paidDate);
+                rentAmount, chargesAmount, totalAmount, paidDate,
+                ville.isEmpty() ? "—" : ville, LocalDate.now().format(FR_DATE));
     }
 }

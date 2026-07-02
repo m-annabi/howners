@@ -20,6 +20,13 @@ import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.audit.AuditService;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.contract.PdfService;
+import com.howners.gestion.util.PdfFormat;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import com.howners.gestion.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -187,10 +194,9 @@ public class EtatDesLieuxService {
 
     private String buildEdlHtml(EtatDesLieux edl, Rental rental) {
         String ownerName = rental.getProperty().getOwner().getFullName();
-        String tenantName = rental.getTenant() != null ? rental.getTenant().getFullName() : "N/A";
+        String tenantName = rental.getTenant() != null ? rental.getTenant().getFullName() : "Locataire non renseigné";
         String propertyName = rental.getProperty().getName();
-        String propertyAddress = rental.getProperty().getAddressLine1() + ", " +
-                rental.getProperty().getCity();
+        String propertyAddress = PdfFormat.adressePostale(rental.getProperty());
         String typeLabel = edl.getType() == EtatDesLieuxType.ENTREE ? "ENTRÉE" : "SORTIE";
 
         StringBuilder html = new StringBuilder();
@@ -208,14 +214,27 @@ public class EtatDesLieuxService {
         html.append("<h3>Date de l'état des lieux</h3>");
         html.append("<p>").append(edl.getInspectionDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))).append("</p>");
 
-        if (edl.getRoomConditions() != null) {
+        List<Map<String, String>> rooms = parseRooms(edl.getRoomConditions());
+        if (!rooms.isEmpty()) {
             html.append("<h3>État des pièces</h3>");
-            html.append("<p><em>Voir détail en annexe (JSON)</em></p>");
+            html.append("<table><tr><th>Pièce</th><th>État</th><th>Observations</th></tr>");
+            for (Map<String, String> r : rooms) {
+                html.append("<tr><td>").append(nl2br(r.get("name")))
+                    .append("</td><td>").append(nl2br(r.getOrDefault("condition", "")))
+                    .append("</td><td>").append(nl2br(r.getOrDefault("comments", ""))).append("</td></tr>");
+            }
+            html.append("</table>");
         }
 
-        if (edl.getMeterReadings() != null) {
+        Map<String, String> meters = parseMeters(edl.getMeterReadings());
+        if (!meters.isEmpty()) {
             html.append("<h3>Relevés des compteurs</h3>");
-            html.append("<p><em>Voir détail en annexe (JSON)</em></p>");
+            html.append("<table><tr><th>Compteur</th><th>Relevé</th></tr>");
+            for (Map.Entry<String, String> m : meters.entrySet()) {
+                html.append("<tr><td>").append(nl2br(m.getKey()))
+                    .append("</td><td>").append(nl2br(m.getValue())).append("</td></tr>");
+            }
+            html.append("</table>");
         }
 
         if (edl.getKeysCount() != null) {
@@ -251,5 +270,47 @@ public class EtatDesLieuxService {
         if (text == null) return "";
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                    .replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>");
+    }
+
+    private static final ObjectMapper EDL_MAPPER = new ObjectMapper();
+
+    /** Parse le JSON des pièces [{name, condition, comments}] pour le rendu PDF. */
+    private List<Map<String, String>> parseRooms(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            List<Map<String, Object>> raw = EDL_MAPPER.readValue(json, new TypeReference<>() {});
+            List<Map<String, String>> result = new ArrayList<>();
+            for (Map<String, Object> item : raw) {
+                Map<String, String> piece = new LinkedHashMap<>();
+                piece.put("name", str(item.get("name")));
+                piece.put("condition", str(item.get("condition")));
+                piece.put("comments", str(item.get("comments")));
+                if (piece.get("name") != null && !piece.get("name").isBlank()) result.add(piece);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("Pièces EDL illisibles pour le PDF : {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    /** Parse le JSON des compteurs [{type, value}] pour le rendu PDF. */
+    private Map<String, String> parseMeters(String json) {
+        Map<String, String> result = new LinkedHashMap<>();
+        if (json == null || json.isBlank()) return result;
+        try {
+            List<Map<String, Object>> raw = EDL_MAPPER.readValue(json, new TypeReference<>() {});
+            for (Map<String, Object> item : raw) {
+                String type = str(item.get("type"));
+                if (type != null && !type.isBlank()) result.put(type, str(item.get("value")));
+            }
+        } catch (Exception e) {
+            log.warn("Compteurs EDL illisibles pour le PDF : {}", e.getMessage());
+        }
+        return result;
+    }
+
+    private static String str(Object v) {
+        return v != null ? String.valueOf(v) : "";
     }
 }

@@ -10,6 +10,7 @@ import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.contract.AmendmentResponse;
 import com.howners.gestion.dto.contract.CreateAmendmentRequest;
+import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ContractAmendmentRepository;
@@ -156,8 +157,9 @@ public class ContractAmendmentService {
     private String buildAmendmentHtml(ContractAmendment amendment, Contract contract, User createdBy) {
         String ownerName = contract.getRental().getProperty().getOwner().getFullName();
         String tenantName = contract.getRental().getTenant() != null
-                ? contract.getRental().getTenant().getFullName() : "N/A";
-        String propertyName = contract.getRental().getProperty().getName();
+                ? contract.getRental().getTenant().getFullName() : "Locataire non renseigné";
+        String propertyName = contract.getRental().getProperty().getName()
+                + " — " + PdfFormat.adressePostale(contract.getRental().getProperty());
 
         StringBuilder html = new StringBuilder();
         html.append("<div style='font-family: Arial, sans-serif; padding: 40px;'>");
@@ -181,14 +183,17 @@ public class ContractAmendmentService {
 
         if (amendment.getPreviousRent() != null && amendment.getNewRent() != null) {
             html.append("<h3>Modification du loyer</h3>");
-            html.append("<p>Ancien loyer : <strong>").append(amendment.getPreviousRent()).append(" EUR</strong></p>");
-            html.append("<p>Nouveau loyer : <strong>").append(amendment.getNewRent()).append(" EUR</strong></p>");
+            html.append("<p>Ancien loyer : <strong>").append(PdfFormat.montant(amendment.getPreviousRent())).append("</strong></p>");
+            html.append("<p>Nouveau loyer : <strong>").append(PdfFormat.montant(amendment.getNewRent())).append("</strong></p>");
         }
 
-        html.append("<p><strong>Date d'effet :</strong> ").append(amendment.getEffectiveDate()).append("</p>");
+        html.append("<p><strong>Date d'effet :</strong> ")
+                .append(amendment.getEffectiveDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))).append("</p>");
         html.append("<p><strong>Date de rédaction :</strong> ")
                 .append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
                 .append("</p>");
+
+        html.append("<p class='legal-note'>Toutes les autres clauses et conditions du bail initial demeurent inchangées et continuent de produire leurs effets.</p>");
 
         html.append("<div style='margin-top: 60px;'>");
         html.append("<table style='width: 100%;'><tr>");

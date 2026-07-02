@@ -1,6 +1,7 @@
 package com.howners.gestion.service.invoice;
 
 import com.howners.gestion.domain.invoice.Invoice;
+import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.invoice.InvoiceStatus;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.rental.RentalStatus;
@@ -196,53 +197,62 @@ public class InvoiceService {
         User tenant = rental.getTenant();
 
         return """
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="font-size: 18pt; margin-bottom: 5px;">FACTURE</h1>
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h1 style="margin-bottom: 4px;">FACTURE</h1>
                     <p style="font-size: 10pt; color: #666;">N° %s</p>
                 </div>
 
-                <table style="width: 100%%; border: none; margin-bottom: 20px;">
+                <table style="border: none; margin-bottom: 16px;">
                     <tr>
                         <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>De :</strong><br/>%s<br/>
+                            <strong>Émetteur (bailleur) :</strong><br/>%s
                         </td>
                         <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>À :</strong><br/>%s<br/>
+                            <strong>Destinataire (locataire) :</strong><br/>%s
                         </td>
                     </tr>
                 </table>
 
-                <p><strong>Bien :</strong> %s - %s, %s %s</p>
-                <p><strong>Date d'émission :</strong> %s</p>
-                <p><strong>Date d'échéance :</strong> %s</p>
+                <p><strong>Bien concerné :</strong> %s — %s</p>
+                <p><strong>Date d'émission :</strong> %s &nbsp;·&nbsp; <strong>Date d'échéance :</strong> %s</p>
 
-                <table style="margin-top: 20px; width: 100%%;">
-                    <tr style="background: #f5f5f5;">
-                        <th style="padding: 10px; text-align: left;">Description</th>
-                        <th style="padding: 10px; text-align: right;">Montant</th>
+                <table style="margin-top: 16px;">
+                    <tr>
+                        <th>Description</th>
+                        <th class="text-right">Montant</th>
                     </tr>
                     <tr>
-                        <td style="padding: 10px;">%s</td>
-                        <td style="padding: 10px; text-align: right;">%.2f €</td>
+                        <td>%s</td>
+                        <td class="text-right">%s</td>
                     </tr>
-                    <tr style="border-top: 2px solid #333;">
-                        <td style="padding: 10px;"><strong>Total</strong></td>
-                        <td style="padding: 10px; text-align: right;"><strong>%.2f €</strong></td>
+                    <tr>
+                        <td><strong>Total à payer</strong></td>
+                        <td class="text-right"><strong>%s</strong></td>
                     </tr>
                 </table>
+
+                <p class="legal-note">TVA non applicable, article 293 B du CGI. Facture émise entre particuliers dans le cadre d'une location à usage d'habitation.</p>
                 """.formatted(
                 invoice.getInvoiceNumber(),
                 owner.getFullName(),
-                tenant != null ? tenant.getFullName() : "N/A",
+                tenant != null ? tenant.getFullName() : "Locataire non renseigné",
                 property.getName(),
-                property.getAddressLine1() != null ? property.getAddressLine1() : "",
-                property.getPostalCode() != null ? property.getPostalCode() : "",
-                property.getCity() != null ? property.getCity() : "",
+                PdfFormat.adressePostale(property),
                 invoice.getIssueDate().format(FR_DATE),
-                invoice.getDueDate() != null ? invoice.getDueDate().format(FR_DATE) : "N/A",
-                invoice.getInvoiceType().name(),
-                invoice.getAmount(),
-                invoice.getAmount()
+                invoice.getDueDate() != null ? invoice.getDueDate().format(FR_DATE) : "à réception",
+                libelleType(invoice.getInvoiceType()),
+                PdfFormat.montant(invoice.getAmount()),
+                PdfFormat.montant(invoice.getAmount())
         );
+    }
+
+    private String libelleType(com.howners.gestion.domain.invoice.InvoiceType type) {
+        if (type == null) return "Prestation";
+        return switch (type) {
+            case RENT -> "Loyer";
+            case CHARGES -> "Charges locatives";
+            case DEPOSIT -> "Dépôt de garantie";
+            default -> "Autre prestation";
+        };
     }
 }
