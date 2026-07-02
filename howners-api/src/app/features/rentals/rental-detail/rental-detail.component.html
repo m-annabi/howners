@@ -3,15 +3,15 @@
 
   <div *ngIf="error" class="error-message">
     {{ error }}
-    <button (click)="goBack()" class="btn btn-secondary">Retour</button>
+    <button (click)="goBack()" class="hw-btn hw-btn--ghost">Retour</button>
   </div>
 
   <div *ngIf="!loading && !error && rental" class="rental-detail">
     <div class="detail-header">
       <button (click)="goBack()" class="btn-back">← Retour</button>
       <div *ngIf="isOwner" class="detail-actions">
-        <button (click)="editRental()" class="btn btn-primary">Modifier</button>
-        <button (click)="deleteRental()" class="btn btn-danger">Supprimer</button>
+        <button (click)="editRental()" class="hw-btn hw-btn--primary">Modifier</button>
+        <button (click)="deleteRental()" class="hw-btn hw-btn--ghost">Supprimer</button>
       </div>
     </div>
 
@@ -227,8 +227,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closePublishModal()">Annuler</button>
-      <button class="btn btn-primary" [disabled]="!publishTitle.trim() || publishLoading" (click)="submitPublish()">
+      <button class="hw-btn hw-btn--ghost" (click)="closePublishModal()">Annuler</button>
+      <button class="hw-btn hw-btn--primary" [disabled]="!publishTitle.trim() || publishLoading" (click)="submitPublish()">
         {{ publishLoading ? 'Publication…' : 'Publier' }}
       </button>
     </div>
@@ -256,8 +256,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeExitModal()">Annuler</button>
-      <button class="btn btn-danger" [disabled]="!exitDate || exitLoading" (click)="submitExitTenant()">
+      <button class="hw-btn hw-btn--ghost" (click)="closeExitModal()">Annuler</button>
+      <button class="hw-btn hw-btn--primary" [disabled]="!exitDate || exitLoading" (click)="submitExitTenant()">
         {{ exitLoading ? 'Enregistrement…' : 'Programmer la sortie' }}
       </button>
     </div>
