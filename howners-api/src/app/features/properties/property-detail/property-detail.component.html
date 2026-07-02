@@ -3,15 +3,15 @@
 
   <div *ngIf="error" class="error-message">
     {{ error }}
-    <button (click)="goBack()" class="btn btn-secondary">Retour</button>
+    <button (click)="goBack()" class="hw-btn hw-btn--ghost">Retour</button>
   </div>
 
   <div *ngIf="!loading && !error && property" class="property-detail">
     <div class="detail-header">
       <button (click)="goBack()" class="btn-back">← Retour</button>
       <div class="detail-actions">
-        <button (click)="editProperty()" class="btn btn-primary">Modifier</button>
-        <button (click)="deleteProperty()" class="btn btn-danger">Supprimer</button>
+        <button (click)="editProperty()" class="hw-btn hw-btn--primary">Modifier</button>
+        <button (click)="deleteProperty()" class="hw-btn hw-btn--ghost">Supprimer</button>
       </div>
     </div>
 

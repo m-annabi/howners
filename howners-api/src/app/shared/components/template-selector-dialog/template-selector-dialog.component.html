@@ -114,15 +114,11 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="cancel()">
+        <button type="button" class="hw-btn hw-btn--ghost" (click)="cancel()">
           <i class="bi bi-x-circle me-2"></i>
           Annuler
         </button>
-        <button
-          type="button"
-          class="btn btn-primary"
-          (click)="confirm()"
-          [disabled]="loadingTemplates">
+        <button type="button" class="hw-btn hw-btn--primary" (click)="confirm()" [disabled]="loadingTemplates">
           <i class="bi bi-check-circle me-2"></i>
           {{ isDefaultSelected() ? 'Utiliser le template par défaut' : 'Utiliser ce template' }}
         </button>

@@ -1,133 +1,75 @@
 <div class="document-list-container">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5>Documents</h5>
-    <button
-      *ngIf="showUpload"
-      class="btn btn-primary btn-sm"
-      (click)="toggleUploadForm()"
-    >
+    <h5 class="mb-0">Documents</h5>
+    <button *ngIf="showUpload" class="hw-btn hw-btn--sm hw-btn--primary" (click)="toggleUploadForm()">
       {{ showUploadForm ? 'Annuler' : '+ Ajouter un document' }}
     </button>
   </div>
 
-  <!-- Formulaire d'upload -->
   <div *ngIf="showUploadForm" class="mb-3">
-    <app-document-upload
-      [propertyId]="propertyId"
-      [rentalId]="rentalId"
-      (uploadComplete)="onUploadComplete()"
-    ></app-document-upload>
+    <app-document-upload [propertyId]="propertyId" [rentalId]="rentalId" (uploadComplete)="onUploadComplete()"></app-document-upload>
   </div>
 
-  <!-- Messages -->
-  <div *ngIf="loading" class="alert alert-info">
-    Chargement des documents...
+  <div *ngIf="loading" class="hw-text-sm hw-text-muted">Chargement des documents…</div>
+
+  <div *ngIf="error" class="hw-alert hw-alert--danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error }}</span>
   </div>
 
-  <div *ngIf="error" class="alert alert-danger">
-    {{ error }}
-  </div>
-
-  <!-- Liste des documents -->
   <div *ngIf="!loading && !error">
-    <div *ngIf="documents.length === 0" class="alert alert-warning">
-      Aucun document disponible.
-    </div>
+    <div *ngIf="documents.length === 0" class="hw-text-sm hw-text-muted">Aucun document disponible.</div>
 
-    <div class="table-responsive" *ngIf="documents.length > 0">
-      <table class="table table-hover">
+    <div *ngIf="documents.length > 0" style="overflow-x: auto;">
+      <table class="hw-table">
         <thead>
           <tr>
-            <th>Fichier</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Taille</th>
-            <th>Uploadé par</th>
-            <th>Date</th>
-            <th *ngIf="showArchiveActions">Statut</th>
-            <th>Actions</th>
+            <th>Fichier</th><th>Type</th><th>Description</th><th>Taille</th><th>Uploadé par</th><th>Date</th>
+            <th *ngIf="showArchiveActions">Statut</th><th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let document of documents" [class.table-secondary]="document.isArchived">
-            <td>
-              <span class="me-2">{{ documentService.getFileIcon(document.mimeType) }}</span>
-              {{ document.fileName }}
-            </td>
-            <td>
-              <span class="badge bg-secondary">
-                {{ getDocumentTypeLabel(document.documentType) }}
-              </span>
-            </td>
-            <td>
-              <small class="text-muted">{{ document.description || '-' }}</small>
-            </td>
+          <tr *ngFor="let document of documents">
+            <td><span class="me-2">{{ documentService.getFileIcon(document.mimeType) }}</span>{{ document.fileName }}</td>
+            <td><span class="hw-badge hw-badge--neutral">{{ getDocumentTypeLabel(document.documentType) }}</span></td>
+            <td class="hw-text-sm hw-text-muted">{{ document.description || '—' }}</td>
             <td>{{ documentService.formatFileSize(document.fileSize) }}</td>
             <td>{{ document.uploaderName }}</td>
             <td>{{ document.uploadedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td *ngIf="showArchiveActions">
-              <span *ngIf="document.isArchived" class="badge bg-dark me-1">Archivé</span>
-              <span *ngIf="document.legalHold" class="badge bg-danger me-1">Blocage légal</span>
-              <span *ngIf="document.retentionEndDate" class="badge bg-info me-1"
+              <span *ngIf="document.isArchived" class="hw-badge hw-badge--neutral me-1">Archivé</span>
+              <span *ngIf="document.legalHold" class="hw-badge hw-badge--danger me-1">Blocage légal</span>
+              <span *ngIf="document.retentionEndDate" class="hw-badge hw-badge--info me-1"
                     title="Rétention jusqu'au {{ document.retentionEndDate | date:'dd/MM/yyyy' }}">
-                Rétention: {{ document.retentionEndDate | date:'dd/MM/yyyy' }}
+                Rétention : {{ document.retentionEndDate | date:'dd/MM/yyyy' }}
               </span>
-              <span *ngIf="!document.isArchived && !document.legalHold && !document.retentionEndDate"
-                    class="badge bg-success">Actif</span>
+              <span *ngIf="!document.isArchived && !document.legalHold && !document.retentionEndDate" class="hw-badge hw-badge--success">Actif</span>
             </td>
             <td>
-              <div class="btn-group btn-group-sm">
-                <button
-                  class="btn btn-outline-primary"
-                  (click)="downloadDocument(document)"
-                  title="Télécharger"
-                >
+              <div class="d-flex gap-1 flex-wrap align-items-center">
+                <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="downloadDocument(document)" title="Télécharger">
                   <i class="bi bi-download"></i>
                 </button>
-                <button
-                  *ngIf="!document.isArchived"
-                  class="btn btn-outline-danger"
-                  (click)="deleteDocument(document, $event)"
-                  title="Supprimer"
-                >
+                <button *ngIf="!document.isArchived" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteDocument(document, $event)" title="Supprimer">
                   <i class="bi bi-trash"></i>
                 </button>
+                <ng-container *ngIf="showArchiveActions && !document.isArchived">
+                  <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="startSetRetention(document.id)" title="Définir la rétention">
+                    <i class="bi bi-clock-history"></i>
+                  </button>
+                  <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="archiveDocument(document, $event)" title="Archiver">
+                    <i class="bi bi-archive"></i>
+                  </button>
+                  <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="toggleLegalHold(document, $event)"
+                          [title]="document.legalHold ? 'Retirer le blocage légal' : 'Blocage légal'">
+                    <i class="bi bi-shield-lock"></i>
+                  </button>
+                </ng-container>
               </div>
-              <!-- Archive actions -->
-              <div *ngIf="showArchiveActions && !document.isArchived" class="btn-group btn-group-sm ms-1">
-                <button
-                  class="btn btn-outline-secondary"
-                  (click)="startSetRetention(document.id)"
-                  title="Définir la rétention"
-                >
-                  <i class="bi bi-clock-history"></i>
-                </button>
-                <button
-                  class="btn btn-outline-dark"
-                  (click)="archiveDocument(document, $event)"
-                  title="Archiver"
-                >
-                  <i class="bi bi-archive"></i>
-                </button>
-                <button
-                  class="btn"
-                  [class.btn-outline-danger]="!document.legalHold"
-                  [class.btn-danger]="document.legalHold"
-                  (click)="toggleLegalHold(document, $event)"
-                  [title]="document.legalHold ? 'Retirer le blocage légal' : 'Blocage légal'"
-                >
-                  <i class="bi bi-shield-lock"></i>
-                </button>
-              </div>
-              <!-- Retention date input -->
               <div *ngIf="retentionDocId === document.id" class="mt-2 d-flex gap-1 align-items-center">
                 <input type="date" class="form-control form-control-sm" [(ngModel)]="retentionDate" style="width: 150px;">
-                <button class="btn btn-sm btn-primary" (click)="saveRetention()" [disabled]="!retentionDate">
-                  <i class="bi bi-check"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-secondary" (click)="cancelRetention()">
-                  <i class="bi bi-x"></i>
-                </button>
+                <button class="hw-btn hw-btn--sm hw-btn--primary" (click)="saveRetention()" [disabled]="!retentionDate"><i class="bi bi-check"></i></button>
+                <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="cancelRetention()"><i class="bi bi-x"></i></button>
               </div>
             </td>
           </tr>

@@ -1,81 +1,57 @@
-<div class="container mt-4">
-  <h2 class="mb-4">Journal d'audit</h2>
+<app-page-header title="Journal d'audit" [breadcrumbs]="[{label: 'Administration'}, {label: 'Audit'}]"></app-page-header>
 
-  <!-- Filtres -->
-  <div class="row mb-3">
-    <div class="col-md-3">
-      <select class="form-select" [(ngModel)]="selectedEntityType" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let type of entityTypes" [value]="type.value">{{ type.label }}</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select class="form-select" [(ngModel)]="selectedAction" (ngModelChange)="onFilterChange()">
-        <option *ngFor="let action of actions" [value]="action.value">{{ action.label }}</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <input
-        type="text"
-        class="form-control"
-        placeholder="ID utilisateur..."
-        [(ngModel)]="selectedUserId"
-        (ngModelChange)="onFilterChange()"
-      >
-    </div>
-    <div class="col-md-3">
-      <span class="form-text">{{ totalElements }} résultat{{ totalElements > 1 ? 's' : '' }}</span>
-    </div>
+<div class="row mb-3">
+  <div class="col-md-3 mb-2">
+    <select class="form-select" [(ngModel)]="selectedEntityType" (ngModelChange)="onFilterChange()">
+      <option *ngFor="let type of entityTypes" [value]="type.value">{{ type.label }}</option>
+    </select>
+  </div>
+  <div class="col-md-3 mb-2">
+    <select class="form-select" [(ngModel)]="selectedAction" (ngModelChange)="onFilterChange()">
+      <option *ngFor="let action of actions" [value]="action.value">{{ action.label }}</option>
+    </select>
+  </div>
+  <div class="col-md-3 mb-2">
+    <input type="text" class="form-control" placeholder="ID utilisateur…" [(ngModel)]="selectedUserId" (ngModelChange)="onFilterChange()">
+  </div>
+  <div class="col-md-3 mb-2 d-flex align-items-center">
+    <span class="hw-text-sm hw-text-muted">{{ totalElements }} résultat{{ totalElements > 1 ? 's' : '' }}</span>
+  </div>
+</div>
+
+<app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
+
+<div *ngIf="error" class="hw-alert hw-alert--danger">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>{{ error }}</span>
+</div>
+
+<div *ngIf="!loading && !error">
+  <app-empty-state *ngIf="logs.length === 0" icon="bi-clock-history" title="Aucun log d'audit trouvé"></app-empty-state>
+
+  <div *ngIf="logs.length > 0" class="hw-card" style="padding: 0; overflow-x: auto;">
+    <table class="hw-table">
+      <thead>
+        <tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Type</th><th>ID Entité</th><th>IP</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let log of logs">
+          <td>{{ log.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+          <td>{{ log.userName }}</td>
+          <td><span class="hw-badge" [ngClass]="'hw-badge--' + getActionColor(log.action)">{{ getActionLabel(log.action) }}</span></td>
+          <td>{{ log.entityType }}</td>
+          <td><code class="hw-text-xs">{{ log.entityId?.substring(0, 8) }}…</code></td>
+          <td>{{ log.ipAddress || '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
-  <div *ngIf="loading" class="alert alert-info">Chargement...</div>
-  <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
-
-  <div *ngIf="!loading && !error">
-    <div *ngIf="logs.length === 0" class="alert alert-warning">Aucun log d'audit trouvé.</div>
-
-    <div class="table-responsive" *ngIf="logs.length > 0">
-      <table class="table table-striped table-sm">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Utilisateur</th>
-            <th>Action</th>
-            <th>Type</th>
-            <th>ID Entité</th>
-            <th>IP</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let log of logs">
-            <td>{{ log.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-            <td>{{ log.userName }}</td>
-            <td>
-              <span class="badge bg-{{ getActionColor(log.action) }}">
-                {{ getActionLabel(log.action) }}
-              </span>
-            </td>
-            <td>{{ log.entityType }}</td>
-            <td><code class="small">{{ log.entityId?.substring(0, 8) }}...</code></td>
-            <td>{{ log.ipAddress || '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <nav *ngIf="totalPages > 1" aria-label="Pagination">
-      <ul class="pagination justify-content-center">
-        <li class="page-item" [class.disabled]="currentPage === 0">
-          <a class="page-link" (click)="goToPage(currentPage - 1)">Précédent</a>
-        </li>
-        <li class="page-item" *ngFor="let p of [].constructor(totalPages); let i = index"
-            [class.active]="i === currentPage">
-          <a class="page-link" (click)="goToPage(i)">{{ i + 1 }}</a>
-        </li>
-        <li class="page-item" [class.disabled]="currentPage === totalPages - 1">
-          <a class="page-link" (click)="goToPage(currentPage + 1)">Suivant</a>
-        </li>
-      </ul>
-    </nav>
+  <div *ngIf="totalPages > 1" class="d-flex justify-content-center gap-1 mt-3">
+    <button class="hw-btn hw-btn--sm hw-btn--ghost" [disabled]="currentPage === 0" (click)="goToPage(currentPage - 1)">Précédent</button>
+    <button *ngFor="let p of [].constructor(totalPages); let i = index"
+            class="hw-btn hw-btn--sm" [class.hw-btn--primary]="i === currentPage" [class.hw-btn--ghost]="i !== currentPage"
+            (click)="goToPage(i)">{{ i + 1 }}</button>
+    <button class="hw-btn hw-btn--sm hw-btn--ghost" [disabled]="currentPage === totalPages - 1" (click)="goToPage(currentPage + 1)">Suivant</button>
   </div>
 </div>

@@ -105,13 +105,13 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="submitting">
+        <button type="button" class="hw-btn hw-btn--ghost" (click)="cancel()" [disabled]="submitting">
           Annuler
         </button>
-        <button type="button" class="btn btn-primary" (click)="confirm()" [disabled]="submitting">
+        <button type="button" class="hw-btn hw-btn--primary" (click)="confirm()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
           <i *ngIf="!submitting" class="bi bi-check-circle me-2"></i>
-          Creer la location
+          Créer la location
         </button>
       </div>
     </div>
