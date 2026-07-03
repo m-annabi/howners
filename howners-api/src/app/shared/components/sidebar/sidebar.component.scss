@@ -2,8 +2,9 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--hw-primary-800);
-  color: rgba(255, 255, 255, 0.78);
+  // Même dégradé que les bannières (Mon espace, Recherche), décliné à la verticale
+  background: linear-gradient(180deg, var(--hw-primary-700) 0%, var(--hw-primary-600) 55%, var(--hw-primary-500) 100%);
+  color: rgba(255, 255, 255, 0.82);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   overflow-y: auto;
 
@@ -15,7 +16,7 @@
 
   &__logo {
     padding: var(--hw-space-5) var(--hw-space-5) var(--hw-space-4);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 
     a {
       display: flex;
@@ -54,7 +55,7 @@
   &__section-title {
     font-size: 0.6875rem;
     font-weight: var(--hw-fw-semibold);
-    color: rgba(255, 255, 255, 0.42);
+    color: var(--hw-primary-200);
     text-transform: uppercase;
     letter-spacing: 0.09em;
     padding: var(--hw-space-3) var(--hw-space-5) var(--hw-space-2);
@@ -83,15 +84,15 @@
     }
 
     &:hover {
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.09);
       color: #fff;
       text-decoration: none;
 
-      i { color: rgba(255, 255, 255, 0.85); }
+      i { color: rgba(255, 255, 255, 0.9); }
     }
 
     &--active {
-      background: rgba(201, 169, 97, 0.13);
+      background: rgba(201, 169, 97, 0.2);
       color: #fff;
       font-weight: var(--hw-fw-semibold);
 
@@ -128,9 +129,9 @@
 
   &__footer {
     padding: var(--hw-space-4) var(--hw-space-5);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     margin-top: auto;
-    background: rgba(0, 0, 0, 0.12);
+    background: rgba(0, 0, 0, 0.14);
   }
 
   &__plan {
