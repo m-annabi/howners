@@ -6,9 +6,11 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { TenantApiService } from '../../../core/services/tenant-api.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { PaymentService } from '../../../core/services/payment.service';
+import { ReceiptService } from '../../../core/services/receipt.service';
 import { User } from '../../../core/models/user.model';
 import { Rental, RentalStatus } from '../../../core/models/rental.model';
 import { Payment, PaymentStatus } from '../../../core/models/payment.model';
+import { Receipt } from '../../../core/models/receipt.model';
 import { DashboardStats } from '../../../core/models/dashboard.model';
 import { TenantContract } from '../../../core/services/tenant-api.service';
 
@@ -24,10 +26,13 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
   activeRental: Rental | null = null;
   activeContract: TenantContract | null = null;
   nextPayment: Payment | null = null;
+  recentPayments: Payment[] = [];
+  lastReceipt: Receipt | null = null;
   stats: DashboardStats | null = null;
 
   loading = true;
   error: string | null = null;
+  downloadingReceipt = false;
 
   readonly RentalStatus = RentalStatus;
   readonly PaymentStatus = PaymentStatus;
@@ -37,6 +42,7 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
     private tenantApiService: TenantApiService,
     private dashboardService: DashboardService,
     private paymentService: PaymentService,
+    private receiptService: ReceiptService,
     private router: Router
   ) {}
 
@@ -59,9 +65,10 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
       rentals: this.tenantApiService.getMyRentals().pipe(catchError(() => of([]))),
       contracts: this.tenantApiService.getMyContracts().pipe(catchError(() => of([]))),
       payments: this.paymentService.getAll().pipe(catchError(() => of([]))),
+      receipts: this.receiptService.getAll().pipe(catchError(() => of([]))),
       stats: this.dashboardService.getStats().pipe(catchError(() => of(null)))
     }).subscribe({
-      next: ({ rentals, contracts, payments, stats }) => {
+      next: ({ rentals, contracts, payments, receipts, stats }) => {
         this.stats = stats;
 
         this.activeRental = rentals.find(r =>
@@ -72,11 +79,18 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
           this.activeContract = contracts.find(c => c.rentalId === this.activeRental!.id) ?? null;
         }
 
-        const today = new Date();
         const pending = payments
           .filter(p => p.status === PaymentStatus.PENDING || p.status === PaymentStatus.LATE)
           .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
         this.nextPayment = pending[0] ?? null;
+
+        this.recentPayments = payments
+          .filter(p => p.id !== this.nextPayment?.id)
+          .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())
+          .slice(0, 3);
+
+        this.lastReceipt = [...receipts]
+          .sort((a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime())[0] ?? null;
 
         this.loading = false;
       },
@@ -95,6 +109,12 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
     return this.stats?.tenantInfo?.pendingApplications ?? 0;
   }
 
+  /** Loyer charges comprises — le montant réellement dû chaque mois. */
+  get totalMonthly(): number {
+    if (!this.activeRental) return 0;
+    return this.activeRental.monthlyRent + (this.activeRental.charges ?? 0);
+  }
+
   get isPaymentLate(): boolean {
     return this.nextPayment?.status === PaymentStatus.LATE ||
       (this.nextPayment?.status === PaymentStatus.PENDING &&
@@ -102,9 +122,49 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
         new Date(this.nextPayment.dueDate) < new Date());
   }
 
+  downloadLastReceipt(): void {
+    if (!this.lastReceipt || this.downloadingReceipt) return;
+    this.downloadingReceipt = true;
+    this.receiptService.downloadPdf(this.lastReceipt.id).subscribe({
+      next: blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `quittance-${this.lastReceipt!.receiptNumber}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.downloadingReceipt = false;
+      },
+      error: () => {
+        this.downloadingReceipt = false;
+      }
+    });
+  }
+
+  paymentStatusLabel(status: PaymentStatus): string {
+    switch (status) {
+      case PaymentStatus.PAID: return 'Payé';
+      case PaymentStatus.PENDING: return 'En attente';
+      case PaymentStatus.LATE: return 'En retard';
+      case PaymentStatus.FAILED: return 'Échoué';
+      case PaymentStatus.REFUNDED: return 'Remboursé';
+      case PaymentStatus.CANCELLED: return 'Annulé';
+      default: return status;
+    }
+  }
+
   formatDate(date: string | undefined): string {
     if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  formatDateShort(date: string | undefined): string {
+    if (!date) return '—';
+    return new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  formatPeriod(receipt: Receipt): string {
+    return new Date(receipt.periodStart).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   }
 
   formatAmount(amount: number, currency = 'EUR'): string {

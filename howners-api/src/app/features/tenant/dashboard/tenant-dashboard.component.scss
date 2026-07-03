@@ -1,185 +1,378 @@
 .tenant-dashboard {
-  max-width: 800px;
+  max-width: 900px;
+}
 
-  &__header {
-    margin-bottom: var(--hw-space-4);
+// ── Bandeau d'accueil ───────────────────────────────────────────────────────
+.tenant-hero {
+  background: linear-gradient(135deg, var(--hw-primary-700) 0%, var(--hw-primary-600) 55%, var(--hw-primary-500) 100%);
+  border-radius: var(--hw-radius-xl);
+  padding: var(--hw-space-6) var(--hw-space-6) var(--hw-space-5);
+  color: #fff;
+  margin-bottom: var(--hw-space-4);
+  box-shadow: var(--hw-shadow-md);
+
+  &__greeting {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-primary-200);
+    font-weight: var(--hw-fw-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--hw-space-3);
+  }
+
+  &__main {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--hw-space-4);
+    flex-wrap: wrap;
+  }
+
+  &__property-name {
+    font-family: var(--hw-font-display);
+    font-size: var(--hw-fs-2xl);
+    font-weight: var(--hw-fw-semibold);
+    line-height: var(--hw-lh-tight);
+    margin-bottom: var(--hw-space-2);
+  }
+
+  &__property-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-3);
+    flex-wrap: wrap;
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-primary-100);
+  }
+
+  &__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: var(--hw-fw-medium);
+    color: #fff;
+  }
+
+  &__status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+
+    &--active { background: #6FCF97; }
+    &--exiting { background: var(--hw-accent-300); }
+  }
+
+  &__rent {
+    text-align: right;
+  }
+
+  &__rent-value {
+    display: block;
+    font-family: var(--hw-font-display);
+    font-size: var(--hw-fs-3xl);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-accent-300);
+    line-height: var(--hw-lh-tight);
+  }
+
+  &__rent-label {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-primary-200);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__rent-detail {
+    display: block;
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-primary-100);
+    margin-top: 2px;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    margin-top: var(--hw-space-4);
+    padding-top: var(--hw-space-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    width: 100%;
+    color: var(--hw-accent-200);
+    font-size: var(--hw-fs-sm);
+    font-weight: var(--hw-fw-medium);
+    text-decoration: none;
+    transition: color 0.15s;
+
+    i { transition: transform 0.15s; }
+
+    &:hover {
+      color: var(--hw-accent-100);
+      i { transform: translateX(3px); }
+    }
   }
 }
 
-// ── Carte principale (logement / paiement) ──────────────────────────────────
-.tenant-card {
+// ── Alertes ─────────────────────────────────────────────────────────────────
+.tenant-alerts {
   display: flex;
-  align-items: center;
-  gap: var(--hw-space-3);
-  padding: var(--hw-space-4);
-  background: var(--hw-white);
-  border: 1px solid var(--hw-border);
-  border-radius: var(--hw-radius-lg);
-  margin-bottom: var(--hw-space-3);
-  cursor: pointer;
-  transition: box-shadow 0.15s, border-color 0.15s;
+  flex-direction: column;
+  gap: var(--hw-space-2);
+  margin-bottom: var(--hw-space-4);
 
-  &:hover {
-    box-shadow: var(--hw-shadow-md);
-    border-color: var(--hw-primary-300);
+  .hw-alert {
+    margin: 0;
+
+    .hw-btn { margin-left: auto; }
   }
+}
 
-  &--rental {
-    border-left: 4px solid var(--hw-success);
+// ── Blocs principaux ────────────────────────────────────────────────────────
+.tenant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--hw-space-4);
+  margin-bottom: var(--hw-space-6);
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
   }
+}
 
-  &--warning {
-    border-left: 4px solid var(--hw-warning);
-  }
+.tenant-panel {
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-xl);
+  padding: var(--hw-space-5);
+  box-shadow: var(--hw-shadow-xs);
+  display: flex;
+  flex-direction: column;
 
-  &--danger {
-    border-left: 4px solid var(--hw-danger);
-    background: #fff8f8;
-  }
-
-  &__icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--hw-radius);
-    background: var(--hw-gray-100);
+  &__header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-    color: var(--hw-primary-700);
+    justify-content: space-between;
+    gap: var(--hw-space-2);
+    margin-bottom: var(--hw-space-4);
   }
 
-  &--rental &__icon { background: #e8f5e9; color: var(--hw-success); }
-  &--warning &__icon { background: #fff8e1; color: var(--hw-warning); }
-  &--danger &__icon { background: #fdecea; color: var(--hw-danger); }
+  &__title {
+    font-size: var(--hw-fs-xs);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
 
-  &__body {
-    flex: 1;
+  &__more {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-primary-500);
+    text-decoration: none;
+    font-weight: var(--hw-fw-medium);
+
+    &:hover { text-decoration: underline; }
+  }
+
+  &__amount {
+    font-family: var(--hw-font-display);
+    font-size: var(--hw-fs-3xl);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-900);
+    line-height: var(--hw-lh-tight);
+
+    &--late { color: var(--hw-danger); }
+  }
+
+  &__due {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    margin-top: var(--hw-space-1);
+
+    strong { color: var(--hw-gray-700); }
+  }
+
+  &__uptodate {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    font-size: var(--hw-fs-base);
+    color: var(--hw-success);
+    font-weight: var(--hw-fw-medium);
+    padding: var(--hw-space-2) 0;
+
+    i { font-size: 1.1rem; }
+  }
+
+  &__cta {
+    margin-top: var(--hw-space-4);
+    align-self: flex-start;
+  }
+
+  &__divider {
+    border-top: var(--hw-border);
+    margin: var(--hw-space-4) 0;
+  }
+
+  &__empty {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    padding: var(--hw-space-2) 0;
+  }
+
+  &__footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    font-size: var(--hw-fs-sm);
+    font-weight: var(--hw-fw-medium);
+    color: var(--hw-primary-500);
+    text-decoration: none;
+    margin-top: auto;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ── Statut (chip) ───────────────────────────────────────────────────────────
+.tenant-chip {
+  font-size: var(--hw-fs-xs);
+  font-weight: var(--hw-fw-semibold);
+  padding: 2px 10px;
+  border-radius: var(--hw-radius-full);
+  white-space: nowrap;
+
+  &--success { background: var(--hw-success-light); color: var(--hw-success); }
+  &--pending { background: var(--hw-warning-light); color: var(--hw-warning); }
+  &--danger  { background: var(--hw-danger-light); color: var(--hw-danger); }
+}
+
+// ── Dernière quittance ──────────────────────────────────────────────────────
+.tenant-receipt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hw-space-3);
+
+  &__info {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
   }
 
   &__label {
     font-size: var(--hw-fs-xs);
     color: var(--hw-gray-500);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 2px;
+    font-weight: var(--hw-fw-medium);
   }
 
-  &__title {
+  &__period {
     font-size: var(--hw-fs-base);
-    font-weight: 600;
-    color: var(--hw-gray-900);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-800);
+    text-transform: capitalize;
+  }
+}
+
+// ── Historique des paiements ────────────────────────────────────────────────
+.tenant-payments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-3);
+    padding: var(--hw-space-2) 0;
+
+    & + & { border-top: 1px solid var(--hw-gray-100); }
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--hw-gray-300);
+    flex-shrink: 0;
+
+    &--paid { background: var(--hw-success); }
+    &--late { background: var(--hw-danger); }
+    &--pending { background: var(--hw-warning); }
+  }
+
+  &__date {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-700);
+    flex-shrink: 0;
+  }
+
+  &__status {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-gray-500);
+    flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  &__meta {
-    font-size: var(--hw-fs-sm);
-    color: var(--hw-gray-500);
-    margin-top: 2px;
-    display: flex;
-    align-items: center;
-    gap: var(--hw-space-2);
-    flex-wrap: wrap;
-  }
-
   &__amount {
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  &__amount-value {
-    display: block;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--hw-gray-900);
-  }
-
-  &__amount-label {
-    font-size: var(--hw-fs-xs);
-    color: var(--hw-gray-500);
-    font-weight: 500;
-
-    &.text-danger {
-      color: var(--hw-danger);
-      font-weight: 700;
-    }
-  }
-
-  &__chev {
-    color: var(--hw-gray-300);
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-}
-
-// ── Raccourcis ──────────────────────────────────────────────────────────────
-.tenant-shortcuts {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: var(--hw-space-3);
-  margin-top: var(--hw-space-4);
-}
-
-.shortcut-widget {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--hw-space-2);
-  padding: var(--hw-space-3);
-  text-decoration: none;
-  text-align: center;
-  transition: box-shadow 0.15s, transform 0.1s;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  &__label {
     font-size: var(--hw-fs-sm);
-    font-weight: 500;
-    color: var(--hw-gray-700);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-900);
+    flex-shrink: 0;
   }
 }
 
-.shortcut-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--hw-danger);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: 100px;
-  padding: 1px 6px;
-  line-height: 1.4;
-}
-
-// ── État vide ───────────────────────────────────────────────────────────────
-.tenant-empty {
-  text-align: center;
-  padding: var(--hw-space-6) var(--hw-space-4);
-
-  &__icon {
-    font-size: 3rem;
-    color: var(--hw-gray-300);
+// ── Accès rapides ───────────────────────────────────────────────────────────
+.tenant-quicklinks {
+  &__label {
+    display: block;
+    font-size: var(--hw-fs-xs);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     margin-bottom: var(--hw-space-3);
   }
 
-  h3 {
-    font-size: var(--hw-fs-lg);
-    font-weight: 600;
-    color: var(--hw-gray-700);
-    margin-bottom: var(--hw-space-2);
+  &__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--hw-space-2);
+
+    a {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--hw-space-2);
+      padding: var(--hw-space-2) var(--hw-space-3);
+      background: var(--hw-surface);
+      border: var(--hw-border);
+      border-radius: var(--hw-radius-full);
+      font-size: var(--hw-fs-sm);
+      font-weight: var(--hw-fw-medium);
+      color: var(--hw-gray-700);
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+
+      i { color: var(--hw-gray-500); transition: color 0.15s; }
+
+      &:hover {
+        border-color: var(--hw-primary-300);
+        color: var(--hw-primary-600);
+        box-shadow: var(--hw-shadow-xs);
+
+        i { color: var(--hw-primary-500); }
+      }
+    }
   }
 
-  p {
-    color: var(--hw-gray-500);
-    margin-bottom: var(--hw-space-4);
+  &__badge {
+    background: var(--hw-danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: var(--hw-fw-bold);
+    border-radius: var(--hw-radius-full);
+    padding: 1px 6px;
+    line-height: 1.4;
   }
 }
