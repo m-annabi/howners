@@ -137,6 +137,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   trackById(_: number, cfg: WidgetConfig): string { return cfg.id; }
 
+  // catalogGroups est un getter qui recrée les objets à chaque cycle de CD :
+  // sans trackBy, ngFor recrée les boutons entre mousedown et click et le
+  // handler (click) est détruit avant d'avoir pu tirer.
+  trackByCategory(_: number, group: { category: string }): string { return group.category; }
+  trackByDefId(_: number, def: WidgetDef): string { return def.id; }
+
   // ── Edit mode ──────────────────────────────────────────────────────────
 
   enterEditMode(): void {

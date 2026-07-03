@@ -53,10 +53,10 @@
               <p *ngIf="catalogGroups.length === 0" class="widget-catalog__empty">
                 Tous les widgets sont affichés
               </p>
-              <ng-container *ngFor="let group of catalogGroups">
+              <ng-container *ngFor="let group of catalogGroups; trackBy: trackByCategory">
                 <p class="widget-catalog__cat">{{ group.category }}</p>
                 <div class="widget-catalog__items">
-                  <button *ngFor="let def of group.defs"
+                  <button *ngFor="let def of group.defs; trackBy: trackByDefId"
                           type="button"
                           class="widget-catalog__item"
                           (click)="addWidget(def.id)">
