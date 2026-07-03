@@ -91,5 +91,6 @@
     <include file="db/changelog/085-asset-source.xml"/>
     <include file="db/changelog/086-loans.xml"/>
     <include file="db/changelog/087-accounting-fiscal-fixes.xml"/>
+    <include file="db/changelog/088-coherence-paiements-quittances-baux.xml"/>
 
 </databaseChangeLog>

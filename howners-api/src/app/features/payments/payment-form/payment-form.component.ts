@@ -60,6 +60,31 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  get selectedRental(): any | null {
+    const id = this.paymentForm?.get('rentalId')?.value;
+    return this.rentals.find(r => r.id === id) ?? null;
+  }
+
+  /** Loyer charges comprises attendu pour un paiement RENT, null sinon. */
+  get expectedRentAmount(): number | null {
+    const rental = this.selectedRental;
+    if (!rental || this.paymentForm.get('paymentType')?.value !== PaymentType.RENT) return null;
+    if (rental.monthlyRent == null) return null;
+    return rental.monthlyRent + (rental.charges ?? 0);
+  }
+
+  get amountMismatch(): boolean {
+    const expected = this.expectedRentAmount;
+    const amount = Number(this.paymentForm.get('amount')?.value);
+    return expected !== null && !!amount && amount !== expected;
+  }
+
+  applyExpectedAmount(): void {
+    if (this.expectedRentAmount !== null) {
+      this.paymentForm.patchValue({ amount: this.expectedRentAmount });
+    }
+  }
+
   onSubmit(): void {
     if (this.paymentForm.invalid) return;
 

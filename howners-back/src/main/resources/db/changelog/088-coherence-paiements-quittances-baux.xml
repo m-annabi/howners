@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <!-- Les seeds (055/056 et données de démo) ont créé des paiements RENT au montant
+         du loyer hors charges : on les réaligne sur loyer + charges, uniquement pour
+         les comptes de test @howners.test. -->
+    <changeSet id="088-fix-seed-payment-amounts" author="howners">
+        <sql>
+            UPDATE payments p
+            SET amount = r.monthly_rent + COALESCE(r.charges, 0),
+                updated_at = NOW()
+            FROM rentals r, users u
+            WHERE r.id = p.rental_id
+              AND u.id = p.payer_id
+              AND u.email LIKE '%@howners.test'
+              AND p.payment_type = 'RENT'
+              AND p.status NOT IN ('CANCELLED', 'REFUNDED')
+              AND p.amount &lt;&gt; r.monthly_rent + COALESCE(r.charges, 0);
+        </sql>
+    </changeSet>
+
+    <!-- Les paiements PAID seedés n'ont jamais eu de quittance (la génération ne passe
+         que par l'application). On crée l'enregistrement sans document : le PDF est
+         régénéré à la volée au premier téléchargement (ReceiptService). -->
+    <changeSet id="088-backfill-seed-receipts" author="howners">
+        <sql>
+            INSERT INTO receipts (id, rental_id, payment_id, receipt_number,
+                                  period_start, period_end, amount, currency, created_at)
+            SELECT gen_random_uuid(),
+                   p.rental_id,
+                   p.id,
+                   'Q-' || to_char(p.due_date, 'YYYY-MM') || '-' || substr(p.id::text, 1, 8),
+                   date_trunc('month', p.due_date)::date,
+                   (date_trunc('month', p.due_date) + interval '1 month' - interval '1 day')::date,
+                   p.amount,
+                   p.currency,
+                   NOW()
+            FROM payments p
+            JOIN users u ON u.id = p.payer_id
+            WHERE u.email LIKE '%@howners.test'
+              AND p.payment_type = 'RENT'
+              AND p.status = 'PAID'
+              AND p.due_date IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM receipts rc WHERE rc.payment_id = p.id);
+        </sql>
+    </changeSet>
+
+    <!-- Une seule quittance par paiement : le contrôle n'existait qu'au niveau applicatif. -->
+    <changeSet id="088-receipts-unique-payment" author="howners">
+        <preConditions onFail="MARK_RAN">
+            <not><uniqueConstraintExists tableName="receipts" constraintName="uk_receipts_payment"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="receipts" columnNames="payment_id"
+                             constraintName="uk_receipts_payment"/>
+    </changeSet>
+
+    <!-- Un seul paiement de loyer actif par bail et par mois d'échéance.
+         Les paiements annulés/échoués/remboursés ne bloquent pas une re-création. -->
+    <changeSet id="088-payments-unique-rent-month" author="howners">
+        <sql>
+            -- ::timestamp explicite : le cast implicite date -> timestamptz n'est pas
+            -- IMMUTABLE (dépend du fuseau) et est refusé dans un index d'expression.
+            CREATE UNIQUE INDEX IF NOT EXISTS uk_payments_rent_month
+            ON payments (rental_id, (date_trunc('month', due_date::timestamp)))
+            WHERE payment_type = 'RENT'
+              AND status NOT IN ('CANCELLED', 'REFUNDED', 'FAILED');
+        </sql>
+        <rollback>
+            DROP INDEX IF EXISTS uk_payments_rent_month;
+        </rollback>
+    </changeSet>
+
+    <!-- Deux baux ACTIVE/EXITING sur un même bien sont permis tant que leurs périodes
+         ne se chevauchent pas (end_date NULL = bail sans fin). -->
+    <changeSet id="088-rentals-no-overlap" author="howners">
+        <sql>
+            CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+            ALTER TABLE rentals
+            ADD CONSTRAINT ex_rentals_no_overlap
+            EXCLUDE USING gist (
+                property_id WITH =,
+                daterange(start_date, COALESCE(end_date, 'infinity'::date), '[]') WITH &amp;&amp;
+            )
+            WHERE (status IN ('ACTIVE', 'EXITING'));
+        </sql>
+        <rollback>
+            ALTER TABLE rentals DROP CONSTRAINT IF EXISTS ex_rentals_no_overlap;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

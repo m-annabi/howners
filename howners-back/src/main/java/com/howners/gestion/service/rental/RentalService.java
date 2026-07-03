@@ -163,6 +163,11 @@ public class RentalService {
             throw new BusinessException("End date must be after start date");
         }
 
+        RentalStatus resultingStatus = request.status() != null ? request.status() : rental.getStatus();
+        if (resultingStatus == RentalStatus.ACTIVE || resultingStatus == RentalStatus.EXITING) {
+            assertNoOverlappingRental(rental, startDate, endDate);
+        }
+
         if (request.rentalType() != null) {
             rental.setRentalType(request.rentalType());
         }
@@ -196,6 +201,31 @@ public class RentalService {
 
         rental = rentalRepository.save(rental);
         return RentalResponse.from(rental);
+    }
+
+    /**
+     * Deux baux ACTIVE/EXITING peuvent coexister sur un même bien tant que leurs
+     * périodes ne se chevauchent pas (miroir applicatif de la contrainte DB
+     * ex_rentals_no_overlap, pour un message d'erreur exploitable).
+     */
+    private void assertNoOverlappingRental(Rental rental, LocalDate startDate, LocalDate endDate) {
+        for (Rental other : rentalRepository.findByPropertyId(rental.getProperty().getId())) {
+            if (other.getId().equals(rental.getId())) continue;
+            if (other.getStatus() != RentalStatus.ACTIVE && other.getStatus() != RentalStatus.EXITING) continue;
+            if (periodsOverlap(startDate, endDate, other.getStartDate(), other.getEndDate())) {
+                throw new BusinessException(String.format(
+                        "Un autre bail actif couvre déjà ce bien sur une période qui se chevauche (du %s au %s)",
+                        other.getStartDate() != null ? other.getStartDate() : "—",
+                        other.getEndDate() != null ? other.getEndDate() : "sans échéance"));
+            }
+        }
+    }
+
+    /** start null = depuis toujours, end null = sans fin. */
+    private boolean periodsOverlap(LocalDate aStart, LocalDate aEnd, LocalDate bStart, LocalDate bEnd) {
+        boolean aEndsBeforeB = aEnd != null && bStart != null && aEnd.isBefore(bStart);
+        boolean bEndsBeforeA = bEnd != null && aStart != null && bEnd.isBefore(aStart);
+        return !(aEndsBeforeB || bEndsBeforeA);
     }
 
     @Transactional

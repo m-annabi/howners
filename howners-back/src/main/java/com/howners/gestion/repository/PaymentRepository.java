@@ -31,6 +31,13 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     @Query("SELECT p FROM Payment p WHERE p.status = 'PENDING' AND p.dueDate < :now")
     List<Payment> findOverduePayments(@Param("now") LocalDate now);
 
+    @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.rental.id = :rentalId AND p.paymentType = 'RENT' " +
+           "AND p.status NOT IN ('CANCELLED', 'REFUNDED', 'FAILED') " +
+           "AND p.dueDate >= :monthStart AND p.dueDate < :nextMonthStart")
+    boolean existsActiveRentPaymentInMonth(@Param("rentalId") UUID rentalId,
+                                           @Param("monthStart") LocalDate monthStart,
+                                           @Param("nextMonthStart") LocalDate nextMonthStart);
+
     Optional<Payment> findByStripePaymentIntentId(String stripePaymentIntentId);
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.rental.property.owner.id = :ownerId AND p.status = 'PAID' AND p.paidAt >= :from AND p.paidAt < :to")

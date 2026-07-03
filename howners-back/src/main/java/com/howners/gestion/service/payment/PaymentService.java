@@ -2,6 +2,7 @@ package com.howners.gestion.service.payment;
 
 import com.howners.gestion.domain.payment.Payment;
 import com.howners.gestion.domain.payment.PaymentStatus;
+import com.howners.gestion.domain.payment.PaymentType;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.user.Role;
@@ -118,6 +119,19 @@ public class PaymentService {
         User payer = rental.getTenant();
         if (payer == null) {
             throw new BadRequestException("Cannot create payment: no tenant assigned to this rental");
+        }
+
+        if (request.paymentType() == PaymentType.RENT && request.dueDate() != null) {
+            LocalDate monthStart = request.dueDate().withDayOfMonth(1);
+            if (paymentRepository.existsActiveRentPaymentInMonth(rental.getId(), monthStart, monthStart.plusMonths(1))) {
+                throw new BadRequestException("Un paiement de loyer existe déjà pour ce bail sur le mois de l'échéance");
+            }
+            if (rental.getStartDate() != null && request.dueDate().isBefore(rental.getStartDate().withDayOfMonth(1))) {
+                throw new BadRequestException("L'échéance est antérieure au début du bail (" + rental.getStartDate() + ")");
+            }
+            if (rental.getEndDate() != null && request.dueDate().isAfter(rental.getEndDate())) {
+                throw new BadRequestException("L'échéance est postérieure à la fin du bail (" + rental.getEndDate() + ")");
+            }
         }
 
         Payment payment = Payment.builder()

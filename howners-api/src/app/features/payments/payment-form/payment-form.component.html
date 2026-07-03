@@ -42,6 +42,18 @@
       </div>
     </div>
 
+    <div *ngIf="amountMismatch" class="hw-alert hw-alert--warning mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>
+        Ce montant diffère du loyer charges comprises du bail
+        ({{ expectedRentAmount | number:'1.2-2' }} €).
+      </span>
+      <button type="button" class="hw-btn hw-btn--sm hw-btn--secondary" style="margin-left: auto"
+              (click)="applyExpectedAmount()">
+        Utiliser {{ expectedRentAmount | number:'1.2-2' }} €
+      </button>
+    </div>
+
     <div class="mb-3">
       <label for="paymentMethod" class="form-label">Méthode de paiement</label>
       <select id="paymentMethod" class="form-select" formControlName="paymentMethod">

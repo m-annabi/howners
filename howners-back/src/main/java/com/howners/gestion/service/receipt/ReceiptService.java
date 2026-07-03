@@ -81,36 +81,7 @@ public class ReceiptService {
             periodEnd = periodStart.plusMonths(1).minusDays(1);
         }
 
-        // Generate PDF
-        String htmlContent = buildQuittanceHtml(rental, payment, receiptNumber, periodStart, periodEnd);
-        byte[] pdfBytes;
-        try {
-            pdfBytes = pdfService.generatePdf(htmlContent, null);
-        } catch (IOException e) {
-            log.error("Failed to generate receipt PDF: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to generate receipt PDF", e);
-        }
-
-        // Upload to MinIO
-        String fileName = String.format("quittance_%s_%d.pdf", receiptNumber, System.currentTimeMillis());
-        String fileKey = storageService.uploadFile(pdfBytes, fileName, "application/pdf");
-
-        // Create Document record
-        User owner = rental.getProperty().getOwner();
-        Document document = Document.builder()
-                .rental(rental)
-                .property(rental.getProperty())
-                .uploader(owner)
-                .documentType(DocumentType.RECEIPT)
-                .fileName(fileName)
-                .filePath(fileKey)
-                .fileKey(fileKey)
-                .fileSize((long) pdfBytes.length)
-                .mimeType("application/pdf")
-                .documentHash(pdfService.calculateHash(pdfBytes))
-                .description("Quittance de loyer - " + receiptNumber)
-                .build();
-        document = documentRepository.save(document);
+        Document document = generateAndStorePdf(rental, payment, receiptNumber, periodStart, periodEnd).document();
 
         // Create Receipt
         Receipt receipt = Receipt.builder()
@@ -155,8 +126,43 @@ public class ReceiptService {
             log.error("Failed to send receipt email: {}", e.getMessage());
         }
 
-        String documentUrl = storageService.generatePresignedUrl(fileKey);
+        String documentUrl = storageService.generatePresignedUrl(document.getFileKey());
         return ReceiptResponse.from(receipt, documentUrl);
+    }
+
+    private record GeneratedPdf(Document document, byte[] bytes) {}
+
+    private GeneratedPdf generateAndStorePdf(Rental rental, Payment payment, String receiptNumber,
+                                             LocalDate periodStart, LocalDate periodEnd) {
+        String htmlContent = buildQuittanceHtml(rental, payment, receiptNumber, periodStart, periodEnd);
+        byte[] pdfBytes;
+        try {
+            pdfBytes = pdfService.generatePdf(htmlContent, null);
+        } catch (IOException e) {
+            log.error("Failed to generate receipt PDF: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate receipt PDF", e);
+        }
+
+        // Upload to MinIO
+        String fileName = String.format("quittance_%s_%d.pdf", receiptNumber, System.currentTimeMillis());
+        String fileKey = storageService.uploadFile(pdfBytes, fileName, "application/pdf");
+
+        // Create Document record
+        User owner = rental.getProperty().getOwner();
+        Document document = Document.builder()
+                .rental(rental)
+                .property(rental.getProperty())
+                .uploader(owner)
+                .documentType(DocumentType.RECEIPT)
+                .fileName(fileName)
+                .filePath(fileKey)
+                .fileKey(fileKey)
+                .fileSize((long) pdfBytes.length)
+                .mimeType("application/pdf")
+                .documentHash(pdfService.calculateHash(pdfBytes))
+                .description("Quittance de loyer - " + receiptNumber)
+                .build();
+        return new GeneratedPdf(documentRepository.save(document), pdfBytes);
     }
 
     @Transactional(readOnly = true)
@@ -197,14 +203,20 @@ public class ReceiptService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public byte[] downloadReceiptPdf(UUID receiptId) throws IOException {
         Receipt receipt = receiptRepository.findById(receiptId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receipt", "id", receiptId.toString()));
         checkAccess(receipt);
 
+        // Quittance enregistrée sans PDF (reprise de données) : génération à la volée
         if (receipt.getDocument() == null || receipt.getDocument().getFileKey() == null) {
-            throw new BadRequestException("No PDF available for this receipt");
+            GeneratedPdf pdf = generateAndStorePdf(receipt.getRental(), receipt.getPayment(),
+                    receipt.getReceiptNumber(), receipt.getPeriodStart(), receipt.getPeriodEnd());
+            receipt.setDocument(pdf.document());
+            receiptRepository.save(receipt);
+            log.info("Receipt {} PDF generated lazily on download", receipt.getReceiptNumber());
+            return pdf.bytes();
         }
 
         return storageService.downloadFile(receipt.getDocument().getFileKey());
