@@ -368,126 +368,11 @@ $control-height: 40px;
   }
 }
 
-// Contrôle segmenté (Meublé)
-.segmented {
-  display: inline-flex;
-  height: $control-height;
-  background: var(--hw-gray-50);
-  border-radius: var(--hw-radius-lg);
-  padding: 4px;
-  gap: 2px;
-  align-self: flex-start;
-
-  button {
-    border: none;
-    background: transparent;
-    border-radius: var(--hw-radius-md);
-    padding: 0 16px;
-    font-size: var(--hw-fs-sm);
-    font-weight: var(--hw-fw-medium);
-    color: var(--hw-gray-600);
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-
-    &:hover { color: var(--hw-gray-900); }
-
-    &.is-active {
-      background: var(--hw-surface);
-      color: var(--hw-primary-700);
-      font-weight: var(--hw-fw-semibold);
-      box-shadow: var(--hw-shadow-sm);
-    }
-  }
-}
-
-// Échelle DPE colorée
-.dpe-scale {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: $control-height;
-
-  &__letter {
-    width: 34px;
-    height: 34px;
-    border: none;
-    border-radius: var(--hw-radius-md);
-    font-size: var(--hw-fs-base);
-    font-weight: var(--hw-fw-bold);
-    color: #fff;
-    cursor: pointer;
-    transition: transform 0.12s, opacity 0.15s, box-shadow 0.15s;
-
-    // Couleurs officielles de l'échelle DPE
-    &--a { background: #009B6B; }
-    &--b { background: #52B153; }
-    &--c { background: #A9C93C; }
-    &--d { background: #F5D908; color: var(--hw-gray-800); }
-    &--e { background: #F0A50A; color: var(--hw-gray-800); }
-    &--f { background: #EB7C24; }
-
-    &:hover {
-      transform: scale(1.12);
-      opacity: 1 !important;
-    }
-
-    &.is-selected {
-      transform: scale(1.12);
-      box-shadow: 0 0 0 2px var(--hw-surface), 0 0 0 4px var(--hw-primary-600);
-    }
-  }
-
-  // Quand une classe max est choisie, on éteint celles au-delà
-  &.has-selection &__letter:not(.is-covered) {
-    opacity: 0.25;
-  }
-
-  &__hint {
-    margin-left: var(--hw-space-2);
-    font-size: var(--hw-fs-xs);
-    color: var(--hw-gray-500);
-    white-space: nowrap;
-  }
-}
-
-// Pilules équipements (extérieur, parking)
+// .amenity-chips : conteneur local des pilules globales
 .amenity-chips {
   display: flex;
   gap: var(--hw-space-2);
   flex-wrap: wrap;
-}
-
-.amenity-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: $control-height;
-  padding: 0 16px;
-  border: var(--hw-border);
-  border-radius: var(--hw-radius-full);
-  background: var(--hw-surface);
-  font-size: var(--hw-fs-sm);
-  font-weight: var(--hw-fw-medium);
-  color: var(--hw-gray-700);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-
-  i { color: var(--hw-gray-400); transition: color 0.15s; }
-
-  &:hover {
-    border-color: var(--hw-primary-300);
-    color: var(--hw-primary-600);
-
-    i { color: var(--hw-primary-400); }
-  }
-
-  &.is-active {
-    background: var(--hw-primary-600);
-    border-color: var(--hw-primary-600);
-    color: #fff;
-
-    i { color: var(--hw-accent-300); }
-  }
 }
 
 // ── Chips + compteur ────────────────────────────────────────────────────────
@@ -524,31 +409,7 @@ $control-height: 40px;
   }
 }
 
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--hw-primary-50);
-  border: 1px solid var(--hw-primary-100);
-  color: var(--hw-primary-700);
-  font-size: var(--hw-fs-sm);
-  font-weight: var(--hw-fw-medium);
-  border-radius: var(--hw-radius-full);
-  padding: 4px 6px 4px 12px;
-
-  button {
-    border: none;
-    background: transparent;
-    color: var(--hw-primary-400);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    padding: 2px;
-    border-radius: 50%;
-
-    &:hover { color: var(--hw-danger); }
-  }
-}
+// .filter-chip, .segmented, .dpe-scale, .amenity-chip : styles globaux (_components.scss)
 
 // ── État vide ───────────────────────────────────────────────────────────────
 .listing-search__empty {
