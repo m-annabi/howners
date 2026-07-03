@@ -573,3 +573,125 @@
     i { color: var(--hw-accent-300); }
   }
 }
+
+// ══ Bandeau héros navy (Mon espace, Recherche, Tableau de bord) ══════════════
+.hw-hero {
+  background: linear-gradient(135deg, var(--hw-primary-700) 0%, var(--hw-primary-600) 55%, var(--hw-primary-500) 100%);
+  border-radius: var(--hw-radius-xl);
+  padding: var(--hw-space-6);
+  color: #fff;
+  margin-bottom: var(--hw-space-4);
+  box-shadow: var(--hw-shadow-md);
+
+  &__main {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--hw-space-4);
+    flex-wrap: wrap;
+  }
+
+  &__eyebrow {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-primary-200);
+    font-weight: var(--hw-fw-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--hw-space-2);
+  }
+
+  &__title {
+    font-family: var(--hw-font-display);
+    font-size: var(--hw-fs-2xl);
+    font-weight: var(--hw-fw-semibold);
+    line-height: var(--hw-lh-tight);
+    color: #fff;
+    margin: 0;
+  }
+
+  &__badges {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    flex-wrap: wrap;
+    margin-top: var(--hw-space-3);
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--hw-radius-full);
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-primary-100);
+
+    strong { color: #fff; font-weight: var(--hw-fw-semibold); }
+
+    &--alert {
+      cursor: pointer;
+      background: rgba(201, 169, 97, 0.18);
+      border-color: rgba(201, 169, 97, 0.4);
+      color: var(--hw-accent-200);
+      transition: background 0.15s;
+
+      i { color: var(--hw-accent-300); font-size: 0.75rem; }
+      strong { color: var(--hw-accent-100); }
+
+      &:hover { background: rgba(201, 169, 97, 0.3); }
+    }
+  }
+
+  &__aside { text-align: right; }
+
+  &__value {
+    display: block;
+    font-family: var(--hw-font-display);
+    font-size: var(--hw-fs-3xl);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-accent-300);
+    line-height: var(--hw-lh-tight);
+  }
+
+  &__value-label {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-primary-200);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+// ══ Rangée de liens rapides en pilules ═══════════════════════════════════════
+.hw-quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hw-space-2);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    padding: var(--hw-space-2) var(--hw-space-3);
+    background: var(--hw-surface);
+    border: var(--hw-border);
+    border-radius: var(--hw-radius-full);
+    font-size: var(--hw-fs-sm);
+    font-weight: var(--hw-fw-medium);
+    color: var(--hw-gray-700);
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+
+    i { color: var(--hw-gray-500); transition: color 0.15s; }
+
+    &:hover {
+      border-color: var(--hw-primary-300);
+      color: var(--hw-primary-600);
+      box-shadow: var(--hw-shadow-xs);
+      text-decoration: none;
+
+      i { color: var(--hw-primary-500); }
+    }
+  }
+}

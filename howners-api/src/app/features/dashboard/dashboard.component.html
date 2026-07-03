@@ -3,13 +3,36 @@
   <!-- ─── OWNER / ADMIN ─────────────────────────────────────────────────── -->
   <ng-container>
 
-    <!-- En-tête -->
-    <div class="dashboard__header">
-      <app-page-header
-        title="Tableau de bord"
-        [subtitle]="currentUser ? 'Bienvenue, ' + currentUser.firstName : ''">
-      </app-page-header>
+    <!-- ══ Bandeau d'accueil ══ -->
+    <div class="hw-hero">
+      <div class="hw-hero__main">
+        <div>
+          <div class="hw-hero__eyebrow">{{ todayLabel }}</div>
+          <h1 class="hw-hero__title">Bonjour{{ currentUser ? ' ' + currentUser.firstName : '' }}</h1>
+          <div class="hw-hero__badges">
+            <span class="hw-hero__badge">
+              <strong>{{ stats?.totalProperties ?? 0 }}</strong> bien{{ (stats?.totalProperties ?? 0) > 1 ? 's' : '' }}
+            </span>
+            <span class="hw-hero__badge">
+              <strong>{{ stats?.activeRentals ?? 0 }}</strong> location{{ (stats?.activeRentals ?? 0) > 1 ? 's' : '' }} active{{ (stats?.activeRentals ?? 0) > 1 ? 's' : '' }}
+            </span>
+            <button *ngIf="totalActionCount > 0" type="button"
+                    class="hw-hero__badge hw-hero__badge--alert"
+                    (click)="scrollToActionItems()">
+              <i class="bi bi-bell-fill"></i>
+              <strong>{{ totalActionCount }}</strong> à traiter
+            </button>
+          </div>
+        </div>
+        <div class="hw-hero__aside">
+          <span class="hw-hero__value">{{ monthlyRevenueLabel }}</span>
+          <span class="hw-hero__value-label">revenus locatifs / mois</span>
+        </div>
+      </div>
+    </div>
 
+    <!-- Barre d'outils widgets -->
+    <div class="dashboard__header">
       <div class="dashboard__header-actions">
         <ng-container *ngIf="!editMode">
           <button class="dash-btn dash-btn--outline" (click)="enterEditMode()">
@@ -132,6 +155,7 @@
 
       <div *ngFor="let cfg of displayWidgets; trackBy: trackById"
            class="widget-cell"
+           [attr.id]="'widget-' + cfg.id"
            [ngClass]="getWidgetSizeClass(cfg.id)">
 
         <!-- Edit mode: mask + remove button -->
@@ -259,76 +283,81 @@
             </div>
 
 
-            <!-- ── Raccourcis individuels (sm, *ngSwitchDefault) ── -->
-            <ng-container *ngSwitchDefault>
-              <ng-container *ngIf="getWidgetDef(cfg.id) as def">
-                <a [routerLink]="def.route" class="shortcut-widget hw-card hw-card--clickable">
-                  <div class="hw-icon-circle" [ngClass]="'hw-icon-circle--' + def.color">
-                    <i class="bi" [ngClass]="def.icon"></i>
+            <!-- ── Accès rapides (lg) ── -->
+            <div *ngSwitchCase="'quick-links'" class="widget-section">
+              <div class="widget-section__header">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>Accès rapides</span>
+              </div>
+              <div class="widget-section__body">
+                <nav class="hw-quicklinks">
+                  <a *ngFor="let link of quickLinks" [routerLink]="link.route">
+                    <i class="bi" [ngClass]="link.icon"></i> {{ link.label }}
+                  </a>
+                </nav>
+              </div>
+            </div>
+
+            <!-- ── Analyse financière (lg) ── -->
+            <div *ngSwitchCase="'financial-analysis'" class="widget-section">
+              <div class="widget-section__header">
+                <i class="bi bi-graph-up"></i>
+                <span>Analyse financière</span>
+                <button *ngIf="analyticsSummary" class="dash-btn dash-btn--outline" style="margin-left:auto" (click)="exportCsv()">
+                  <i class="bi bi-download"></i><span>Exporter CSV</span>
+                </button>
+              </div>
+              <div class="widget-section__body">
+                <ng-container *ngIf="isOwner && analyticsSummary; else noAnalytics">
+                  <!-- KPI row -->
+                  <div class="widget-grid" style="margin-bottom:var(--hw-space-4)">
+                    <app-stats-card label="Revenus totaux"
+                      [value]="(analyticsSummary.totalRevenue | number:'1.2-2') + ' EUR'"
+                      icon="bi-cash-stack" color="warning" class="widget-sm"></app-stats-card>
+                    <app-stats-card label="Taux d'occupation"
+                      [value]="analyticsSummary.occupancyRate + '%'"
+                      icon="bi-pie-chart" color="success" class="widget-sm"></app-stats-card>
+                    <app-stats-card label="Biens"
+                      [value]="analyticsSummary.totalProperties"
+                      icon="bi-building" color="primary" class="widget-sm"></app-stats-card>
+                    <app-stats-card label="Locations actives"
+                      [value]="analyticsSummary.activeRentals"
+                      icon="bi-key" color="success" class="widget-sm"></app-stats-card>
                   </div>
-                  <span class="shortcut-widget__label">{{ def.label }}</span>
-                </a>
-              </ng-container>
-            </ng-container>
+                  <!-- Bar chart -->
+                  <div *ngIf="analyticsSummary.monthlyRevenue.length > 0" style="margin-bottom:var(--hw-space-4)">
+                    <h4 style="font-family:var(--hw-font-display);font-size:var(--hw-fs-sm);font-weight:600;color:var(--hw-primary-800);margin:0 0 var(--hw-space-3)">Revenus mensuels (6 derniers mois)</h4>
+                    <div class="a-bars">
+                      <div class="a-bar-g" *ngFor="let m of analyticsSummary.monthlyRevenue">
+                        <div class="a-bar-w"><div class="a-bar" [style.height.%]="getBarHeight(m.amount)" [title]="m.amount + ' EUR'"></div></div>
+                        <span class="a-lbl">{{ formatMonth(m.month) }}</span>
+                        <span class="a-amt">{{ m.amount | number:'1.0-0' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Vacant -->
+                  <div *ngIf="analyticsSummary.vacantProperties.length > 0" class="hw-alert hw-alert--warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>{{ analyticsSummary.vacantProperties.length }} bien{{ analyticsSummary.vacantProperties.length > 1 ? 's' : '' }} vacant{{ analyticsSummary.vacantProperties.length > 1 ? 's' : '' }}:
+                      <span *ngFor="let name of analyticsSummary.vacantProperties; let last = last">{{ name }}{{ last ? '' : ', ' }}</span>
+                    </span>
+                  </div>
+                </ng-container>
+                <ng-template #noAnalytics>
+                  <app-loading-skeleton *ngIf="analyticsLoading" type="card" [count]="1"></app-loading-skeleton>
+                  <div *ngIf="!analyticsLoading" class="widget-empty">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Analyse disponible pour les comptes propriétaires</span>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
 
           </ng-container>
         </div>
       </div>
 
     </div>
-
-    <!-- ════ ANALYTICS (OWNER only) ════ -->
-    <ng-container *ngIf="isOwner && !loading && !error">
-      <ng-container *ngIf="analyticsSummary">
-
-        <div class="widget-section" style="margin-bottom:var(--hw-space-4)">
-          <div class="widget-section__header">
-            <i class="bi bi-graph-up"></i>
-            <span>Analyse financiere</span>
-            <button class="dash-btn dash-btn--outline" style="margin-left:auto" (click)="exportCsv()">
-              <i class="bi bi-download"></i><span>Exporter CSV</span>
-            </button>
-          </div>
-          <div class="widget-section__body">
-            <!-- KPI row -->
-            <div class="widget-grid" style="margin-bottom:var(--hw-space-4)">
-              <app-stats-card label="Revenus totaux"
-                [value]="(analyticsSummary.totalRevenue | number:'1.2-2') + ' EUR'"
-                icon="bi-cash-stack" color="warning" class="widget-sm"></app-stats-card>
-              <app-stats-card label="Taux d'occupation"
-                [value]="analyticsSummary.occupancyRate + '%'"
-                icon="bi-pie-chart" color="success" class="widget-sm"></app-stats-card>
-              <app-stats-card label="Biens"
-                [value]="analyticsSummary.totalProperties"
-                icon="bi-building" color="primary" class="widget-sm"></app-stats-card>
-              <app-stats-card label="Locations actives"
-                [value]="analyticsSummary.activeRentals"
-                icon="bi-key" color="success" class="widget-sm"></app-stats-card>
-            </div>
-            <!-- Bar chart -->
-            <div *ngIf="analyticsSummary.monthlyRevenue.length > 0" style="margin-bottom:var(--hw-space-4)">
-              <h4 style="font-family:var(--hw-font-display);font-size:var(--hw-fs-sm);font-weight:600;color:var(--hw-primary-800);margin:0 0 var(--hw-space-3)">Revenus mensuels (6 derniers mois)</h4>
-              <div class="a-bars">
-                <div class="a-bar-g" *ngFor="let m of analyticsSummary.monthlyRevenue">
-                  <div class="a-bar-w"><div class="a-bar" [style.height.%]="getBarHeight(m.amount)" [title]="m.amount + ' EUR'"></div></div>
-                  <span class="a-lbl">{{ formatMonth(m.month) }}</span>
-                  <span class="a-amt">{{ m.amount | number:'1.0-0' }}</span>
-                </div>
-              </div>
-            </div>
-            <!-- Vacant -->
-            <div *ngIf="analyticsSummary.vacantProperties.length > 0" class="hw-alert hw-alert--warning">
-              <i class="bi bi-exclamation-triangle-fill"></i>
-              <span>{{ analyticsSummary.vacantProperties.length }} bien{{ analyticsSummary.vacantProperties.length > 1 ? 's' : '' }} vacant{{ analyticsSummary.vacantProperties.length > 1 ? 's' : '' }}:
-                <span *ngFor="let name of analyticsSummary.vacantProperties; let last = last">{{ name }}{{ last ? '' : ', ' }}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-      </ng-container>
-      <app-loading-skeleton *ngIf="analyticsLoading" type="card" [count]="2"></app-loading-skeleton>
-    </ng-container>
 
   </ng-container>
 

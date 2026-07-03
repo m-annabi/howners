@@ -17,7 +17,7 @@ import { DashboardStats } from '../../core/models/dashboard.model';
 import { PaymentStatus } from '../../core/models/payment.model';
 import { ContractStatus } from '../../core/models/contract.model';
 import { ApplicationStatus } from '../../core/models/application.model';
-import { WidgetConfig, WidgetDef, ALL_WIDGET_DEFS } from '../../core/models/widget-config.model';
+import { WidgetConfig, WidgetDef, ALL_WIDGET_DEFS, QUICK_LINKS } from '../../core/models/widget-config.model';
 
 interface ActionItems {
   latePayments: number;
@@ -55,6 +55,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   addPanelOpen = false;
 
   readonly ALL_WIDGET_DEFS: WidgetDef[] = ALL_WIDGET_DEFS;
+  readonly quickLinks = QUICK_LINKS;
 
   private _gridEl?: ElementRef<HTMLElement>;
 
@@ -69,12 +70,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get isOwner(): boolean { return this.currentUser?.role === 'OWNER'; }
 
   get hasActionItems(): boolean {
-    return !!this.actionItems && (
-      this.actionItems.latePayments > 0 ||
-      this.actionItems.expiringContracts > 0 ||
-      this.actionItems.pendingApplications > 0 ||
-      this.actionItems.awaitingSignatures > 0
-    );
+    return this.totalActionCount > 0;
+  }
+
+  get totalActionCount(): number {
+    if (!this.actionItems) return 0;
+    return this.actionItems.latePayments + this.actionItems.expiringContracts
+      + this.actionItems.pendingApplications + this.actionItems.awaitingSignatures;
+  }
+
+  get todayLabel(): string {
+    const label = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  get monthlyRevenueLabel(): string {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: this.stats?.currency || 'EUR',
+      maximumFractionDigits: 0
+    }).format(this.stats?.monthlyRevenue || 0);
+  }
+
+  scrollToActionItems(): void {
+    document.getElementById('widget-action-items')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   get showOnboarding(): boolean {
@@ -114,10 +133,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   getWidgetSizeClass(id: string): string {
     const def = ALL_WIDGET_DEFS.find(d => d.id === id);
     return def?.size === 'sm' ? 'widget-sm' : 'widget-lg';
-  }
-
-  getWidgetDef(id: string): WidgetDef | undefined {
-    return ALL_WIDGET_DEFS.find(d => d.id === id);
   }
 
   trackById(_: number, cfg: WidgetConfig): string { return cfg.id; }

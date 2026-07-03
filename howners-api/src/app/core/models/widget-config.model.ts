@@ -24,21 +24,27 @@ export interface WidgetDefinition {
 }
 
 export const ALL_WIDGET_DEFS: WidgetDef[] = [
-  { id: 'stat-properties',     label: 'Biens',               icon: 'bi-building',          category: 'Statistiques', size: 'sm' },
-  { id: 'stat-rentals',        label: 'Locations actives',   icon: 'bi-key',               category: 'Statistiques', size: 'sm' },
-  { id: 'stat-revenue',        label: 'Revenus mensuels',    icon: 'bi-cash-stack',        category: 'Statistiques', size: 'sm' },
-  { id: 'stat-pending',        label: 'En attente',          icon: 'bi-clock-history',     category: 'Statistiques', size: 'sm' },
-  { id: 'action-items',        label: 'À traiter',           icon: 'bi-bell',              category: 'Gestion',      size: 'lg' },
-  { id: 'recent-activity',     label: 'Activité récente',    icon: 'bi-clock-history',     category: 'Gestion',      size: 'lg' },
-  { id: 'shortcut-properties', label: 'Mes Biens',           icon: 'bi-building',          category: 'Raccourcis',   size: 'sm', route: '/properties', color: 'primary' },
-  { id: 'shortcut-rentals',    label: 'Locations',           icon: 'bi-key',               category: 'Raccourcis',   size: 'sm', route: '/rentals',    color: 'success' },
-  { id: 'shortcut-contracts',  label: 'Contrats',            icon: 'bi-file-earmark-text', category: 'Raccourcis',   size: 'sm', route: '/contracts',  color: 'info'    },
-  { id: 'shortcut-payments',   label: 'Paiements',           icon: 'bi-credit-card',       category: 'Raccourcis',   size: 'sm', route: '/payments',   color: 'warning' },
-  { id: 'shortcut-listings',   label: 'Annonces',            icon: 'bi-megaphone',         category: 'Raccourcis',   size: 'sm', route: '/listings',   color: 'neutral' },
-  { id: 'shortcut-invoices',   label: 'Factures',            icon: 'bi-receipt',           category: 'Raccourcis',   size: 'sm', route: '/invoices',   color: 'danger'  },
-  { id: 'shortcut-expenses',   label: 'Dépenses',            icon: 'bi-wallet2',           category: 'Raccourcis',   size: 'sm', route: '/expenses',   color: 'warning' },
-  { id: 'shortcut-messages',   label: 'Messages',            icon: 'bi-chat-dots',         category: 'Raccourcis',   size: 'sm', route: '/messages',   color: 'neutral' },
-  { id: 'shortcut-financial',  label: 'Finances',            icon: 'bi-graph-up',          category: 'Raccourcis',   size: 'sm', route: '/financial',  color: 'success' },
+  { id: 'stat-properties',    label: 'Biens',              icon: 'bi-building',         category: 'Statistiques', size: 'sm' },
+  { id: 'stat-rentals',       label: 'Locations actives',  icon: 'bi-key',              category: 'Statistiques', size: 'sm' },
+  { id: 'stat-revenue',       label: 'Revenus mensuels',   icon: 'bi-cash-stack',       category: 'Statistiques', size: 'sm' },
+  { id: 'stat-pending',       label: 'En attente',         icon: 'bi-clock-history',    category: 'Statistiques', size: 'sm' },
+  { id: 'action-items',       label: 'À traiter',          icon: 'bi-bell',             category: 'Gestion',      size: 'lg' },
+  { id: 'recent-activity',    label: 'Activité récente',   icon: 'bi-clock-history',    category: 'Gestion',      size: 'lg' },
+  { id: 'quick-links',        label: 'Accès rapides',      icon: 'bi-lightning-charge', category: 'Raccourcis',   size: 'lg' },
+  { id: 'financial-analysis', label: 'Analyse financière', icon: 'bi-graph-up',         category: 'Finances',     size: 'lg' },
+];
+
+/** Liens du widget « Accès rapides » (ex-tuiles de raccourcis individuelles). */
+export const QUICK_LINKS: { label: string; icon: string; route: string }[] = [
+  { label: 'Mes Biens', icon: 'bi-building',          route: '/properties' },
+  { label: 'Locations', icon: 'bi-key',               route: '/rentals' },
+  { label: 'Contrats',  icon: 'bi-file-earmark-text', route: '/contracts' },
+  { label: 'Paiements', icon: 'bi-credit-card',       route: '/payments' },
+  { label: 'Annonces',  icon: 'bi-megaphone',         route: '/listings' },
+  { label: 'Factures',  icon: 'bi-receipt',           route: '/invoices' },
+  { label: 'Dépenses',  icon: 'bi-wallet2',           route: '/expenses' },
+  { label: 'Messages',  icon: 'bi-chat-dots',         route: '/messages' },
+  { label: 'Finances',  icon: 'bi-graph-up',          route: '/financial' },
 ];
 
 export const FINANCIAL_WIDGET_DEFS: WidgetDef[] = [
