@@ -1,46 +1,54 @@
-<div class="mb-3">
-  <a routerLink="/messages" class="hw-btn hw-btn--sm hw-btn--ghost">
-    <i class="bi bi-arrow-left"></i> Retour aux conversations
-  </a>
-</div>
+<div class="msg-thread">
 
-<div class="hw-card conv-detail">
-  <div class="conv-detail__header">
-    <i class="bi bi-chat-dots"></i>
-    Conversation
-    <span *ngIf="messages.length > 0"> avec {{ isMyMessage(messages[0]) ? messages[0].recipientName : messages[0].senderName }}</span>
+  <!-- En-tête du fil -->
+  <div class="msg-thread__header">
+    <a routerLink="/messages" class="msg-thread__back" title="Retour aux conversations">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <span class="msg-avatar" [style.background]="avatarColor(displayName)">
+      {{ displayName.charAt(0).toUpperCase() }}
+    </span>
+    <span class="msg-thread__name">{{ displayName }}</span>
   </div>
 
-  <div #messagesContainer class="conv-detail__body">
+  <!-- Messages -->
+  <div #messagesContainer class="msg-thread__body">
     <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
 
-    <div *ngIf="!loading && messages.length === 0" class="conv-detail__empty">
-      <i class="bi bi-chat-square"></i>
+    <div *ngIf="!loading && messages.length === 0" class="msg-thread__empty">
+      <i class="bi bi-chat-square-text"></i>
       <p>Commencez la conversation</p>
     </div>
 
-    <div *ngFor="let msg of messages" class="conv-msg" [class.conv-msg--mine]="isMyMessage(msg)">
-      <div class="conv-bubble" [class.conv-bubble--mine]="isMyMessage(msg)">
-        <div class="conv-bubble__meta">
-          {{ isMyMessage(msg) ? 'Vous' : msg.senderName }}
-          <span class="ms-2">{{ msg.createdAt | date:'dd/MM HH:mm' }}</span>
-        </div>
-        <div>{{ msg.body }}</div>
-        <div *ngIf="isMyMessage(msg)" class="conv-bubble__receipt">
-          <i class="bi" [class.bi-check2-all]="msg.isRead" [class.bi-check2]="!msg.isRead"></i>
+    <ng-container *ngFor="let msg of messages; let i = index">
+      <div *ngIf="isNewDay(i)" class="msg-day">
+        <span>{{ dayLabel(msg) }}</span>
+      </div>
+
+      <div class="msg-row" [class.msg-row--mine]="isMyMessage(msg)">
+        <div class="msg-bubble" [class.msg-bubble--mine]="isMyMessage(msg)">
+          <div class="msg-bubble__text">{{ msg.body }}</div>
+          <div class="msg-bubble__footer">
+            <span>{{ msg.createdAt | date:'HH:mm' }}</span>
+            <i *ngIf="isMyMessage(msg)"
+               class="bi msg-bubble__receipt"
+               [class.bi-check2-all]="msg.isRead"
+               [class.bi-check2]="!msg.isRead"
+               [class.msg-bubble__receipt--read]="msg.isRead"></i>
+          </div>
         </div>
       </div>
-    </div>
+    </ng-container>
   </div>
 
-  <div class="conv-detail__footer">
-    <div class="input-group">
-      <input type="text" class="form-control" [(ngModel)]="newMessage"
-             placeholder="Tapez votre message…" (keyup.enter)="send()" [disabled]="sending">
-      <button class="hw-btn hw-btn--primary" (click)="send()" [disabled]="!newMessage.trim() || sending">
-        <span *ngIf="sending" class="spinner-border spinner-border-sm me-1"></span>
-        <i class="bi bi-send"></i>
-      </button>
-    </div>
+  <!-- Saisie -->
+  <div class="msg-thread__footer">
+    <input type="text" class="msg-input" [(ngModel)]="newMessage"
+           placeholder="Votre message…" (keyup.enter)="send()" [disabled]="sending">
+    <button class="msg-send" (click)="send()" [disabled]="!newMessage.trim() || sending" title="Envoyer">
+      <span *ngIf="sending" class="spinner-border spinner-border-sm"></span>
+      <i *ngIf="!sending" class="bi bi-send-fill"></i>
+    </button>
   </div>
+
 </div>

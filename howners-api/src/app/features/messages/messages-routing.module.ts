@@ -1,12 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ConversationListComponent } from './conversation-list/conversation-list.component';
-import { ConversationDetailComponent } from './conversation-detail/conversation-detail.component';
 
+// Vue scindée : la page liste héberge aussi le fil actif
+// (userId en paramètre, ou recipientId en query pour /new)
 const routes: Routes = [
   { path: '', component: ConversationListComponent },
-  { path: 'new', component: ConversationDetailComponent },
-  { path: ':userId', component: ConversationDetailComponent }
+  { path: 'new', component: ConversationListComponent },
+  { path: ':userId', component: ConversationListComponent }
 ];
 
 @NgModule({

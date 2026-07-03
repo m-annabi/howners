@@ -1,26 +1,62 @@
-<app-page-header title="Messages"></app-page-header>
+<div class="msg-page" [class.msg-page--active]="activePartnerId">
 
-<app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
-
-<app-empty-state
-  *ngIf="!loading && conversations.length === 0"
-  icon="bi-chat-square"
-  title="Aucune conversation">
-</app-empty-state>
-
-<div class="conv-list" *ngIf="!loading && conversations.length > 0">
-  <a *ngFor="let conv of conversations"
-     [routerLink]="['/messages', conv.partnerId]"
-     class="hw-card conv-item"
-     [class.conv-item--unread]="!conv.lastMessageRead && conv.unreadCount > 0">
-    <div class="conv-item__avatar">{{ conv.partnerName.charAt(0).toUpperCase() }}</div>
-    <div class="conv-item__body">
-      <div class="conv-item__name" [class.fw-bold]="conv.unreadCount > 0">{{ conv.partnerName }}</div>
-      <div class="conv-item__preview">{{ conv.lastMessageBody }}</div>
+  <!-- ══ Volet gauche : conversations ══ -->
+  <aside class="msg-side">
+    <div class="msg-side__header">
+      <h2>Messages</h2>
     </div>
-    <div class="conv-item__meta">
-      <span class="hw-text-xs hw-text-muted">{{ conv.lastMessageAt | date:'dd/MM HH:mm' }}</span>
-      <span *ngIf="conv.unreadCount > 0" class="hw-badge hw-badge--danger">{{ conv.unreadCount }}</span>
+
+    <div class="msg-side__search">
+      <i class="bi bi-search"></i>
+      <input type="text" placeholder="Rechercher…" [(ngModel)]="searchTerm">
     </div>
-  </a>
+
+    <div class="msg-side__list">
+      <app-loading-skeleton *ngIf="loading" type="card" [count]="4"></app-loading-skeleton>
+
+      <div *ngIf="!loading && conversations.length === 0" class="msg-side__empty">
+        <i class="bi bi-chat-square"></i>
+        <p>Aucune conversation</p>
+      </div>
+
+      <div *ngIf="!loading && conversations.length > 0 && filteredConversations.length === 0" class="msg-side__empty">
+        <p>Aucun résultat pour « {{ searchTerm }} »</p>
+      </div>
+
+      <a *ngFor="let conv of filteredConversations; trackBy: trackByPartner"
+         [routerLink]="['/messages', conv.partnerId]"
+         class="msg-conv"
+         [class.msg-conv--active]="conv.partnerId === activePartnerId"
+         [class.msg-conv--unread]="conv.unreadCount > 0">
+        <span class="msg-avatar" [style.background]="avatarColor(conv.partnerName)">
+          {{ conv.partnerName.charAt(0).toUpperCase() }}
+        </span>
+        <span class="msg-conv__body">
+          <span class="msg-conv__name">{{ conv.partnerName }}</span>
+          <span class="msg-conv__preview">{{ conv.lastMessageBody }}</span>
+        </span>
+        <span class="msg-conv__meta">
+          <span class="msg-conv__time">{{ conv.lastMessageAt | date:'dd/MM' }}</span>
+          <span *ngIf="conv.unreadCount > 0" class="msg-conv__badge">{{ conv.unreadCount }}</span>
+        </span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ══ Volet droit : fil actif ══ -->
+  <section class="msg-thread-pane">
+    <app-conversation-detail
+      *ngIf="activePartnerId; else pickOne"
+      [partnerId]="activePartnerId"
+      [partnerName]="activePartnerName">
+    </app-conversation-detail>
+
+    <ng-template #pickOne>
+      <div class="msg-thread-pane__placeholder">
+        <i class="bi bi-chat-dots"></i>
+        <p>Sélectionnez une conversation</p>
+      </div>
+    </ng-template>
+  </section>
+
 </div>

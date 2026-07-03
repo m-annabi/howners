@@ -1,52 +1,189 @@
-.conv-list {
+// ── Vue scindée ─────────────────────────────────────────────────────────────
+.msg-page {
   display: flex;
-  flex-direction: column;
-  gap: var(--hw-space-2);
+  height: calc(100vh - var(--hw-topbar-height) - 2 * var(--hw-space-6));
+  min-height: 480px;
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-xl);
+  box-shadow: var(--hw-shadow-xs);
+  overflow: hidden;
 }
 
-.conv-item {
+// ── Volet conversations ─────────────────────────────────────────────────────
+.msg-side {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: var(--hw-border);
+  background: var(--hw-gray-50);
+
+  &__header {
+    padding: var(--hw-space-4) var(--hw-space-4) var(--hw-space-2);
+
+    h2 {
+      font-family: var(--hw-font-display);
+      font-size: var(--hw-fs-xl);
+      font-weight: var(--hw-fw-semibold);
+      color: var(--hw-primary-800);
+      margin: 0;
+    }
+  }
+
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    margin: var(--hw-space-2) var(--hw-space-4) var(--hw-space-3);
+    padding: 0 var(--hw-space-3);
+    height: 38px;
+    background: var(--hw-surface);
+    border: var(--hw-border);
+    border-radius: var(--hw-radius-full);
+
+    i { color: var(--hw-gray-400); font-size: 0.85rem; }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: var(--hw-fs-sm);
+      color: var(--hw-gray-900);
+
+      &::placeholder { color: var(--hw-gray-400); }
+    }
+  }
+
+  &__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 var(--hw-space-2) var(--hw-space-2);
+  }
+
+  &__empty {
+    text-align: center;
+    padding: var(--hw-space-8) var(--hw-space-4);
+    color: var(--hw-gray-500);
+
+    i { font-size: 2rem; color: var(--hw-gray-300); display: block; margin-bottom: var(--hw-space-2); }
+    p { margin: 0; font-size: var(--hw-fs-sm); }
+  }
+}
+
+// ── Élément de conversation ─────────────────────────────────────────────────
+.msg-conv {
   display: flex;
   align-items: center;
   gap: var(--hw-space-3);
+  padding: var(--hw-space-3);
+  border-radius: var(--hw-radius-lg);
   text-decoration: none;
-  color: inherit;
-  transition: background 0.12s ease;
+  transition: background 0.12s;
 
-  &:hover { background: var(--hw-gray-50); }
+  &:hover { background: var(--hw-gray-100); text-decoration: none; }
 
-  &--unread { border-left: 3px solid var(--hw-primary-600); }
+  &--active {
+    background: var(--hw-primary-600) !important;
 
-  &__avatar {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
-    border-radius: var(--hw-radius-full);
-    background: var(--hw-primary-600);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    font-weight: var(--hw-fw-semibold);
+    .msg-conv__name, .msg-conv__time { color: #fff; }
+    .msg-conv__preview { color: var(--hw-primary-200); }
   }
 
-  &__body { flex: 1; min-width: 0; }
+  &__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
 
-  &__name { margin-bottom: 2px; }
-
-  &__preview {
-    color: var(--hw-gray-600);
-    font-size: var(--hw-fs-sm);
+  &__name {
+    font-size: var(--hw-fs-base);
+    font-weight: var(--hw-fw-medium);
+    color: var(--hw-gray-900);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
+  &--unread &__name { font-weight: var(--hw-fw-bold); }
+
+  &__preview {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &--unread &__preview { color: var(--hw-gray-700); font-weight: var(--hw-fw-medium); }
+
   &__meta {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: var(--hw-space-1);
-    white-space: nowrap;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  &__time {
+    font-size: var(--hw-fs-xs);
+    color: var(--hw-gray-400);
+  }
+
+  &__badge {
+    background: var(--hw-accent-500);
+    color: var(--hw-primary-800);
+    font-size: 0.65rem;
+    font-weight: var(--hw-fw-bold);
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--hw-radius-full);
+    padding: 0 5px;
+  }
+}
+
+// ── Volet fil ───────────────────────────────────────────────────────────────
+.msg-thread-pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  app-conversation-detail {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  &__placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--hw-space-2);
+    color: var(--hw-gray-400);
+
+    i { font-size: 3rem; color: var(--hw-gray-200); }
+    p { margin: 0; font-size: var(--hw-fs-base); }
+  }
+}
+
+// ── Mobile : volets basculants ──────────────────────────────────────────────
+@media (max-width: 800px) {
+  .msg-side { width: 100%; border-right: none; }
+  .msg-thread-pane { display: none; }
+
+  .msg-page--active {
+    .msg-side { display: none; }
+    .msg-thread-pane { display: flex; }
   }
 }

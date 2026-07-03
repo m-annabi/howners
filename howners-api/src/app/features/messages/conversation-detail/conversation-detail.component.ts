@@ -1,26 +1,33 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MessageService } from '../../../core/services/message.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
-import { Message, CreateMessageRequest } from '../../../core/models/message.model';
+import { Message, CreateMessageRequest, avatarColor } from '../../../core/models/message.model';
 
+/**
+ * Fil de conversation, embarqué dans la vue scindée (partnerId fourni en Input).
+ */
 @Component({
   selector: 'app-conversation-detail',
   templateUrl: './conversation-detail.component.html',
   styleUrls: ['./conversation-detail.component.scss']
 })
-export class ConversationDetailComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ConversationDetailComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
+
+  @Input() partnerId: string | null = null;
+  @Input() partnerName: string | null = null;
 
   messages: Message[] = [];
   loading = false;
-  partnerId: string | null = null;
   currentUserId: string | null = null;
   newMessage = '';
   sending = false;
   listingId: string | null = null;
+
+  readonly avatarColor = avatarColor;
 
   private userSub?: Subscription;
   private wsSub?: Subscription;
@@ -38,16 +45,19 @@ export class ConversationDetailComponent implements OnInit, OnDestroy, AfterView
       this.currentUserId = user?.id || null;
     });
 
-    this.partnerId = this.route.snapshot.paramMap.get('userId');
     this.listingId = this.route.snapshot.queryParamMap.get('listingId');
-
-    if (!this.partnerId) {
-      this.partnerId = this.route.snapshot.queryParamMap.get('recipientId');
-    }
 
     if (this.partnerId) {
       this.loadMessages();
-      this.subscribeToWebSocket();
+    }
+    this.subscribeToWebSocket();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['partnerId'] && !changes['partnerId'].firstChange) {
+      this.messages = [];
+      this.newMessage = '';
+      if (this.partnerId) this.loadMessages();
     }
   }
 
@@ -61,6 +71,13 @@ export class ConversationDetailComponent implements OnInit, OnDestroy, AfterView
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
     this.wsSub?.unsubscribe();
+  }
+
+  get displayName(): string {
+    if (this.partnerName) return this.partnerName;
+    const first = this.messages[0];
+    if (!first) return 'Conversation';
+    return this.isMyMessage(first) ? first.recipientName : first.senderName;
   }
 
   loadMessages(): void {
@@ -104,6 +121,23 @@ export class ConversationDetailComponent implements OnInit, OnDestroy, AfterView
 
   isMyMessage(msg: Message): boolean {
     return msg.senderId === this.currentUserId;
+  }
+
+  /** Sépare les messages par jour : vrai si le message ouvre une nouvelle journée. */
+  isNewDay(index: number): boolean {
+    if (index === 0) return true;
+    return new Date(this.messages[index].createdAt).toDateString()
+      !== new Date(this.messages[index - 1].createdAt).toDateString();
+  }
+
+  dayLabel(msg: Message): string {
+    const date = new Date(msg.createdAt);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+    if (date.toDateString() === yesterday.toDateString()) return 'Hier';
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   private subscribeToWebSocket(): void {

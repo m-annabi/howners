@@ -695,3 +695,18 @@
     }
   }
 }
+
+// Avatar rond à initiale (messagerie) — la couleur de fond vient de avatarColor()
+.msg-avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--hw-font-display);
+  font-weight: var(--hw-fw-semibold);
+  font-size: 1rem;
+}
