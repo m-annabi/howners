@@ -83,6 +83,18 @@ export class RentalListComponent implements OnInit {
     this.rentalService.getRentals().subscribe({
       next: (page) => {
         this.rentals = page.content;
+
+        // Un locataire n'a qu'un bail courant : on va directement à son détail
+        // (replaceUrl pour que le bouton retour ne repasse pas par la liste).
+        if (this.isTenant && this.rentals.length > 0) {
+          const current = this.rentals.find(r =>
+            r.status === RentalStatus.ACTIVE || r.status === RentalStatus.EXITING
+          ) ?? [...this.rentals].sort((a, b) =>
+            new Date(b.startDate ?? 0).getTime() - new Date(a.startDate ?? 0).getTime())[0];
+          this.router.navigate(['/rentals', current.id], { replaceUrl: true });
+          return;
+        }
+
         this.buildFilters();
         this.applyFilters();
         this.loading = false;
