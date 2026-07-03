@@ -22,6 +22,11 @@ export interface Listing {
   propertyPostalCode: string | null;
   propertyDepartment: string | null;
   propertyCountry: string | null;
+  propertyLatitude: number | null;
+  propertyLongitude: number | null;
+  propertySurface: number | null;
+  propertyBedrooms: number | null;
+  propertyFurnished: boolean | null;
   ownerId: string;
   ownerName: string;
   title: string;

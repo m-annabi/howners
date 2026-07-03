@@ -8,6 +8,7 @@ export const PREDEFINED_AMENITIES: AmenityItem[] = [
   { key: 'wifi', label: 'WiFi', icon: 'bi-wifi' },
   { key: 'parking', label: 'Parking', icon: 'bi-p-circle' },
   { key: 'ascenseur', label: 'Ascenseur', icon: 'bi-arrow-up-square' },
+  { key: 'acces_pmr', label: 'Accès PMR', icon: 'bi-person-wheelchair' },
   { key: 'balcon', label: 'Balcon', icon: 'bi-border-outer' },
   { key: 'terrasse', label: 'Terrasse', icon: 'bi-sun' },
   { key: 'cave', label: 'Cave', icon: 'bi-box-seam' },

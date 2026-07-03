@@ -79,7 +79,9 @@ public class ListingService {
             BigDecimal priceMin, BigDecimal priceMax, PropertyType propertyType,
             BigDecimal minSurface, Integer minBedrooms, Boolean furnished,
             LocalDate availableFrom, String sortBy,
-            BigDecimal nearLat, BigDecimal nearLng, BigDecimal radiusKm) {
+            BigDecimal nearLat, BigDecimal nearLng, BigDecimal radiusKm,
+            String dpeMax, Boolean parking, String exterior,
+            Boolean elevator, Boolean pmr, Boolean cellar) {
 
         // Bounding box for radius search. Conservative (square containing the circle);
         // an exact haversine pass below refines to the actual disk.
@@ -106,7 +108,13 @@ public class ListingService {
                 || propertyType != null || minSurface != null
                 || minBedrooms != null || furnished != null
                 || availableFrom != null
-                || hasRadius;
+                || hasRadius
+                || (dpeMax != null && !dpeMax.isBlank())
+                || Boolean.TRUE.equals(parking)
+                || (exterior != null && !exterior.isBlank())
+                || Boolean.TRUE.equals(elevator)
+                || Boolean.TRUE.equals(pmr)
+                || Boolean.TRUE.equals(cellar);
 
         List<Listing> listings;
         if (!hasAny) {
@@ -133,6 +141,50 @@ public class ListingService {
                         if (pLat == null || pLng == null) return false;
                         return haversineKm(lat, lng, pLat.doubleValue(), pLng.doubleValue()) <= rKm;
                     })
+                    .toList();
+        }
+
+        // Post-filtres confort (comme le rayon : appliqués après la requête)
+        if (dpeMax != null && !dpeMax.isBlank()) {
+            final String max = dpeMax.trim().toUpperCase();
+            listings = listings.stream()
+                    .filter(l -> {
+                        String dpe = l.getProperty().getDpeRating();
+                        return dpe != null && !dpe.isBlank()
+                                && dpe.trim().toUpperCase().compareTo(max) <= 0;
+                    })
+                    .toList();
+        }
+        if (Boolean.TRUE.equals(parking)) {
+            listings = listings.stream()
+                    .filter(l -> Boolean.TRUE.equals(l.getProperty().getHasParking())
+                            || hasAmenity(l, "parking"))
+                    .toList();
+        }
+        if (exterior != null && !exterior.isBlank()) {
+            final String ext = exterior;
+            listings = listings.stream()
+                    .filter(l -> switch (ext) {
+                        case "garden" -> hasAmenity(l, "jardin");
+                        case "balcony_terrace" -> hasAmenity(l, "balcon") || hasAmenity(l, "terrasse");
+                        default -> hasAmenity(l, "balcon") || hasAmenity(l, "terrasse") || hasAmenity(l, "jardin");
+                    })
+                    .toList();
+        }
+        if (Boolean.TRUE.equals(elevator)) {
+            listings = listings.stream()
+                    .filter(l -> Boolean.TRUE.equals(l.getProperty().getHasElevator())
+                            || hasAmenity(l, "ascenseur"))
+                    .toList();
+        }
+        if (Boolean.TRUE.equals(pmr)) {
+            listings = listings.stream()
+                    .filter(l -> hasAmenity(l, "acces_pmr"))
+                    .toList();
+        }
+        if (Boolean.TRUE.equals(cellar)) {
+            listings = listings.stream()
+                    .filter(l -> hasAmenity(l, "cave"))
                     .toList();
         }
 
@@ -164,19 +216,29 @@ public class ListingService {
             BigDecimal minSurface, Integer minBedrooms, Boolean furnished,
             LocalDate availableFrom, String sortBy,
             BigDecimal nearLat, BigDecimal nearLng, BigDecimal radiusKm,
+            String dpeMax, Boolean parking, String exterior,
+            Boolean elevator, Boolean pmr, Boolean cellar,
             Pageable pageable) {
 
-        // When geo-radius or custom sort is active, fall back to the non-paginated path
-        // because post-fetch filtering / re-sorting is incompatible with DB-level pagination.
+        // When geo-radius, post-filters or custom sort are active, fall back to the
+        // non-paginated path because post-fetch filtering / re-sorting is incompatible
+        // with DB-level pagination.
         boolean hasRadius = nearLat != null && nearLng != null && radiusKm != null
                 && radiusKm.signum() > 0;
         boolean hasCustomSort = sortBy != null && !sortBy.isBlank();
+        boolean hasPostFilter = (dpeMax != null && !dpeMax.isBlank())
+                || Boolean.TRUE.equals(parking)
+                || (exterior != null && !exterior.isBlank())
+                || Boolean.TRUE.equals(elevator)
+                || Boolean.TRUE.equals(pmr)
+                || Boolean.TRUE.equals(cellar);
 
-        if (hasRadius || hasCustomSort) {
+        if (hasRadius || hasCustomSort || hasPostFilter) {
             List<ListingResponse> all = searchPublishedAdvanced(
                     search, city, department, postalCode,
                     priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished,
-                    availableFrom, sortBy, nearLat, nearLng, radiusKm);
+                    availableFrom, sortBy, nearLat, nearLng, radiusKm,
+                    dpeMax, parking, exterior, elevator, pmr, cellar);
             int start = (int) pageable.getOffset();
             int end = Math.min(start + pageable.getPageSize(), all.size());
             List<ListingResponse> pageContent = start >= all.size()
@@ -212,6 +274,11 @@ public class ListingService {
         }
 
         return listings.map(this::toResponseWithPhotos);
+    }
+
+    private static boolean hasAmenity(Listing l, String key) {
+        String amenities = l.getAmenities();
+        return amenities != null && amenities.toLowerCase().contains(key);
     }
 
     private static double haversineKm(double lat1, double lng1, double lat2, double lng2) {

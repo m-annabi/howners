@@ -1,219 +1,224 @@
 <div class="listing-search">
-  <header class="listing-search__header">
-    <h2>Rechercher des annonces</h2>
-    <p class="text-muted">Filtrez par localisation, prix et surface — les essentiels d'abord.</p>
-  </header>
 
-  <!-- Search bar (text query) -->
-  <div class="listing-search__query">
-    <div class="input-group input-group-lg">
-      <span class="input-group-text"><i class="bi bi-search"></i></span>
+  <!-- ══ Bandeau de recherche ══ -->
+  <div class="search-hero">
+    <h1 class="search-hero__title">Trouvez votre prochain logement</h1>
+    <p class="search-hero__subtitle">Appartements, maisons, studios — partout en France et au-delà.</p>
+
+    <div class="search-hero__bar">
+      <!-- Lieu avec autocomplete -->
+      <div class="search-hero__location">
+        <i class="bi bi-geo-alt search-hero__field-icon"></i>
+        <input
+          type="text"
+          class="search-hero__input"
+          placeholder="Ville, secteur…"
+          [(ngModel)]="locationQuery"
+          (input)="onLocationInput()"
+          (keyup.enter)="search()"
+          (blur)="hideSuggestionsSoon()"
+          (focus)="citySuggestions.length > 0 && (showSuggestions = true)">
+        <button
+          type="button"
+          class="search-hero__locate"
+          [class.is-loading]="geolocating"
+          (mousedown)="locateMe()"
+          title="Autour de ma position">
+          <i class="bi" [ngClass]="geolocating ? 'bi-arrow-clockwise' : 'bi-crosshair'"></i>
+        </button>
+
+        <!-- Suggestions -->
+        <ul class="search-hero__suggestions" *ngIf="showSuggestions">
+          <li *ngFor="let s of citySuggestions" (mousedown)="selectCity(s)">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span class="suggestion-label">{{ s.label }}</span>
+            <span class="suggestion-cp" *ngIf="s.postalCode">{{ s.postalCode }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Mot-clé -->
+      <div class="search-hero__keyword">
+        <i class="bi bi-search search-hero__field-icon"></i>
+        <input
+          type="text"
+          class="search-hero__input"
+          placeholder="Mot-clé (quartier, terrasse…)"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="search()">
+      </div>
+
+      <button class="search-hero__submit" (click)="search()">Rechercher</button>
+    </div>
+
+    <!-- Rayon — visible quand un secteur est choisi -->
+    <div class="search-hero__radius" *ngIf="searchCenter">
+      <i class="bi bi-broadcast-pin"></i>
+      <span class="search-hero__radius-label">{{ searchCenter.label }}</span>
       <input
-        type="text"
-        class="form-control"
-        placeholder="Mot-clé : titre, description, quartier…"
-        [(ngModel)]="searchQuery"
-        (keyup.enter)="search()">
-      <button class="btn btn-primary" (click)="search()">Rechercher</button>
+        type="range" min="1" max="50" step="1"
+        [(ngModel)]="radiusKm"
+        (change)="onRadiusChange()">
+      <span class="search-hero__radius-value">{{ radiusKm }} km</span>
+      <button type="button" class="search-hero__radius-close" (click)="clearLocation()" title="Retirer le secteur">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
   </div>
 
-  <!-- Primary filter bar (always visible) -->
-  <div class="filter-bar" role="search">
-    <div class="filter-bar__field filter-bar__field--location">
-      <label class="filter-bar__label">
-        <i class="bi bi-geo-alt"></i> Lieu
-      </label>
-      <div class="filter-bar__location-input">
-        <input
-          type="text"
-          class="form-control form-control-sm"
-          placeholder="Ville ou code postal"
-          [(ngModel)]="filterCity"
-          (keyup.enter)="search()">
-        <button
-          type="button"
-          class="filter-bar__locate"
-          [class.is-loading]="geolocating"
-          [class.is-active]="userLat != null"
-          (click)="locateMe()"
-          title="Détecter ma position">
-          <i class="bi" [ngClass]="geolocating ? 'bi-arrow-clockwise' : 'bi-crosshair'"></i>
-          <span class="filter-bar__locate-label">Près de moi</span>
-        </button>
-      </div>
-    </div>
-
+  <!-- ══ Barre de filtres ══ -->
+  <div class="filter-bar">
     <div class="filter-bar__field">
-      <label class="filter-bar__label">
-        <i class="bi bi-coin"></i> Prix max
-      </label>
+      <label>Prix max</label>
       <div class="filter-bar__unit-input">
-        <input
-          type="number"
-          class="form-control form-control-sm"
-          placeholder="—"
-          min="0"
-          step="50"
-          [(ngModel)]="filterPriceMax"
-          (change)="search()">
-        <span class="filter-bar__unit">€</span>
+        <input type="number" placeholder="—" min="0" step="50"
+               [(ngModel)]="filterPriceMax" (change)="search()">
+        <span>€</span>
       </div>
     </div>
 
     <div class="filter-bar__field">
-      <label class="filter-bar__label">
-        <i class="bi bi-arrows-angle-expand"></i> Surface min
-      </label>
+      <label>Surface min</label>
       <div class="filter-bar__unit-input">
-        <input
-          type="number"
-          class="form-control form-control-sm"
-          placeholder="—"
-          min="0"
-          step="5"
-          [(ngModel)]="filterMinSurface"
-          (change)="search()">
-        <span class="filter-bar__unit">m²</span>
+        <input type="number" placeholder="—" min="0" step="5"
+               [(ngModel)]="filterMinSurface" (change)="search()">
+        <span>m²</span>
       </div>
     </div>
 
     <div class="filter-bar__field">
-      <label class="filter-bar__label">
-        <i class="bi bi-house"></i> Type
-      </label>
-      <select class="form-select form-select-sm" [(ngModel)]="filterPropertyType" (change)="search()">
+      <label>Type de bien</label>
+      <select [(ngModel)]="filterPropertyType" (change)="search()">
         <option value="">Tous</option>
-        <option *ngFor="let type of propertyTypes" [value]="type">
-          {{ propertyTypeLabels[type] }}
-        </option>
+        <option *ngFor="let type of propertyTypes" [value]="type">{{ propertyTypeLabels[type] }}</option>
       </select>
     </div>
 
     <div class="filter-bar__field">
-      <label class="filter-bar__label">
-        <i class="bi bi-sort-down"></i> Tri
-      </label>
-      <select class="form-select form-select-sm" [(ngModel)]="sortBy" (change)="search()">
+      <label>Trier par</label>
+      <select [(ngModel)]="sortBy" (change)="search()">
         <option value="">Plus récents</option>
-        <option value="price_asc">Prix ↑</option>
-        <option value="price_desc">Prix ↓</option>
-        <option *ngIf="userLat != null" value="distance_asc">Distance ↑</option>
+        <option value="price_asc">Prix croissant</option>
+        <option value="price_desc">Prix décroissant</option>
+        <option *ngIf="searchCenter" value="distance_asc">Distance</option>
       </select>
     </div>
 
     <div class="filter-bar__actions">
-      <button class="btn btn-outline-secondary btn-sm"
-              (click)="toggleMoreFilters()"
-              [class.active]="showMoreFilters">
-        <i class="bi bi-sliders"></i>
-        Plus
-        <span *ngIf="(filterMinBedrooms != null) || filterFurnished || filterDepartment || filterPriceMin != null || filterAvailableFrom"
-              class="filter-bar__more-dot"></span>
-      </button>
-      <button *ngIf="hasActiveFilters"
-              class="btn btn-link btn-sm"
-              (click)="clearFilters()">
-        Effacer
+      <button class="filter-bar__more" (click)="toggleMoreFilters()" [class.is-active]="showMoreFilters">
+        <i class="bi bi-sliders"></i> Plus de filtres
+        <span *ngIf="hasSecondaryFilters" class="filter-bar__more-dot"></span>
       </button>
     </div>
   </div>
 
-  <!-- Radius pill — visible only when geolocation is active -->
-  <div *ngIf="userLat != null" class="radius-pill">
-    <i class="bi bi-broadcast-pin"></i>
-    <span class="radius-pill__label">{{ detectedLocationLabel || 'Autour de ma position' }}</span>
-    <div class="radius-pill__slider">
-      <input
-        type="range"
-        min="1"
-        max="50"
-        step="1"
-        [(ngModel)]="radiusKm"
-        (change)="onRadiusChange()"
-        class="form-range">
-      <span class="radius-pill__value">{{ radiusKm }} km</span>
-    </div>
-    <button type="button" class="radius-pill__close" (click)="clearGeolocation()" title="Désactiver">
-      <i class="bi bi-x-lg"></i>
-    </button>
-  </div>
-
-  <!-- Secondary filters (toggle) -->
+  <!-- ══ Filtres secondaires ══ -->
   <div *ngIf="showMoreFilters" class="filter-more">
-    <div class="row g-3">
-      <div class="col-md-2">
-        <label class="form-label">Code postal</label>
-        <input type="text" class="form-control" [(ngModel)]="filterPostalCode" placeholder="Ex: 92" (change)="search()">
-        <small class="form-text text-muted">Préfixe accepté</small>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Pays</label>
-        <select class="form-select" [(ngModel)]="filterCountry" (change)="onCountryFilterChange(); search()">
-          <option value="">Tous</option>
-          <option *ngFor="let c of countries" [value]="c.code">{{ c.label }}</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Département</label>
-        <select class="form-select" [(ngModel)]="filterDepartment" (change)="search()">
-          <option value="">Tous</option>
-          <option *ngFor="let dept of filteredDepartments" [value]="dept.code">
-            {{ getDepartmentLabel(dept) }}
-          </option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Prix min</label>
+    <div class="filter-more__row">
+      <div class="filter-more__field">
+        <label>Prix min</label>
         <div class="filter-bar__unit-input">
-          <input type="number" class="form-control" [(ngModel)]="filterPriceMin" placeholder="0" (change)="search()">
-          <span class="filter-bar__unit">€</span>
+          <input type="number" placeholder="0" [(ngModel)]="filterPriceMin" (change)="search()">
+          <span>€</span>
         </div>
       </div>
-      <div class="col-md-1">
-        <label class="form-label">Chambres ≥</label>
-        <input type="number" class="form-control" [(ngModel)]="filterMinBedrooms" placeholder="Min" (change)="search()">
+      <div class="filter-more__field">
+        <label>Chambres min</label>
+        <input type="number" min="0" placeholder="—" [(ngModel)]="filterMinBedrooms" (change)="search()">
       </div>
-      <div class="col-md-1">
-        <label class="form-label">Meublé</label>
-        <select class="form-select" [(ngModel)]="filterFurnished" (change)="search()">
-          <option value="">—</option>
-          <option value="true">Oui</option>
-          <option value="false">Non</option>
-        </select>
+      <div class="filter-more__field filter-more__field--grow">
+        <label>Meublé</label>
+        <div class="segmented">
+          <button type="button" [class.is-active]="filterFurnished === ''" (click)="setFurnished('')">Indifférent</button>
+          <button type="button" [class.is-active]="filterFurnished === 'true'" (click)="setFurnished('true')">Meublé</button>
+          <button type="button" [class.is-active]="filterFurnished === 'false'" (click)="setFurnished('false')">Non meublé</button>
+        </div>
       </div>
-      <div class="col-md-2">
-        <label class="form-label">Disponible dès</label>
-        <input type="date" class="form-control" [(ngModel)]="filterAvailableFrom" (change)="search()">
+    </div>
+
+    <div class="filter-more__row">
+      <div class="filter-more__field">
+        <label>DPE maximum</label>
+        <div class="dpe-scale" [class.has-selection]="filterDpeMax">
+          <button *ngFor="let rating of dpeRatings"
+                  type="button"
+                  class="dpe-scale__letter"
+                  [ngClass]="'dpe-scale__letter--' + rating.toLowerCase()"
+                  [class.is-selected]="filterDpeMax === rating"
+                  [class.is-covered]="filterDpeMax && rating <= filterDpeMax"
+                  (click)="toggleDpe(rating)"
+                  [title]="'Classe ' + rating + ' ou mieux'">
+            {{ rating }}
+          </button>
+          <span class="dpe-scale__hint" *ngIf="filterDpeMax">classe {{ filterDpeMax }} ou mieux</span>
+        </div>
+      </div>
+      <div class="filter-more__field">
+        <label>Extérieur & annexes</label>
+        <div class="amenity-chips">
+          <button type="button" class="amenity-chip" [class.is-active]="filterExtBalcony" (click)="toggleAmenity('balcony')">
+            <i class="bi bi-sun"></i> Balcon / terrasse
+          </button>
+          <button type="button" class="amenity-chip" [class.is-active]="filterExtGarden" (click)="toggleAmenity('garden')">
+            <i class="bi bi-tree"></i> Jardin
+          </button>
+          <button type="button" class="amenity-chip" [class.is-active]="filterParking" (click)="toggleAmenity('parking')">
+            <i class="bi bi-p-circle"></i> Parking
+          </button>
+          <button type="button" class="amenity-chip" [class.is-active]="filterCellar" (click)="toggleAmenity('cellar')">
+            <i class="bi bi-box-seam"></i> Cave
+          </button>
+        </div>
+      </div>
+      <div class="filter-more__field">
+        <label>Accessibilité</label>
+        <div class="amenity-chips">
+          <button type="button" class="amenity-chip" [class.is-active]="filterPmr" (click)="toggleAmenity('pmr')">
+            <i class="bi bi-person-wheelchair"></i> Accès PMR
+          </button>
+          <button type="button" class="amenity-chip" [class.is-active]="filterElevator" (click)="toggleAmenity('elevator')">
+            <i class="bi bi-arrow-up-square"></i> Ascenseur
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Loading -->
-  <!-- Loading -->
+  <!-- ══ Chips filtres actifs + compteur ══ -->
+  <div class="results-bar" *ngIf="!loading && (hasActiveFilters || listings.length > 0)">
+    <div class="results-bar__chips">
+      <span class="filter-chip" *ngFor="let chip of activeChips">
+        {{ chip.label }}
+        <button type="button" (click)="chip.clear()" title="Retirer"><i class="bi bi-x"></i></button>
+      </span>
+      <button *ngIf="activeChips.length > 1" class="results-bar__clear-all" (click)="clearFilters()">
+        Tout effacer
+      </button>
+    </div>
+    <span class="results-bar__count" *ngIf="listings.length > 0">
+      {{ listings.length }} annonce{{ listings.length > 1 ? 's' : '' }}
+    </span>
+  </div>
+
+  <!-- Chargement -->
   <app-loading-skeleton *ngIf="loading" type="card" [count]="6"></app-loading-skeleton>
 
-  <!-- Empty -->
+  <!-- Vide -->
   <div *ngIf="!loading && listings.length === 0" class="listing-search__empty">
     <i class="bi bi-house-slash"></i>
-    <p>Aucune annonce trouvée</p>
-    <button *ngIf="hasActiveFilters" class="hw-btn hw-btn--outline" (click)="clearFilters()">
+    <h3>Aucune annonce trouvée</h3>
+    <p>Essayez d'élargir le secteur ou de retirer des filtres.</p>
+    <button *ngIf="hasActiveFilters" class="hw-btn hw-btn--primary" (click)="clearFilters()">
       Effacer les filtres
     </button>
   </div>
 
-  <!-- Results count -->
-  <p *ngIf="!loading && listings.length > 0" class="listing-search__count">
-    {{ listings.length }} annonce{{ listings.length > 1 ? 's' : '' }}
-  </p>
-
-  <!-- Cards -->
+  <!-- ══ Résultats ══ -->
   <div *ngIf="!loading" class="listing-grid">
     <a *ngFor="let listing of listings"
        [routerLink]="['/listings', listing.id]"
-       class="listing-card hw-card hw-card--clickable">
+       class="listing-card">
 
-      <!-- Photo -->
       <div class="listing-card__photo">
         <img *ngIf="listing.photos && listing.photos.length > 0"
              [src]="listing.photos[0].fileUrl"
@@ -221,28 +226,36 @@
         <div *ngIf="!listing.photos || listing.photos.length === 0" class="listing-card__no-photo">
           <i class="bi bi-image"></i>
         </div>
-        <span *ngIf="listing.pricePerMonth" class="listing-card__price-badge">
-          {{ listing.pricePerMonth | number:'1.0-0' }} {{ listing.currency }}<span>/mois</span>
+        <span *ngIf="listing.pricePerMonth" class="listing-card__price">
+          {{ listing.pricePerMonth | number:'1.0-0' }} €<span>/mois</span>
         </span>
-        <span *ngIf="!listing.pricePerMonth && listing.pricePerNight" class="listing-card__price-badge listing-card__price-badge--night">
-          {{ listing.pricePerNight | number:'1.0-0' }} {{ listing.currency }}<span>/nuit</span>
+        <span *ngIf="!listing.pricePerMonth && listing.pricePerNight" class="listing-card__price">
+          {{ listing.pricePerNight | number:'1.0-0' }} €<span>/nuit</span>
+        </span>
+        <span *ngIf="distanceLabel(listing)" class="listing-card__distance">
+          <i class="bi bi-geo"></i> {{ distanceLabel(listing) }}
         </span>
       </div>
 
-      <!-- Infos -->
       <div class="listing-card__body">
         <div class="listing-card__title">{{ listing.title }}</div>
         <div class="listing-card__location">
           <i class="bi bi-geo-alt-fill"></i>
           {{ listing.propertyCity }}<span *ngIf="listing.propertyPostalCode"> · {{ listing.propertyPostalCode }}</span>
         </div>
-        <p class="listing-card__desc">{{ listing.description }}</p>
-      </div>
 
-      <div class="listing-card__footer">
-        <span class="hw-btn hw-btn--sm hw-btn--outline">
-          <i class="bi bi-eye"></i> Voir l'annonce
-        </span>
+        <div class="listing-card__specs">
+          <span *ngIf="listing.propertySurface">
+            <i class="bi bi-arrows-angle-expand"></i> {{ listing.propertySurface | number:'1.0-0' }} m²
+          </span>
+          <span *ngIf="listing.propertyBedrooms">
+            <i class="bi bi-door-closed"></i> {{ listing.propertyBedrooms }} ch.
+          </span>
+          <span *ngIf="listing.propertyFurnished === true" class="listing-card__badge">Meublé</span>
+          <span *ngIf="listing.propertyFurnished === false" class="listing-card__badge listing-card__badge--muted">Non meublé</span>
+        </div>
+
+        <p class="listing-card__desc">{{ listing.description }}</p>
       </div>
 
     </a>

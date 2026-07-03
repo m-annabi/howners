@@ -44,6 +44,12 @@ public class ListingController {
             @RequestParam(required = false) BigDecimal nearLat,
             @RequestParam(required = false) BigDecimal nearLng,
             @RequestParam(required = false) BigDecimal radiusKm,
+            @RequestParam(required = false) String dpeMax,
+            @RequestParam(required = false) Boolean parking,
+            @RequestParam(required = false) String exterior,
+            @RequestParam(required = false) Boolean elevator,
+            @RequestParam(required = false) Boolean pmr,
+            @RequestParam(required = false) Boolean cellar,
             Pageable pageable) {
         log.info("Searching listings - search: {}, city: {}, near: {},{} r={}km, page: {}, size: {}",
                 search, city, nearLat, nearLng, radiusKm, pageable.getPageNumber(), pageable.getPageSize());
@@ -51,7 +57,8 @@ public class ListingController {
                 search, city, department, postalCode,
                 priceMin, priceMax, propertyType, minSurface, minBedrooms, furnished,
                 availableFrom, sortBy,
-                nearLat, nearLng, radiusKm, pageable);
+                nearLat, nearLng, radiusKm,
+                dpeMax, parking, exterior, elevator, pmr, cellar, pageable);
         return ResponseEntity.ok(listings);
     }
 

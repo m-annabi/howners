@@ -19,6 +19,8 @@ export class ListingService {
     minSurface?: number; minBedrooms?: number; furnished?: boolean;
     availableFrom?: string; sortBy?: string;
     nearLat?: number; nearLng?: number; radiusKm?: number;
+    dpeMax?: string; parking?: boolean; exterior?: string;
+    elevator?: boolean; pmr?: boolean; cellar?: boolean;
     page?: number; size?: number;
   }): Observable<Page<Listing>> {
     let params = new HttpParams();
@@ -37,6 +39,12 @@ export class ListingService {
     if (filters?.nearLat != null) params = params.set('nearLat', filters.nearLat.toString());
     if (filters?.nearLng != null) params = params.set('nearLng', filters.nearLng.toString());
     if (filters?.radiusKm != null) params = params.set('radiusKm', filters.radiusKm.toString());
+    if (filters?.dpeMax) params = params.set('dpeMax', filters.dpeMax);
+    if (filters?.parking != null) params = params.set('parking', filters.parking.toString());
+    if (filters?.exterior) params = params.set('exterior', filters.exterior);
+    if (filters?.elevator != null) params = params.set('elevator', filters.elevator.toString());
+    if (filters?.pmr != null) params = params.set('pmr', filters.pmr.toString());
+    if (filters?.cellar != null) params = params.set('cellar', filters.cellar.toString());
     if (filters?.page != null) params = params.set('page', filters.page.toString());
     if (filters?.size != null) params = params.set('size', filters.size.toString());
     return this.http.get<Page<Listing>>(this.apiUrl, { params });

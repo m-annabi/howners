@@ -14,6 +14,14 @@ export interface ReverseGeocodeResult {
   raw?: any;
 }
 
+export interface CitySuggestion {
+  label: string;       // ex. « Nice, Alpes-Maritimes »
+  city: string;
+  postalCode: string;
+  latitude: number;
+  longitude: number;
+}
+
 /**
  * Géolocalisation browser + reverse geocoding via Nominatim (OpenStreetMap, gratuit).
  * Pas de clé API ; respecte la politique d'usage en se limitant à des requêtes
@@ -22,8 +30,34 @@ export interface ReverseGeocodeResult {
 @Injectable({ providedIn: 'root' })
 export class GeolocationService {
   private readonly NOMINATIM_URL = 'https://nominatim.openstreetmap.org/reverse';
+  private readonly NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Géocodage direct : recherche de villes par nom (autocomplete).
+   * Limité aux lieux de type ville/commune pour éviter le bruit (rues, POI…).
+   */
+  searchCities(query: string): Observable<CitySuggestion[]> {
+    if (!query || query.trim().length < 2) return of([]);
+    const params = `?q=${encodeURIComponent(query.trim())}&format=json&addressdetails=1`
+      + `&limit=5&featureType=city&accept-language=fr`;
+    return this.http.get<any[]>(this.NOMINATIM_SEARCH_URL + params).pipe(
+      map(results => (results || []).map(r => {
+        const a = r.address || {};
+        const city = a.city || a.town || a.village || a.municipality || r.name || '';
+        const dept = a.county || a.state || '';
+        return {
+          label: dept && dept !== city ? `${city}, ${dept}` : city,
+          city,
+          postalCode: a.postcode || '',
+          latitude: parseFloat(r.lat),
+          longitude: parseFloat(r.lon)
+        } as CitySuggestion;
+      }).filter(s => !!s.city && !isNaN(s.latitude))),
+      catchError(() => of([]))
+    );
+  }
 
   /**
    * Récupère la position via le navigateur puis la convertit en adresse (ville + CP).
