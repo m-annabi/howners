@@ -231,7 +231,14 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
   viewPayments(): void { this.router.navigate(['/payments']); }
   viewInvoices(): void { this.router.navigate(['/invoices']); }
   viewStats(): void { this.router.navigate(['/financial']); }
-  goBack(): void { this.router.navigate(['/rentals']); }
+  goBack(): void {
+    // /rentals redirige le locataire vers ce détail : retour vers Mon espace
+    if (this.authService.hasRole('TENANT')) {
+      this.router.navigate(['/tenant/dashboard']);
+    } else {
+      this.router.navigate(['/rentals']);
+    }
+  }
 
   getStatusColor(status: string): string {
     return this.rentalStatusColors[status as keyof typeof RENTAL_STATUS_COLORS];
