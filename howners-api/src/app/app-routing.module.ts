@@ -27,6 +27,18 @@ const routes: Routes = [
     data: { roles: ['OWNER', 'ADMIN'] }
   },
   {
+    path: 'owners',
+    loadChildren: () => import('./features/owners/owners.module').then(m => m.OwnersModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['TENANT'] }
+  },
+  {
+    path: 'avis',
+    loadChildren: () => import('./features/avis/avis.module').then(m => m.AvisModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['TENANT', 'OWNER', 'ADMIN'] }
+  },
+  {
     path: 'dashboard',
     loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule),
     canActivate: [AuthGuard]

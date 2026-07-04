@@ -15,6 +15,8 @@ export interface Rental {
   tenantId?: string;
   tenantName?: string;
   tenantEmail?: string;
+  ownerId?: string;
+  ownerName?: string;
   status: RentalStatus;
   startDate?: string;
   endDate?: string;

@@ -45,6 +45,12 @@ public class RentalController {
         return ResponseEntity.ok(rentalService.findByTenant(tenantId));
     }
 
+    @GetMapping("/by-owner/{ownerId}")
+    @PreAuthorize("hasRole('TENANT')")
+    public ResponseEntity<List<RentalResponse>> getRentalsByOwner(@PathVariable UUID ownerId) {
+        return ResponseEntity.ok(rentalService.findByOwnerForCurrentTenant(ownerId));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
     public ResponseEntity<RentalResponse> getRental(@PathVariable UUID id) {

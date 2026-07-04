@@ -167,7 +167,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           items: [
             { label: 'Mon profil', icon: 'bi-person', route: '/profile' },
             { label: 'Mon dossier', icon: 'bi-folder2-open', route: '/tenant/dossier' },
-            { label: 'Mes avis', icon: 'bi-star', route: '/tenant/avis' },
+            { label: 'Mes avis', icon: 'bi-star', route: '/avis' },
           ]
         }
       ];
@@ -226,6 +226,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
         items: [
           { label: 'Parrainage', icon: 'bi-gift', route: '/referral' },
           { label: 'Comptes délégués', icon: 'bi-people-fill', route: '/delegations' },
+        ],
+        roles: ['OWNER', 'ADMIN']
+      },
+      {
+        title: 'MON COMPTE',
+        items: [
+          { label: 'Mon profil', icon: 'bi-person', route: '/profile' },
+          { label: 'Mes avis', icon: 'bi-star', route: '/avis' },
         ],
         roles: ['OWNER', 'ADMIN']
       },

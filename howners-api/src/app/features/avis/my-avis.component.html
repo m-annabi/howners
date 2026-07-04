@@ -1,6 +1,6 @@
 <div class="avis-page">
 
-  <app-page-header title="Mes avis" subtitle="Les évaluations laissées par vos propriétaires"></app-page-header>
+  <app-page-header title="Mes avis" [subtitle]="subtitle"></app-page-header>
 
   <app-loading-skeleton *ngIf="loading" type="card" [count]="3"></app-loading-skeleton>
 
@@ -17,7 +17,7 @@
         <i class="bi bi-star"></i>
       </div>
       <p class="fw-semibold">Aucun avis pour l'instant</p>
-      <p class="hw-text-sm hw-text-muted">Les propriétaires chez qui vous avez loué peuvent vous laisser une évaluation à la fin de votre location.</p>
+      <p class="hw-text-sm hw-text-muted">{{ emptyText }}</p>
     </div>
 
     <ng-container *ngIf="ratings.length > 0">
@@ -58,11 +58,7 @@
         <!-- Barres par catégorie -->
         <div class="avis-summary__divider"></div>
         <div class="avis-cats">
-          <div class="avis-cat" *ngFor="let cat of [
-            { key: 'paymentRating',         label: 'Paiement du loyer', icon: 'bi-credit-card' },
-            { key: 'propertyRespectRating', label: 'Respect du bien',   icon: 'bi-house-check' },
-            { key: 'communicationRating',   label: 'Communication',     icon: 'bi-chat-dots' }
-          ]">
+          <div class="avis-cat" *ngFor="let cat of categories">
             <i class="bi {{ cat.icon }} avis-cat__icon"></i>
             <span class="hw-text-sm">{{ cat.label }}</span>
             <div class="avis-cat__bar">
@@ -104,14 +100,9 @@
 
           <!-- Notes par critère -->
           <div class="avis-item__cats">
-            <div class="avis-item__cat"
-                 *ngFor="let cat of [
-                   { key: 'paymentRating',         label: 'Paiement',  icon: 'bi-credit-card' },
-                   { key: 'propertyRespectRating', label: 'Bien',      icon: 'bi-house-check' },
-                   { key: 'communicationRating',   label: 'Comm.',     icon: 'bi-chat-dots' }
-                 ]">
+            <div class="avis-item__cat" *ngFor="let cat of categories">
               <i class="bi {{ cat.icon }} avis-item__cat-icon"></i>
-              <span class="hw-text-xs">{{ cat.label }}</span>
+              <span class="hw-text-xs">{{ cat.shortLabel }}</span>
               <div class="avis-item__cat-stars">
                 <i *ngFor="let s of stars" class="bi bi-star-fill"
                    [style.color]="asAny(r)[cat.key] >= s ? '#F59E0B' : 'var(--hw-gray-200)'"

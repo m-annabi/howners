@@ -51,13 +51,29 @@
           </div>
         </div>
 
-        <div class="detail-section">
+        <div class="detail-section" *ngIf="isOwner">
           <h2>Locataire</h2>
           <div *ngIf="rental.tenantName" class="tenant-info">
             <p class="tenant-name">{{ rental.tenantName }}</p>
             <p class="tenant-email">{{ rental.tenantEmail }}</p>
+            <a *ngIf="rental.tenantId" class="hw-btn hw-btn--ghost hw-btn--sm mt-2"
+               [routerLink]="['/tenants', rental.tenantId]">
+              <i class="bi bi-person-badge"></i> Voir la fiche locataire
+            </a>
           </div>
           <p *ngIf="!rental.tenantName" class="no-tenant">Aucun locataire assigné</p>
+        </div>
+
+        <div class="detail-section" *ngIf="!isOwner">
+          <h2>Propriétaire</h2>
+          <div *ngIf="rental.ownerName" class="tenant-info">
+            <p class="tenant-name">{{ rental.ownerName }}</p>
+            <a *ngIf="rental.ownerId" class="hw-btn hw-btn--ghost hw-btn--sm mt-2"
+               [routerLink]="['/owners', rental.ownerId]">
+              <i class="bi bi-person-badge"></i> Voir la fiche et laisser un avis
+            </a>
+          </div>
+          <p *ngIf="!rental.ownerName" class="no-tenant">Propriétaire non renseigné</p>
         </div>
 
         <div class="detail-section">

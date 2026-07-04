@@ -1,0 +1,8 @@
+// La fiche propriétaire partage le langage visuel de la fiche locataire :
+// on réutilise ses styles (classes tp-*) plutôt que de les dupliquer.
+@import '../../tenants/tenant-profile/tenant-profile.component';
+
+.owner-profile-page {
+  max-width: 1080px;
+  margin: 0 auto;
+}

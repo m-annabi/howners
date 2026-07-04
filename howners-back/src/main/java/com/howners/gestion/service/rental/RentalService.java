@@ -115,6 +115,13 @@ public class RentalService {
     }
 
     @Transactional(readOnly = true)
+    public List<RentalResponse> findByOwnerForCurrentTenant(UUID ownerId) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        return rentalRepository.findByOwnerIdAndTenantId(ownerId, currentUserId)
+                .stream().map(RentalResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
     public RentalResponse findById(UUID rentalId) {
         return RentalResponse.from(findRentalByIdAndCheckAccess(rentalId));
     }
