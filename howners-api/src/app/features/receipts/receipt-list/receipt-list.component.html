@@ -4,12 +4,11 @@
 </app-page-header>
 
 <!-- Toolbar: search -->
-<div *ngIf="!loading && receipts.length > 0" class="receipt-list__toolbar">
-  <div class="receipt-list__search">
+<div *ngIf="!loading && receipts.length > 0" class="hw-list-toolbar">
+  <div class="hw-list-toolbar__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
-      class="form-control"
       placeholder="Rechercher par numéro, bien ou locataire..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
@@ -42,8 +41,8 @@
 </app-empty-state>
 
 <!-- Dense table -->
-<div *ngIf="!loading && !error && filteredReceipts.length > 0" class="hw-card receipt-table-wrap">
-  <table class="receipt-table">
+<div *ngIf="!loading && !error && filteredReceipts.length > 0" class="hw-table-card">
+  <table class="hw-table receipt-table">
     <thead>
       <tr>
         <th>Numéro</th>
@@ -51,24 +50,23 @@
         <th>Locataire</th>
         <th class="receipt-table__col-period">Période</th>
         <th class="receipt-table__col-amount">Montant</th>
-        <th class="receipt-table__col-actions"></th>
+        <th class="hw-table__col-actions"></th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let receipt of filteredReceipts"
-          class="receipt-row"
           (click)="viewReceipt(receipt)">
-        <td><div class="receipt-table__number">{{ receipt.receiptNumber }}</div></td>
+        <td><div class="hw-table__strong">{{ receipt.receiptNumber }}</div></td>
         <td>{{ receipt.propertyName }}</td>
         <td>{{ receipt.tenantName }}</td>
         <td class="receipt-table__col-period">
           <div>{{ receipt.periodStart | date:'dd/MM/yyyy' }}</div>
-          <div class="receipt-table__muted">→ {{ receipt.periodEnd | date:'dd/MM/yyyy' }}</div>
+          <div class="hw-table__muted">→ {{ receipt.periodEnd | date:'dd/MM/yyyy' }}</div>
         </td>
         <td class="receipt-table__col-amount">
-          <div class="receipt-table__amount">{{ receipt.amount | number:'1.2-2' }} {{ receipt.currency }}</div>
+          <div class="hw-table__amount">{{ receipt.amount | number:'1.2-2' }} {{ receipt.currency }}</div>
         </td>
-        <td class="receipt-table__col-actions" (click)="$event.stopPropagation()">
+        <td class="hw-table__col-actions" (click)="$event.stopPropagation()">
           <div class="row-actions">
             <button class="row-actions__btn"
                     (click)="downloadPdf(receipt, $event)"

@@ -710,3 +710,208 @@
   font-weight: var(--hw-fw-semibold);
   font-size: 1rem;
 }
+
+// ── Pages de liste (GESTION) : barre d'outils + tableau dense ──────────────
+// Styles partagés par biens / locations / contrats / états des lieux.
+.hw-list-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  flex-wrap: wrap;
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-xl);
+  padding: var(--hw-space-3) var(--hw-space-4);
+  margin-bottom: var(--hw-space-3);
+  box-shadow: var(--hw-shadow-xs);
+
+  &--hidden { display: none; }
+
+  .quick-filters {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__search {
+    position: relative;
+    flex: 0 1 340px;
+    min-width: 220px;
+    margin-left: auto;
+
+    > i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--hw-gray-400);
+      pointer-events: none;
+      font-size: 0.9rem;
+    }
+
+    input {
+      width: 100%;
+      height: 40px;
+      border: 1px solid transparent;
+      border-radius: var(--hw-radius-lg);
+      padding: 0 12px 0 36px;
+      font-size: var(--hw-fs-base);
+      color: var(--hw-gray-900);
+      background: var(--hw-gray-50);
+      transition: border-color 0.15s, background 0.15s;
+
+      &::placeholder { color: var(--hw-gray-400); }
+      &:hover { background: var(--hw-gray-100); }
+
+      &:focus {
+        outline: none;
+        border-color: var(--hw-primary-300);
+        background: var(--hw-surface);
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.hw-table-card {
+  background: var(--hw-surface);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-xl);
+  box-shadow: var(--hw-shadow-xs);
+  overflow: hidden;
+}
+
+.hw-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: var(--hw-fs-base);
+
+  thead th {
+    background: var(--hw-surface);
+    border-bottom: 1px solid var(--hw-gray-200);
+    padding: 0.8rem 1rem;
+    text-align: left;
+    color: var(--hw-gray-500);
+    font-weight: var(--hw-fw-semibold);
+    font-size: var(--hw-fs-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.12s ease;
+
+    &:hover { color: var(--hw-primary-600); }
+
+    i { font-size: 0.65rem; margin-left: 3px; opacity: 0.3; }
+
+    &.sorted {
+      color: var(--hw-primary-700);
+      i { opacity: 1; color: var(--hw-accent-600); }
+    }
+  }
+
+  tbody td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--hw-gray-100);
+    vertical-align: middle;
+    color: var(--hw-gray-800);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  tbody tr {
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+
+    &:hover {
+      background: var(--hw-primary-50);
+      .row-actions { opacity: 1; }
+    }
+  }
+
+  // Helpers communs aux tableaux
+  &__strong {
+    font-family: var(--hw-font-display);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-primary-800);
+    letter-spacing: -0.005em;
+  }
+
+  &__amount {
+    font-family: var(--hw-font-display);
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-primary-800);
+    letter-spacing: -0.005em;
+  }
+
+  &__muted {
+    color: var(--hw-gray-500);
+    font-size: var(--hw-fs-xs);
+    margin-top: 2px;
+  }
+
+  &__empty { color: var(--hw-gray-400); }
+
+  &__col-actions {
+    width: 1%;
+    padding-right: 1rem !important;
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+// Actions en ligne — révélées au survol de la ligne, toujours visibles au tactile
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+
+  @media (hover: none) { opacity: 1; }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--hw-radius-md);
+    color: var(--hw-gray-600);
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+
+    i { font-size: 0.9rem; }
+
+    &:hover {
+      background: var(--hw-surface);
+      border-color: var(--hw-gray-300);
+      color: var(--hw-primary-700);
+    }
+
+    &--danger:hover {
+      background: var(--hw-danger-light);
+      border-color: rgba(166, 51, 46, 0.18);
+      color: var(--hw-danger);
+    }
+
+    &--success:hover {
+      background: var(--hw-success-light);
+      border-color: rgba(46, 107, 69, 0.18);
+      color: var(--hw-success);
+    }
+
+    &--warning:hover {
+      background: var(--hw-warning-light);
+      border-color: rgba(176, 121, 30, 0.18);
+      color: var(--hw-warning);
+    }
+  }
+}

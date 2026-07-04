@@ -4,21 +4,20 @@
 </app-page-header>
 
 <!-- Toolbar: filter chips + search -->
-<div *ngIf="!loading && edls.length > 0" class="edl-list__toolbar">
+<div *ngIf="!loading && edls.length > 0" class="hw-list-toolbar">
   <app-quick-filters
     [filters]="filters"
     [activeKey]="activeFilter"
     (filterChange)="onFilterChange($event)">
   </app-quick-filters>
 
-  <div class="edl-list__search">
+  <div class="hw-list-toolbar__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
       [(ngModel)]="searchTerm"
       (input)="applyFilters()"
-      placeholder="Rechercher par bien ou locataire..."
-      class="form-control">
+      placeholder="Rechercher par bien ou locataire...">
   </div>
 </div>
 
@@ -48,8 +47,8 @@
 </app-empty-state>
 
 <!-- Dense table -->
-<div *ngIf="!loading && !error && filteredEdls.length > 0" class="hw-card edl-table-wrap">
-  <table class="edl-table">
+<div *ngIf="!loading && !error && filteredEdls.length > 0" class="hw-table-card">
+  <table class="hw-table edl-table">
     <thead>
       <tr>
         <th class="sortable" [class.sorted]="sortCol==='property'" (click)="sortOn('property')">Bien <i class="bi" [ngClass]="sortIcon('property')"></i></th>
@@ -57,19 +56,19 @@
         <th class="sortable" [class.sorted]="sortCol==='type'" (click)="sortOn('type')">Type <i class="bi" [ngClass]="sortIcon('type')"></i></th>
         <th class="sortable" [class.sorted]="sortCol==='date'" (click)="sortOn('date')">Date <i class="bi" [ngClass]="sortIcon('date')"></i></th>
         <th>Signatures</th>
-        <th class="edl-table__col-actions"></th>
+        <th class="hw-table__col-actions"></th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let edl of filteredEdls" class="edl-row" (click)="viewDetail(edl)">
+      <tr *ngFor="let edl of filteredEdls" (click)="viewDetail(edl)">
 
         <td>
-          <div class="edl-table__property">{{ edl.propertyName }}</div>
+          <div class="hw-table__strong">{{ edl.propertyName }}</div>
         </td>
 
         <td>
           <ng-container *ngIf="edl.tenantName">{{ edl.tenantName }}</ng-container>
-          <span *ngIf="!edl.tenantName" class="edl-table__muted">—</span>
+          <span *ngIf="!edl.tenantName" class="hw-table__empty">—</span>
         </td>
 
         <td>
@@ -84,7 +83,7 @@
           </span>
         </td>
 
-        <td class="edl-table__col-actions" (click)="$event.stopPropagation()">
+        <td class="hw-table__col-actions" (click)="$event.stopPropagation()">
           <div class="row-actions">
             <button class="row-actions__btn" (click)="viewDetail(edl); $event.stopPropagation()" title="Voir">
               <i class="bi bi-eye"></i>

@@ -23,18 +23,17 @@
 </div>
 
 <!-- Toolbar: filter chips + search -->
-<div *ngIf="!loading && expenses.length > 0" class="expense-list__toolbar">
+<div *ngIf="!loading && expenses.length > 0" class="hw-list-toolbar">
   <app-quick-filters
     [filters]="filters"
     [activeKey]="selectedCategory"
     (filterChange)="onFilterChange($event)">
   </app-quick-filters>
 
-  <div class="expense-list__search">
+  <div class="hw-list-toolbar__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
-      class="form-control"
       placeholder="Rechercher par bien ou description..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
@@ -69,8 +68,8 @@
 </app-empty-state>
 
 <!-- Dense table -->
-<div *ngIf="!loading && !error && filteredExpenses.length > 0" class="hw-card expense-table-wrap">
-  <table class="expense-table">
+<div *ngIf="!loading && !error && filteredExpenses.length > 0" class="hw-table-card">
+  <table class="hw-table expense-table">
     <thead>
       <tr>
         <th class="expense-table__col-date">Date</th>
@@ -78,23 +77,22 @@
         <th>Description</th>
         <th>Bien</th>
         <th class="expense-table__col-amount">Montant</th>
-        <th class="expense-table__col-actions"></th>
+        <th class="hw-table__col-actions"></th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let expense of filteredExpenses"
-          class="expense-row"
           (click)="viewExpense(expense)">
         <td class="expense-table__col-date">{{ expense.expenseDate | date:'dd/MM/yyyy' }}</td>
         <td class="expense-table__col-cat">
-          <span class="badge bg-light">{{ categoryLabels[expense.category] }}</span>
+          <span class="hw-badge hw-badge--neutral">{{ categoryLabels[expense.category] }}</span>
         </td>
         <td>{{ expense.description || '—' }}</td>
         <td>{{ expense.propertyName || '—' }}</td>
         <td class="expense-table__col-amount">
           <div class="expense-table__amount">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</div>
         </td>
-        <td class="expense-table__col-actions" (click)="$event.stopPropagation()">
+        <td class="hw-table__col-actions" (click)="$event.stopPropagation()">
           <div class="row-actions">
             <button class="row-actions__btn row-actions__btn--danger"
                     (click)="deleteExpense(expense, $event)"

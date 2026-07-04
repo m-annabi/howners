@@ -27,18 +27,17 @@
 </div>
 
 <!-- Toolbar: filter chips + search -->
-<div class="contract-list__toolbar" [class.contract-list__toolbar--hidden]="loading || contracts.length === 0">
+<div class="hw-list-toolbar" [class.hw-list-toolbar--hidden]="loading || contracts.length === 0">
   <app-quick-filters
     [filters]="filters"
     [activeKey]="selectedStatus"
     (filterChange)="onFilterChange($event)">
   </app-quick-filters>
 
-  <div class="contract-list__search">
+  <div class="hw-list-toolbar__search">
     <i class="bi bi-search"></i>
     <input
       type="text"
-      class="form-control"
       placeholder="Rechercher par numéro, bien ou locataire..."
       [(ngModel)]="searchTerm"
       (ngModelChange)="onSearchChange()">
@@ -118,8 +117,8 @@
 </div>
 
 <!-- Dense table -->
-<div *ngIf="!loading && !error && filteredContracts.length > 0" class="hw-card contract-table-wrap">
-  <table class="contract-table">
+<div *ngIf="!loading && !error && filteredContracts.length > 0" class="hw-table-card">
+  <table class="hw-table contract-table">
     <thead>
       <tr>
         <th>N° de contrat</th>
@@ -128,16 +127,15 @@
         <th class="contract-table__col-version">Version</th>
         <th class="sortable" [class.sorted]="sortCol==='date'" (click)="sortOn('date')">Créé le <i class="bi" [ngClass]="sortIcon('date')"></i></th>
         <th class="contract-table__col-status sortable" [class.sorted]="sortCol==='status'" (click)="sortOn('status')">Statut <i class="bi" [ngClass]="sortIcon('status')"></i></th>
-        <th *ngIf="isOwner" class="contract-table__col-actions"></th>
+        <th *ngIf="isOwner" class="hw-table__col-actions"></th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let contract of filteredContracts"
-          class="contract-row"
           (click)="viewContract(contract)">
 
         <td>
-          <div class="contract-table__number">{{ contract.contractNumber }}</div>
+          <div class="hw-table__strong">{{ contract.contractNumber }}</div>
         </td>
 
         <td>{{ contract.rentalPropertyName }}</td>
@@ -152,7 +150,7 @@
           <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
         </td>
 
-        <td *ngIf="isOwner" class="contract-table__col-actions" (click)="$event.stopPropagation()">
+        <td *ngIf="isOwner" class="hw-table__col-actions" (click)="$event.stopPropagation()">
           <div class="row-actions">
             <button class="row-actions__btn"
                     (click)="viewContract(contract); $event.stopPropagation()"

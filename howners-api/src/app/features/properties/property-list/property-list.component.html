@@ -11,23 +11,20 @@
 </ng-template>
 
 <!-- Toolbar: filter chips + search -->
-<div class="property-list__toolbar" [class.property-list__toolbar--hidden]="loading || properties.length === 0">
+<div class="hw-list-toolbar" [class.hw-list-toolbar--hidden]="loading || properties.length === 0">
   <app-quick-filters
     [filters]="filters"
     [activeKey]="activeFilter"
     (filterChange)="onFilterChange($event)">
   </app-quick-filters>
 
-  <div class="property-list__row">
-    <div class="property-list__search">
-      <i class="bi bi-search"></i>
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        (input)="filterProperties()"
-        placeholder="Rechercher par nom, ville ou code postal..."
-        class="form-control form-control-sm">
-    </div>
+  <div class="hw-list-toolbar__search">
+    <i class="bi bi-search"></i>
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="filterProperties()"
+      placeholder="Rechercher par nom, ville ou code postal...">
   </div>
 </div>
 
@@ -59,8 +56,8 @@
 </app-empty-state>
 
 <!-- Dense table -->
-<div *ngIf="!loading && !error && filteredProperties.length > 0" class="hw-card property-table-wrap">
-  <table class="property-table">
+<div *ngIf="!loading && !error && filteredProperties.length > 0" class="hw-table-card">
+  <table class="hw-table property-table">
     <thead>
       <tr>
         <th class="property-table__col-thumb"></th>
@@ -70,12 +67,11 @@
         <th class="property-table__col-surface">Surface</th>
         <th class="property-table__col-rent sortable" [class.sorted]="sortCol==='rent'" (click)="sortOn('rent')">Loyer <i class="bi" [ngClass]="sortIcon('rent')"></i></th>
         <th class="property-table__col-yield sortable" [class.sorted]="sortCol==='yield'" (click)="sortOn('yield')">Rentabilité <i class="bi" [ngClass]="sortIcon('yield')"></i></th>
-        <th class="property-table__col-actions"></th>
+        <th class="hw-table__col-actions"></th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let property of filteredProperties"
-          class="property-row"
           (click)="viewProperty(property.id)">
 
         <td class="property-table__col-thumb">
@@ -88,7 +84,7 @@
         </td>
 
         <td class="property-table__col-name">
-          <div class="property-table__name">{{ property.name }}</div>
+          <div class="hw-table__strong">{{ property.name }}</div>
         </td>
 
         <td class="property-table__col-city">
@@ -97,20 +93,20 @@
         </td>
 
         <td class="property-table__col-type">
-          <span class="badge bg-light">{{ propertyTypeLabels[property.propertyType] }}</span>
+          <span class="hw-badge hw-badge--neutral">{{ propertyTypeLabels[property.propertyType] }}</span>
         </td>
 
         <td class="property-table__col-surface">
           <ng-container *ngIf="property.surfaceArea">{{ property.surfaceArea }} m²</ng-container>
-          <span *ngIf="!property.surfaceArea" class="property-table__empty">—</span>
+          <span *ngIf="!property.surfaceArea" class="hw-table__empty">—</span>
         </td>
 
         <td class="property-table__col-rent">
           <ng-container *ngIf="property.currentMonthlyRent">
-            <span class="property-table__rent">{{ property.currentMonthlyRent | number:'1.0-0' }} €</span>
-            <span class="property-table__unit">/mois</span>
+            <span class="hw-table__amount">{{ property.currentMonthlyRent | number:'1.0-0' }} €</span>
+            <span class="hw-table__muted">/mois</span>
           </ng-container>
-          <span *ngIf="!property.currentMonthlyRent" class="badge bg-light">Vacant</span>
+          <span *ngIf="!property.currentMonthlyRent" class="hw-badge hw-badge--neutral">Vacant</span>
         </td>
 
         <td class="property-table__col-yield">
@@ -122,10 +118,10 @@
               {{ property.grossYieldPercent | number:'1.2-2' }} %
             </span>
           </ng-container>
-          <span *ngIf="property.grossYieldPercent == null" class="property-table__empty">—</span>
+          <span *ngIf="property.grossYieldPercent == null" class="hw-table__empty">—</span>
         </td>
 
-        <td class="property-table__col-actions" (click)="$event.stopPropagation()">
+        <td class="hw-table__col-actions" (click)="$event.stopPropagation()">
           <div class="row-actions">
             <button class="row-actions__btn"
                     (click)="editProperty(property.id, $event)"
