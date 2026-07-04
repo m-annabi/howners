@@ -11,10 +11,12 @@ import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
+import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.TenantRatingRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.security.UserPrincipal;
+import com.howners.gestion.service.notification.NotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,7 @@ class TenantRatingServiceTest {
     @Mock private TenantRatingRepository ratingRepository;
     @Mock private RentalRepository rentalRepository;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private TenantRatingService ratingService;
@@ -109,6 +112,10 @@ class TenantRatingServiceTest {
         assertThat(captor.getValue().getRental()).isEqualTo(rental);
         assertThat(response.overallRating()).isEqualByComparingTo(new BigDecimal("4.33"));
         assertThat(response.tenantId()).isEqualTo(tenantId);
+
+        // Le locataire noté est notifié
+        verify(notificationService).create(eq(tenantId), eq(NotificationType.RATING_RECEIVED),
+                anyString(), contains("4,3"), eq("/avis"));
     }
 
     @Test

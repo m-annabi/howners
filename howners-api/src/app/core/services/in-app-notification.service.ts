@@ -14,6 +14,7 @@ const ICON_MAP: Record<string, string> = {
   APPLICATION_ACCEPTED: 'bi-check-circle',
   APPLICATION_REJECTED: 'bi-x-circle',
   SIGNATURE_COMPLETED:  'bi-pen',
+  RATING_RECEIVED:      'bi-star',
   SYSTEM:               'bi-info-circle',
   message:     'bi-chat-dots',
   payment:     'bi-credit-card',

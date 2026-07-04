@@ -11,10 +11,12 @@ import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
+import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.repository.OwnerRatingRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.security.UserPrincipal;
+import com.howners.gestion.service.notification.NotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,7 @@ class OwnerRatingServiceTest {
     @Mock private OwnerRatingRepository ratingRepository;
     @Mock private RentalRepository rentalRepository;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private OwnerRatingService ratingService;
@@ -109,6 +112,10 @@ class OwnerRatingServiceTest {
         assertThat(captor.getValue().getRental()).isEqualTo(rental);
         assertThat(response.overallRating()).isEqualByComparingTo(new BigDecimal("4.33"));
         assertThat(response.ownerId()).isEqualTo(ownerId);
+
+        // Le proprio noté est notifié
+        verify(notificationService).create(eq(ownerId), eq(NotificationType.RATING_RECEIVED),
+                anyString(), contains("4,3"), eq("/avis"));
     }
 
     @Test
@@ -139,6 +146,7 @@ class OwnerRatingServiceTest {
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("propriétaires");
         verify(ratingRepository, never()).save(any());
+        verify(notificationService, never()).create(any(), any(), any(), any(), any());
     }
 
     @Test

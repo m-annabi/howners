@@ -9,10 +9,12 @@ import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
+import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.repository.OwnerRatingRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
+import com.howners.gestion.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class OwnerRatingService {
     private final OwnerRatingRepository ratingRepository;
     private final RentalRepository rentalRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public OwnerRatingResponse create(CreateOwnerRatingRequest request) {
@@ -76,7 +79,19 @@ public class OwnerRatingService {
 
         rating = ratingRepository.save(rating);
         log.info("Owner rating created by {} for owner {}", currentUserId, request.ownerId());
+
+        notificationService.create(
+                owner.getId(),
+                NotificationType.RATING_RECEIVED,
+                "Nouvel avis reçu",
+                rater.getFullName() + " vous a laissé un avis (" + formatNote(overall) + "/5).",
+                "/avis");
+
         return OwnerRatingResponse.from(rating);
+    }
+
+    private static String formatNote(BigDecimal overall) {
+        return overall.setScale(1, RoundingMode.HALF_UP).toPlainString().replace('.', ',');
     }
 
     @Transactional(readOnly = true)
