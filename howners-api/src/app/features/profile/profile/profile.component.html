@@ -1,102 +1,158 @@
-<div class="row">
-  <div class="col-lg-8 mx-auto">
-    <app-page-header title="Mon profil" [breadcrumbs]="[{label: 'Profil'}]"></app-page-header>
+<div class="profile-page">
 
-    <app-loading-skeleton *ngIf="loading" type="card" [count]="1"></app-loading-skeleton>
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="2"></app-loading-skeleton>
 
-    <div *ngIf="!loading && user" class="hw-card">
-      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
-        <!-- En-tête utilisateur -->
-        <div class="profile-header mb-4 p-3">
-          <div class="d-flex align-items-center gap-3">
-            <div class="avatar-circle">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
-            <div>
-              <h4 class="mb-1">{{ user.firstName }} {{ user.lastName }}</h4>
-              <p class="hw-text-muted mb-1"><i class="bi bi-envelope me-2"></i>{{ user.email }}</p>
-              <span class="hw-badge" [class.hw-badge--success]="user.role === 'TENANT'" [class.hw-badge--primary]="user.role === 'OWNER'">
-                {{ user.role === 'TENANT' ? 'Locataire' : 'Propriétaire' }}
-              </span>
-            </div>
+  <ng-container *ngIf="!loading && user">
+
+    <!-- ── Bandeau héro ── -->
+    <div class="pf-hero">
+      <div class="pf-hero__main">
+        <div class="pf-hero__avatar">{{ initials }}</div>
+        <div class="pf-hero__identity">
+          <h1 class="pf-hero__name">
+            {{ user.firstName }} {{ user.lastName }}
+            <span class="pf-hero__role">{{ roleLabel }}</span>
+          </h1>
+          <div class="pf-hero__meta">
+            <span><i class="bi bi-envelope"></i> {{ user.email }}</span>
+            <span *ngIf="user.phone"><i class="bi bi-telephone"></i> {{ user.phone }}</span>
+            <span><i class="bi bi-calendar3"></i> Membre depuis {{ memberSince }}</span>
           </div>
         </div>
-
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <label for="firstName" class="form-label">Prénom *</label>
-            <input type="text" id="firstName" class="form-control" formControlName="firstName"
-                   [class.is-invalid]="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
-            <div class="invalid-feedback" *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
-              Le prénom est requis (min. 2 caractères)
-            </div>
+        <a *ngIf="ratingsCount > 0" class="pf-hero__score" routerLink="/avis" title="Voir mes avis">
+          <div class="pf-hero__score-value">{{ averageOverall | number:'1.1-1' }}</div>
+          <div class="pf-hero__score-stars">
+            <i *ngFor="let s of stars"
+               class="bi"
+               [ngClass]="s <= averageOverall ? 'bi-star-fill' : (s - 0.5 <= averageOverall ? 'bi-star-half' : 'bi-star')">
+            </i>
           </div>
-          <div class="col-md-6">
-            <label for="lastName" class="form-label">Nom *</label>
-            <input type="text" id="lastName" class="form-control" formControlName="lastName"
-                   [class.is-invalid]="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
-            <div class="invalid-feedback" *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
-              Le nom est requis (min. 2 caractères)
-            </div>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label for="email" class="form-label">Email *</label>
-          <input type="email" id="email" class="form-control" formControlName="email"
-                 [class.is-invalid]="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
-          <div class="invalid-feedback" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">Email invalide</div>
-        </div>
-
-        <div class="mb-4">
-          <label for="phone" class="form-label">Téléphone</label>
-          <input type="tel" id="phone" class="form-control" formControlName="phone" placeholder="+33 6 12 34 56 78">
-        </div>
-
-        <h6 class="mb-3"><i class="bi bi-geo-alt me-2"></i>Adresse postale</h6>
-        <p class="hw-text-muted hw-text-sm mb-3">Utilisée sur vos documents légaux (quittances, courriers, mises en demeure).</p>
-        <div class="mb-3">
-          <label for="addressLine1" class="form-label">Adresse</label>
-          <input type="text" id="addressLine1" class="form-control" formControlName="addressLine1" placeholder="12 rue de la Paix">
-        </div>
-        <div class="mb-3">
-          <label for="addressLine2" class="form-label">Complément d'adresse</label>
-          <input type="text" id="addressLine2" class="form-control" formControlName="addressLine2" placeholder="Bâtiment B, appartement 4">
-        </div>
-        <div class="row mb-4">
-          <div class="col-md-4">
-            <label for="postalCode" class="form-label">Code postal</label>
-            <input type="text" id="postalCode" class="form-control" formControlName="postalCode" placeholder="75002">
-          </div>
-          <div class="col-md-5">
-            <label for="city" class="form-label">Ville</label>
-            <input type="text" id="city" class="form-control" formControlName="city" placeholder="Paris">
-          </div>
-          <div class="col-md-3">
-            <label for="country" class="form-label">Pays</label>
-            <input type="text" id="country" class="form-control" formControlName="country" placeholder="France">
-          </div>
-        </div>
-
-        <!-- Infos compte -->
-        <div class="account-info mb-4 p-3">
-          <h6 class="mb-3"><i class="bi bi-info-circle me-2"></i>Informations du compte</h6>
-          <div class="row">
-            <div class="col-md-6">
-              <p class="mb-2"><strong>Statut :</strong> <span class="hw-badge hw-badge--success ms-2"><i class="bi bi-check-circle me-1"></i>Actif</span></p>
-            </div>
-            <div class="col-md-6">
-              <p class="mb-2"><strong>Membre depuis :</strong> {{ user.createdAt | date: 'dd/MM/yyyy' }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="d-flex justify-content-end gap-2">
-          <button type="button" class="hw-btn hw-btn--ghost" routerLink="/dashboard">Annuler</button>
-          <button type="submit" class="hw-btn hw-btn--primary" [disabled]="profileForm.invalid || saving">
-            <span *ngIf="!saving"><i class="bi bi-check-circle me-1"></i>Enregistrer</span>
-            <span *ngIf="saving"><span class="spinner-border spinner-border-sm me-1"></span>Enregistrement…</span>
-          </button>
-        </div>
-      </form>
+          <div class="pf-hero__score-count">{{ ratingsCount }} avis reçu{{ ratingsCount > 1 ? 's' : '' }}</div>
+        </a>
+      </div>
     </div>
-  </div>
+
+    <!-- ── Deux colonnes : compte | formulaire ── -->
+    <div class="pf-layout">
+
+      <aside class="pf-side">
+        <div class="pf-panel">
+          <div class="pf-panel__title">Mon compte</div>
+
+          <div class="pf-info-row">
+            <span class="pf-info-row__label">Statut</span>
+            <span class="hw-badge hw-badge--success"><i class="bi bi-check-circle me-1"></i>Actif</span>
+          </div>
+          <div class="pf-info-row">
+            <span class="pf-info-row__label">Rôle</span>
+            <span class="pf-info-row__value">{{ roleLabel }}</span>
+          </div>
+          <div class="pf-info-row">
+            <span class="pf-info-row__label">Membre depuis</span>
+            <span class="pf-info-row__value">{{ user.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <div class="pf-panel__divider"></div>
+
+          <a class="pf-panel-link" routerLink="/avis">
+            <i class="bi bi-star"></i>
+            <span>Mes avis</span>
+            <span *ngIf="ratingsCount > 0" class="pf-panel-link__badge">{{ ratingsCount }}</span>
+            <i class="bi bi-chevron-right pf-panel-link__chevron"></i>
+          </a>
+          <a class="pf-panel-link" routerLink="/profile/rgpd">
+            <i class="bi bi-shield-lock"></i>
+            <span>Confidentialité (RGPD)</span>
+            <i class="bi bi-chevron-right pf-panel-link__chevron"></i>
+          </a>
+        </div>
+      </aside>
+
+      <div class="pf-main">
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+
+          <!-- Identité -->
+          <div class="pf-form-card">
+            <div class="pf-section-title"><i class="bi bi-person"></i> Identité</div>
+
+            <div class="pf-form__row">
+              <div class="pf-form__field">
+                <label for="firstName">Prénom *</label>
+                <input type="text" id="firstName" formControlName="firstName"
+                       [class.is-invalid]="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
+                <div class="pf-form__error" *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
+                  Le prénom est requis (min. 2 caractères)
+                </div>
+              </div>
+              <div class="pf-form__field">
+                <label for="lastName">Nom *</label>
+                <input type="text" id="lastName" formControlName="lastName"
+                       [class.is-invalid]="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
+                <div class="pf-form__error" *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
+                  Le nom est requis (min. 2 caractères)
+                </div>
+              </div>
+            </div>
+
+            <div class="pf-form__row">
+              <div class="pf-form__field">
+                <label for="email">Email *</label>
+                <input type="email" id="email" formControlName="email"
+                       [class.is-invalid]="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                <div class="pf-form__error" *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+                  Email invalide
+                </div>
+              </div>
+              <div class="pf-form__field">
+                <label for="phone">Téléphone</label>
+                <input type="tel" id="phone" formControlName="phone" placeholder="+33 6 12 34 56 78">
+              </div>
+            </div>
+          </div>
+
+          <!-- Adresse -->
+          <div class="pf-form-card">
+            <div class="pf-section-title"><i class="bi bi-geo-alt"></i> Adresse postale</div>
+            <p class="pf-section-hint">Utilisée sur vos documents légaux (quittances, courriers, mises en demeure).</p>
+
+            <div class="pf-form__row">
+              <div class="pf-form__field">
+                <label for="addressLine1">Adresse</label>
+                <input type="text" id="addressLine1" formControlName="addressLine1" placeholder="12 rue de la Paix">
+              </div>
+            </div>
+            <div class="pf-form__row">
+              <div class="pf-form__field">
+                <label for="addressLine2">Complément d'adresse</label>
+                <input type="text" id="addressLine2" formControlName="addressLine2" placeholder="Bâtiment B, appartement 4">
+              </div>
+            </div>
+            <div class="pf-form__row">
+              <div class="pf-form__field pf-form__field--sm">
+                <label for="postalCode">Code postal</label>
+                <input type="text" id="postalCode" formControlName="postalCode" placeholder="75002">
+              </div>
+              <div class="pf-form__field">
+                <label for="city">Ville</label>
+                <input type="text" id="city" formControlName="city" placeholder="Paris">
+              </div>
+              <div class="pf-form__field pf-form__field--sm">
+                <label for="country">Pays</label>
+                <input type="text" id="country" formControlName="country" placeholder="France">
+              </div>
+            </div>
+          </div>
+
+          <div class="pf-form__actions">
+            <button type="button" class="hw-btn hw-btn--ghost" routerLink="/dashboard">Annuler</button>
+            <button type="submit" class="hw-btn hw-btn--primary" [disabled]="profileForm.invalid || saving">
+              <span *ngIf="!saving"><i class="bi bi-check-circle me-1"></i>Enregistrer</span>
+              <span *ngIf="saving"><span class="spinner-border spinner-border-sm me-1"></span>Enregistrement…</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </ng-container>
 </div>
