@@ -24,7 +24,7 @@ cd howners-api && npm install && npm start    # Angular CLI dev server on :4200
 
 `howners-back/start.sh` is a convenience wrapper that sources `.env` and runs `./mvnw spring-boot:run`. **Never inline secrets in scripts or any tracked file** — all credentials (SMTP, DocuSign, Stripe…) belong in `.env`, which is gitignored. (A former `restart-backend.sh` that hardcoded credentials was purged from history after those secrets leaked; it is gitignored to prevent reintroduction. Use `start.sh`.)
 
-For a step-by-step local bootstrap (services, default credentials, URLs to verify), see `SETUP_GUIDE.md` at the repo root. Other top-level docs worth knowing: `OBSERVABILITY.md` (metrics/logging), `RGPD-AUDIT.md` (RGPD/audit obligations), `SECURITY-ROTATION.md` (secret rotation playbook), `NEXT-STEPS.md` (open roadmap items).
+For a step-by-step local bootstrap (services, default credentials, URLs to verify), see `SETUP_GUIDE.md` at the repo root. Other top-level docs worth knowing: `OBSERVABILITY.md` (metrics/logging), `RGPD-AUDIT.md` (RGPD/audit obligations), `SECURITY-ROTATION.md` (secret rotation playbook), `NEXT-STEPS.md` (open roadmap items), `GUIDE-COMPTABILITE-LMNP.md` (user-facing guide to the LMNP accounting module — read it before touching `service/accounting/`), `PROD-CHECKLIST.md` (production go-live checklist). The root `scripts/` directory holds ops scripts (`db-backup.sh`, `db-restore.sh`, `manage-secrets.sh`, `setup-stripe-prices.sh`); `Caddyfile` is the production reverse-proxy config.
 
 ### Backend (`howners-back/`)
 
@@ -54,7 +54,7 @@ The API base URL is hardcoded in `src/environments/environment.ts` to `http://lo
 
 ### Database / migrations
 
-Schema is owned by **Liquibase** — `spring.jpa.hibernate.ddl-auto: none`. Never let Hibernate auto-generate DDL. Add a new changelog file under `howners-back/src/main/resources/db/changelog/` using the next free number (latest is `082-...`) and register it in `db.changelog-master.xml`. Number `017` is intentionally absent — keep the gap.
+Schema is owned by **Liquibase** — `spring.jpa.hibernate.ddl-auto: none`. Never let Hibernate auto-generate DDL. Add a new changelog file under `howners-back/src/main/resources/db/changelog/` using the next free number (latest is `089-...`) and register it in `db.changelog-master.xml`. Number `017` is intentionally absent — keep the gap.
 
 To reset the DB completely (destroys all data):
 
@@ -75,7 +75,7 @@ docker exec -it howners-postgres psql -U howners_user -d howners_db \
 
 Standard Spring layered architecture, but several cross-cutting subsystems are worth knowing before editing:
 
-- `controller/` — REST entry points. ~35 controllers grouped by domain (property, rental, contract, document, signature, payment, invoice, listing, application, message, subscription, audit, rgpd, tenant-discovery, etc.). `PublicContractController` is the only auth-bypassed controller — it serves the tokenised `/sign` flow.
+- `controller/` — REST entry points. ~45 controllers grouped by domain (property, rental, contract, document, signature, payment, invoice, listing, application, message, subscription, accounting, rating, delegation, referral/affiliate, audit, rgpd, etc.). `PublicContractController` is the only auth-bypassed controller — it serves the tokenised `/sign` flow.
 - `service/<domain>/` — business logic. Domains mirror the controllers and the `domain/` entity packages.
 - `domain/<domain>/` — JPA entities. Each domain has its own subpackage (`property`, `rental`, `contract`, `signature`, `subscription`, `audit`, etc.).
 - `repository/` — Spring Data JPA repositories.
@@ -92,13 +92,15 @@ Key cross-cutting behaviours:
 - **E-signature**: Two providers coexist. `signature/` (controller + service) handles the in-app HTML5 canvas signature; `esignature/` integrates DocuSign (JWT auth, requires RSA keypair, demo URL by default). The provider per contract is tracked in the `signature_provider` column. Public sign flow: backend mints a `ContractTokenProvider` token, emails it via Thymeleaf template + Spring Mail, recipient lands on `/sign?token=...` (Angular `public-sign` module, no `AuthGuard`).
 - **Audit**: `AuditAspect` writes to `audit_logs` via AOP. RGPD endpoints (`RgpdController`) handle export/anonymisation (`anonymized_at` on users, `user_consents` table).
 - **Payments / billing**: Stripe SDK (`stripe-java`). Webhooks land on `WebhookController`. Subscriptions, plans, and usage tracking live in `domain/subscription/` (changelogs 040–043).
+- **LMNP accounting** (`service/accounting/`, `domain/accounting/`, changelogs 084–088): French "location meublée au réel" bookkeeping — `AccountingEntryGenerator` derives entries from payments/expenses, `AmortizationService` handles fixed-asset depreciation, `LoanScheduleService` loan schedules, `FecExportService` the FEC export, and `LmnpDocumentService` assembles the downloadable fiscal "liasse". Fiscal rules go through `FiscalEngineResolver` → engine implementations (`FranceLmnpReelEngine`), so country/regime logic stays out of services. `GUIDE-COMPTABILITE-LMNP.md` documents the intended user-facing behaviour.
+- **Ratings** (`service/rating/`, `domain/rating/`, changelog 089): bidirectional — owners rate tenants (`TenantRatingService`) and tenants rate owners (`OwnerRatingService`, with in-app notification on receipt). Frontend module is `avis`.
 
 ### Frontend (`howners-api/src/app/`)
 
 Standard Angular module structure, all feature modules **lazy-loaded** from `app-routing.module.ts`:
 
 - `core/` — singletons: `auth/`, `guards/` (`AuthGuard`, `RoleGuard` — reads `data: { roles: [...] }` from routes), `interceptors/` (`auth.interceptor` attaches JWT, `error.interceptor` central error handling), `services/`, `models/`.
-- `features/<domain>/` — one lazy module per domain (admin, applications, audit, auth, billing, contracts, dashboard, expenses, financial, inventory, invoices, landing, listings, messages, payments, profile, properties, public-sign, ratings, receipts, referral, rentals, templates, tenant-discovery, tenant-search) plus a `not-found` fallback route.
+- `features/<domain>/` — one lazy module per domain (accounting, admin, applications, audit, auth, avis, billing, contracts, dashboard, delegations, expenses, financial, inventory, invoices, landing, listings, messages, owners, payments, profile, properties, public-sign, receipts, referral, rentals, templates, tenant, tenants) plus a `not-found` fallback route. Naming trap: `tenant` (singular) is the tenant-facing space (`RoleGuard` role `TENANT`), `tenants` (plural) is the owner's tenant management (`OWNER`/`ADMIN`), and `owners` is the tenant-side view of owners (`TENANT`).
 - `shared/` — reusable components (`signature-pad`, `document-upload`, `document-list`, etc.) re-exported via `shared.module.ts`.
 
 Routing rules to respect when adding features:
