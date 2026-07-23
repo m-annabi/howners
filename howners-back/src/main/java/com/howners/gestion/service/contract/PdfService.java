@@ -21,6 +21,14 @@ public class PdfService {
      * Génère un PDF à partir d'un contenu HTML (provenant de l'éditeur Quill)
      */
     public byte[] generatePdf(String content, String title) throws IOException {
+        return generatePdf(content, title, null);
+    }
+
+    /**
+     * Génère un PDF à partir d'un contenu HTML, avec un bloc HTML additionnel
+     * (ex. encart de signature) inséré après le contenu, avant le pied de page.
+     */
+    public byte[] generatePdf(String content, String title, String appendixHtml) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
@@ -28,7 +36,7 @@ public class PdfService {
                     content != null ? content.length() : 0);
 
             // Construire un document HTML complet avec CSS
-            String htmlDocument = buildHtmlDocument(content, title);
+            String htmlDocument = buildHtmlDocument(content, title, appendixHtml);
 
             log.debug("Full HTML document length: {} chars", htmlDocument.length());
 
@@ -49,7 +57,7 @@ public class PdfService {
     /**
      * Construit un document HTML complet avec styles CSS pour le PDF
      */
-    private String buildHtmlDocument(String content, String title) {
+    private String buildHtmlDocument(String content, String title, String appendixHtml) {
         StringBuilder html = new StringBuilder();
         html.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>");
         html.append("<style>");
@@ -85,6 +93,10 @@ public class PdfService {
         // brut avec des retours à la ligne (templates seedés). En HTML, les \n et espaces
         // multiples sont réduits à un seul espace ; on convertit donc le texte brut en HTML.
         html.append(looksLikeHtml(content) ? content : plainTextToHtml(content));
+
+        if (appendixHtml != null && !appendixHtml.isEmpty()) {
+            html.append(appendixHtml);
+        }
 
         // Pied de page commun à tous les documents (traçabilité).
         html.append("<div class=\"doc-footer\">Document généré par Howners le ")

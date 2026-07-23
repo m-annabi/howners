@@ -5,6 +5,7 @@ import com.howners.gestion.domain.contract.ContractSignatureRequest;
 import com.howners.gestion.domain.contract.ContractStatus;
 import com.howners.gestion.domain.contract.ContractVersion;
 import com.howners.gestion.domain.contract.SignatureRequestStatus;
+import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.contract.ContractPublicView;
@@ -28,6 +29,7 @@ import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.email.EmailService;
 import com.howners.gestion.service.esignature.ESignatureProvider;
 import com.howners.gestion.service.esignature.ESignatureProviderFactory;
+import com.howners.gestion.service.notification.NotificationService;
 import com.howners.gestion.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +62,7 @@ public class ContractESignatureService {
     private final ContractTokenProvider tokenProvider;
     private final StorageService storageService;
     private final PdfService pdfService;
+    private final NotificationService notificationService;
     private final com.howners.gestion.service.subscription.FeatureGateService featureGateService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
@@ -80,7 +83,7 @@ public class ContractESignatureService {
         log.info("Sending contract {} for electronic signature", contractId);
 
         UUID currentUserId = AuthService.getCurrentUserId();
-        if (!featureGateService.hasFeature(currentUserId, "e_signature")) {
+        if (!featureGateService.hasFeature(currentUserId, "esignature")) {
             throw new PlanLimitExceededException(
                     "La signature électronique est réservée aux plans PRO et PREMIUM. Passez au plan supérieur pour y accéder.");
         }
@@ -197,7 +200,7 @@ public class ContractESignatureService {
         log.info("Contract {} marked as SENT with signature provider {}", contractId, providerFactory.getProviderName());
 
         // 8. Envoyer l'email au locataire (APRÈS le commit de la transaction)
-        String signingLink = frontendUrl + "/contracts/sign?token=" + rawToken;
+        String signingLink = frontendUrl + "/sign?token=" + rawToken;
         String expirationDate = signatureRequest.getTokenExpiresAt().format(DATE_FORMATTER);
 
         SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
@@ -388,9 +391,104 @@ public class ContractESignatureService {
         contract.setSignedAt(now);
         contractRepository.save(contract);
 
+        // Générer et stocker la version signée du PDF (versioning + hash SHA-256,
+        // mêmes invariants que le flux webhook). Non bloquant : la signature reste
+        // valide même si la génération échoue.
+        try {
+            String baseContent = contractVersionRepository
+                    .findByContractIdAndVersion(contract.getId(), contract.getCurrentVersion())
+                    .map(ContractVersion::getContent)
+                    .orElse("");
+            String signatureBlock = buildCanvasSignatureBlock(signatureRequest, base64Payload, now);
+            byte[] signedPdfBytes = pdfService.generatePdf(
+                    baseContent, "Contrat " + contract.getContractNumber(), signatureBlock);
+            String documentHash = pdfService.calculateHash(signedPdfBytes);
+            String pdfFileName = pdfService.generateFileName(
+                    contract.getContractNumber(), contract.getCurrentVersion() + 1);
+            String documentKey = storageService.uploadFile(signedPdfBytes, pdfFileName, "application/pdf");
+
+            ContractVersion signedVersion = ContractVersion.builder()
+                    .contract(contract)
+                    .version(contract.getCurrentVersion() + 1)
+                    .fileKey(documentKey)
+                    .content("Signed document")
+                    .documentHash(documentHash)
+                    .build();
+            contractVersionRepository.save(signedVersion);
+            contract.setCurrentVersion(signedVersion.getVersion());
+            contractRepository.save(contract);
+
+            log.info("Signed PDF stored for contract {} with fileKey: {}", contract.getId(), documentKey);
+        } catch (Exception e) {
+            log.error("Failed to generate and store signed PDF for contract {}: {}",
+                    contract.getId(), e.getMessage(), e);
+        }
+
+        notifyOwnerOfCanvasSignature(contract, signatureRequest);
+
         log.info("Contract {} signed via canvas by {}",
                 contract.getContractNumber(),
                 signatureRequest.getSignerEmail());
+    }
+
+    /**
+     * Encart de signature ajouté au PDF signé : signataire, horodatage, IP et
+     * image de la signature manuscrite (canvas).
+     */
+    private String buildCanvasSignatureBlock(ContractSignatureRequest signatureRequest,
+                                             String signatureImageBase64,
+                                             LocalDateTime signedAt) {
+        String signerName = signatureRequest.getSigner() != null
+                ? getFullName(signatureRequest.getSigner())
+                : signatureRequest.getSignerEmail();
+        return "<h2>Signature électronique</h2>"
+                + "<p>Signé électroniquement par <strong>" + signerName + "</strong> ("
+                + signatureRequest.getSignerEmail() + ") le "
+                + signedAt.format(DATETIME_FORMATTER)
+                + " — IP : " + signatureRequest.getIpAddress() + "</p>"
+                + "<p><img src=\"data:image/png;base64," + signatureImageBase64
+                + "\" style=\"max-width: 300px; max-height: 120px;\"/></p>";
+    }
+
+    /**
+     * Notifie le propriétaire (email + notification in-app) qu'un contrat a été
+     * signé via le flux canvas public. Non bloquant : la signature reste valide
+     * même si une notification échoue.
+     */
+    private void notifyOwnerOfCanvasSignature(Contract contract, ContractSignatureRequest signatureRequest) {
+        Rental rental = contract.getRental();
+        User owner = rental.getProperty().getOwner();
+        String signerName = signatureRequest.getSigner() != null
+                ? getFullName(signatureRequest.getSigner())
+                : signatureRequest.getSignerEmail();
+
+        try {
+            SignatureCompletedEmailData emailData = SignatureCompletedEmailData.builder()
+                    .recipientEmail(owner.getEmail())
+                    .recipientName(getFullName(owner))
+                    .tenantName(signerName)
+                    .propertyName(rental.getProperty().getName())
+                    .contractNumber(contract.getContractNumber())
+                    .signedDate(signatureRequest.getSignedAt().format(DATETIME_FORMATTER))
+                    .contractViewUrl(frontendUrl + "/contracts/" + contract.getId())
+                    .build();
+            emailService.sendSignatureCompletedEmail(emailData);
+        } catch (Exception e) {
+            log.error("Échec de l'envoi de l'email de confirmation de signature pour le contrat {}",
+                    contract.getId(), e);
+        }
+
+        try {
+            notificationService.create(
+                    owner.getId(),
+                    NotificationType.SIGNATURE_COMPLETED,
+                    "Contrat signé",
+                    "Le contrat " + contract.getContractNumber() + " a été signé par " + signerName + ".",
+                    "/contracts/" + contract.getId());
+        } catch (Exception e) {
+            log.error("Échec de la création de notification pour la signature du contrat {}",
+                    contract.getId(), e);
+        }
     }
 
     /**
@@ -465,7 +563,7 @@ public class ContractESignatureService {
         User tenant = rental.getTenant();
         User owner = rental.getProperty().getOwner();
 
-        String signingLink = frontendUrl + "/contracts/sign?token=" + rawToken;
+        String signingLink = frontendUrl + "/sign?token=" + rawToken;
         String expirationDate = signatureRequest.getTokenExpiresAt().format(DATE_FORMATTER);
 
         SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
@@ -552,7 +650,7 @@ public class ContractESignatureService {
                 request.setAccessToken(hashedToken);
                 request.setTokenExpiresAt(LocalDateTime.now().plusDays(DEFAULT_TOKEN_EXPIRATION_DAYS));
 
-                String signingLink = frontendUrl + "/contracts/sign?token=" + rawToken;
+                String signingLink = frontendUrl + "/sign?token=" + rawToken;
                 String expirationDate = request.getTokenExpiresAt().format(DATE_FORMATTER);
 
                 SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
@@ -628,7 +726,7 @@ public class ContractESignatureService {
         log.info("Sending contract {} for multi-signature with {} signers", contractId, signers.size());
 
         UUID currentUserId = AuthService.getCurrentUserId();
-        if (!featureGateService.hasFeature(currentUserId, "e_signature")) {
+        if (!featureGateService.hasFeature(currentUserId, "esignature")) {
             throw new PlanLimitExceededException(
                     "La signature électronique est réservée aux plans PRO et PREMIUM. Passez au plan supérieur pour y accéder.");
         }
@@ -705,7 +803,7 @@ public class ContractESignatureService {
 
             // Send email only to first signer (sequential signing)
             if (signerInfo.order() == 1) {
-                String signingLink = frontendUrl + "/contracts/sign?token=" + rawToken;
+                String signingLink = frontendUrl + "/sign?token=" + rawToken;
                 User owner = rental.getProperty().getOwner();
 
                 SignatureRequestEmailData emailData = SignatureRequestEmailData.builder()
