@@ -21,12 +21,16 @@ public interface ContractSignatureRequestRepository extends JpaRepository<Contra
     Optional<ContractSignatureRequest> findByAccessToken(String accessToken);
 
     /**
-     * Trouve une demande de signature par l'ID du contrat
+     * Trouve la demande de signature la plus récente d'un contrat. Un contrat
+     * peut cumuler plusieurs demandes au fil du temps (annulée puis renvoyée) —
+     * seule la dernière fait foi pour le suivi.
      */
     @Query("SELECT csr FROM ContractSignatureRequest csr " +
            "LEFT JOIN FETCH csr.contract c " +
            "LEFT JOIN FETCH csr.signer s " +
-           "WHERE c.id = :contractId")
+           "WHERE c.id = :contractId " +
+           "ORDER BY csr.createdAt DESC " +
+           "LIMIT 1")
     Optional<ContractSignatureRequest> findByContractId(@Param("contractId") UUID contractId);
 
     /**

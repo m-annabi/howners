@@ -102,13 +102,55 @@
       <span>Vous avez déjà signé ce contrat.</span>
     </div>
 
+    <!-- Suivi de la demande de signature électronique (vue propriétaire) -->
+    <ng-container *ngIf="isOwner && signatureRequest">
+      <div *ngIf="signatureRequest.status === SignatureRequestStatus.SENT || signatureRequest.status === SignatureRequestStatus.VIEWED"
+           class="hw-alert hw-alert--info mb-2">
+        <i class="bi bi-hourglass-split"></i>
+        <span>
+          Email de signature envoyé à <strong>{{ signatureRequest.signerName }}</strong>
+          ({{ signatureRequest.signerEmail }})<ng-container *ngIf="signatureRequest.sentAt"> le
+          {{ signatureRequest.sentAt | date: 'dd/MM/yyyy HH:mm' }}</ng-container>.
+          En attente de sa signature.
+        </span>
+      </div>
+      <div *ngIf="signatureRequest.status === SignatureRequestStatus.SENT || signatureRequest.status === SignatureRequestStatus.VIEWED"
+           class="mb-3">
+        <button class="hw-btn hw-btn--outline hw-btn--sm" (click)="resendSignatureRequest()">
+          <i class="bi bi-envelope-arrow-up"></i> Renvoyer l'email de signature
+        </button>
+      </div>
+      <div *ngIf="signatureRequest.status === SignatureRequestStatus.SIGNED" class="hw-alert hw-alert--success mb-2">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>
+          <strong>Signé par :</strong> {{ signatureRequest.signerName }}
+          ({{ signatureRequest.signerEmail }})<ng-container *ngIf="signatureRequest.signedAt"> —
+          {{ signatureRequest.signedAt | date: 'dd/MM/yyyy HH:mm' }}</ng-container>
+        </span>
+      </div>
+      <div *ngIf="signatureRequest.status === SignatureRequestStatus.DECLINED || signatureRequest.status === SignatureRequestStatus.EXPIRED || signatureRequest.status === SignatureRequestStatus.CANCELLED"
+           class="hw-alert hw-alert--warning mb-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>
+          La demande de signature est
+          {{ signatureRequest.status === SignatureRequestStatus.DECLINED ? 'refusée' :
+             signatureRequest.status === SignatureRequestStatus.EXPIRED ? 'expirée' : 'annulée' }}.
+        </span>
+      </div>
+    </ng-container>
+
+    <div *ngIf="isOwner && !signatureRequest && contract.status === ContractStatus.SENT" class="hw-alert hw-alert--info">
+      <i class="bi bi-hourglass-split"></i>
+      <span>En attente de la signature du locataire.</span>
+    </div>
+
     <div *ngIf="canSign()">
       <button class="hw-btn hw-btn--primary" (click)="openSignDialog()">
         <i class="bi bi-pen"></i> Signer le contrat
       </button>
     </div>
 
-    <div *ngIf="!canSign() && !hasUserSigned() && contract.status !== ContractStatus.SENT" class="hw-alert hw-alert--warning">
+    <div *ngIf="!canSign() && !hasUserSigned() && !isOwner && contract.status !== ContractStatus.SENT" class="hw-alert hw-alert--warning">
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>Le contrat doit être en statut « Envoyé » pour être signé.</span>
     </div>

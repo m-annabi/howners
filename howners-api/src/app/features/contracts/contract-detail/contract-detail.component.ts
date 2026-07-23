@@ -250,6 +250,9 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   canSign(): boolean {
     if (!this.contract || !this.currentUserId) return false;
 
+    // Seul le locataire peut signer (règle appliquée aussi côté backend)
+    if (this.isOwner) return false;
+
     // Le contrat doit être en statut SENT
     if (this.contract.status !== ContractStatus.SENT) return false;
 
@@ -341,7 +344,9 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Envoie le contrat pour signature (remplace DocuSign)
+   * Envoie le contrat au locataire pour signature électronique : crée la
+   * demande tokenisée côté backend, qui envoie l'email avec le lien public
+   * de signature (/sign?token=…).
    */
   sendForSignature(): void {
     if (!this.contract) return;
@@ -351,20 +356,21 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (confirm('Envoyer ce contrat au locataire pour signature ?')) {
-      const request: UpdateContractRequest = {
-        status: ContractStatus.SENT
-      };
+    if (confirm('Envoyer ce contrat au locataire pour signature ? Un email avec un lien de signature lui sera envoyé.')) {
+      this.sendingForSignature = true;
 
-      this.contractService.updateContract(this.contract.id, request).pipe(
+      this.esignatureService.sendForSignature(this.contract.id).pipe(
         takeUntil(this.destroy$)
       ).subscribe({
-        next: (updatedContract) => {
-          this.contract = updatedContract;
-          this.notificationService.success('Contrat envoyé avec succès ! Le locataire peut maintenant le signer.');
+        next: (request) => {
+          this.signatureRequest = request;
+          this.sendingForSignature = false;
+          this.notificationService.success('Contrat envoyé ! Un email de signature a été adressé à ' + request.signerEmail + '.');
+          this.loadContract(this.contract!.id);
         },
         error: (err) => {
-          this.notificationService.error(err.error?.message || 'Erreur lors de l\'envoi du contrat');
+          this.sendingForSignature = false;
+          this.notificationService.error(err.userMessage || err.error?.message || 'Erreur lors de l\'envoi du contrat');
         }
       });
     }
