@@ -102,6 +102,8 @@ public class AccountingService {
         FiscalActivity activity = requireActivity();
         if (req.type() == null || req.base() == null || req.startDate() == null)
             throw new BadRequestException("Type, base et date de mise en service sont requis.");
+        if (req.base().signum() <= 0)
+            throw new BadRequestException("La base amortissable doit être strictement positive.");
         Property property = null;
         if (req.propertyId() != null) {
             property = propertyRepository.findById(req.propertyId())
@@ -233,6 +235,14 @@ public class AccountingService {
         FiscalActivity activity = requireActivity();
         if (req.principal() == null || req.annualRate() == null || req.durationMonths() == null || req.startDate() == null)
             throw new BadRequestException("Capital, taux, durée et date sont requis.");
+        if (req.principal().signum() <= 0)
+            throw new BadRequestException("Le capital emprunté doit être strictement positif.");
+        if (req.annualRate().signum() < 0)
+            throw new BadRequestException("Le taux annuel ne peut pas être négatif.");
+        if (req.durationMonths() <= 0)
+            throw new BadRequestException("La durée du prêt doit être d'au moins un mois.");
+        if (req.insuranceMonthly() != null && req.insuranceMonthly().signum() < 0)
+            throw new BadRequestException("L'assurance mensuelle ne peut pas être négative.");
         Property property = null;
         if (req.propertyId() != null) {
             property = propertyRepository.findById(req.propertyId())
