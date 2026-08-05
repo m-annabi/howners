@@ -36,11 +36,33 @@ public record LmnpResult(
         // Détail amortissements (par immobilisation, pour le tableau)
         List<AssetAmortLine> lignesAmortissement,
         // Points d'attention (biens non classés meublé/nu, seuil LMP, double déduction…)
-        List<String> avertissements
+        List<String> avertissements,
+        // Checklist « prêt à déposer » : état de complétude et actions guidées avant dépôt.
+        List<ReadinessCheck> checklist,
+        // Aide au report : cases à servir sur la déclaration (2031 / 2033 / 2042-C-PRO).
+        List<ReportLine> reportLines
 ) implements FiscalResult {
 
     public record AssetAmortLine(AmortizableAsset asset, BigDecimal base, BigDecimal annuite,
                                  BigDecimal cumul, BigDecimal vnc) {}
+
+    /**
+     * Une vérification de complétude avant dépôt. {@code level} : {@code DONE} (déjà en
+     * ordre), {@code ACTION} (à traiter avant de déclarer), {@code INFO} (repère utile).
+     */
+    public record ReadinessCheck(String level, String titre, String detail) {
+        public static ReadinessCheck done(String titre, String detail) { return new ReadinessCheck("DONE", titre, detail); }
+        public static ReadinessCheck action(String titre, String detail) { return new ReadinessCheck("ACTION", titre, detail); }
+        public static ReadinessCheck info(String titre, String detail) { return new ReadinessCheck("INFO", titre, detail); }
+    }
+
+    /** Une ligne d'aide au report : un montant et la case/rubrique où l'inscrire. */
+    public record ReportLine(String libelle, BigDecimal montant, String destination) {}
+
+    /** Vrai si aucune action bloquante ne reste avant de déposer la déclaration. */
+    public boolean pretADeposer() {
+        return checklist != null && checklist.stream().noneMatch(c -> "ACTION".equals(c.level()));
+    }
 
     public BigDecimal totalActif() {
         return vncImmobilisations.add(tresorerie);

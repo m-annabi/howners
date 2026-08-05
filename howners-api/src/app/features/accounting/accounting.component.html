@@ -45,6 +45,48 @@
     </div>
   </div>
 
+  <!-- Préparer ma déclaration (checklist + aide au report) -->
+  <div class="hw-card mb-4 acc-readiness" *ngIf="result && checklist.length > 0">
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+      <h5 class="hw-section-title mb-0" style="border:none;padding:0;">Préparer ma déclaration {{ result.year }}</h5>
+      <span class="hw-badge ms-auto"
+            [class.hw-badge--success]="result.pretADeposer"
+            [class.hw-badge--warning]="!result.pretADeposer">
+        <i class="bi" [class.bi-check-circle-fill]="result.pretADeposer" [class.bi-exclamation-circle-fill]="!result.pretADeposer"></i>
+        {{ result.pretADeposer ? 'Prêt à déposer' : (actionsRestantes + ' action' + (actionsRestantes > 1 ? 's' : '') + ' avant de déposer') }}
+      </span>
+    </div>
+    <ul class="acc-checklist">
+      <li *ngFor="let c of checklist" [ngClass]="'acc-check--' + c.level.toLowerCase()">
+        <i class="bi acc-check__icon"
+           [class.bi-check-circle-fill]="c.level === 'DONE'"
+           [class.bi-exclamation-circle-fill]="c.level === 'ACTION'"
+           [class.bi-info-circle]="c.level === 'INFO'"></i>
+        <span><strong>{{ c.titre }}</strong> — <span class="hw-text-muted">{{ c.detail }}</span></span>
+      </li>
+    </ul>
+
+    <div *ngIf="result.reportLines && result.reportLines.length > 0" class="acc-report mt-3">
+      <h6 class="hw-text-sm mb-2"><i class="bi bi-arrow-right-circle"></i> Où reporter ces montants</h6>
+      <div style="overflow-x:auto;">
+        <table class="hw-table">
+          <thead><tr><th>Montant</th><th class="text-end">Valeur</th><th>Formulaire / case</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let l of result.reportLines">
+              <td>{{ l.libelle }}</td>
+              <td class="text-end">{{ l.montant | number:'1.2-2' }} €</td>
+              <td class="hw-text-muted hw-text-sm">{{ l.destination }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="hw-text-muted hw-text-sm mt-3 mb-0" *ngIf="!result.pretADeposer">
+      Vous pouvez déjà télécharger la liasse (bouton « Télécharger la liasse » ci-dessus) ; traitez les actions listées pour une déclaration complète.
+    </p>
+  </div>
+
   <div class="row" *ngIf="result">
     <!-- Résultat -->
     <div class="col-lg-6 mb-4">

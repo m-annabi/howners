@@ -224,6 +224,47 @@ class LmnpResultServiceTest {
     }
 
     @Test
+    void checklist_pretADeposer_quandDossierComplet() {
+        activity.setSiret("12345678901234");
+        property.setIsFurnished(true);
+        stub(new BigDecimal("10000"), List.of(charge("3000", ExpenseCategory.MAINTENANCE)),
+                List.of(assetAnnuite("5000")));
+
+        LmnpResult r = service.compute(activity, 2024);
+
+        assertThat(r.checklist()).isNotEmpty();
+        assertThat(r.pretADeposer()).isTrue();
+        assertThat(r.checklist()).noneMatch(c -> "ACTION".equals(c.level()));
+        // Bénéfice fiscal 2000 € → aide au report vers la case 5NA.
+        assertThat(r.reportLines()).anyMatch(l -> l.destination().contains("5NA"));
+    }
+
+    @Test
+    void checklist_signaleActions_quandDossierIncomplet() {
+        // Pas de SIRET, aucune recette, bien non classé.
+        stub(new BigDecimal("0"), List.of(), List.of());
+
+        LmnpResult r = service.compute(activity, 2024);
+
+        assertThat(r.pretADeposer()).isFalse();
+        assertThat(r.checklist()).anyMatch(c -> "ACTION".equals(c.level()) && c.titre().contains("SIRET"));
+        assertThat(r.checklist()).anyMatch(c -> "ACTION".equals(c.level()) && c.titre().toLowerCase().contains("recette"));
+    }
+
+    @Test
+    void avertissement_doubleDeductionAssurance_cibleeQuandDepenseEtEmpruntAssure() {
+        Loan loan = Loan.builder().principal(new BigDecimal("100000")).annualRate(new BigDecimal("2.000"))
+                .durationMonths(240).startDate(LocalDate.of(2024, 1, 1))
+                .insuranceMonthly(new BigDecimal("30")).label("Prêt").build();
+        stub(new BigDecimal("12000"), List.of(charge("360", ExpenseCategory.INSURANCE)), List.of());
+        when(loanRepository.findByActivityId(activity.getId())).thenReturn(List.of(loan));
+
+        LmnpResult r = service.compute(activity, 2024);
+
+        assertThat(String.join(" ", r.avertissements())).contains("Double déduction probable de l'assurance");
+    }
+
+    @Test
     void avertissements_seuilLmp_bienNonClasse_etEmprunt() {
         Loan loan = Loan.builder().principal(new BigDecimal("10000")).annualRate(new BigDecimal("2.000"))
                 .durationMonths(60).startDate(LocalDate.of(2024, 1, 1)).label("Prêt").build();

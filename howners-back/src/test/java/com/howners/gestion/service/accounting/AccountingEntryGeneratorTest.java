@@ -148,6 +148,40 @@ class AccountingEntryGeneratorTest {
     }
 
     @Test
+    void fec_equilibreParEcriture_etNumeroPartageParPiece() {
+        List<JournalEntry> entries = generator.generate(activity, 2024);
+        String fec = new String(fecExportService.generate(activity, 2024, entries), StandardCharsets.UTF_8);
+        String[] lines = fec.split("\n");
+
+        // Groupe les lignes par EcritureNum (colonne 2) et somme débit (11) / crédit (12).
+        java.util.Map<String, BigDecimal> debitParEcriture = new java.util.HashMap<>();
+        java.util.Map<String, BigDecimal> creditParEcriture = new java.util.HashMap<>();
+        java.util.Map<String, java.util.Set<String>> numParPiece = new java.util.HashMap<>();
+        for (int i = 1; i < lines.length; i++) {
+            String[] c = lines[i].split("\\|", -1);
+            String ecritureNum = c[2];
+            debitParEcriture.merge(ecritureNum, montant(c[11]), BigDecimal::add);
+            creditParEcriture.merge(ecritureNum, montant(c[12]), BigDecimal::add);
+            numParPiece.computeIfAbsent(c[8], k -> new java.util.HashSet<>()).add(ecritureNum);
+        }
+
+        // Contrôle DGFiP : chaque écriture est équilibrée (Σdébit = Σcrédit par EcritureNum).
+        for (String num : debitParEcriture.keySet()) {
+            assertThat(debitParEcriture.get(num))
+                    .as("écriture %s équilibrée", num)
+                    .isEqualByComparingTo(creditParEcriture.get(num));
+        }
+        // Les deux volets d'une même pièce partagent un unique EcritureNum.
+        for (var e : numParPiece.entrySet()) {
+            assertThat(e.getValue()).as("pièce %s → un seul EcritureNum", e.getKey()).hasSize(1);
+        }
+    }
+
+    private static BigDecimal montant(String s) {
+        return s == null || s.isBlank() ? BigDecimal.ZERO : new BigDecimal(s.replace(',', '.'));
+    }
+
+    @Test
     void fec_numeroteParJournal_etNomReglementaire() {
         List<JournalEntry> entries = generator.generate(activity, 2024);
         String fec = new String(fecExportService.generate(activity, 2024, entries), StandardCharsets.UTF_8);

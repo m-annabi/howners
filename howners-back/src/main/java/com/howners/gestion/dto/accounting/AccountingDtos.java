@@ -69,24 +69,35 @@ public final class AccountingDtos {
             BigDecimal totalActif,
             BigDecimal totalPassif,
             List<AmortLineResponse> amortissements,
-            List<String> avertissements) {
+            List<String> avertissements,
+            boolean pretADeposer,
+            List<ReadinessCheckResponse> checklist,
+            List<ReportLineResponse> reportLines) {
         public static ResultResponse from(LmnpResult r) {
             List<AmortLineResponse> lignes = r.lignesAmortissement().stream()
                     .map(l -> new AmortLineResponse(l.asset().getType().getLabel() + " — " + l.asset().getLabel(),
                             l.base(), l.annuite(), l.cumul(), l.vnc()))
                     .toList();
+            List<ReadinessCheckResponse> checklist = r.checklist() == null ? List.of()
+                    : r.checklist().stream().map(c -> new ReadinessCheckResponse(c.level(), c.titre(), c.detail())).toList();
+            List<ReportLineResponse> reports = r.reportLines() == null ? List.of()
+                    : r.reportLines().stream().map(x -> new ReportLineResponse(x.libelle(), x.montant(), x.destination())).toList();
             return new ResultResponse(r.year(), r.recettes(), r.chargesParPoste(), r.totalCharges(),
                     r.resultatAvantAmortissement(), r.dotationComptable(), r.amortissementDeductible(),
                     r.amortissementDiffereCumul(), r.resultatComptable(), r.resultatFiscal(),
                     r.deficitAnterieurImpute(), r.deficitReportable(),
                     r.vncImmobilisations(), r.tresorerie(), r.capitalExploitant(),
                     r.reportANouveau(), r.dettesEmprunt(), r.totalActif(), r.totalPassif(), lignes,
-                    r.avertissements());
+                    r.avertissements(), r.pretADeposer(), checklist, reports);
         }
     }
 
     public record AmortLineResponse(String immobilisation, BigDecimal base, BigDecimal annuite,
                                     BigDecimal cumul, BigDecimal vnc) {}
+
+    public record ReadinessCheckResponse(String level, String titre, String detail) {}
+
+    public record ReportLineResponse(String libelle, BigDecimal montant, String destination) {}
 
     /** Immobilisation suggérée à partir d'une dépense ou d'un bien existant. */
     public record AssetSuggestion(

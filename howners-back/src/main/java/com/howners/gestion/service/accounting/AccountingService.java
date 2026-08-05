@@ -64,6 +64,17 @@ public class AccountingService {
                 FiscalActivity.builder().owner(owner)
                         .jurisdiction(FiscalJurisdiction.FR).regime(FiscalRegime.LMNP_REEL).build());
         activity.setStartDate(req.startDate());
+        // Une immobilisation ne peut être amortie avant la mise en location : si la date de
+        // début d'activité est repoussée, re-caler les immobilisations déjà saisies dont la
+        // mise en service devient antérieure (sinon amortissement fantôme + bilan déséquilibré).
+        if (activity.getId() != null) {
+            for (AmortizableAsset asset : assetRepository.findByActivityId(activity.getId())) {
+                if (asset.getStartDate() != null && asset.getStartDate().isBefore(req.startDate())) {
+                    asset.setStartDate(req.startDate());
+                    assetRepository.save(asset);
+                }
+            }
+        }
         activity.setOpeningCash(req.openingCash());
         if (req.siret() != null && !req.siret().isBlank()) {
             String siret = req.siret().replaceAll("\\s", "");

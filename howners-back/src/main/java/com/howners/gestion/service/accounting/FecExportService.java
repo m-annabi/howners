@@ -46,13 +46,26 @@ public class FecExportService {
                 "ValidDate", "Montantdevise", "Idevise")).append("\n");
 
         LocalDate cloture = LocalDate.of(year, 12, 31);
+        // EcritureNum identifie une écriture (transaction) : toutes les lignes d'une même
+        // pièce partagent le même numéro, pour que le contrôle d'équilibre par écriture de la
+        // DGFiP (Σdébit = Σcrédit par EcritureNum) soit satisfait.
         java.util.Map<String, Integer> numParJournal = new java.util.HashMap<>();
+        java.util.Map<String, String> ecritureNumParPiece = new java.util.HashMap<>();
         for (JournalEntry e : entries) {
-            int num = numParJournal.merge(e.journalCode(), 1, Integer::sum);
+            String clePiece = e.journalCode() + "|PIECE|" + e.pieceRef();
+            String ecritureNum = ecritureNumParPiece.computeIfAbsent(clePiece,
+                    k -> e.journalCode() + "-" + numParJournal.merge(e.journalCode(), 1, Integer::sum));
+
+            // Le sens d'une écriture est porté par la colonne (Debit / Credit), jamais par le
+            // signe : un montant négatif est basculé dans la colonne opposée en valeur absolue.
+            BigDecimal net = nz(e.debit()).subtract(nz(e.credit()));
+            BigDecimal debit = net.signum() >= 0 ? net : BigDecimal.ZERO;
+            BigDecimal credit = net.signum() < 0 ? net.negate() : BigDecimal.ZERO;
+
             sb.append(String.join(SEP,
                     e.journalCode(),
                     e.journalLib(),
-                    e.journalCode() + "-" + num,
+                    ecritureNum,
                     e.date().format(FEC_DATE),
                     e.compteNum(),
                     e.compteLib(),
@@ -61,8 +74,8 @@ public class FecExportService {
                     e.pieceRef(),
                     e.pieceDate().format(FEC_DATE),
                     sanitize(e.libelle()),
-                    montant(e.debit()),
-                    montant(e.credit()),
+                    montant(debit),
+                    montant(credit),
                     "",                 // EcritureLet
                     "",                 // DateLet
                     cloture.format(FEC_DATE),
@@ -71,6 +84,10 @@ public class FecExportService {
             )).append("\n");
         }
         return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static BigDecimal nz(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
     }
 
     private static String montant(BigDecimal v) {

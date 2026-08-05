@@ -24,3 +24,33 @@
   background: var(--hw-surface-alt, #f9fafb);
   padding: var(--hw-space-3, 0.75rem);
 }
+
+.acc-readiness {
+  border-left: 4px solid var(--hw-primary, #2563eb);
+}
+
+.acc-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--hw-border, #eef0f3);
+    line-height: 1.35;
+  }
+  li:last-child { border-bottom: none; }
+
+  .acc-check__icon { margin-top: 0.15rem; flex: 0 0 auto; }
+  .acc-check--done .acc-check__icon { color: var(--hw-success, #16a34a); }
+  .acc-check--action .acc-check__icon { color: var(--hw-warning, #f59e0b); }
+  .acc-check--info .acc-check__icon { color: var(--hw-text-muted, #6b7280); }
+}
+
+.acc-report {
+  border-top: 1px solid var(--hw-border, #e5e7eb);
+  padding-top: var(--hw-space-3, 0.75rem);
+}

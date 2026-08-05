@@ -44,6 +44,25 @@ public class LmnpDocumentService {
             h.append("<p class=\"legal-note\">SIRET non renseigné : il est obligatoire sur la déclaration 2031 et donne son nom réglementaire au FEC. Renseignez-le dans la configuration de l'activité.</p>");
         }
 
+        // --- Avant de déposer (checklist) ---
+        if (r.checklist() != null && !r.checklist().isEmpty()) {
+            h.append("<h2>Avant de déposer</h2>");
+            h.append("<p>").append(r.pretADeposer()
+                    ? "✓ Aucune action bloquante : votre liasse est prête à être reportée sur votre déclaration."
+                    : "Quelques points restent à traiter avant de déclarer (voir ci-dessous).").append("</p>");
+            h.append("<table><tr><th>État</th><th>Point</th><th>Détail</th></tr>");
+            for (LmnpResult.ReadinessCheck c : r.checklist()) {
+                String etat = switch (c.level()) {
+                    case "DONE" -> "✓ OK";
+                    case "ACTION" -> "À faire";
+                    default -> "Info";
+                };
+                h.append("<tr><td>").append(etat).append("</td><td>").append(c.titre())
+                        .append("</td><td style=\"color:#555;\">").append(c.detail()).append("</td></tr>");
+            }
+            h.append("</table>");
+        }
+
         // --- Compte de résultat ---
         h.append("<h2>Compte de résultat <span style=\"font-weight:normal;color:#888;font-size:9pt;\">(façon 2033-B)</span></h2>");
         h.append("<table><tr><th>Poste</th><th class=\"text-right\">Montant</th></tr>");

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult, Loan, LoanYear } from '../../core/services/accounting.service';
+import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult, Loan, LoanYear, ReadinessCheck } from '../../core/services/accounting.service';
 import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
@@ -48,6 +48,14 @@ export class AccountingComponent implements OnInit {
 
   get bilanEquilibre(): boolean {
     return !!this.result && Math.abs(this.result.totalActif - this.result.totalPassif) < 0.05;
+  }
+
+  get checklist(): ReadinessCheck[] {
+    return this.result?.checklist ?? [];
+  }
+
+  get actionsRestantes(): number {
+    return this.checklist.filter(c => c.level === 'ACTION').length;
   }
 
   get minYear(): number {

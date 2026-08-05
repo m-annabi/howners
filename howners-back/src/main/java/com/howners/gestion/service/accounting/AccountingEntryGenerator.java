@@ -127,7 +127,7 @@ public class AccountingEntryGenerator {
         // 3b. Déblocage des emprunts souscrits en cours d'activité (entrée de trésorerie)
         for (Loan l : loans) {
             if (l.getStartDate().getYear() != year || year <= startYear) continue;
-            String ref = "EMP-" + l.getId().toString().substring(0, 8);
+            String ref = "EMP-" + l.getId().toString().substring(0, 8) + "-DEB";
             entries.add(new JournalEntry(l.getStartDate(), "OD", "Emprunts", ref, l.getStartDate(), "512", "Banque", "Déblocage " + l.getLabel(), l.getPrincipal(), BigDecimal.ZERO));
             entries.add(new JournalEntry(l.getStartDate(), "OD", "Emprunts", ref, l.getStartDate(), "164", "Emprunts", "Déblocage " + l.getLabel(), BigDecimal.ZERO, l.getPrincipal()));
         }
@@ -137,7 +137,7 @@ public class AccountingEntryGenerator {
         for (Loan l : loans) {
             var ly = loanScheduleService.forYear(l, year);
             if (ly.capital().signum() <= 0 && ly.interest().signum() <= 0) continue;
-            String ref = "EMP-" + l.getId().toString().substring(0, 8);
+            String ref = "EMP-" + l.getId().toString().substring(0, 8) + "-ECH";
             BigDecimal total = ly.capital().add(ly.interest()).add(ly.insurance());
             if (ly.capital().signum() > 0) entries.add(new JournalEntry(echeance, "OD", "Emprunts", ref, echeance, "164", "Emprunts", "Remboursement capital " + l.getLabel(), ly.capital(), BigDecimal.ZERO));
             if (ly.interest().signum() > 0) entries.add(new JournalEntry(echeance, "OD", "Emprunts", ref, echeance, "66116", "Intérêts d'emprunt", "Intérêts " + l.getLabel(), ly.interest(), BigDecimal.ZERO));

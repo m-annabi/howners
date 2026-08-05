@@ -62,6 +62,18 @@ export interface LoanYear {
   crdEnd: number;
 }
 
+export interface ReadinessCheck {
+  level: 'DONE' | 'ACTION' | 'INFO';
+  titre: string;
+  detail: string;
+}
+
+export interface ReportLine {
+  libelle: string;
+  montant: number;
+  destination: string;
+}
+
 export interface LmnpResult {
   year: number;
   recettes: number;
@@ -84,6 +96,9 @@ export interface LmnpResult {
   totalPassif: number;
   amortissements: AmortLine[];
   avertissements: string[];
+  pretADeposer: boolean;
+  checklist: ReadinessCheck[];
+  reportLines: ReportLine[];
 }
 
 @Injectable({ providedIn: 'root' })

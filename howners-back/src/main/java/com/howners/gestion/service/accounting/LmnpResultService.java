@@ -88,7 +88,9 @@ public class LmnpResultService {
         if (targetYear < startYear) {
             BigDecimal z = BigDecimal.ZERO;
             return new LmnpResult(targetYear, z, Map.of(), z, z, z, z, z, z, z, z, z, z,
-                    z, z, z, z, z, z, z, List.of(), List.of());
+                    z, z, z, z, z, z, z, List.of(),
+                    List.of("Exercice antérieur au début d'activité (" + startYear + ") : aucune écriture."),
+                    List.of(), List.of());
         }
 
         List<Loan> loans = loanRepository.findByActivityId(activity.getId());
@@ -185,13 +187,22 @@ public class LmnpResultService {
                                 amortizationService.vnc(a, targetYear)))
                         .toList();
 
+                BigDecimal vnc = immoBrutes.subtract(amortCumules);
+                BigDecimal totalActif = vnc.add(tresorerie);
+                BigDecimal totalPassif = capitalExploitant.add(reportANouveau).add(resultatComptable).add(dettes);
+                List<String> avertissements = avertissements(ownerId, recettes, loans, allExpenses, exercice);
+                List<LmnpResult.ReadinessCheck> checklist = checklist(activity, recettes, resultatFiscal,
+                        totalActif.subtract(totalPassif), assets, ownerId);
+                List<LmnpResult.ReportLine> reportLines = reportLines(recettes, resultatFiscal, vnc, dettes,
+                        amortDiffereFin, deficitReportable);
+
                 result = new LmnpResult(y, recettes, chargesParPoste, totalCharges,
                         resultatAvantAmort, dotation, amortDeductible, amortDiffereGenere,
                         amortDiffereFin, resultatComptable, resultatFiscal,
                         deficitImpute, deficitReportable,
-                        immoBrutes, amortCumules, immoBrutes.subtract(amortCumules),
+                        immoBrutes, amortCumules, vnc,
                         tresorerie, capitalExploitant, reportANouveau, dettes, lignes,
-                        avertissements(ownerId, recettes, loans));
+                        avertissements, checklist, reportLines);
             }
 
             // Report vers l'exercice suivant
@@ -201,11 +212,10 @@ public class LmnpResultService {
         return result;
     }
 
-    private List<String> avertissements(UUID ownerId, BigDecimal recettes, List<Loan> loans) {
+    private List<String> avertissements(UUID ownerId, BigDecimal recettes, List<Loan> loans,
+                                        List<Expense> allExpenses, int exercice) {
         List<String> notes = new ArrayList<>();
-        List<String> nonClasses = propertyRepository.findByOwnerId(ownerId).stream()
-                .filter(p -> p.getIsFurnished() == null)
-                .map(Property::getName).toList();
+        List<String> nonClasses = nonClasses(ownerId);
         if (!nonClasses.isEmpty()) {
             notes.add("Biens non classés meublé / nu, inclus dans le BIC : "
                     + String.join(", ", nonClasses)
@@ -216,9 +226,118 @@ public class LmnpResultService {
                     + "l'activité bascule en loueur en meublé professionnel (LMP) — cotisations sociales et régime des plus-values différents.");
         }
         if (!loans.isEmpty()) {
-            notes.add("Emprunt(s) modélisé(s) : ne saisissez pas en plus les intérêts ou l'assurance emprunteur en dépenses, ils seraient déduits deux fois.");
+            // Escalade ciblée : une dépense d'assurance coexiste avec un emprunt assuré →
+            // risque concret de double déduction (l'assurance emprunteur est déjà déduite via l'emprunt).
+            if (assuranceEmpruntSaisieEnDouble(loans, allExpenses, exercice)) {
+                notes.add("Double déduction probable de l'assurance : une dépense « Assurances » est saisie alors que "
+                        + "l'assurance emprunteur est déjà déduite via l'emprunt. Retirez-la des dépenses si c'est la même prime.");
+            } else {
+                notes.add("Emprunt(s) modélisé(s) : ne saisissez pas en plus les intérêts ou l'assurance emprunteur en dépenses, ils seraient déduits deux fois.");
+            }
         }
         return notes;
+    }
+
+    /** Biens du propriétaire dont le caractère meublé/nu n'est pas renseigné. */
+    private List<String> nonClasses(UUID ownerId) {
+        return propertyRepository.findByOwnerId(ownerId).stream()
+                .filter(p -> p.getIsFurnished() == null)
+                .map(Property::getName).toList();
+    }
+
+    /** Un emprunt porte une assurance ET une dépense « Assurances » est saisie sur l'exercice. */
+    private boolean assuranceEmpruntSaisieEnDouble(List<Loan> loans, List<Expense> allExpenses, int exercice) {
+        boolean empruntAssure = loans.stream()
+                .anyMatch(l -> l.getInsuranceMonthly() != null && l.getInsuranceMonthly().signum() > 0);
+        if (!empruntAssure) return false;
+        return allExpenses.stream().anyMatch(e -> e.getCategory() == ExpenseCategory.INSURANCE
+                && e.getExpenseDate() != null && e.getExpenseDate().getYear() == exercice
+                && (e.getProperty() == null || estMeuble(e.getProperty())));
+    }
+
+    /**
+     * Checklist « prêt à déposer » : transforme les données en actions concrètes avant
+     * de déclarer (SIRET, recettes, classement des biens, immobilisations, équilibre du
+     * bilan), avec confirmation des points déjà en ordre.
+     */
+    private List<LmnpResult.ReadinessCheck> checklist(FiscalActivity activity, BigDecimal recettes,
+            BigDecimal resultatFiscal, BigDecimal ecartBilan, List<AmortizableAsset> assets, UUID ownerId) {
+        List<LmnpResult.ReadinessCheck> l = new ArrayList<>();
+
+        String siret = activity.getSiret();
+        if (siret != null && (siret.length() == 9 || siret.length() == 14)) {
+            l.add(LmnpResult.ReadinessCheck.done("SIRET renseigné", "Nom réglementaire du FEC et report sur la 2031 assurés."));
+        } else {
+            l.add(LmnpResult.ReadinessCheck.action("SIRET manquant",
+                    "Renseignez votre SIRET dans la configuration de l'activité : il est obligatoire sur la 2031 et nomme le FEC."));
+        }
+
+        if (recettes.signum() > 0) {
+            l.add(LmnpResult.ReadinessCheck.done("Recettes prises en compte",
+                    "Loyers et provisions encaissés sur l'exercice pour vos biens meublés."));
+        } else {
+            l.add(LmnpResult.ReadinessCheck.action("Aucune recette encaissée",
+                    "Aucun loyer meublé encaissé sur l'exercice : vérifiez que vos paiements sont bien marqués « encaissés » et rattachés à un bien meublé."));
+        }
+
+        List<String> nonClasses = nonClasses(ownerId);
+        if (nonClasses.isEmpty()) {
+            l.add(LmnpResult.ReadinessCheck.done("Biens classés meublé / nu", "Aucun risque de double emploi avec la 2044."));
+        } else {
+            l.add(LmnpResult.ReadinessCheck.action("Classez vos biens meublé / nu",
+                    "Non renseigné (inclus par défaut dans le BIC) : " + String.join(", ", nonClasses)
+                    + ". Classez-les pour éviter tout double emploi avec la 2044 (location nue)."));
+        }
+
+        if (!assets.isEmpty()) {
+            l.add(LmnpResult.ReadinessCheck.done(assets.size() + " immobilisation(s) amortie(s)",
+                    "Bâti, mobilier, travaux et frais réduisent votre base imposable."));
+        } else {
+            l.add(LmnpResult.ReadinessCheck.info("Aucune immobilisation",
+                    "Amortir le bâti, le mobilier et les travaux réduit fortement l'impôt : importez-les depuis vos biens et dépenses."));
+        }
+
+        if (ecartBilan.abs().compareTo(new BigDecimal("0.05")) <= 0) {
+            l.add(LmnpResult.ReadinessCheck.done("Bilan équilibré", "Actif = passif : votre liasse est cohérente."));
+        } else {
+            l.add(LmnpResult.ReadinessCheck.action("Bilan déséquilibré",
+                    "Écart actif/passif de " + ecartBilan.abs().setScale(2, java.math.RoundingMode.HALF_UP)
+                    + " € : vérifiez la trésorerie d'ouverture et les dates de mise en service des immobilisations et emprunts."));
+        }
+
+        boolean benefice = resultatFiscal.signum() >= 0;
+        l.add(LmnpResult.ReadinessCheck.info(benefice ? "À reporter : bénéfice (case 5NA)" : "À reporter : déficit (case 5NY)",
+                (benefice ? "Bénéfice BIC de " : "Déficit BIC de ") + resultatFiscal.abs().setScale(2, java.math.RoundingMode.HALF_UP)
+                + " € à porter sur la 2042-C-PRO (LMNP réel), après la 2031 et ses annexes 2033. La liasse détaille chaque case."));
+
+        return l;
+    }
+
+    /** Aide au report : chaque montant clé et la case/rubrique où l'inscrire. */
+    private List<LmnpResult.ReportLine> reportLines(BigDecimal recettes, BigDecimal resultatFiscal,
+            BigDecimal vnc, BigDecimal dettes, BigDecimal amortDiffere, BigDecimal deficitReportable) {
+        List<LmnpResult.ReportLine> r = new ArrayList<>();
+        boolean benefice = resultatFiscal.signum() >= 0;
+        r.add(new LmnpResult.ReportLine("Résultat fiscal " + (benefice ? "(bénéfice)" : "(déficit)"), resultatFiscal,
+                benefice ? "2042-C-PRO case 5NA (5OA/5PA selon le déclarant), après la 2031"
+                        : "2042-C-PRO case 5NY (5OY/5PY selon le déclarant), après la 2031"));
+        r.add(new LmnpResult.ReportLine("Recettes et charges par nature", recettes,
+                "2033-B — compte de résultat simplifié"));
+        r.add(new LmnpResult.ReportLine("Immobilisations et amortissements (VNC)", vnc,
+                "2033-A (actif) et 2033-C (amortissements)"));
+        if (dettes.signum() != 0) {
+            r.add(new LmnpResult.ReportLine("Capital restant dû des emprunts", dettes,
+                    "2033-A — passif, « emprunts et dettes assimilées »"));
+        }
+        if (amortDiffere.signum() > 0) {
+            r.add(new LmnpResult.ReportLine("Amortissements différés en report", amortDiffere,
+                    "Suivi extra-comptable (art. 39 C du CGI), reportable sans limite"));
+        }
+        if (deficitReportable.signum() > 0) {
+            r.add(new LmnpResult.ReportLine("Déficits BIC reportables", deficitReportable,
+                    "Suivi des déficits non professionnels (imputables 10 ans)"));
+        }
+        return r;
     }
 
     private BigDecimal recettes(List<Property> properties, int year) {

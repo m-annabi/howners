@@ -1,8 +1,10 @@
 package com.howners.gestion.service.accounting;
 
+import com.howners.gestion.domain.accounting.AmortizableAsset;
 import com.howners.gestion.domain.accounting.AssetType;
 import com.howners.gestion.domain.accounting.FiscalActivity;
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.dto.accounting.AccountingDtos.ConfigureActivityRequest;
 import com.howners.gestion.dto.accounting.AccountingDtos.CreateAssetRequest;
 import com.howners.gestion.dto.accounting.AccountingDtos.CreateLoanRequest;
 import com.howners.gestion.exception.BadRequestException;
@@ -32,7 +34,9 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -105,6 +109,26 @@ class AccountingServiceTest {
         assertThatThrownBy(() -> accountingService.addLoan(req))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("assurance");
+    }
+
+    @Test
+    void configureActivity_repousseDebut_reclampeImmobilisationsAnterieures() {
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(
+                User.builder().id(ownerId).email("o@t.fr").firstName("O").lastName("W").build()));
+        AmortizableAsset asset = AmortizableAsset.builder().id(UUID.randomUUID())
+                .type(AssetType.MOBILIER).label("Mob").base(new BigDecimal("7000"))
+                .durationYears(7).startDate(LocalDate.of(2024, 6, 1)).build();
+        when(assetRepository.findByActivityId(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(java.util.List.of(asset));
+        when(activityRepository.save(org.mockito.ArgumentMatchers.any(FiscalActivity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        // Le début d'activité est repoussé de 2024 à 2025 : l'immobilisation datée avant doit être re-calée.
+        accountingService.configureActivity(new ConfigureActivityRequest(
+                LocalDate.of(2025, 1, 1), new BigDecimal("1000"), null));
+
+        assertThat(asset.getStartDate()).isEqualTo(LocalDate.of(2025, 1, 1));
+        verify(assetRepository).save(asset);
     }
 
     @Test
