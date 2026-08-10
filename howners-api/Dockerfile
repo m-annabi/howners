@@ -21,4 +21,6 @@ COPY --from=build /app/dist/howners-api/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 RUN chown -R nginx:nginx /usr/share/nginx/html
 EXPOSE 80
-HEALTHCHECK --interval=30s --timeout=3s CMD wget --quiet --tries=1 --spider http://localhost:80 || exit 1
+# 127.0.0.1 explicite : dans l'image alpine, localhost résout d'abord en ::1
+# (IPv6) où nginx n'écoute pas — le healthcheck serait toujours "unhealthy".
+HEALTHCHECK --interval=30s --timeout=3s CMD wget --quiet --tries=1 --spider http://127.0.0.1:80 || exit 1
