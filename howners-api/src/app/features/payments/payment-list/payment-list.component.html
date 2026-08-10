@@ -104,14 +104,16 @@
 
         <td class="payment-table__col-status">
           <app-status-badge [status]="payment.status" type="payment"></app-status-badge>
-          <span *ngIf="payment.relanceNiveau === 1" class="hw-badge hw-badge--warning payment-table__relance"
-                title="Relance envoyée le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}">
-            Relancé
-          </span>
-          <span *ngIf="payment.relanceNiveau === 2" class="hw-badge hw-badge--danger payment-table__relance"
-                title="Mise en demeure envoyée le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}">
-            Mise en demeure
-          </span>
+          <ng-container *ngIf="payment.status !== PaymentStatus.PAID && payment.status !== PaymentStatus.REFUNDED">
+            <span *ngIf="payment.relanceNiveau === 1" class="hw-badge hw-badge--warning payment-table__relance"
+                  title="Relance envoyée le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}">
+              Relancé
+            </span>
+            <span *ngIf="payment.relanceNiveau === 2" class="hw-badge hw-badge--danger payment-table__relance"
+                  title="Mise en demeure envoyée le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}">
+              Mise en demeure
+            </span>
+          </ng-container>
         </td>
 
         <td class="hw-table__col-actions" (click)="$event.stopPropagation()">
