@@ -100,3 +100,41 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy-staging:
+    name: Deploy — Staging (Lightsail)
+    runs-on: ubuntu-latest
+    # Déploie seulement un push sur main dont les tests sont verts.
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Un seul déploiement à la fois ; les pushes rapprochés s'enchaînent.
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurer la clé SSH
+        # STAGING_SSH_KEY : clé privée ed25519 dédiée au déploiement (secret repo),
+        # dont la clé publique est dans ~/.ssh/authorized_keys du serveur.
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.STAGING_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 51.44.0.177 >> ~/.ssh/known_hosts
+
+      - name: Synchroniser les sources
+        # rsync plutôt que git pull : le serveur n'a besoin d'aucun credential GitHub.
+        # .env.prod (secrets du serveur) et .git sont préservés.
+        run: |
+          rsync -az --delete --exclude '.git' --exclude '.env.prod' ./ ubuntu@51.44.0.177:~/howners/
+
+      - name: Rebuild & redémarrer la stack
+        run: |
+          ssh ubuntu@51.44.0.177 'cd ~/howners && sudo docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build --remove-orphans'
+
+      - name: Vérifier la santé
+        run: |
+          sleep 20
+          curl -sf --max-time 20 https://api.staging.howners-app.com/actuator/health | grep -q '"status":"UP"'
+          curl -sf -o /dev/null --max-time 15 https://staging.howners-app.com
