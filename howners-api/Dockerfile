@@ -3,6 +3,15 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY . .
+# Domaine de déploiement : l'API est attendue sur api.<APP_DOMAIN> (cf. Caddyfile).
+# Vide (défaut) → environment.prod.ts inchangé (howners.com). Pour un staging :
+#   docker build --build-arg APP_DOMAIN=staging.mondomaine.fr …
+# (ou APP_DOMAIN dans le .env passé à docker compose, cf. docker-compose.prod.yml)
+ARG APP_DOMAIN=""
+RUN if [ -n "$APP_DOMAIN" ]; then \
+      sed -i "s|api\.howners\.com|api.${APP_DOMAIN}|g" src/environments/environment.prod.ts && \
+      grep "apiUrl" src/environments/environment.prod.ts; \
+    fi
 # Prérend les routes publiques (landing) en HTML statique : meilleur SEO + paint.
 # La sortie est dans dist/howners-api/browser/ (le serveur SSR dans server/ n'est pas servi).
 RUN npm run prerender

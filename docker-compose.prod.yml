@@ -41,7 +41,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
-      MINIO_ENDPOINT: http://minio:9000
+      # Endpoint PUBLIC du stockage : les URLs présignées générées dessus sont
+      # ouvertes par le navigateur. https://s3.<APP_DOMAIN> (proxifié par Caddy)
+      # ou l'endpoint S3 AWS. Défaut : MinIO interne (dev/local uniquement).
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
     expose:
       - "8080"
     depends_on:
@@ -62,6 +65,11 @@ services:
     build:
       context: ./howners-api
       dockerfile: Dockerfile
+      args:
+        # L'URL de l'API est figée au build (environment.prod.ts). Sur un domaine
+        # autre que howners.com, APP_DOMAIN (déjà utilisé par Caddy) fait pointer
+        # le front vers api.<APP_DOMAIN>. Vide → comportement historique.
+        APP_DOMAIN: ${APP_DOMAIN:-}
     container_name: howners-frontend
     expose:
       - "80"

@@ -39,3 +39,14 @@ api.{$APP_DOMAIN} {
 		header_up X-Forwarded-Proto https
 	}
 }
+
+# --- Stockage S3 (MinIO) ---
+# Les URLs présignées (photos, documents, contrats) sont générées sur
+# MINIO_ENDPOINT et ouvertes par le navigateur : MinIO doit donc être joignable
+# publiquement. Mettre MINIO_ENDPOINT=https://s3.<APP_DOMAIN> dans le .env
+# (l'entrée DNS s3.<APP_DOMAIN> doit exister). Inutile avec un vrai S3 AWS.
+s3.{$APP_DOMAIN} {
+	# Le Host doit arriver intact à MinIO : la signature des URLs présignées
+	# est calculée dessus (Caddy le préserve par défaut).
+	reverse_proxy minio:9000
+}

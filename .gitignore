@@ -6,6 +6,7 @@
 # Seule exception : le template neutre
 !.env.example
 !**/.env.example
+!.env.staging.example
 
 # Sauvegardes base de données — ne jamais committer (contiennent les données clients)
 *.dump
