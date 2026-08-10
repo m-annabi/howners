@@ -18,6 +18,13 @@ export class PricingComponent implements OnInit {
   planFeatures = PLAN_FEATURES;
   planColors = PLAN_COLORS;
 
+  private readonly taglines: { [key: string]: string } = {
+    [PlanName.FREE]: 'Pour démarrer et gérer vos premiers biens.',
+    [PlanName.PRO]: 'Pour les bailleurs qui veulent piloter leur patrimoine.',
+    [PlanName.PREMIUM]: 'Pour les portefeuilles conséquents, sans limite.',
+    [PlanName.AGENCE]: 'Pour les agences et SCI multi-comptes.'
+  };
+
   constructor(
     private subscriptionService: SubscriptionService,
     private router: Router
@@ -66,5 +73,20 @@ export class PricingComponent implements OnInit {
 
   isPopular(plan: SubscriptionPlan): boolean {
     return plan.name === PlanName.PRO;
+  }
+
+  isFree(plan: SubscriptionPlan): boolean {
+    return plan.name === PlanName.FREE || plan.monthlyPrice === 0;
+  }
+
+  getTagline(plan: SubscriptionPlan): string {
+    return this.taglines[plan.name] || '';
+  }
+
+  getSavingsPercent(plan: SubscriptionPlan): number | null {
+    if (!plan.monthlyPrice || !plan.annualPrice) return null;
+    const full = plan.monthlyPrice * 12;
+    if (plan.annualPrice >= full) return null;
+    return Math.round((1 - plan.annualPrice / full) * 100);
   }
 }

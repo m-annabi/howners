@@ -1,0 +1,47 @@
+<ng-container *ngIf="config">
+  <app-page-header
+    [title]="config.title"
+    [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: config.title}]">
+  </app-page-header>
+
+  <div class="pro-teaser">
+
+    <div class="hw-card pro-teaser__hero">
+      <div class="pro-teaser__icon">
+        <i class="bi" [ngClass]="config.icon"></i>
+      </div>
+      <span class="pro-teaser__badge">
+        <i class="bi bi-stars"></i> Fonctionnalité Pro
+      </span>
+      <h2 class="pro-teaser__headline">{{ config.headline }}</h2>
+      <p class="pro-teaser__tagline">{{ config.tagline }}</p>
+      <a routerLink="/billing/pricing" class="hw-btn hw-btn--primary pro-teaser__cta-btn">
+        <i class="bi bi-arrow-up-circle"></i>
+        Passer au plan Pro<ng-container *ngIf="proPrice"> — dès {{ proPrice | number:'1.0-0' }} €/mois</ng-container>
+      </a>
+    </div>
+
+    <div class="pro-teaser__grid">
+      <div class="hw-card pro-teaser__feature" *ngFor="let detail of config.details">
+        <div class="pro-teaser__feature-icon">
+          <i class="bi" [ngClass]="detail.icon"></i>
+        </div>
+        <div>
+          <strong>{{ detail.title }}</strong>
+          <p>{{ detail.text }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hw-card pro-teaser__footer">
+      <div>
+        <strong>Le plan Pro inclut aussi</strong>
+        <p>Jusqu'à 10 propriétés, contrats illimités, signature électronique, scoring locataire, révision de loyer IRL…</p>
+      </div>
+      <a routerLink="/billing/pricing" class="hw-btn hw-btn--secondary">
+        Comparer les plans
+      </a>
+    </div>
+
+  </div>
+</ng-container>

@@ -4,9 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from '../../shared/shared.module';
 import { AccountingComponent } from './accounting.component';
+import { PlanGuard } from '../../core/guards/plan.guard';
 
 const routes: Routes = [
-  { path: '', component: AccountingComponent }
+  { path: '', component: AccountingComponent, canActivate: [PlanGuard], data: { proFeature: 'comptabilite' } }
 ];
 
 @NgModule({
