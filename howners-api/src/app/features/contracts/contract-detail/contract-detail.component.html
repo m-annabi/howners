@@ -150,9 +150,21 @@
       </button>
     </div>
 
-    <div *ngIf="!canSign() && !hasUserSigned() && !isOwner && contract.status !== ContractStatus.SENT" class="hw-alert hw-alert--warning">
+    <!-- Locataire : contrat déjà signé / actif -->
+    <div *ngIf="!isOwner && (contract.status === ContractStatus.SIGNED || contract.status === ContractStatus.ACTIVE)"
+         class="hw-alert hw-alert--success">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>
+        Contrat signé<ng-container *ngIf="contract.signedAt"> le
+        {{ contract.signedAt | date: 'dd/MM/yyyy' }}</ng-container>.
+      </span>
+    </div>
+
+    <!-- Locataire : contrat pas encore disponible à la signature -->
+    <div *ngIf="!isOwner && !hasUserSigned() && contract.status === ContractStatus.DRAFT"
+         class="hw-alert hw-alert--warning">
       <i class="bi bi-exclamation-triangle-fill"></i>
-      <span>Le contrat doit être en statut « Envoyé » pour être signé.</span>
+      <span>Le contrat n'a pas encore été envoyé pour signature par le propriétaire.</span>
     </div>
   </div>
 </div>

@@ -258,7 +258,14 @@ public class ContractService {
                     .collect(Collectors.toList());
         }
 
-        // Sinon, retourner seulement les contrats du propriétaire
+        // Locataire : retourner les contrats où il est le locataire
+        if (currentUser.getRole() == Role.TENANT) {
+            return contractRepository.findByTenantId(currentUserId).stream()
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        }
+
+        // Propriétaire (ou concierge) : les contrats de ses biens
         return contractRepository.findByOwnerId(currentUserId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());

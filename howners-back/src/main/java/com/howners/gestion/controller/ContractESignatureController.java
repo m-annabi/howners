@@ -47,6 +47,7 @@ public class ContractESignatureController {
      * GET /api/contracts/{contractId}/esignature/status
      */
     @GetMapping("/status")
+    @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
     public ResponseEntity<SignatureRequestResponse> getSignatureStatus(
             @PathVariable UUID contractId) {
         log.info("Request to get signature status for contract {}", contractId);

@@ -23,4 +23,7 @@ public interface ContractRepository extends JpaRepository<Contract, UUID> {
 
     @Query("SELECT c FROM Contract c WHERE c.rental.property.owner.id = :ownerId")
     List<Contract> findByOwnerId(UUID ownerId);
+
+    @Query("SELECT c FROM Contract c WHERE c.rental.tenant.id = :tenantId")
+    List<Contract> findByTenantId(UUID tenantId);
 }

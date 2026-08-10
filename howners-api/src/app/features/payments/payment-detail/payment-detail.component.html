@@ -41,12 +41,12 @@
   </div>
 
   <div class="d-flex gap-2 flex-wrap">
+    <button *ngIf="canPay()" class="hw-btn hw-btn--primary" (click)="payNow()" [disabled]="paying">
+      <i class="bi bi-credit-card"></i>
+      {{ paying ? 'Redirection…' : 'Payer le loyer' }}
+    </button>
     <button *ngIf="canConfirm()" class="hw-btn hw-btn--primary" (click)="confirmPayment()" [disabled]="confirming">
       {{ confirming ? 'Confirmation…' : 'Confirmer le paiement' }}
-    </button>
-    <button *ngIf="canConfirm() && !payment.stripePaymentIntentId" class="hw-btn hw-btn--outline"
-            (click)="createStripeIntent()" [disabled]="creatingIntent">
-      {{ creatingIntent ? 'Création…' : 'Créer intent Stripe' }}
     </button>
     <a *ngIf="payment.receiptUrl" [href]="payment.receiptUrl" target="_blank" class="hw-btn hw-btn--ghost">
       Voir le reçu Stripe

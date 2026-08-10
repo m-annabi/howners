@@ -8,6 +8,7 @@ import com.howners.gestion.domain.contract.SignatureRequestStatus;
 import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.dto.contract.ContractPublicView;
 import com.howners.gestion.dto.contract.SignatureRequestResponse;
 import com.howners.gestion.dto.contract.SignatureTrackingDashboard;
@@ -18,6 +19,7 @@ import com.howners.gestion.dto.email.SignatureRequestEmailData;
 import com.howners.gestion.dto.esignature.ESignatureRequest;
 import com.howners.gestion.dto.esignature.ESignatureResponse;
 import com.howners.gestion.dto.esignature.WebhookEvent;
+import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.PlanLimitExceededException;
 import com.howners.gestion.exception.esignature.*;
 import com.howners.gestion.repository.ContractRepository;
@@ -841,12 +843,38 @@ public class ContractESignatureService {
      */
     @Transactional(readOnly = true)
     public SignatureRequestResponse getSignatureStatus(UUID contractId) {
+        // Vérifier que l'appelant est bien partie au contrat (propriétaire,
+        // locataire ou admin) avant d'exposer le statut de signature.
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new ContractNotFoundException(
+                        "Contract not found: " + contractId,
+                        "CONTRACT_NOT_FOUND"));
+        verifyContractAccess(contract);
+
         ContractSignatureRequest request = signatureRequestRepository
                 .findByContractId(contractId)
                 .orElseThrow(() -> new SignatureRequestNotFoundException(
                         "No signature request found for contract " + contractId,
                         "SIGNATURE_REQUEST_NOT_FOUND"));
         return mapToResponse(request);
+    }
+
+    /**
+     * Autorise l'accès en lecture à un contrat pour son propriétaire, son
+     * locataire ou un admin ; lève ForbiddenException sinon.
+     */
+    private void verifyContractAccess(Contract contract) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        UUID ownerId = contract.getRental().getProperty().getOwner().getId();
+        User tenant = contract.getRental().getTenant();
+        UUID tenantId = tenant != null ? tenant.getId() : null;
+        boolean isAdmin = userRepository.findById(currentUserId)
+                .map(u -> u.getRole() == Role.ADMIN)
+                .orElse(false);
+
+        if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId) && !isAdmin) {
+            throw new ForbiddenException("You are not authorized to view this contract");
+        }
     }
 
     // Méthodes privées

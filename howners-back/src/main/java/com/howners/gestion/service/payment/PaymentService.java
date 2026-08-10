@@ -29,8 +29,11 @@ import com.stripe.net.ApiResource;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.param.checkout.SessionCreateParams;
+import com.howners.gestion.dto.subscription.CheckoutSessionResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -203,6 +206,112 @@ public class PaymentService {
         } catch (StripeException e) {
             log.error("Failed to create Stripe PaymentIntent: {}", e.getMessage(), e);
             throw new BadRequestException("Failed to create payment intent: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Crée une session Stripe Checkout (hébergée) pour régler un loyer.
+     * Le locataire (payeur) paie par carte sur la page Stripe ; si le
+     * propriétaire a un compte Connect, le montant lui est reversé avec
+     * prélèvement de la commission plateforme.
+     */
+    @Transactional
+    public CheckoutSessionResponse createRentCheckoutSession(UUID paymentId) {
+        Payment payment = findPaymentAndCheckAccess(paymentId);
+
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            throw new BadRequestException("Ce paiement est déjà réglé.");
+        }
+
+        try {
+            long amountInCents = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
+            User owner = payment.getRental().getProperty().getOwner();
+            String connectedAccountId = owner.getStripeConnectAccountId();
+
+            SessionCreateParams.PaymentIntentData.Builder piData =
+                    SessionCreateParams.PaymentIntentData.builder()
+                            .putMetadata("payment_id", payment.getId().toString())
+                            .putMetadata("rental_id", payment.getRental().getId().toString());
+
+            if (connectedAccountId != null && !connectedAccountId.isBlank()) {
+                BigDecimal feePercent = platformFeeService.getFeePercentPourProprietaire(owner.getId());
+                long platformFee = Math.round(amountInCents * feePercent.doubleValue() / 100.0);
+                piData.setApplicationFeeAmount(platformFee)
+                        .setTransferData(SessionCreateParams.PaymentIntentData.TransferData.builder()
+                                .setDestination(connectedAccountId)
+                                .build());
+                log.info("Rent checkout: Connect vers {} (commission {} c)", connectedAccountId, platformFee);
+            }
+
+            SessionCreateParams params = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl(frontendUrl + "/payments/" + paymentId + "?session_id={CHECKOUT_SESSION_ID}")
+                    .setCancelUrl(frontendUrl + "/payments/" + paymentId)
+                    .addLineItem(SessionCreateParams.LineItem.builder()
+                            .setQuantity(1L)
+                            .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                    .setCurrency(payment.getCurrency().toLowerCase())
+                                    .setUnitAmount(amountInCents)
+                                    .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                            .setName("Loyer — " + payment.getRental().getProperty().getName())
+                                            .build())
+                                    .build())
+                            .build())
+                    .setPaymentIntentData(piData.build())
+                    .putMetadata("payment_id", payment.getId().toString())
+                    .build();
+
+            Session session = Session.create(params);
+            payment.setPaymentMethod("stripe");
+            paymentRepository.save(payment);
+
+            log.info("Rent checkout session {} créée pour paiement {}", session.getId(), paymentId);
+            return new CheckoutSessionResponse(session.getId(), session.getUrl());
+        } catch (StripeException e) {
+            log.error("Échec création session checkout loyer: {}", e.getMessage(), e);
+            throw new BadRequestException("Échec de la création du paiement Stripe : " + e.getMessage());
+        }
+    }
+
+    /**
+     * Finalise un paiement de loyer au retour de Stripe Checkout : vérifie
+     * auprès de Stripe que la session est payée, puis passe le paiement en
+     * PAID et génère la quittance. Permet de fonctionner sans webhook en local.
+     */
+    @Transactional
+    public PaymentResponse finalizeCheckout(UUID paymentId, String sessionId) {
+        Payment payment = findPaymentAndCheckAccess(paymentId);
+
+        if (payment.getStatus() == PaymentStatus.PAID) {
+            return PaymentResponse.from(payment);
+        }
+
+        try {
+            Session session = Session.retrieve(sessionId);
+            if (!"paid".equals(session.getPaymentStatus())) {
+                throw new BadRequestException("Le paiement n'a pas encore été confirmé par Stripe.");
+            }
+
+            payment.setStatus(PaymentStatus.PAID);
+            payment.setPaidAt(LocalDateTime.now());
+            if (session.getPaymentIntent() != null) {
+                payment.setStripePaymentIntentId(session.getPaymentIntent());
+            }
+            payment.setPaymentMethod("stripe");
+            paymentRepository.save(payment);
+
+            try {
+                receiptService.generateReceipt(paymentId);
+            } catch (Exception e) {
+                log.error("Échec génération quittance paiement {}: {}", paymentId, e.getMessage());
+            }
+            auditService.logAction(AuditAction.PAYMENT_CONFIRMED, "Payment", paymentId);
+
+            log.info("Paiement {} réglé via Stripe Checkout (session {})", paymentId, sessionId);
+            return PaymentResponse.from(payment);
+        } catch (StripeException e) {
+            log.error("Échec vérification session Stripe {}: {}", sessionId, e.getMessage(), e);
+            throw new BadRequestException("Impossible de vérifier la session Stripe : " + e.getMessage());
         }
     }
 

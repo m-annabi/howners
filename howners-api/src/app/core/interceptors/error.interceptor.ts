@@ -50,8 +50,11 @@ export class ErrorInterceptor implements HttpInterceptor {
               errorMessage = error.error?.message || "Vous n'avez pas les droits nécessaires pour effectuer cette action";
               break;
             case 404:
-              // Skip notification for optional resource endpoints (e.g. primary photo)
-              if (request.url.includes('/photos/primary')) {
+              // Skip notification for optional resource endpoints where a 404 is
+              // an expected "not set yet" case, handled locally by the component
+              // (primary photo, contract with no e-signature request yet…).
+              if (request.url.includes('/photos/primary') ||
+                  request.url.includes('/esignature/status')) {
                 return throwError(() => error);
               }
               errorMessage = error.error?.message || 'Ressource non trouvée';

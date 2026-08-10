@@ -3,6 +3,7 @@ package com.howners.gestion.controller;
 import com.howners.gestion.dto.payment.CreatePaymentRequest;
 import com.howners.gestion.dto.payment.PaymentResponse;
 import com.howners.gestion.dto.payment.StripePaymentIntentResponse;
+import com.howners.gestion.dto.subscription.CheckoutSessionResponse;
 import com.howners.gestion.service.payment.PaymentService;
 import com.howners.gestion.service.payment.RelanceImpayesService;
 import jakarta.validation.Valid;
@@ -51,6 +52,22 @@ public class PaymentController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public ResponseEntity<PaymentResponse> confirmPayment(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.confirmPayment(id));
+    }
+
+    /** Crée une session Stripe Checkout pour régler le loyer (payeur/locataire). */
+    @PostMapping("/{id}/checkout")
+    @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
+    public ResponseEntity<CheckoutSessionResponse> createRentCheckout(@PathVariable UUID id) {
+        return ResponseEntity.ok(paymentService.createRentCheckoutSession(id));
+    }
+
+    /** Finalise le paiement au retour de Stripe Checkout (vérifie la session). */
+    @PostMapping("/{id}/checkout/confirm")
+    @PreAuthorize("hasAnyRole('OWNER', 'TENANT', 'ADMIN')")
+    public ResponseEntity<PaymentResponse> finalizeRentCheckout(
+            @PathVariable UUID id,
+            @RequestParam String sessionId) {
+        return ResponseEntity.ok(paymentService.finalizeCheckout(id, sessionId));
     }
 
     @GetMapping("/rental/{rentalId}")

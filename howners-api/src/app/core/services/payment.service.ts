@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Payment,
-  CreatePaymentRequest,
-  StripePaymentIntentResponse
+  CreatePaymentRequest
 } from '../models/payment.model';
 
 @Injectable({
@@ -32,14 +31,23 @@ export class PaymentService {
     return this.http.post<Payment>(this.apiUrl, request);
   }
 
-  createStripeIntent(paymentId: string): Observable<StripePaymentIntentResponse> {
-    return this.http.post<StripePaymentIntentResponse>(
-      `${this.apiUrl}/${paymentId}/stripe-intent`, {}
+  confirmPayment(paymentId: string): Observable<Payment> {
+    return this.http.post<Payment>(`${this.apiUrl}/${paymentId}/confirm`, {});
+  }
+
+  /** Crée une session Stripe Checkout hébergée pour régler le loyer. */
+  createCheckout(paymentId: string): Observable<{ sessionId: string; checkoutUrl: string }> {
+    return this.http.post<{ sessionId: string; checkoutUrl: string }>(
+      `${this.apiUrl}/${paymentId}/checkout`, {}
     );
   }
 
-  confirmPayment(paymentId: string): Observable<Payment> {
-    return this.http.post<Payment>(`${this.apiUrl}/${paymentId}/confirm`, {});
+  /** Finalise le paiement au retour de Stripe (vérifie la session). */
+  finalizeCheckout(paymentId: string, sessionId: string): Observable<Payment> {
+    return this.http.post<Payment>(
+      `${this.apiUrl}/${paymentId}/checkout/confirm`, null,
+      { params: new HttpParams().set('sessionId', sessionId) }
+    );
   }
 
   relancer(paymentId: string): Observable<Payment> {

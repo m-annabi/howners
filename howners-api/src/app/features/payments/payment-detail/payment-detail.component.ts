@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { PaymentService } from '../../../core/services/payment.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import {
   Payment,
   PaymentStatus,
@@ -24,7 +25,8 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
   loading = false;
   error: string | null = null;
   confirming = false;
-  creatingIntent = false;
+  paying = false;
+  finalizing = false;
 
   PaymentStatus = PaymentStatus;
   statusLabels = PAYMENT_STATUS_LABELS;
@@ -35,13 +37,23 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private paymentService: PaymentService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
+
+  get isOwner(): boolean {
+    return this.authService.hasRole('OWNER') || this.authService.hasRole('ADMIN');
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.loadPayment(id);
+      const sessionId = this.route.snapshot.queryParamMap.get('session_id');
+      if (sessionId) {
+        this.finalizeCheckout(id, sessionId);
+      } else {
+        this.loadPayment(id);
+      }
     }
   }
 
@@ -80,24 +92,51 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  createStripeIntent(): void {
-    if (!this.payment) return;
+  canConfirm(): boolean {
+    // Confirmer un paiement comme « reçu » (et générer la quittance) est une
+    // action réservée au propriétaire/admin. Le locataire ne doit pas y accéder.
+    if (!this.isOwner) return false;
+    return this.payment?.status === PaymentStatus.PENDING || this.payment?.status === PaymentStatus.LATE;
+  }
 
-    this.creatingIntent = true;
-    this.paymentService.createStripeIntent(this.payment.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        this.creatingIntent = false;
-        this.notificationService.success('Intent Stripe créé. ID: ' + response.paymentIntentId);
+  /** Le locataire (payeur) peut régler en ligne un loyer non encore payé. */
+  canPay(): boolean {
+    if (this.isOwner) return false;
+    return this.payment?.status === PaymentStatus.PENDING || this.payment?.status === PaymentStatus.LATE;
+  }
+
+  payNow(): void {
+    if (!this.payment) return;
+    this.paying = true;
+    this.paymentService.createCheckout(this.payment.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        window.location.href = res.checkoutUrl;
       },
-      error: () => {
-        this.creatingIntent = false;
-        this.notificationService.error('Erreur lors de la création du paiement Stripe');
+      error: (err) => {
+        this.paying = false;
+        this.notificationService.error(err.error?.message || 'Impossible de démarrer le paiement');
       }
     });
   }
 
-  canConfirm(): boolean {
-    return this.payment?.status === PaymentStatus.PENDING || this.payment?.status === PaymentStatus.LATE;
+  private finalizeCheckout(paymentId: string, sessionId: string): void {
+    this.loading = true;
+    this.finalizing = true;
+    this.paymentService.finalizeCheckout(paymentId, sessionId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (payment) => {
+        this.payment = payment;
+        this.loading = false;
+        this.finalizing = false;
+        this.notificationService.success('Paiement effectué. Une quittance a été générée.');
+        // Nettoie l'URL (retire session_id)
+        this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+      },
+      error: () => {
+        this.finalizing = false;
+        // La session n'est pas (encore) payée : on affiche simplement le paiement.
+        this.loadPayment(paymentId);
+      }
+    });
   }
 
   goBack(): void {
