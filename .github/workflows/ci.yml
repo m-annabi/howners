@@ -115,11 +115,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Configurer la clé SSH
-        # STAGING_SSH_KEY : clé privée ed25519 dédiée au déploiement (secret repo),
-        # dont la clé publique est dans ~/.ssh/authorized_keys du serveur.
+        # STAGING_SSH_KEY : clé privée ed25519 dédiée au déploiement, encodée en
+        # base64 sur UNE ligne (base64 -w0 deploy_key) — le collage multi-lignes
+        # d'une clé PEM dans un secret est trop fragile (cf. "error in libcrypto").
+        # La clé publique correspondante est dans ~/.ssh/authorized_keys du serveur.
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.STAGING_SSH_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s' "${{ secrets.STAGING_SSH_KEY }}" | base64 -d > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 51.44.0.177 >> ~/.ssh/known_hosts
 
