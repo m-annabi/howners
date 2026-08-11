@@ -3,21 +3,15 @@ import {
   HttpRequest,
   HttpHandler,
   HttpEvent,
-  HttpInterceptor,
-  HttpErrorResponse
+  HttpInterceptor
 } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { StorageService } from '../services/storage.service';
-import { Router } from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(
-    private storageService: StorageService,
-    private router: Router
-  ) {}
+  constructor(private storageService: StorageService) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.storageService.getItem('access_token');
@@ -30,14 +24,8 @@ export class AuthInterceptor implements HttpInterceptor {
       });
     }
 
-    return next.handle(request).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
-          this.storageService.removeItem('access_token');
-          this.router.navigate(['/auth/login']);
-        }
-        return throwError(() => error);
-      })
-    );
+    // La gestion des 401 (session expirée) est centralisée dans ErrorInterceptor :
+    // la dupliquer ici provoquait une seconde navigation par requête en échec.
+    return next.handle(request);
   }
 }

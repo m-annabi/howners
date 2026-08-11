@@ -10,6 +10,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { NotificationService } from '../services/notification.service';
 import { UpgradeModalService } from '../services/upgrade-modal.service';
+import { StorageService } from '../services/storage.service';
 import { Router } from '@angular/router';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class ErrorInterceptor implements HttpInterceptor {
   constructor(
     private notificationService: NotificationService,
     private upgradeModalService: UpgradeModalService,
+    private storageService: StorageService,
     private router: Router
   ) {}
 
@@ -39,9 +41,21 @@ export class ErrorInterceptor implements HttpInterceptor {
           // Gestion spécifique selon le code d'erreur
           switch (error.status) {
             case 401:
-              errorMessage = 'Session expirée. Veuillez vous reconnecter.';
-              this.router.navigate(['/auth/login']);
-              break;
+              // Échec de connexion/inscription : le formulaire affiche lui-même
+              // le message du serveur — pas de toast global (et surtout pas
+              // « Session expirée » pour un mauvais mot de passe).
+              if (request.url.includes('/auth/login') || request.url.includes('/auth/register')) {
+                return throwError(() => error);
+              }
+              // Session expirée : traitée UNE seule fois par rafale. La première
+              // 401 purge le jeton ; les 401 concurrentes (polling, requêtes
+              // parallèles du dashboard) ne trouvent plus de jeton et se taisent.
+              if (this.storageService.getItem('access_token')) {
+                this.storageService.removeItem('access_token');
+                this.notificationService.error('Session expirée. Veuillez vous reconnecter.');
+                this.router.navigate(['/auth/login']);
+              }
+              return throwError(() => error);
             case 402:
               errorMessage = error.error?.message || 'Cette fonctionnalité nécessite un plan supérieur';
               this.upgradeModalService.show(errorMessage);
