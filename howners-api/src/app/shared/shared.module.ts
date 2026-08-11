@@ -25,6 +25,7 @@ import { DataTableComponent } from './components/data-table/data-table.component
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { TopbarComponent } from './components/topbar/topbar.component';
+import { GuestTopbarComponent } from './components/guest-topbar/guest-topbar.component';
 import { QuickFiltersComponent } from './components/quick-filters/quick-filters.component';
 import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component';
 import { UpgradeModalComponent } from './components/upgrade-modal/upgrade-modal.component';
@@ -51,6 +52,7 @@ import { OnboardingChecklistComponent } from './components/onboarding-checklist/
     ConfirmDialogComponent,
     SidebarComponent,
     TopbarComponent,
+    GuestTopbarComponent,
     QuickFiltersComponent,
     NpsPromptComponent,
     WidgetConfiguratorComponent,
@@ -84,6 +86,7 @@ import { OnboardingChecklistComponent } from './components/onboarding-checklist/
     ConfirmDialogComponent,
     SidebarComponent,
     TopbarComponent,
+    GuestTopbarComponent,
     QuickFiltersComponent,
     NpsPromptComponent,
     WidgetConfiguratorComponent,
