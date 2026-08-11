@@ -136,7 +136,16 @@ jobs:
           ssh ubuntu@51.44.0.177 'cd ~/howners && sudo docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build --remove-orphans'
 
       - name: Vérifier la santé
+        # Spring Boot + Liquibase mettent 1 à 2 min à redémarrer après un rebuild :
+        # on interroge l'API jusqu'à 5 min avant de déclarer le déploiement en échec.
         run: |
-          sleep 20
-          curl -sf --max-time 20 https://api.staging.howners-app.com/actuator/health | grep -q '"status":"UP"'
-          curl -sf -o /dev/null --max-time 15 https://staging.howners-app.com
+          for i in $(seq 1 30); do
+            if curl -sf --max-time 10 https://api.staging.howners-app.com/actuator/health | grep -q '"status":"UP"'; then
+              echo "API UP après $((i*10))s"
+              curl -sf -o /dev/null --max-time 15 https://staging.howners-app.com
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "L'API n'est pas revenue UP en 5 minutes" >&2
+          exit 1
