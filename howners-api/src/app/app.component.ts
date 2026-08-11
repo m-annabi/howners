@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/auth/auth.service';
 
@@ -15,9 +16,23 @@ export class AppComponent implements OnInit {
   /** Barre de navigation invité (pages publiques hors landing/auth/signature). */
   showGuestNav = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private swUpdate: SwUpdate
+  ) {}
 
   ngOnInit(): void {
+    // Applique immédiatement toute nouvelle version déployée : sans ça, le
+    // service worker ressert l'ancien bundle jusqu'à un rechargement forcé
+    // manuel (symptôme : des bugs déjà corrigés qui « persistent »).
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.versionUpdates.pipe(
+        filter((e): e is VersionReadyEvent => e.type === 'VERSION_READY')
+      ).subscribe(() => document.location.reload());
+      this.swUpdate.unrecoverable.subscribe(() => document.location.reload());
+    }
+
     this.authService.isAuthenticated$.subscribe(
       isAuth => this.isAuthenticated = isAuth
     );
