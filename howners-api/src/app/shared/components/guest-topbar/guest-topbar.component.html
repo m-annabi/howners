@@ -1,0 +1,26 @@
+<nav class="guest-topbar">
+  <!-- Marque = retour au menu principal (accueil) -->
+  <a class="guest-topbar__brand" routerLink="/" aria-label="Retour à l'accueil Howners">
+    <i class="bi bi-house-door-fill"></i>
+    <span class="guest-topbar__brand-name">Howners</span>
+  </a>
+
+  <div class="guest-topbar__actions">
+    <a class="guest-topbar__link"
+       routerLink="/listings"
+       routerLinkActive="is-active"
+       [routerLinkActiveOptions]="{ exact: true }">
+      <i class="bi bi-search"></i>
+      <span class="guest-topbar__link-label">Annonces</span>
+    </a>
+
+    <a class="guest-topbar__btn guest-topbar__btn--ghost" routerLink="/auth/login">
+      Connexion
+    </a>
+
+    <a class="guest-topbar__btn guest-topbar__btn--primary" routerLink="/auth/register">
+      <span class="guest-topbar__label-full">Créer un compte</span>
+      <span class="guest-topbar__label-short">S'inscrire</span>
+    </a>
+  </div>
+</nav>

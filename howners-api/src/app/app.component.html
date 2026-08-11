@@ -17,6 +17,8 @@
     <header *ngIf="isAuthenticated" class="hw-topbar">
       <app-topbar (toggleSidebar)="toggleSidebar()"></app-topbar>
     </header>
+    <!-- Navigation invité (pages publiques : annonces, 404…) -->
+    <app-guest-topbar *ngIf="!isAuthenticated && showGuestNav"></app-guest-topbar>
     <main class="hw-content" [class.hw-content--guest]="!isAuthenticated">
       <router-outlet></router-outlet>
     </main>

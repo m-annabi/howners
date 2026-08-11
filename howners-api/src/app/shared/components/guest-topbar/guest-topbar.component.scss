@@ -1,0 +1,96 @@
+.guest-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1010;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hw-space-3, 0.75rem);
+  height: 56px;
+  padding: 0 var(--hw-space-4, 1rem);
+  background: var(--hw-surface, #ffffff);
+  border-bottom: 1px solid var(--hw-border, #e5e7eb);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.guest-topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hw-space-2, 0.5rem);
+  font-size: 1.15rem;
+  font-weight: var(--hw-fw-bold, 700);
+  color: var(--hw-primary-800, #1e3a8a);
+  text-decoration: none;
+  white-space: nowrap;
+
+  i { color: var(--hw-primary, #2563eb); font-size: 1.25rem; }
+  &:hover { color: var(--hw-primary, #2563eb); }
+}
+
+.guest-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-2, 0.5rem);
+}
+
+.guest-topbar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--hw-radius, 8px);
+  color: var(--hw-text, #374151);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &:hover,
+  &.is-active {
+    color: var(--hw-primary, #2563eb);
+    background: var(--hw-primary-50, #eff6ff);
+  }
+}
+
+.guest-topbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--hw-radius-full, 999px);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &--ghost {
+    color: var(--hw-primary-700, #1d4ed8);
+    border-color: var(--hw-border, #e5e7eb);
+    &:hover { background: var(--hw-primary-50, #eff6ff); }
+  }
+
+  &--primary {
+    background: var(--hw-primary, #2563eb);
+    color: #ffffff;
+    &:hover { background: var(--hw-primary-700, #1d4ed8); }
+  }
+}
+
+// Labels alternatifs pour les petits écrans
+.guest-topbar__label-short { display: none; }
+
+// Mobile : on garde la marque (retour accueil) bien visible, on compacte le reste.
+@media (max-width: 560px) {
+  .guest-topbar {
+    padding: 0 var(--hw-space-3, 0.75rem);
+    gap: var(--hw-space-2, 0.5rem);
+  }
+  .guest-topbar__link-label { display: none; }        // l'icône loupe suffit
+  .guest-topbar__label-full { display: none; }
+  .guest-topbar__label-short { display: inline; }      // « S'inscrire »
+  .guest-topbar__btn { padding: 0.4rem 0.75rem; }
+}
+
+@media (max-width: 360px) {
+  .guest-topbar__brand-name { display: none; }         // dernier recours : icône maison seule
+}
