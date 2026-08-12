@@ -13,6 +13,12 @@
   border-radius: var(--hw-radius-xl);
   box-shadow: var(--hw-shadow-lg);
   width: 100%;
+  min-width: 0; // enfant flex : sans ça la carte refuse de rétrécir sous sa largeur intrinsèque
+
+  // Petits écrans : padding réduit pour que carte + marges tiennent dans 320 px.
+  @media (max-width: 380px) {
+    padding: var(--hw-space-6) var(--hw-space-4);
+  }
   max-width: 480px;
 
   &__header {
@@ -65,10 +71,18 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--hw-space-4);
+
+  // Une seule colonne sur mobile : sans repli, la largeur intrinsèque des deux
+  // champs côte à côte force un défilement horizontal de toute la page.
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 
 .auth-field {
   margin-bottom: var(--hw-space-4);
+  min-width: 0; // autorise les champs à rétrécir dans la grille/flex
 }
 
 .password-wrapper {
