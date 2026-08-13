@@ -96,5 +96,6 @@
     <include file="db/changelog/090-fix-amendment-changes-type.xml"/>
     <include file="db/changelog/091-fix-contract-template-owner-address-label.xml"/>
     <include file="db/changelog/092-invoice-sequential-numbering.xml"/>
+    <include file="db/changelog/093-receipt-sequential-numbering.xml"/>
 
 </databaseChangeLog>

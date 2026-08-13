@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 public class ReceiptService {
 
     private final ReceiptRepository receiptRepository;
+    private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
     private final PaymentRepository paymentRepository;
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
@@ -68,7 +69,7 @@ public class ReceiptService {
         }
 
         Rental rental = payment.getRental();
-        String receiptNumber = generateReceiptNumber();
+        String receiptNumber = generateReceiptNumber(rental.getProperty().getOwner().getId());
 
         // Determine period from payment due date or current month
         LocalDate periodStart;
@@ -243,10 +244,15 @@ public class ReceiptService {
         }
     }
 
-    private String generateReceiptNumber() {
-        String year = String.valueOf(LocalDate.now().getYear());
-        String random = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        return String.format("QTL-%s-%s", year, random);
+    /**
+     * Numéro de quittance séquentiel par bailleur et par année (Q-2026-0001),
+     * alloué atomiquement — même mécanique que les factures (changelog 093).
+     */
+    private String generateReceiptNumber(UUID ownerId) {
+        int year = LocalDate.now().getYear();
+        long seq = documentSequenceService.next(ownerId,
+                com.howners.gestion.service.document.DocumentSequenceService.RECEIPT, year);
+        return String.format("Q-%d-%04d", year, seq);
     }
 
     private String buildQuittanceHtml(Rental rental, Payment payment, String receiptNumber,

@@ -43,6 +43,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -56,6 +57,7 @@ class ReceiptServiceTest {
     @Mock private PdfService pdfService;
     @Mock private StorageService storageService;
     @Mock private EmailService emailService;
+    @Mock private com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
     @InjectMocks
     private ReceiptService receiptService;
@@ -72,6 +74,8 @@ class ReceiptServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(documentSequenceService.next(any(), anyString(), anyInt()))
+                .thenReturn(1L);
         ReflectionTestUtils.setField(receiptService, "frontendUrl", "http://localhost:4200");
 
         ownerId = UUID.randomUUID();

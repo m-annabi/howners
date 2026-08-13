@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Généralisation de la numérotation séquentielle (factures + quittances,
+         extensible) : table unique document_sequences par bailleur / type /
+         année, qui remplace invoice_sequences (092) dont les compteurs sont
+         repris tels quels. -->
+    <changeSet id="093-01" author="claude">
+        <createTable tableName="document_sequences">
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="doc_kind" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seq_year" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_value" type="BIGINT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="document_sequences" columnNames="owner_id, doc_kind, seq_year"
+                       constraintName="pk_document_sequences"/>
+        <sql>
+            INSERT INTO document_sequences (owner_id, doc_kind, seq_year, next_value)
+            SELECT owner_id, 'INVOICE', seq_year, next_value FROM invoice_sequences;
+        </sql>
+        <dropTable tableName="invoice_sequences"/>
+    </changeSet>
+
+    <!-- Comme pour les factures (092) : l'unicité du numéro de quittance
+         devient par bailleur, garantie par la séquence — la contrainte
+         globale saute, remplacée par un index simple. -->
+    <changeSet id="093-02" author="claude">
+        <sql>ALTER TABLE receipts DROP CONSTRAINT IF EXISTS receipts_receipt_number_key;</sql>
+        <sql>CREATE INDEX IF NOT EXISTS idx_receipts_receipt_number ON receipts (receipt_number);</sql>
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_receipts_receipt_number;</sql>
+            <sql>ALTER TABLE receipts ADD CONSTRAINT receipts_receipt_number_key UNIQUE (receipt_number);</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

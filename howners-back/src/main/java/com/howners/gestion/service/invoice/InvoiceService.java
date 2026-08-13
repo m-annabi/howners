@@ -16,8 +16,7 @@ import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.contract.PdfService;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import com.howners.gestion.service.document.DocumentSequenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,9 +39,7 @@ public class InvoiceService {
     private final RentalRepository rentalRepository;
     private final UserRepository userRepository;
     private final PdfService pdfService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final DocumentSequenceService documentSequenceService;
 
     private static final DateTimeFormatter FR_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -199,14 +196,8 @@ public class InvoiceService {
      */
     private String generateInvoiceNumber(UUID ownerId) {
         int year = LocalDate.now().getYear();
-        Number seq = (Number) entityManager.createNativeQuery(
-                        "INSERT INTO invoice_sequences (owner_id, seq_year, next_value) VALUES (:ownerId, :year, 2) "
-                        + "ON CONFLICT (owner_id, seq_year) DO UPDATE SET next_value = invoice_sequences.next_value + 1 "
-                        + "RETURNING next_value - 1")
-                .setParameter("ownerId", ownerId)
-                .setParameter("year", year)
-                .getSingleResult();
-        return String.format("INV-%d-%04d", year, seq.longValue());
+        long seq = documentSequenceService.next(ownerId, DocumentSequenceService.INVOICE, year);
+        return String.format("INV-%d-%04d", year, seq);
     }
 
     private String buildInvoiceHtml(Invoice invoice) {

@@ -16,7 +16,8 @@ public interface ReceiptRepository extends JpaRepository<Receipt, UUID> {
 
     List<Receipt> findByRentalId(UUID rentalId);
 
-    Optional<Receipt> findByReceiptNumber(String receiptNumber);
+    // findByReceiptNumber supprimé : le numéro n'est plus unique globalement
+    // (séquence Q-<année>-NNNN par bailleur, changelog 093).
 
     Optional<Receipt> findByPaymentId(UUID paymentId);
 
