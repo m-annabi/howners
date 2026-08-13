@@ -26,6 +26,7 @@ public record PaymentResponse(
         LocalDateTime paidAt,
         Integer relanceNiveau,
         LocalDateTime derniereRelanceLe,
+        String miseEnDemeureNumero,
         LocalDateTime createdAt
 ) {
     public static PaymentResponse from(Payment p) {
@@ -46,6 +47,7 @@ public record PaymentResponse(
                 p.getPaidAt(),
                 p.getRelanceNiveau(),
                 p.getDerniereRelanceLe(),
+                p.getMiseEnDemeureNumero(),
                 p.getCreatedAt()
         );
     }

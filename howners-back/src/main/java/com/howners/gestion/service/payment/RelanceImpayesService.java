@@ -56,6 +56,7 @@ public class RelanceImpayesService {
     private final StorageService storageService;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
     @Scheduled(cron = "0 30 8 * * ?")
     @Transactional
@@ -152,6 +153,17 @@ public class RelanceImpayesService {
         Rental rental = payment.getRental();
         User tenant = payment.getPayer();
         User owner = rental.getProperty().getOwner();
+
+        // Numéro d'émission séquentiel par bailleur/année, alloué avant la
+        // génération pour figurer sur le courrier. En cas d'échec html2pdf
+        // (catch-return ci-dessous, qui protège le lot planifié), le numéro
+        // alloué reste inutilisé — trou rarissime, assumé pour un courrier
+        // non comptable.
+        int anneeEmission = LocalDate.now().getYear();
+        long seq = documentSequenceService.next(owner.getId(),
+                com.howners.gestion.service.document.DocumentSequenceService.MISE_EN_DEMEURE,
+                anneeEmission);
+        payment.setMiseEnDemeureNumero(String.format("MED-%d-%04d", anneeEmission, seq));
 
         // Mise en demeure PDF
         String html = buildMiseEnDemeureHtml(payment);
@@ -251,7 +263,7 @@ public class RelanceImpayesService {
         return """
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h1 style="font-size: 16pt; margin-bottom: 5px;">MISE EN DEMEURE DE PAYER</h1>
-                    <p style="font-size: 10pt; color: #666;">Lettre recommandée avec accusé de réception (ou remise contre signature)</p>
+                    <p style="font-size: 10pt; color: #666;">Lettre recommandée avec accusé de réception (ou remise contre signature)%s</p>
                 </div>
 
                 <table style="width: 100%%; border: none; margin-bottom: 20px;">
@@ -292,6 +304,7 @@ public class RelanceImpayesService {
                     solidarité pour le logement (FSL) ou contacter l'ADIL de votre département.
                 </p>
                 """.formatted(
+                payment.getMiseEnDemeureNumero() != null ? " · N° " + payment.getMiseEnDemeureNumero() : "",
                 owner.getFullName(),
                 tenant != null ? tenant.getFullName() : "N/A",
                 adresse(rental),

@@ -55,6 +55,8 @@ class RelanceImpayesServiceTest {
     @Mock EmailService emailService;
     @Mock NotificationService notificationService;
 
+    @Mock com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
+
     @InjectMocks RelanceImpayesService relanceService;
 
     UUID ownerId;
@@ -62,6 +64,10 @@ class RelanceImpayesServiceTest {
 
     @BeforeEach
     void setup() {
+        org.mockito.Mockito.lenient()
+                .when(documentSequenceService.next(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(1L);
         ownerId = UUID.randomUUID();
         User owner = User.builder().id(ownerId).email("o@t.fr").firstName("O").lastName("W").role(Role.OWNER).build();
         User tenant = User.builder().id(UUID.randomUUID()).email("t@t.fr").firstName("T").lastName("E").role(Role.TENANT).build();

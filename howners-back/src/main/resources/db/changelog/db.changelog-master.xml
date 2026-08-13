@@ -100,5 +100,6 @@
     <include file="db/changelog/094-amendment-sequential-numbering.xml"/>
     <include file="db/changelog/095-regularisation-numero.xml"/>
     <include file="db/changelog/096-revision-numero.xml"/>
+    <include file="db/changelog/097-mise-en-demeure-numero.xml"/>
 
 </databaseChangeLog>

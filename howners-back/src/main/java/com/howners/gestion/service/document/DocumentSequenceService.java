@@ -22,6 +22,7 @@ public class DocumentSequenceService {
     public static final String AMENDMENT = "AMENDMENT";
     public static final String REGULARISATION = "REGULARISATION";
     public static final String REVISION = "REVISION";
+    public static final String MISE_EN_DEMEURE = "MISE_EN_DEMEURE";
 
     /** Valeur de seq_year pour les séquences non annuelles (avenants). */
     public static final int NO_YEAR = 0;

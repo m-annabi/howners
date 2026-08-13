@@ -74,6 +74,10 @@ public class Payment {
     @Column(name = "derniere_relance_le")
     private LocalDateTime derniereRelanceLe;
 
+    /** Numéro d'émission de la mise en demeure (MED-2026-0001) — null tant que non émise. */
+    @Column(name = "mise_en_demeure_numero", length = 30)
+    private String miseEnDemeureNumero;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
