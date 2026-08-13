@@ -112,7 +112,9 @@ public class EtatDesLieuxService {
         // Generate PDF
         String html = buildEdlHtml(edl, rental);
         String typeLabel = request.type() == EtatDesLieuxType.ENTREE ? "entree" : "sortie";
-        byte[] pdfBytes = pdfService.generatePdf(html, "État des lieux - " + typeLabel);
+        // Titre null : le corps porte déjà « ÉTAT DES LIEUX D'ENTRÉE / DE SORTIE » —
+        // un titre PdfService en plus (« État des lieux - entree ») faisait doublon.
+        byte[] pdfBytes = pdfService.generatePdf(html, null);
 
         String fileKey = storageService.uploadFile(pdfBytes,
                 "edl/edl-" + typeLabel + "-" + rental.getId() + ".pdf",
@@ -121,6 +123,7 @@ public class EtatDesLieuxService {
         Document doc = Document.builder()
                 .rental(rental)
                 .fileName("edl-" + typeLabel + "-" + rental.getProperty().getName() + ".pdf")
+                .filePath(fileKey)   // colonne NOT NULL héritée du schéma initial
                 .fileKey(fileKey)
                 .mimeType("application/pdf")
                 .fileSize((long) pdfBytes.length)
@@ -197,11 +200,11 @@ public class EtatDesLieuxService {
         String tenantName = rental.getTenant() != null ? rental.getTenant().getFullName() : "Locataire non renseigné";
         String propertyName = rental.getProperty().getName();
         String propertyAddress = PdfFormat.adressePostale(rental.getProperty());
-        String typeLabel = edl.getType() == EtatDesLieuxType.ENTREE ? "ENTRÉE" : "SORTIE";
+        String typeLabel = edl.getType() == EtatDesLieuxType.ENTREE ? "D'ENTRÉE" : "DE SORTIE";
 
         StringBuilder html = new StringBuilder();
         html.append("<div style='font-family: Arial, sans-serif; padding: 40px;'>");
-        html.append("<h1 style='text-align: center;'>ÉTAT DES LIEUX DE ").append(typeLabel).append("</h1>");
+        html.append("<h1 style='text-align: center;'>ÉTAT DES LIEUX ").append(typeLabel).append("</h1>");
         html.append("<hr/>");
 
         html.append("<h3>Parties</h3>");
@@ -220,7 +223,7 @@ public class EtatDesLieuxService {
             html.append("<table><tr><th>Pièce</th><th>État</th><th>Observations</th></tr>");
             for (Map<String, String> r : rooms) {
                 html.append("<tr><td>").append(nl2br(r.get("name")))
-                    .append("</td><td>").append(nl2br(r.getOrDefault("condition", "")))
+                    .append("</td><td>").append(nl2br(PdfFormat.libelleEtat(r.getOrDefault("condition", ""))))
                     .append("</td><td>").append(nl2br(r.getOrDefault("comments", ""))).append("</td></tr>");
             }
             html.append("</table>");

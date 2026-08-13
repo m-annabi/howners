@@ -61,9 +61,16 @@ public class PdfService {
         StringBuilder html = new StringBuilder();
         html.append("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>");
         html.append("<style>");
-        // Page A4 avec marges homogènes + pied de page paginé (numéro de page).
+        // Page A4 avec marges homogènes. Pied de page en marge de page (répété sur
+        // CHAQUE page, jamais dans le flux) : mention de génération à gauche,
+        // pagination à droite — évite les dernières pages quasi vides qu'un
+        // pied-de-page dans le corps pouvait provoquer.
+        String generatedLine = "Document généré par Howners le "
+                + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                + " — howners.fr";
         html.append("@page { size: A4; margin: 2cm 2cm 2.4cm 2cm;");
-        html.append("  @bottom-center { content: 'Page ' counter(page) ' / ' counter(pages); font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #999; } }");
+        html.append("  @bottom-left { content: '").append(generatedLine).append("'; font-family: Helvetica, Arial, sans-serif; font-size: 7.5pt; color: #9CA3AF; }");
+        html.append("  @bottom-right { content: 'Page ' counter(page) ' / ' counter(pages); font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #999; } }");
         html.append("body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 1.5; color: #333; }");
         html.append("h1 { font-size: 17pt; text-align: center; margin: 0 0 6px; color: #1E3A5F; }");
         html.append("h2 { font-size: 13pt; margin: 16px 0 8px; color: #1E3A5F; border-bottom: 1px solid #E5E7EB; padding-bottom: 3px; }");
@@ -79,7 +86,8 @@ public class PdfService {
         html.append("td, th { border: 1px solid #D1D5DB; padding: 6px 9px; }");
         html.append(".title { font-size: 17pt; font-weight: bold; text-align: center; margin-bottom: 20px; }");
         html.append(".doc-footer { margin-top: 36px; padding-top: 8px; border-top: 1px solid #E5E7EB; font-size: 8pt; color: #9CA3AF; text-align: center; }");
-        html.append(".text-right { text-align: right; }");
+        // nowrap : un montant (« 200 000,00 € ») ne doit jamais se couper sur deux lignes
+        html.append(".text-right { text-align: right; white-space: nowrap; }");
         html.append(".legal-note { font-size: 8.5pt; color: #6B7280; font-style: italic; margin-top: 20px; }");
         html.append("</style>");
         html.append("</head><body>");
@@ -97,11 +105,6 @@ public class PdfService {
         if (appendixHtml != null && !appendixHtml.isEmpty()) {
             html.append(appendixHtml);
         }
-
-        // Pied de page commun à tous les documents (traçabilité).
-        html.append("<div class=\"doc-footer\">Document généré par Howners le ")
-            .append(java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")))
-            .append(" — howners.fr</div>");
 
         html.append("</body></html>");
         return html.toString();
@@ -128,6 +131,10 @@ public class PdfService {
             String trimmed = block.strip();
             if (trimmed.isEmpty()) continue;
             String escaped = escapeHtml(trimmed).replace("\n", "<br/>");
+            // Préserve les alignements par espaces des templates texte (ex. la ligne
+            // « Signature du Bailleur          Signature du Locataire ») : en HTML,
+            // les espaces consécutifs seraient réduits à un seul.
+            escaped = escaped.replaceAll("(?<= ) ", "&nbsp;");
             out.append("<p>").append(escaped).append("</p>");
         }
         return out.toString();

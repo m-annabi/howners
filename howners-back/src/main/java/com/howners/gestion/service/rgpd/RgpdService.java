@@ -167,6 +167,9 @@ public class RgpdService {
         appendRecords(html, "Documents", data.documents());
 
         html.append("<h2>Consentements</h2>");
+        if (data.consents().isEmpty()) {
+            html.append("<p><em>Aucun enregistrement.</em></p>");
+        }
         for (ConsentResponse consent : data.consents()) {
             html.append("<p>").append(consent.consentType()).append(" : ")
                     .append(consent.granted() ? "Accordé" : "Refusé").append("</p>");

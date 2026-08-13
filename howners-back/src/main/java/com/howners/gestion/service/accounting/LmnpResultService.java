@@ -307,7 +307,7 @@ public class LmnpResultService {
 
         boolean benefice = resultatFiscal.signum() >= 0;
         l.add(LmnpResult.ReadinessCheck.info(benefice ? "À reporter : bénéfice (case 5NA)" : "À reporter : déficit (case 5NY)",
-                (benefice ? "Bénéfice BIC de " : "Déficit BIC de ") + resultatFiscal.abs().setScale(2, java.math.RoundingMode.HALF_UP)
+                (benefice ? "Bénéfice BIC de " : "Déficit BIC de ") + com.howners.gestion.util.PdfFormat.montant(resultatFiscal.abs()).replace(" €", "")
                 + " € à porter sur la 2042-C-PRO (LMNP réel), après la 2031 et ses annexes 2033. La liasse détaille chaque case."));
 
         return l;

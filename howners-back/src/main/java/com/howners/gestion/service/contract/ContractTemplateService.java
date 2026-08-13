@@ -213,7 +213,7 @@ public class ContractTemplateService {
     }
 
     private String formatAmount(BigDecimal amount) {
-        return amount != null ? String.format("%.2f €", amount) : "0.00 €";
+        return amount != null ? com.howners.gestion.util.PdfFormat.montant(amount) : "0,00 €";
     }
 
     /**

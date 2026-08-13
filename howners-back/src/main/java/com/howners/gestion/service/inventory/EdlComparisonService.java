@@ -413,13 +413,23 @@ public class EdlComparisonService {
         StringBuilder lignesPieces = new StringBuilder();
         for (var piece : diff.pieces()) {
             String style = piece.degradee() ? " style=\"background-color: #fdf2f2;\"" : "";
+            String verdict;
+            if (piece.degradee()) {
+                verdict = "Dégradation constatée";
+            } else if (piece.nonComparable()) {
+                verdict = "Non comparable";
+            } else {
+                int idxEntree = ORDRE_ETATS.indexOf(piece.etatEntree() != null ? piece.etatEntree().toUpperCase() : "");
+                int idxSortie = ORDRE_ETATS.indexOf(piece.etatSortie() != null ? piece.etatSortie().toUpperCase() : "");
+                verdict = idxSortie < idxEntree ? "Amélioration" : "Inchangé";
+            }
             lignesPieces.append(String.format(
                     "<tr%s><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px; font-size: 8pt;\">%s</td></tr>",
                     style,
                     piece.nom(),
-                    piece.etatEntree() != null ? piece.etatEntree() : "—",
-                    piece.etatSortie() != null ? piece.etatSortie() : "—",
-                    piece.degradee() ? "Dégradation constatée" : (piece.nonComparable() ? "Non comparable" : "")));
+                    piece.etatEntree() != null ? PdfFormat.libelleEtat(piece.etatEntree()) : "—",
+                    piece.etatSortie() != null ? PdfFormat.libelleEtat(piece.etatSortie()) : "—",
+                    verdict));
         }
 
         StringBuilder blocCompteurs = new StringBuilder();
@@ -442,8 +452,8 @@ public class EdlComparisonService {
         StringBuilder lignesRetenues = new StringBuilder();
         for (var retenue : diff.retenues()) {
             lignesRetenues.append(String.format(
-                    "<tr><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px; text-align: right;\">%.2f €</td></tr>",
-                    retenue.piece(), retenue.motif(), retenue.montant()));
+                    "<tr><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px; text-align: right;\">%s</td></tr>",
+                    retenue.piece(), retenue.motif(), PdfFormat.montant(retenue.montant())));
         }
         if (diff.retenues().isEmpty()) {
             lignesRetenues.append("<tr><td colspan=\"3\" style=\"padding: 6px; font-style: italic;\">Aucune retenue</td></tr>");
@@ -470,7 +480,7 @@ public class EdlComparisonService {
                         <th style="padding: 6px; text-align: left;">Pièce</th>
                         <th style="padding: 6px; text-align: left;">Entrée</th>
                         <th style="padding: 6px; text-align: left;">Sortie</th>
-                        <th style="padding: 6px; text-align: left;"></th>
+                        <th style="padding: 6px; text-align: left;">Évolution</th>
                     </tr>
                     %s
                 </table>
@@ -487,15 +497,15 @@ public class EdlComparisonService {
                     %s
                     <tr style="border-top: 2px solid #333;">
                         <td colspan="2" style="padding: 6px;"><strong>Total des retenues</strong></td>
-                        <td style="padding: 6px; text-align: right;"><strong>%.2f €</strong></td>
+                        <td style="padding: 6px; text-align: right;"><strong>%s</strong></td>
                     </tr>
                     <tr>
                         <td colspan="2" style="padding: 6px;"><strong>Dépôt de garantie</strong></td>
-                        <td style="padding: 6px; text-align: right;">%.2f €</td>
+                        <td style="padding: 6px; text-align: right;">%s</td>
                     </tr>
                     <tr>
                         <td colspan="2" style="padding: 6px;"><strong>Solde à restituer au locataire</strong></td>
-                        <td style="padding: 6px; text-align: right;"><strong>%.2f €</strong></td>
+                        <td style="padding: 6px; text-align: right;"><strong>%s</strong></td>
                     </tr>
                 </table>
 
@@ -514,8 +524,8 @@ public class EdlComparisonService {
                 lignesPieces,
                 blocCompteurs,
                 lignesRetenues,
-                diff.totalRetenues(),
-                diff.depositAmount() != null ? diff.depositAmount() : BigDecimal.ZERO,
-                diff.soldeARestituer() != null ? diff.soldeARestituer() : BigDecimal.ZERO);
+                PdfFormat.montant(diff.totalRetenues()),
+                PdfFormat.montant(diff.depositAmount() != null ? diff.depositAmount() : BigDecimal.ZERO),
+                PdfFormat.montant(diff.soldeARestituer() != null ? diff.soldeARestituer() : BigDecimal.ZERO));
     }
 }

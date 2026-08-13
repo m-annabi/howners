@@ -32,6 +32,23 @@ public final class PdfFormat {
     }
 
     /**
+     * Libellé français d'un état de pièce d'état des lieux. Les EDL saisis dans
+     * l'application stockent les codes NEUF/BON/CORRECT/USAGE/MAUVAIS ; tout autre
+     * texte (données importées, saisies libres historiques) est rendu tel quel.
+     */
+    public static String libelleEtat(String code) {
+        if (code == null) return "";
+        return switch (code.trim().toUpperCase(Locale.ROOT)) {
+            case "NEUF" -> "Neuf";
+            case "BON" -> "Bon état";
+            case "CORRECT" -> "Correct";
+            case "USAGE" -> "Usagé";
+            case "MAUVAIS" -> "Mauvais état";
+            default -> code;
+        };
+    }
+
+    /**
      * Adresse postale complète et null-safe d'un bien, sur une ou plusieurs lignes.
      * Évite les rendus « null, Ville » ou les virgules orphelines.
      */

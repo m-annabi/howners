@@ -270,7 +270,7 @@ public class RelanceImpayesService {
 
                 <table style="margin-top: 15px; width: 90%%; margin-left: auto; margin-right: auto;">
                     <tr><td style="padding: 8px;"><strong>Nature</strong></td><td style="padding: 8px; text-align: right;">%s</td></tr>
-                    <tr><td style="padding: 8px;"><strong>Montant dû</strong></td><td style="padding: 8px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                    <tr><td style="padding: 8px;"><strong>Montant dû</strong></td><td style="padding: 8px; text-align: right;"><strong>%s</strong></td></tr>
                     <tr><td style="padding: 8px;"><strong>Échéance</strong></td><td style="padding: 8px; text-align: right;">%s</td></tr>
                 </table>
 
@@ -302,7 +302,7 @@ public class RelanceImpayesService {
                     case DEPOSIT -> "Dépôt de garantie";
                     default -> "Autre";
                 } : "Loyer",
-                payment.getAmount(),
+                com.howners.gestion.util.PdfFormat.montant(payment.getAmount()),
                 payment.getDueDate() != null ? payment.getDueDate().format(FR_DATE) : "—",
                 owner.getFullName());
     }

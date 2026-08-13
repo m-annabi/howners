@@ -342,8 +342,8 @@ public class RegularisationChargesService {
         StringBuilder lignes = new StringBuilder();
         if (regul.getDetail() != null) {
             regul.getDetail().forEach((cat, montant) -> lignes.append(String.format(
-                    "<tr><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px; text-align: right;\">%s €</td></tr>",
-                    libelleCategorie(cat), montant)));
+                    "<tr><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px; text-align: right;\">%s</td></tr>",
+                    libelleCategorie(cat), com.howners.gestion.util.PdfFormat.montant(new java.math.BigDecimal(String.valueOf(montant))))));
         }
 
         boolean complementDu = regul.getSolde().compareTo(BigDecimal.ZERO) >= 0;
@@ -367,12 +367,12 @@ public class RegularisationChargesService {
                 <h3 style="margin-top: 20px;">Charges récupérables de l'année %d</h3>
                 <table style="width: 90%%; margin-left: auto; margin-right: auto;">
                     %s
-                    <tr style="border-top: 1px solid #999;"><td style="padding: 6px;"><strong>Total charges réelles</strong></td><td style="padding: 6px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                    <tr style="border-top: 1px solid #999;"><td style="padding: 6px;"><strong>Total charges réelles</strong></td><td style="padding: 6px; text-align: right;"><strong>%s</strong></td></tr>
                 </table>
 
                 <table style="margin-top: 20px; width: 90%%; margin-left: auto; margin-right: auto;">
-                    <tr><td style="padding: 8px;"><strong>Provisions encaissées</strong></td><td style="padding: 8px; text-align: right;">%.2f €</td></tr>
-                    <tr style="border-top: 2px solid #333;"><td style="padding: 8px;"><strong>%s</strong></td><td style="padding: 8px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                    <tr><td style="padding: 8px;"><strong>Provisions encaissées</strong></td><td style="padding: 8px; text-align: right;">%s</td></tr>
+                    <tr style="border-top: 2px solid #333;"><td style="padding: 8px;"><strong>%s</strong></td><td style="padding: 8px; text-align: right;"><strong>%s</strong></td></tr>
                 </table>
 
                 <p style="margin-top: 25px;">%s</p>
@@ -389,10 +389,10 @@ public class RegularisationChargesService {
                 LocalDate.now().format(FR_DATE),
                 regul.getAnnee(),
                 lignes.toString(),
-                regul.getChargesReelles(),
-                regul.getProvisionsEncaissees(),
+                com.howners.gestion.util.PdfFormat.montant(regul.getChargesReelles()),
+                com.howners.gestion.util.PdfFormat.montant(regul.getProvisionsEncaissees()),
                 complementDu ? "Complément dû par le locataire" : "Trop-perçu à restituer au locataire",
-                regul.getSolde().abs(),
+                com.howners.gestion.util.PdfFormat.montant(regul.getSolde().abs()),
                 complementDu
                         ? "Le montant du complément est à régler dans un délai de 30 jours."
                         : "Le trop-perçu vous sera restitué ou déduit de votre prochaine échéance.");

@@ -93,5 +93,7 @@
     <include file="db/changelog/087-accounting-fiscal-fixes.xml"/>
     <include file="db/changelog/088-coherence-paiements-quittances-baux.xml"/>
     <include file="db/changelog/089-create-owner-ratings.xml"/>
+    <include file="db/changelog/090-fix-amendment-changes-type.xml"/>
+    <include file="db/changelog/091-fix-contract-template-owner-address-label.xml"/>
 
 </databaseChangeLog>

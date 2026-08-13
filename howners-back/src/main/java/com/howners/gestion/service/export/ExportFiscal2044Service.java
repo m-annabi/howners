@@ -180,24 +180,24 @@ public class ExportFiscal2044Service {
         for (var bien : declaration.biens()) {
             StringBuilder lignes = new StringBuilder();
             bien.chargesParLigne().forEach((ligne, montant) -> lignes.append(String.format(
-                    "<tr><td style=\"padding: 6px;\">Ligne %s — %s</td><td style=\"padding: 6px; text-align: right;\">%.2f €</td></tr>",
-                    ligne, LIBELLES_LIGNES.getOrDefault(ligne, ligne), montant)));
+                    "<tr><td style=\"padding: 6px;\">Ligne %s — %s</td><td style=\"padding: 6px; text-align: right;\">%s</td></tr>",
+                    ligne, LIBELLES_LIGNES.getOrDefault(ligne, ligne), com.howners.gestion.util.PdfFormat.montant(montant))));
 
             biensHtml.append(String.format("""
                     <h3 style="margin-top: 20px;">%s</h3>
                     <p style="font-size: 9pt; color: #666;">%s</p>
                     <table style="width: 95%%; margin-left: auto; margin-right: auto;">
-                        <tr><td style="padding: 6px;"><strong>Ligne 211 — Loyers bruts encaissés</strong></td><td style="padding: 6px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                        <tr><td style="padding: 6px;"><strong>Ligne 211 — Loyers bruts encaissés</strong></td><td style="padding: 6px; text-align: right;"><strong>%s</strong></td></tr>
                         %s
-                        <tr style="border-top: 1px solid #999;"><td style="padding: 6px;"><strong>Revenu net du bien</strong></td><td style="padding: 6px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                        <tr style="border-top: 1px solid #999;"><td style="padding: 6px;"><strong>Revenu net du bien</strong></td><td style="padding: 6px; text-align: right;"><strong>%s</strong></td></tr>
                     </table>
-                    """, bien.nom(), bien.adresse(), bien.revenusBruts(), lignes, bien.revenuNet()));
+                    """, bien.nom(), bien.adresse(), com.howners.gestion.util.PdfFormat.montant(bien.revenusBruts()), lignes, com.howners.gestion.util.PdfFormat.montant(bien.revenuNet())));
         }
 
         StringBuilder totaux = new StringBuilder();
         declaration.totauxParLigne().forEach((ligne, montant) -> totaux.append(String.format(
-                "<tr><td style=\"padding: 6px;\">Ligne %s — %s</td><td style=\"padding: 6px; text-align: right;\">%.2f €</td></tr>",
-                ligne, LIBELLES_LIGNES.getOrDefault(ligne, ligne), montant)));
+                "<tr><td style=\"padding: 6px;\">Ligne %s — %s</td><td style=\"padding: 6px; text-align: right;\">%s</td></tr>",
+                ligne, LIBELLES_LIGNES.getOrDefault(ligne, ligne), com.howners.gestion.util.PdfFormat.montant(montant))));
 
         return """
                 <div style="text-align: center; margin-bottom: 30px;">
@@ -211,9 +211,9 @@ public class ExportFiscal2044Service {
 
                 <h3 style="margin-top: 25px;">Totaux à reporter sur le formulaire 2044</h3>
                 <table style="width: 95%%; margin-left: auto; margin-right: auto;">
-                    <tr><td style="padding: 6px;"><strong>Ligne 211 — Total des loyers bruts encaissés</strong></td><td style="padding: 6px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                    <tr><td style="padding: 6px;"><strong>Ligne 211 — Total des loyers bruts encaissés</strong></td><td style="padding: 6px; text-align: right;"><strong>%s</strong></td></tr>
                     %s
-                    <tr style="border-top: 2px solid #333;"><td style="padding: 6px;"><strong>Revenu foncier net (avant imputation des déficits)</strong></td><td style="padding: 6px; text-align: right;"><strong>%.2f €</strong></td></tr>
+                    <tr style="border-top: 2px solid #333;"><td style="padding: 6px;"><strong>Revenu foncier net (avant imputation des déficits)</strong></td><td style="padding: 6px; text-align: right;"><strong>%s</strong></td></tr>
                 </table>
 
                 <p style="margin-top: 30px; font-size: 9pt; color: #666; font-style: italic;">
@@ -230,8 +230,8 @@ public class ExportFiscal2044Service {
                 declaration.annee(),
                 LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
                 biensHtml,
-                declaration.totalRevenusBruts(),
+                com.howners.gestion.util.PdfFormat.montant(declaration.totalRevenusBruts()),
                 totaux,
-                declaration.revenuFoncierNet());
+                com.howners.gestion.util.PdfFormat.montant(declaration.revenuFoncierNet()));
     }
 }

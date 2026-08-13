@@ -90,8 +90,10 @@ public class ContractAmendmentService {
                 .build();
 
         // Generate PDF
+        // Titre null : le corps porte déjà son en-tête « AVENANT N°x » — un titre
+        // PdfService en plus faisait doublon en tête de document.
         String html = buildAmendmentHtml(amendment, contract, currentUser);
-        byte[] pdfBytes = pdfService.generatePdf(html, "Avenant n°" + nextNumber);
+        byte[] pdfBytes = pdfService.generatePdf(html, null);
 
         String fileKey = storageService.uploadFile(pdfBytes,
                 "amendments/avenant-" + contract.getContractNumber() + "-" + nextNumber + ".pdf",
@@ -100,6 +102,7 @@ public class ContractAmendmentService {
         Document doc = Document.builder()
                 .rental(contract.getRental())
                 .fileName("avenant-" + contract.getContractNumber() + "-" + nextNumber + ".pdf")
+                .filePath(fileKey)   // colonne NOT NULL héritée du schéma initial
                 .fileKey(fileKey)
                 .mimeType("application/pdf")
                 .fileSize((long) pdfBytes.length)

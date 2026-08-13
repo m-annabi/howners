@@ -40,8 +40,9 @@ public class ContractAmendment {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
 
-    @Column(columnDefinition = "JSONB")
-    @JdbcTypeCode(SqlTypes.JSON)
+    // Texte libre décrivant les modifications (saisi tel quel dans le formulaire,
+    // rendu tel quel dans le PDF) — changelog 090 a aligné la colonne sur TEXT.
+    @Column(columnDefinition = "TEXT")
     private String changes;
 
     @Column(name = "previous_rent", precision = 10, scale = 2)

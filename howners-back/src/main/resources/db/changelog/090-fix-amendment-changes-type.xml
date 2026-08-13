@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- La colonne `changes` était JSONB alors que toute la chaîne la traite en
+         texte libre : le formulaire d'avenant envoie le texte saisi tel quel et
+         le PDF le rend via nl2br. Toute création d'avenant échouait donc en
+         "invalid input syntax for type json". Aucune ligne existante n'est à
+         convertir (les insertions n'ont jamais pu aboutir) ; le USING couvre
+         par précaution d'éventuelles valeurs JSON scalaires. -->
+    <changeSet id="090-01" author="claude">
+        <sql>
+            ALTER TABLE contract_amendments
+                ALTER COLUMN changes TYPE TEXT
+                USING COALESCE(changes #&gt;&gt; '{}', changes::text);
+        </sql>
+        <rollback>
+            <sql>ALTER TABLE contract_amendments ALTER COLUMN changes TYPE JSONB USING to_jsonb(changes);</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

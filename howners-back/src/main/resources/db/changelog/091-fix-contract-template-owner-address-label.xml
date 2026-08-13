@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Les templates de contrat seedés (changelog 013) affichaient l'email du
+         bailleur sous le libellé « Adresse : » — trompeur dans un document
+         contractuel. On aligne sur le bloc locataire (« Adresse email : »).
+         UPDATE plutôt que modification du changelog 013 : celui-ci a déjà été
+         exécuté (checksum verrouillé) sur toutes les bases existantes. -->
+    <changeSet id="091-01" author="claude">
+        <sql>
+            UPDATE contract_templates
+            SET content = REPLACE(content, 'Adresse : {{owner.email}}', 'Adresse email : {{owner.email}}')
+            WHERE content LIKE '%Adresse : {{owner.email}}%';
+        </sql>
+        <rollback>
+            <sql>
+                UPDATE contract_templates
+                SET content = REPLACE(content, 'Adresse email : {{owner.email}}', 'Adresse : {{owner.email}}')
+                WHERE content LIKE '%Adresse email : {{owner.email}}%';
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
