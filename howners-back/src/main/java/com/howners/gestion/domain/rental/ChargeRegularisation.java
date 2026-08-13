@@ -52,6 +52,10 @@ public class ChargeRegularisation {
     @Column(name = "detail")
     private Map<String, Object> detail;
 
+    /** Numéro d'émission (REG-2026-0001), alloué à l'envoi — null pour les décomptes historiques. */
+    @Column(name = "numero", length = 30)
+    private String numero;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "statut", nullable = false)
     @Builder.Default

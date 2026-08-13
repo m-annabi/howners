@@ -82,6 +82,7 @@ public class RegularisationChargesService {
     private final StorageService storageService;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
     @Transactional(readOnly = true)
     public List<RegularisationResponse> findByRentalId(UUID rentalId) {
@@ -173,6 +174,15 @@ public class RegularisationChargesService {
 
         Rental rental = regul.getRental();
         User tenant = rental.getTenant();
+
+        // Numéro d'émission séquentiel par bailleur/année (même mécanique que
+        // les factures et quittances), alloué au moment de l'envoi.
+        int anneeEmission = LocalDate.now().getYear();
+        long seq = documentSequenceService.next(
+                rental.getProperty().getOwner().getId(),
+                com.howners.gestion.service.document.DocumentSequenceService.REGULARISATION,
+                anneeEmission);
+        regul.setNumero(String.format("REG-%d-%04d", anneeEmission, seq));
 
         String html = buildDecompteHtml(regul);
         byte[] pdfBytes;
@@ -351,7 +361,7 @@ public class RegularisationChargesService {
         return """
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h1 style="font-size: 16pt; margin-bottom: 5px;">DÉCOMPTE DE RÉGULARISATION DES CHARGES</h1>
-                    <p style="font-size: 10pt; color: #666;">Année %d</p>
+                    <p style="font-size: 10pt; color: #666;">Année %d%s</p>
                 </div>
 
                 <table style="width: 100%%; border: none; margin-bottom: 20px;">
@@ -383,6 +393,7 @@ public class RegularisationChargesService {
                 </p>
                 """.formatted(
                 regul.getAnnee(),
+                regul.getNumero() != null ? " · N° " + regul.getNumero() : "",
                 owner.getFullName(),
                 tenant != null ? tenant.getFullName() : "N/A",
                 adresse,

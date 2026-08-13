@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Numéro de décompte de régularisation (REG-2026-0001), alloué à l'envoi
+         via la séquence par bailleur/année (document_sequences). Nullable :
+         les décomptes déjà émis n'avaient pas de numéro et n'en reçoivent pas
+         rétroactivement (on ne renumérote pas des documents émis). -->
+    <changeSet id="095-01" author="claude">
+        <addColumn tableName="charge_regularisations">
+            <column name="numero" type="VARCHAR(30)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

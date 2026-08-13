@@ -20,6 +20,7 @@ public class DocumentSequenceService {
     public static final String INVOICE = "INVOICE";
     public static final String RECEIPT = "RECEIPT";
     public static final String AMENDMENT = "AMENDMENT";
+    public static final String REGULARISATION = "REGULARISATION";
 
     /** Valeur de seq_year pour les séquences non annuelles (avenants). */
     public static final int NO_YEAR = 0;

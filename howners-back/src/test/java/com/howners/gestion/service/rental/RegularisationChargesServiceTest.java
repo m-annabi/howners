@@ -60,6 +60,7 @@ class RegularisationChargesServiceTest {
     @Mock StorageService storageService;
     @Mock EmailService emailService;
     @Mock NotificationService notificationService;
+    @Mock com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
     @InjectMocks RegularisationChargesService regularisationService;
 
@@ -70,6 +71,10 @@ class RegularisationChargesServiceTest {
 
     @BeforeEach
     void setup() {
+        org.mockito.Mockito.lenient()
+                .when(documentSequenceService.next(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(1L);
         ownerId = UUID.randomUUID();
         rentalId = UUID.randomUUID();
         propertyId = UUID.randomUUID();
