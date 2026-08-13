@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Numérotation séquentielle des factures (art. 242 nonies A du CGI) :
+         séquence chronologique continue PAR BAILLEUR et par année, allouée
+         atomiquement via UPSERT sur cette table. -->
+    <changeSet id="092-01" author="claude">
+        <createTable tableName="invoice_sequences">
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seq_year" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_value" type="BIGINT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="invoice_sequences" columnNames="owner_id, seq_year"
+                       constraintName="pk_invoice_sequences"/>
+    </changeSet>
+
+    <!-- L'unicité de invoice_number devient PAR BAILLEUR (deux bailleurs ont
+         chacun leur INV-2026-0001, comme toute numérotation par émetteur) :
+         la contrainte globale doit sauter. L'unicité par bailleur est garantie
+         par l'allocation atomique de la séquence ; on garde un index simple
+         pour les recherches. -->
+    <changeSet id="092-02" author="claude">
+        <sql>ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_invoice_number_key;</sql>
+        <sql>CREATE INDEX IF NOT EXISTS idx_invoices_invoice_number ON invoices (invoice_number);</sql>
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_invoices_invoice_number;</sql>
+            <sql>ALTER TABLE invoices ADD CONSTRAINT invoices_invoice_number_key UNIQUE (invoice_number);</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

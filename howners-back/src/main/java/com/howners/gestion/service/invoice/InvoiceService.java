@@ -16,6 +16,8 @@ import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.contract.PdfService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,6 +40,9 @@ public class InvoiceService {
     private final RentalRepository rentalRepository;
     private final UserRepository userRepository;
     private final PdfService pdfService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private static final DateTimeFormatter FR_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -98,7 +103,7 @@ public class InvoiceService {
             throw new ForbiddenException("You are not authorized to create invoices for this rental");
         }
 
-        String invoiceNumber = generateInvoiceNumber();
+        String invoiceNumber = generateInvoiceNumber(rental.getProperty().getOwner().getId());
 
         Invoice invoice = Invoice.builder()
                 .rental(rental)
@@ -135,7 +140,7 @@ public class InvoiceService {
 
         for (Rental rental : activeRentals) {
             try {
-                String invoiceNumber = generateInvoiceNumber();
+                String invoiceNumber = generateInvoiceNumber(rental.getProperty().getOwner().getId());
                 LocalDate now = LocalDate.now();
 
                 Invoice invoice = Invoice.builder()
@@ -184,10 +189,24 @@ public class InvoiceService {
         }
     }
 
-    private String generateInvoiceNumber() {
-        String year = String.valueOf(LocalDate.now().getYear());
-        String random = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        return String.format("INV-%s-%s", year, random);
+    /**
+     * Alloue le prochain numéro de facture du bailleur pour l'année en cours :
+     * séquence chronologique continue par émetteur (art. 242 nonies A du CGI),
+     * au format INV-2026-0001. L'UPSERT est atomique : deux créations
+     * concurrentes ne peuvent pas obtenir le même numéro, et l'incrément est
+     * annulé avec la transaction si la création de la facture échoue (pas de
+     * trou dans la séquence).
+     */
+    private String generateInvoiceNumber(UUID ownerId) {
+        int year = LocalDate.now().getYear();
+        Number seq = (Number) entityManager.createNativeQuery(
+                        "INSERT INTO invoice_sequences (owner_id, seq_year, next_value) VALUES (:ownerId, :year, 2) "
+                        + "ON CONFLICT (owner_id, seq_year) DO UPDATE SET next_value = invoice_sequences.next_value + 1 "
+                        + "RETURNING next_value - 1")
+                .setParameter("ownerId", ownerId)
+                .setParameter("year", year)
+                .getSingleResult();
+        return String.format("INV-%d-%04d", year, seq.longValue());
     }
 
     private String buildInvoiceHtml(Invoice invoice) {

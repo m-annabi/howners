@@ -17,7 +17,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
     List<Invoice> findByRentalId(UUID rentalId);
 
-    Optional<Invoice> findByInvoiceNumber(String invoiceNumber);
+    // findByInvoiceNumber supprimé : le numéro n'est plus unique globalement
+    // (chaque bailleur a sa propre séquence INV-<année>-NNNN, changelog 092).
 
     List<Invoice> findByStatus(InvoiceStatus status);
 
