@@ -57,6 +57,7 @@ class RevisionLoyerServiceTest {
     @Mock StorageService storageService;
     @Mock EmailService emailService;
     @Mock NotificationService notificationService;
+    @Mock com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
     @InjectMocks RevisionLoyerService revisionLoyerService;
 
@@ -67,6 +68,10 @@ class RevisionLoyerServiceTest {
 
     @BeforeEach
     void setup() {
+        org.mockito.Mockito.lenient()
+                .when(documentSequenceService.next(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(1L);
         ownerId = UUID.randomUUID();
         rentalId = UUID.randomUUID();
         owner = User.builder().id(ownerId).email("owner@test.fr").firstName("Pro").lastName("Prio")

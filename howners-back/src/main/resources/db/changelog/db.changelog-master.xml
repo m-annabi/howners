@@ -99,5 +99,6 @@
     <include file="db/changelog/093-receipt-sequential-numbering.xml"/>
     <include file="db/changelog/094-amendment-sequential-numbering.xml"/>
     <include file="db/changelog/095-regularisation-numero.xml"/>
+    <include file="db/changelog/096-revision-numero.xml"/>
 
 </databaseChangeLog>

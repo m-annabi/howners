@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Numéro d'émission des courriers de révision de loyer (REV-2026-0001),
+         alloué à la notification via la séquence par bailleur/année
+         (document_sequences). Nullable : les courriers déjà émis n'en
+         reçoivent pas rétroactivement. -->
+    <changeSet id="096-01" author="claude">
+        <addColumn tableName="rent_revisions">
+            <column name="numero" type="VARCHAR(30)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

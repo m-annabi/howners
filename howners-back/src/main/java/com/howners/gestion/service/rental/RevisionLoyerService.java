@@ -64,6 +64,7 @@ public class RevisionLoyerService {
     private final StorageService storageService;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
     // ----- Indices IRL -----
 
@@ -159,6 +160,14 @@ public class RevisionLoyerService {
 
         Rental rental = revision.getRental();
         User tenant = rental.getTenant();
+
+        // Numéro d'émission séquentiel par bailleur/année, alloué à la notification.
+        int anneeEmission = LocalDate.now().getYear();
+        long seq = documentSequenceService.next(
+                rental.getProperty().getOwner().getId(),
+                com.howners.gestion.service.document.DocumentSequenceService.REVISION,
+                anneeEmission);
+        revision.setNumero(String.format("REV-%d-%04d", anneeEmission, seq));
 
         // Courrier PDF
         String html = buildCourrierHtml(revision);
@@ -376,7 +385,7 @@ public class RevisionLoyerService {
         return """
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h1 style="font-size: 16pt; margin-bottom: 5px;">RÉVISION ANNUELLE DE LOYER</h1>
-                    <p style="font-size: 10pt; color: #666;">Indexation sur l'indice de référence des loyers (IRL)</p>
+                    <p style="font-size: 10pt; color: #666;">Indexation sur l'indice de référence des loyers (IRL)%s</p>
                 </div>
 
                 <table style="width: 100%%; border: none; margin-bottom: 20px;">
@@ -420,6 +429,7 @@ public class RevisionLoyerService {
                     (article 17-1, loi n° 89-462 du 6 juillet 1989).
                 </p>
                 """.formatted(
+                revision.getNumero() != null ? " · N° " + revision.getNumero() : "",
                 owner.getFullName(), PdfFormat.blocAdresse(owner),
                 tenant != null ? tenant.getFullName() : "Locataire non renseigné",
                 tenant != null ? PdfFormat.blocAdresse(tenant) : "",

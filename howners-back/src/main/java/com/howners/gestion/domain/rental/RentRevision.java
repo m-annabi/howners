@@ -51,6 +51,10 @@ public class RentRevision {
     @Column(name = "date_effet")
     private LocalDate dateEffet;
 
+    /** Numéro d'émission (REV-2026-0001), alloué à la notification — null pour l'historique. */
+    @Column(name = "numero", length = 30)
+    private String numero;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "statut", nullable = false)
     @Builder.Default

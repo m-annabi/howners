@@ -18,6 +18,7 @@ public record RevisionLoyerResponse(
         IrlIndiceResponse indiceNouveau,
         LocalDate dateRevision,
         LocalDate dateEffet,
+        String numero,
         StatutRevision statut,
         UUID documentId,
         LocalDateTime createdAt
@@ -33,6 +34,7 @@ public record RevisionLoyerResponse(
                 revision.getIndiceNouveau() != null ? IrlIndiceResponse.from(revision.getIndiceNouveau()) : null,
                 revision.getDateRevision(),
                 revision.getDateEffet(),
+                revision.getNumero(),
                 revision.getStatut(),
                 revision.getDocument() != null ? revision.getDocument().getId() : null,
                 revision.getCreatedAt()
