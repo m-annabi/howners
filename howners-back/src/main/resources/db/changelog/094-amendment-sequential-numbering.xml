@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Les avenants rejoignent la numérotation par séquence, mais leur portée
+         est le CONTRAT (« Avenant n°2 au contrat X »), pas le bailleur :
+         la colonne owner_id devient scope_id (bailleur pour factures et
+         quittances, contrat pour avenants). seq_year vaut 0 pour les
+         séquences non annuelles : un avenant n°3 suit le n°2 même en
+         changeant d'année. -->
+    <changeSet id="094-01" author="claude">
+        <renameColumn tableName="document_sequences" oldColumnName="owner_id" newColumnName="scope_id"/>
+    </changeSet>
+
+    <!-- Amorce les séquences d'avenants depuis l'existant : sans cela, la
+         première allocation rendrait 1 sur un contrat ayant déjà un avenant
+         n°1 → violation de l'unicité (contract_id, amendment_number). -->
+    <changeSet id="094-02" author="claude">
+        <sql>
+            INSERT INTO document_sequences (scope_id, doc_kind, seq_year, next_value)
+            SELECT contract_id, 'AMENDMENT', 0, MAX(amendment_number) + 1
+            FROM contract_amendments
+            GROUP BY contract_id;
+        </sql>
+        <rollback>
+            <sql>DELETE FROM document_sequences WHERE doc_kind = 'AMENDMENT';</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

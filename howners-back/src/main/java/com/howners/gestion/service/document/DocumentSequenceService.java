@@ -9,15 +9,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 /**
- * Séquences de numérotation de documents, par bailleur, type et année
- * (table document_sequences, changelog 093). Garantit des numéros
- * chronologiques continus par émetteur (factures : art. 242 nonies A du CGI).
+ * Séquences de numérotation de documents (table document_sequences,
+ * changelogs 093-094), par portée, type et année. La portée dépend du type :
+ * le bailleur pour les factures et quittances (numéros continus par émetteur,
+ * art. 242 nonies A du CGI pour les factures), le contrat pour les avenants.
  */
 @Service
 public class DocumentSequenceService {
 
     public static final String INVOICE = "INVOICE";
     public static final String RECEIPT = "RECEIPT";
+    public static final String AMENDMENT = "AMENDMENT";
+
+    /** Valeur de seq_year pour les séquences non annuelles (avenants). */
+    public static final int NO_YEAR = 0;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -30,14 +35,14 @@ public class DocumentSequenceService {
      * annulé avec elle en cas d'échec (pas de trou dans la séquence).
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public long next(UUID ownerId, String docKind, int year) {
+    public long next(UUID scopeId, String docKind, int year) {
         Number seq = (Number) entityManager.createNativeQuery(
-                        "INSERT INTO document_sequences (owner_id, doc_kind, seq_year, next_value) "
-                        + "VALUES (:ownerId, :kind, :year, 2) "
-                        + "ON CONFLICT (owner_id, doc_kind, seq_year) "
+                        "INSERT INTO document_sequences (scope_id, doc_kind, seq_year, next_value) "
+                        + "VALUES (:scopeId, :kind, :year, 2) "
+                        + "ON CONFLICT (scope_id, doc_kind, seq_year) "
                         + "DO UPDATE SET next_value = document_sequences.next_value + 1 "
                         + "RETURNING next_value - 1")
-                .setParameter("ownerId", ownerId)
+                .setParameter("scopeId", scopeId)
                 .setParameter("kind", docKind)
                 .setParameter("year", year)
                 .getSingleResult();

@@ -46,6 +46,7 @@ public class ContractAmendmentService {
     private final PdfService pdfService;
     private final StorageService storageService;
     private final AuditService auditService;
+    private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
     @Transactional(readOnly = true)
     public List<AmendmentResponse> findByContractId(UUID contractId) {
@@ -75,7 +76,12 @@ public class ContractAmendmentService {
             throw new BadRequestException("Contract must be ACTIVE or SIGNED to create an amendment");
         }
 
-        int nextNumber = amendmentRepository.countByContractId(contractId) + 1;
+        // Séquence atomique par contrat (changelog 094) : l'ancien
+        // countByContractId + 1 doublonnait en cas de créations concurrentes
+        // et réutilisait un numéro si un avenant venait à être supprimé.
+        int nextNumber = (int) documentSequenceService.next(contractId,
+                com.howners.gestion.service.document.DocumentSequenceService.AMENDMENT,
+                com.howners.gestion.service.document.DocumentSequenceService.NO_YEAR);
 
         ContractAmendment amendment = ContractAmendment.builder()
                 .contract(contract)
