@@ -6,6 +6,7 @@ import com.howners.gestion.domain.listing.ListingStatus;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.rental.RentalStatus;
+import com.howners.gestion.domain.rental.RentalType;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.listing.ListingResponse;
@@ -142,6 +143,9 @@ public class RentalService {
         Rental rental = Rental.builder()
                 .property(property)
                 .status(RentalStatus.VACANT)
+                // rental_type est NOT NULL en base : sans choix explicite (le
+                // formulaire n'en propose pas), une location est longue durée.
+                .rentalType(request.rentalType() != null ? request.rentalType() : RentalType.LONG_TERM)
                 .startDate(request.startDate())
                 .endDate(request.endDate())
                 .monthlyRent(request.monthlyRent())

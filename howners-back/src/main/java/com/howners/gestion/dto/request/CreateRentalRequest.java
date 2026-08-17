@@ -20,6 +20,8 @@ public record CreateRentalRequest(
 
         String currency,
 
+        com.howners.gestion.domain.rental.RentalType rentalType,
+
         @DecimalMin(value = "0.0", message = "Deposit amount must be positive")
         BigDecimal depositAmount,
 

@@ -352,8 +352,8 @@ public class ListingService {
                 .currency(request.currency() != null ? request.currency() : "EUR")
                 .minStay(request.minStay())
                 .maxStay(request.maxStay())
-                .amenities(request.amenities())
-                .requirements(request.requirements())
+                .amenities(toJson(request.amenities()))
+                .requirements(toJson(request.requirements()))
                 .availableFrom(request.availableFrom())
                 .status(ListingStatus.DRAFT)
                 .build();
@@ -375,8 +375,8 @@ public class ListingService {
         if (request.currency() != null) listing.setCurrency(request.currency());
         listing.setMinStay(request.minStay());
         listing.setMaxStay(request.maxStay());
-        listing.setAmenities(request.amenities());
-        listing.setRequirements(request.requirements());
+        listing.setAmenities(toJson(request.amenities()));
+        listing.setRequirements(toJson(request.requirements()));
         listing.setAvailableFrom(request.availableFrom());
 
         listing = listingRepository.save(listing);
@@ -429,5 +429,15 @@ public class ListingService {
     private ListingResponse toResponseWithPhotos(Listing listing) {
         List<ListingPhotoResponse> photos = listingPhotoService.getListingPhotos(listing.getId());
         return ListingResponse.from(listing, photos);
+    }
+
+    /** Sérialise la liste en JSON pour la colonne texte (null si vide) — le filtre plein-texte des recherches continue de fonctionner sur la chaîne. */
+    private static String toJson(java.util.List<String> values) {
+        if (values == null || values.isEmpty()) return null;
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(values);
+        } catch (Exception e) {
+            return String.join(",", values);
+        }
     }
 }

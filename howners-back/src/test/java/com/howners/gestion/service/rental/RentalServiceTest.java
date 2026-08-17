@@ -161,7 +161,7 @@ class RentalServiceTest {
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
         stubSaveReturnsArg();
         CreateRentalRequest req = new CreateRentalRequest(property.getId(), LocalDate.now(), null,
-                new BigDecimal("1200"), "EUR", new BigDecimal("1200"), new BigDecimal("50"), 5, null);
+                new BigDecimal("1200"), "EUR", null, new BigDecimal("1200"), new BigDecimal("50"), 5, null);
 
         RentalResponse result = rentalService.create(req);
 
@@ -179,7 +179,7 @@ class RentalServiceTest {
         Property notMine = Property.builder().id(UUID.randomUUID()).name("Autre").owner(otherOwner).build();
         when(propertyRepository.findById(notMine.getId())).thenReturn(Optional.of(notMine));
         CreateRentalRequest req = new CreateRentalRequest(notMine.getId(), LocalDate.now(), null,
-                new BigDecimal("1000"), "EUR", null, null, 1, null);
+                new BigDecimal("1000"), "EUR", null, null, null, 1, null);
 
         assertThatThrownBy(() -> rentalService.create(req))
                 .isInstanceOf(BusinessException.class)
@@ -192,7 +192,7 @@ class RentalServiceTest {
         UUID pid = UUID.randomUUID();
         when(propertyRepository.findById(pid)).thenReturn(Optional.empty());
         CreateRentalRequest req = new CreateRentalRequest(pid, LocalDate.now(), null,
-                new BigDecimal("1000"), "EUR", null, null, 1, null);
+                new BigDecimal("1000"), "EUR", null, null, null, 1, null);
 
         assertThatThrownBy(() -> rentalService.create(req))
                 .isInstanceOf(ResourceNotFoundException.class);

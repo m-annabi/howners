@@ -31,8 +31,8 @@ public record ListingResponse(
         Integer minStay,
         Integer maxStay,
         ListingStatus status,
-        String amenities,
-        String requirements,
+        java.util.List<String> amenities,
+        java.util.List<String> requirements,
         LocalDate availableFrom,
         List<ListingPhotoResponse> photos,
         LocalDateTime publishedAt,
@@ -65,12 +65,23 @@ public record ListingResponse(
                 l.getMinStay(),
                 l.getMaxStay(),
                 l.getStatus(),
-                l.getAmenities(),
-                l.getRequirements(),
+                parseJsonList(l.getAmenities()),
+                parseJsonList(l.getRequirements()),
                 l.getAvailableFrom(),
                 resolvedPhotos != null ? resolvedPhotos : List.of(),
                 l.getPublishedAt(),
                 l.getCreatedAt()
         );
+    }
+
+    /** Les listes sont stockées en JSON (["wifi","parking"]) ; les anciennes valeurs texte deviennent une liste à un élément. */
+    private static java.util.List<String> parseJsonList(String raw) {
+        if (raw == null || raw.isBlank()) return java.util.List.of();
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(raw, new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {});
+        } catch (Exception e) {
+            return java.util.List.of(raw);
+        }
     }
 }

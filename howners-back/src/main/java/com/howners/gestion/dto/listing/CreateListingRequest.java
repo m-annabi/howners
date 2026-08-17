@@ -15,8 +15,8 @@ public record CreateListingRequest(
         String currency,
         @Min(value = 1, message = "La durée minimum doit être d'au moins 1 jour") Integer minStay,
         Integer maxStay,
-        String amenities,
-        String requirements,
+        java.util.List<String> amenities,
+        java.util.List<String> requirements,
         LocalDate availableFrom
 ) {
 }
