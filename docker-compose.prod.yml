@@ -30,9 +30,9 @@ services:
     restart: unless-stopped
 
   backend:
-    # Build local par défaut. Pour déployer l'image construite par la CI (GHCR),
-    # commenter `build:` et décommenter `image:` ci-dessous, puis `docker compose pull`.
-    # image: ghcr.io/m-annabi/howners-backend:latest
+    # Image construite par la CI (GHCR). `build:` reste disponible en secours :
+    # `docker compose build` localement si besoin, mais le déploiement fait `pull`.
+    image: ghcr.io/m-annabi/howners-backend:latest
     build:
       context: ./howners-back
       dockerfile: Dockerfile
@@ -61,7 +61,9 @@ services:
           memory: 1G
 
   frontend:
-    # image: ghcr.io/m-annabi/howners-frontend:latest   # cf. note sur le service backend
+    # FRONTEND_TAG=staging → variante construite avec APP_DOMAIN du staging
+    # (l'URL de l'API est figée dans le bundle au build).
+    image: ghcr.io/m-annabi/howners-frontend:${FRONTEND_TAG:-latest}
     build:
       context: ./howners-api
       dockerfile: Dockerfile

@@ -63,9 +63,15 @@ puis ouvrir `https://staging.mondomaine.fr`.
 
 ## 5. Mettre à jour le staging
 
+Le déploiement est automatique à chaque push sur `main` : la CI construit les
+images (dont la variante frontend `:staging`, avec le domaine du staging figé
+au build), puis le serveur fait un simple `pull` + `up` (~1 min) — il ne
+construit jamais rien lui-même. Manuellement si besoin :
+
 ```bash
-git pull
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+sudo docker login ghcr.io   # jeton GitHub avec read:packages
+sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml pull backend frontend
+sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
 ```
 
 (Liquibase applique les migrations tout seul au démarrage du backend.)

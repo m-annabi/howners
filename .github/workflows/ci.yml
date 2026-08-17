@@ -64,8 +64,25 @@ jobs:
         include:
           - image: howners-backend
             context: ./howners-back
+            scope: howners-backend
+            tags: |
+              type=sha,format=short
+              type=raw,value=latest,enable={{is_default_branch}}
           - image: howners-frontend
             context: ./howners-api
+            scope: howners-frontend
+            tags: |
+              type=sha,format=short
+              type=raw,value=latest,enable={{is_default_branch}}
+          # Variante staging : l'URL de l'API est figée dans le bundle Angular au
+          # build → une image par environnement (build-arg APP_DOMAIN).
+          - image: howners-frontend
+            context: ./howners-api
+            scope: howners-frontend-staging
+            build_args: |
+              APP_DOMAIN=staging.howners-app.com
+            tags: |
+              type=raw,value=staging,enable={{is_default_branch}}
     steps:
       - uses: actions/checkout@v4
 
@@ -86,9 +103,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
-          tags: |
-            type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
+          tags: ${{ matrix.tags }}
 
       - name: Build & push
         uses: docker/build-push-action@v6
@@ -98,14 +113,19 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          build-args: ${{ matrix.build_args }}
+          cache-from: type=gha,scope=${{ matrix.scope }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.scope }}
 
   deploy-staging:
     name: Deploy — Staging (Lightsail)
     runs-on: ubuntu-latest
-    # Déploie seulement un push sur main dont les tests sont verts.
-    needs: [backend, frontend]
+    # Déploie seulement un push sur main dont les tests sont verts, à partir
+    # des images construites par la CI (le serveur ne build plus rien).
+    needs: [backend, frontend, docker]
+    permissions:
+      contents: read
+      packages: read
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     # Un seul déploiement à la fois ; les pushes rapprochés s'enchaînent.
     concurrency:
@@ -131,15 +151,18 @@ jobs:
         run: |
           rsync -az --delete --exclude '.git' --exclude '.env.prod' ./ ubuntu@51.44.0.177:~/howners/
 
-      - name: Rebuild & redémarrer la stack
+      - name: Déployer les images construites par la CI
+        # Le build sur l'instance (2 vCPU / 4 Go) prenait 10-20 min et pouvait
+        # la saturer ; désormais : login GHCR (jeton éphémère du run), pull des
+        # images :latest / :staging, redémarrage. FRONTEND_TAG=staging cible la
+        # variante frontend construite avec le domaine du staging.
         run: |
-          ssh ubuntu@51.44.0.177 'cd ~/howners && sudo docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build --remove-orphans'
-
-      - name: Nettoyer les images Docker orphelines
-        # Chaque rebuild laisse des couches orphelines : sans purge, le disque
-        # de l'instance (80 Go) finit par saturer et les déploiements rampent.
-        run: |
-          ssh ubuntu@51.44.0.177 'sudo docker image prune -f && df -h / | tail -1'
+          ssh ubuntu@51.44.0.177 "echo '${{ secrets.GITHUB_TOKEN }}' | sudo docker login ghcr.io -u '${{ github.actor }}' --password-stdin \
+            && cd ~/howners \
+            && sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml pull backend frontend \
+            && sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans \
+            && sudo docker image prune -f \
+            && df -h / | tail -1"
 
       - name: Vérifier la santé
         # Spring Boot + Liquibase mettent 1 à 2 min à redémarrer après un rebuild :
