@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ApplicationService } from '../../../core/services/application.service';
 import { DocumentService } from '../../../core/services/document.service';
+import { MessageService } from '../../../core/services/message.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 import {
   Application,
@@ -85,6 +87,8 @@ export class ApplicationListComponent implements OnInit {
   constructor(
     private applicationService: ApplicationService,
     private documentService: DocumentService,
+    private messageService: MessageService,
+    private notificationService: NotificationService,
     private route: ActivatedRoute
   ) {}
 
@@ -171,6 +175,22 @@ export class ApplicationListComponent implements OnInit {
 
   hasDocumentType(app: Application, type: DocumentType): boolean {
     return app.documents?.some(d => d.documentType === type) ?? false;
+  }
+
+  /**
+   * Envoie un message au candidat pour demander des pièces complémentaires
+   * ou différentes — le fil de discussion se poursuit dans la messagerie.
+   */
+  demanderPieces(app: { applicantId: string; applicantName: string }): void {
+    const body = prompt(
+      `Message à ${app.applicantName} :`,
+      'Bonjour, pour compléter l\'examen de votre dossier, pourriez-vous fournir les pièces suivantes : '
+    );
+    if (!body || !body.trim()) return;
+    this.messageService.send({ recipientId: app.applicantId, body: body.trim() }).subscribe({
+      next: () => this.notificationService.success('Demande envoyée au candidat — la suite se passe dans votre messagerie.'),
+      error: () => this.notificationService.error('Impossible d\'envoyer la demande.')
+    });
   }
 
   downloadDocument(docId: string, fileName: string): void {

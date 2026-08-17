@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ListingService } from '../../../core/services/listing.service';
@@ -6,6 +6,7 @@ import { ListingPhotoService } from '../../../core/services/listing-photo.servic
 import { PropertyService } from '../../properties/property.service';
 import { Property } from '../../../core/models/property.model';
 import { ListingPhoto } from '../../../core/models/listing.model';
+import { ListingPhotoUploadComponent } from '../../../shared/components/listing-photo-upload/listing-photo-upload.component';
 import {
   PREDEFINED_AMENITIES,
   PREDEFINED_REQUIREMENTS,
@@ -33,6 +34,9 @@ export class ListingFormComponent implements OnInit {
 
   // Photos
   listingPhotos: ListingPhoto[] = [];
+  listingStatus: string | null = null;
+
+  @ViewChild(ListingPhotoUploadComponent) photoUploader?: ListingPhotoUploadComponent;
 
   constructor(
     private fb: FormBuilder,
@@ -79,6 +83,8 @@ export class ListingFormComponent implements OnInit {
             maxStay: listing.maxStay,
             availableFrom: listing.availableFrom
           });
+
+          this.listingStatus = listing.status;
 
           // Load amenities as keys
           if (listing.amenities) {
@@ -134,10 +140,17 @@ export class ListingFormComponent implements OnInit {
     });
   }
 
-  onSubmit(): void {
+  async onSubmit(publish = false): Promise<void> {
     if (this.form.invalid) return;
 
     this.submitting = true;
+
+    // Les photos sélectionnées mais pas encore téléversées partent avec la
+    // sauvegarde : plus besoin de cliquer un second bouton dans le composant.
+    if (this.isEditMode && this.photoUploader && this.photoUploader.selectedFiles.length > 0) {
+      await this.photoUploader.uploadAll();
+    }
+
     const amenitiesArray = Array.from(this.selectedAmenities);
     const requirementsArray = Array.from(this.selectedRequirements);
 
@@ -153,8 +166,21 @@ export class ListingFormComponent implements OnInit {
 
     action.subscribe({
       next: (listing) => {
-        this.submitting = false;
-        this.router.navigate(['/listings', listing.id]);
+        if (publish && String(listing.status) !== 'PUBLISHED') {
+          this.listingService.publishListing(listing.id).subscribe({
+            next: () => {
+              this.submitting = false;
+              this.router.navigate(['/listings', listing.id]);
+            },
+            error: () => {
+              this.submitting = false;
+              this.router.navigate(['/listings', listing.id]);
+            }
+          });
+        } else {
+          this.submitting = false;
+          this.router.navigate(['/listings', listing.id]);
+        }
       },
       error: () => this.submitting = false
     });

@@ -101,9 +101,12 @@
     </div>
 
     <!-- Examen -->
-    <div *ngIf="canReview(app) && reviewingId !== app.id" class="mt-3">
+    <div *ngIf="canReview(app) && reviewingId !== app.id" class="mt-3 d-flex gap-2 flex-wrap">
       <button class="hw-btn hw-btn--sm hw-btn--primary" (click)="startReview(app.id)">
         <i class="bi bi-pencil-square"></i> Examiner
+      </button>
+      <button class="hw-btn hw-btn--sm hw-btn--outline" (click)="demanderPieces(app)">
+        <i class="bi bi-envelope-plus"></i> Demander des pièces
       </button>
     </div>
 

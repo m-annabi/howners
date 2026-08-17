@@ -251,7 +251,7 @@ public class DocumentService {
 
         boolean isUploader = document.getUploader().getId().equals(currentUserId);
 
-        if (!isOwner && !isUploader) {
+        if (!isOwner && !isUploader && !isDossierReviewer(document, currentUserId)) {
             throw new RuntimeException("You are not authorized to view this document");
         }
 
@@ -285,7 +285,7 @@ public class DocumentService {
 
         boolean isUploader = document.getUploader().getId().equals(currentUserId);
 
-        if (!isOwner && !isUploader) {
+        if (!isOwner && !isUploader && !isDossierReviewer(document, currentUserId)) {
             throw new RuntimeException("You are not authorized to download this document");
         }
 
@@ -379,4 +379,23 @@ public class DocumentService {
         return (firstName + " " + lastName).trim();
     }
 
+
+    /** Pièces du dossier locataire (non rattachées à un bien/bail/candidature). */
+    private static final java.util.List<DocumentType> DOSSIER_TYPES = java.util.List.of(
+            DocumentType.IDENTITY, DocumentType.PROOF_OF_INCOME, DocumentType.EMPLOYMENT_CONTRACT,
+            DocumentType.TAX_NOTICE, DocumentType.PROOF_OF_RESIDENCE);
+
+    /**
+     * Un bailleur qui examine une candidature doit pouvoir lire les pièces du
+     * dossier de son auteur : elles sont personnelles (aucun lien bien/bail/
+     * candidature) mais présentées dans le dossier de candidature.
+     */
+    private boolean isDossierReviewer(Document document, java.util.UUID currentUserId) {
+        return document.getProperty() == null && document.getRental() == null
+                && document.getApplication() == null
+                && DOSSIER_TYPES.contains(document.getDocumentType())
+                && applicationRepository.existsByApplicantIdAndListingPropertyOwnerIdAndStatusNot(
+                        document.getUploader().getId(), currentUserId,
+                        com.howners.gestion.domain.application.ApplicationStatus.WITHDRAWN);
+    }
 }

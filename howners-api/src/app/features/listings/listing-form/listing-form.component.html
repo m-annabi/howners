@@ -134,9 +134,18 @@
       </div>
 
       <div class="d-grid gap-2">
-        <button type="submit" class="hw-btn hw-btn--primary" [disabled]="form.invalid || submitting">
+        <button *ngIf="listingStatus !== 'PUBLISHED'" type="button" class="hw-btn hw-btn--primary"
+                [disabled]="form.invalid || submitting" (click)="onSubmit(true)">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
-          {{ isEditMode ? 'Mettre à jour' : 'Créer l\'annonce' }}
+          <i class="bi bi-megaphone"></i>
+          {{ isEditMode ? 'Mettre à jour et publier' : 'Publier l\'annonce' }}
+        </button>
+        <button type="submit" class="hw-btn"
+                [class.hw-btn--primary]="listingStatus === 'PUBLISHED'"
+                [class.hw-btn--outline]="listingStatus !== 'PUBLISHED'"
+                [disabled]="form.invalid || submitting">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+          {{ isEditMode ? 'Mettre à jour' : 'Enregistrer en brouillon' }}
         </button>
         <a routerLink="/listings/my" class="hw-btn hw-btn--ghost">Annuler</a>
       </div>

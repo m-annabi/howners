@@ -25,4 +25,9 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     boolean existsByListingIdAndApplicantIdAndStatusNot(UUID listingId, UUID applicantId, ApplicationStatus status);
 
     long countByListingIdAndStatus(UUID listingId, ApplicationStatus status);
+
+    /** Le bailleur a-t-il une candidature (non retirée) de ce candidat sur l'une de ses annonces ? */
+    boolean existsByApplicantIdAndListingPropertyOwnerIdAndStatusNot(
+            java.util.UUID applicantId, java.util.UUID ownerId,
+            com.howners.gestion.domain.application.ApplicationStatus status);
 }
