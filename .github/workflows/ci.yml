@@ -135,6 +135,12 @@ jobs:
         run: |
           ssh ubuntu@51.44.0.177 'cd ~/howners && sudo docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build --remove-orphans'
 
+      - name: Nettoyer les images Docker orphelines
+        # Chaque rebuild laisse des couches orphelines : sans purge, le disque
+        # de l'instance (80 Go) finit par saturer et les déploiements rampent.
+        run: |
+          ssh ubuntu@51.44.0.177 'sudo docker image prune -f && df -h / | tail -1'
+
       - name: Vérifier la santé
         # Spring Boot + Liquibase mettent 1 à 2 min à redémarrer après un rebuild :
         # on interroge l'API jusqu'à 5 min avant de déclarer le déploiement en échec.

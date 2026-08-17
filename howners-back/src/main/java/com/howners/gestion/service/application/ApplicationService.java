@@ -275,6 +275,12 @@ public class ApplicationService {
                 .tenant(application.getApplicant())
                 .application(application)
                 .status(RentalStatus.PENDING)
+                // rental_type est NOT NULL : déduit de l'annonce (prix à la nuit
+                // uniquement → saisonnière), longue durée sinon.
+                .rentalType(application.getListing().getPricePerNight() != null
+                        && application.getListing().getPricePerMonth() == null
+                        ? com.howners.gestion.domain.rental.RentalType.SHORT_TERM
+                        : com.howners.gestion.domain.rental.RentalType.LONG_TERM)
                 .startDate(request.startDate())
                 .endDate(request.endDate())
                 .monthlyRent(request.monthlyRent())
