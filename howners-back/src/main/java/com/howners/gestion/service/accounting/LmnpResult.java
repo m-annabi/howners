@@ -59,9 +59,13 @@ public record LmnpResult(
     /** Une ligne d'aide au report : un montant et la case/rubrique où l'inscrire. */
     public record ReportLine(String libelle, BigDecimal montant, String destination) {}
 
-    /** Vrai si aucune action bloquante ne reste avant de déposer la déclaration. */
+    /**
+     * Vrai si l'exercice est évalué et qu'aucune action bloquante ne reste avant dépôt.
+     * Une checklist vide (ex. exercice antérieur au début d'activité) n'est pas « prête ».
+     */
     public boolean pretADeposer() {
-        return checklist != null && checklist.stream().noneMatch(c -> "ACTION".equals(c.level()));
+        return checklist != null && !checklist.isEmpty()
+                && checklist.stream().noneMatch(c -> "ACTION".equals(c.level()));
     }
 
     public BigDecimal totalActif() {

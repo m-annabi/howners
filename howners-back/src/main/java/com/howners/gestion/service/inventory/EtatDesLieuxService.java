@@ -97,6 +97,14 @@ public class EtatDesLieuxService {
                 .orElseThrow(() -> new ResourceNotFoundException("Rental not found"));
         checkRentalAccess(rental);
 
+        // Un seul état des lieux par type et par bail : la comparaison (et l'accès par
+        // type) suppose l'unicité ; un doublon ferait échouer la requête (NonUniqueResult → 500).
+        if (edlRepository.findByRentalIdAndType(rentalId, request.type()).isPresent()) {
+            throw new BadRequestException("Un état des lieux « "
+                    + (request.type() == EtatDesLieuxType.ENTREE ? "d'entrée" : "de sortie")
+                    + " » existe déjà pour ce bail. Supprimez-le avant d'en créer un nouveau.");
+        }
+
         EtatDesLieux edl = EtatDesLieux.builder()
                 .rental(rental)
                 .type(request.type())
@@ -141,11 +149,33 @@ public class EtatDesLieuxService {
     }
 
     @Transactional
-    public EtatDesLieuxResponse sign(UUID edlId, String signerRole) {
+    public EtatDesLieuxResponse sign(UUID edlId, String requestedRole) {
         UUID currentUserId = AuthService.getCurrentUserId();
         EtatDesLieux edl = edlRepository.findById(edlId)
                 .orElseThrow(() -> new ResourceNotFoundException("Etat des lieux not found"));
         checkRentalAccess(edl.getRental());
+
+        // Le rôle signataire est DÉDUIT de la relation au bail, pas du paramètre : un
+        // locataire ne peut pas signer à la place du propriétaire (et inversement).
+        Rental rental = edl.getRental();
+        UUID ownerId = rental.getProperty() != null && rental.getProperty().getOwner() != null
+                ? rental.getProperty().getOwner().getId() : null;
+        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
+        String signerRole;
+        if (currentUserId.equals(ownerId)) {
+            signerRole = "OWNER";
+        } else if (currentUserId.equals(tenantId)) {
+            signerRole = "TENANT";
+        } else {
+            // Admin (déjà autorisé par checkRentalAccess) : peut signer au nom du rôle demandé.
+            boolean isAdmin = userRepository.findById(currentUserId)
+                    .map(u -> u.getRole() == Role.ADMIN).orElse(false);
+            if (isAdmin && ("OWNER".equalsIgnoreCase(requestedRole) || "TENANT".equalsIgnoreCase(requestedRole))) {
+                signerRole = requestedRole.toUpperCase();
+            } else {
+                throw new ForbiddenException("Vous ne pouvez pas signer cet état des lieux.");
+            }
+        }
 
         if ("OWNER".equalsIgnoreCase(signerRole)) {
             if (Boolean.TRUE.equals(edl.getOwnerSigned())) {

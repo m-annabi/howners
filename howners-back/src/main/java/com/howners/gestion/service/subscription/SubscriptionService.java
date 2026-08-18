@@ -1,5 +1,7 @@
 package com.howners.gestion.service.subscription;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.howners.gestion.domain.subscription.*;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.subscription.*;
@@ -129,7 +131,7 @@ public class SubscriptionService {
             return new CheckoutSessionResponse(session.getId(), session.getUrl());
         } catch (StripeException e) {
             log.error("Stripe error creating checkout session: {}", e.getMessage());
-            throw new RuntimeException("Failed to create checkout session", e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Le service de paiement est momentanément indisponible. Réessayez dans quelques instants.", e);
         }
     }
 
@@ -278,7 +280,7 @@ public class SubscriptionService {
             return session.getUrl();
         } catch (StripeException e) {
             log.error("Stripe error creating billing portal: {}", e.getMessage());
-            throw new RuntimeException("Failed to create billing portal session", e);
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Le service de paiement est momentanément indisponible. Réessayez dans quelques instants.", e);
         }
     }
 
@@ -296,7 +298,7 @@ public class SubscriptionService {
                         .build());
             } catch (StripeException e) {
                 log.error("Stripe error cancelling subscription: {}", e.getMessage());
-                throw new RuntimeException("Failed to cancel subscription", e);
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Le service de paiement est momentanément indisponible. Réessayez dans quelques instants.", e);
             }
         }
 

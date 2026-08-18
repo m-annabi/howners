@@ -1,5 +1,6 @@
 package com.howners.gestion.controller;
 
+import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.domain.contract.ContractTemplate;
 import com.howners.gestion.domain.rental.RentalType;
 import com.howners.gestion.domain.user.User;
@@ -59,7 +60,7 @@ public class ContractTemplateController {
         ContractTemplate template = contractTemplateService.getMyTemplates(currentUserId, null).stream()
                 .filter(t -> t.getId().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Template not found or not accessible"));
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found or not accessible"));
 
         return ResponseEntity.ok(ContractTemplateResponse.from(template));
     }
@@ -73,7 +74,7 @@ public class ContractTemplateController {
             @Valid @RequestBody CreateTemplateRequest request) {
         UUID currentUserId = AuthService.getCurrentUserId();
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         log.info("Creating new template: {} by user: {}", request.name(), currentUserId);
 
@@ -91,7 +92,7 @@ public class ContractTemplateController {
             @Valid @RequestBody UpdateTemplateRequest request) {
         UUID currentUserId = AuthService.getCurrentUserId();
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         log.info("Updating template: {} by user: {}", id, currentUserId);
 
@@ -107,7 +108,7 @@ public class ContractTemplateController {
     public ResponseEntity<Void> deleteTemplate(@PathVariable UUID id) {
         UUID currentUserId = AuthService.getCurrentUserId();
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         log.info("Deleting template: {} by user: {}", id, currentUserId);
 
@@ -125,7 +126,7 @@ public class ContractTemplateController {
             @RequestParam String newName) {
         UUID currentUserId = AuthService.getCurrentUserId();
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         log.info("Duplicating template: {} as '{}' by user: {}", id, newName, currentUserId);
 

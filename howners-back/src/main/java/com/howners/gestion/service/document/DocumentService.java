@@ -1,5 +1,8 @@
 package com.howners.gestion.service.document;
 
+import com.howners.gestion.exception.BadRequestException;
+import com.howners.gestion.exception.ForbiddenException;
+import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.domain.application.Application;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
@@ -59,23 +62,23 @@ public class DocumentService {
 
         UUID currentUserId = AuthService.getCurrentUserId();
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Valider le fichier
         if (file.isEmpty()) {
-            throw new RuntimeException("File is empty");
+            throw new BadRequestException("File is empty");
         }
 
         // Valider la taille (max 10MB)
         if (file.getSize() > 10 * 1024 * 1024) {
-            throw new RuntimeException("File size exceeds 10MB limit");
+            throw new BadRequestException("File size exceeds 10MB limit");
         }
 
         // Quota par utilisateur (anti-saturation S3). Le multipart cap par requête
         // est dans application.yml ; ici on borne le total d'objets stockés.
         long owned = documentRepository.countByUploaderId(currentUserId);
         if (owned >= maxDocumentsPerOwner) {
-            throw new RuntimeException(
+            throw new BadRequestException(
                 "Limite de " + maxDocumentsPerOwner +
                 " documents atteinte. Archivez ou supprimez d'anciens documents avant d'en ajouter de nouveaux.");
         }
@@ -84,36 +87,36 @@ public class DocumentService {
         Property property = null;
         if (propertyId != null) {
             property = propertyRepository.findById(propertyId)
-                    .orElseThrow(() -> new RuntimeException("Property not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
             // Vérifier que l'utilisateur est le propriétaire
             if (!property.getOwner().getId().equals(currentUserId)) {
-                throw new RuntimeException("You are not authorized to upload documents for this property");
+                throw new ForbiddenException("You are not authorized to upload documents for this property");
             }
         }
 
         Rental rental = null;
         if (rentalId != null) {
             rental = rentalRepository.findById(rentalId)
-                    .orElseThrow(() -> new RuntimeException("Rental not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Rental not found"));
 
             // Vérifier que l'utilisateur est le propriétaire ou le locataire
             UUID ownerId = rental.getProperty().getOwner().getId();
             UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
 
             if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId)) {
-                throw new RuntimeException("You are not authorized to upload documents for this rental");
+                throw new ForbiddenException("You are not authorized to upload documents for this rental");
             }
         }
 
         Application application = null;
         if (applicationId != null) {
             application = applicationRepository.findById(applicationId)
-                    .orElseThrow(() -> new RuntimeException("Application not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
             // Vérifier que l'utilisateur est le candidat de cette candidature
             if (!application.getApplicant().getId().equals(currentUserId)) {
-                throw new RuntimeException("You are not authorized to upload documents for this application");
+                throw new ForbiddenException("You are not authorized to upload documents for this application");
             }
         }
 
@@ -168,11 +171,11 @@ public class DocumentService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         // Vérifier les permissions
         if (!property.getOwner().getId().equals(currentUserId)) {
-            throw new RuntimeException("You are not authorized to view documents for this property");
+            throw new ForbiddenException("You are not authorized to view documents for this property");
         }
 
         return documentRepository.findByPropertyId(propertyId).stream()
@@ -187,14 +190,14 @@ public class DocumentService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Rental rental = rentalRepository.findById(rentalId)
-                .orElseThrow(() -> new RuntimeException("Rental not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Rental not found"));
 
         // Vérifier les permissions (propriétaire ou locataire)
         UUID ownerId = rental.getProperty().getOwner().getId();
         UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
 
         if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId)) {
-            throw new RuntimeException("You are not authorized to view documents for this rental");
+            throw new ForbiddenException("You are not authorized to view documents for this rental");
         }
 
         return documentRepository.findByRentalId(rentalId).stream()
@@ -209,14 +212,14 @@ public class DocumentService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Application application = applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new RuntimeException("Application not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
         // Le candidat, le propriétaire de l'annonce, ou un admin peut voir les documents
         boolean isApplicant = application.getApplicant().getId().equals(currentUserId);
         boolean isOwner = application.getListing().getProperty().getOwner().getId().equals(currentUserId);
 
         if (!isApplicant && !isOwner) {
-            throw new RuntimeException("You are not authorized to view documents for this application");
+            throw new ForbiddenException("You are not authorized to view documents for this application");
         }
 
         return documentRepository.findByApplicationId(applicationId).stream()
@@ -231,7 +234,7 @@ public class DocumentService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Document document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         // Vérifier les permissions
         boolean isOwner = false;
@@ -252,7 +255,7 @@ public class DocumentService {
         boolean isUploader = document.getUploader().getId().equals(currentUserId);
 
         if (!isOwner && !isUploader && !isDossierReviewer(document, currentUserId)) {
-            throw new RuntimeException("You are not authorized to view this document");
+            throw new ForbiddenException("You are not authorized to view this document");
         }
 
         return toResponse(document);
@@ -265,7 +268,7 @@ public class DocumentService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Document document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         // Vérifier les permissions (même logique que getDocument)
         boolean isOwner = false;
@@ -286,7 +289,7 @@ public class DocumentService {
         boolean isUploader = document.getUploader().getId().equals(currentUserId);
 
         if (!isOwner && !isUploader && !isDossierReviewer(document, currentUserId)) {
-            throw new RuntimeException("You are not authorized to download this document");
+            throw new ForbiddenException("You are not authorized to download this document");
         }
 
         // Utiliser directement la clé stockée
@@ -302,7 +305,7 @@ public class DocumentService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Document document = documentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         // Seul l'uploader ou le propriétaire peut supprimer
         boolean isOwner = false;
@@ -318,7 +321,7 @@ public class DocumentService {
         boolean isUploader = document.getUploader().getId().equals(currentUserId);
 
         if (!isOwner && !isUploader) {
-            throw new RuntimeException("You are not authorized to delete this document");
+            throw new ForbiddenException("You are not authorized to delete this document");
         }
 
         // Supprimer de MinIO

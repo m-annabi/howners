@@ -27,7 +27,10 @@ public class AccountingController {
 
     @GetMapping("/activity")
     public ResponseEntity<ActivityResponse> getActivity() {
-        return ResponseEntity.ok(accountingService.getActivity());
+        ActivityResponse activity = accountingService.getActivity();
+        // Activité pas encore configurée : 204 explicite plutôt qu'un corps vide (0 octet)
+        // qui casse le parsing JSON côté client.
+        return activity != null ? ResponseEntity.ok(activity) : ResponseEntity.noContent().build();
     }
 
     @PostMapping("/activity")
@@ -100,8 +103,13 @@ public class AccountingController {
     /** Document individuel : type = pdf | fec. */
     @GetMapping("/document")
     public ResponseEntity<byte[]> document(@RequestParam int year, @RequestParam String type) {
-        List<GeneratedDocument> docs = accountingService.documents(year);
         boolean wantPdf = "pdf".equalsIgnoreCase(type);
+        boolean wantFec = "fec".equalsIgnoreCase(type);
+        if (!wantPdf && !wantFec) {
+            throw new com.howners.gestion.exception.BadRequestException(
+                    "Type de document inconnu : " + type + " (attendu : pdf ou fec).");
+        }
+        List<GeneratedDocument> docs = accountingService.documents(year);
         GeneratedDocument doc = docs.stream()
                 .filter(d -> wantPdf ? d.contentType().contains("pdf") : d.contentType().contains("plain"))
                 .findFirst().orElseThrow();

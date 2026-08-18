@@ -31,7 +31,7 @@ public class NpsController {
     }
 
     @PostMapping("/nps")
-    public ResponseEntity<Void> submit(@org.springframework.web.bind.annotation.RequestBody NpsSubmission body) {
+    public ResponseEntity<Void> submit(@jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody NpsSubmission body) {
         UUID userId = AuthService.getCurrentUserId();
         NpsResponse r = NpsResponse.builder()
                 .user(userRepository.getReferenceById(userId))

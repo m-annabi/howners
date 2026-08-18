@@ -9,6 +9,7 @@ import com.howners.gestion.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,6 +27,9 @@ public class ExportService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    // Session ouverte pendant tout le parcours : les lignes lisent rental.property
+    // (associations paresseuses) qui, hors transaction, lèveraient LazyInitializationException.
+    @Transactional(readOnly = true)
     public String generateFinancialCsv(int year) {
         UUID ownerId = getCurrentUserId();
 

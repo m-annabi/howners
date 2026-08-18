@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,7 +34,21 @@ public class ContractTemplateService {
 
     private final ContractTemplateRepository contractTemplateRepository;
     private final RentalRepository rentalRepository;
+    private final com.howners.gestion.repository.UserRepository userRepository;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    /** Autorise le propriétaire du bien, le locataire du bail, ou un admin. */
+    private void assertRentalAccess(Rental rental) {
+        UUID currentUserId = com.howners.gestion.service.auth.AuthService.getCurrentUserId();
+        UUID ownerId = rental.getProperty() != null && rental.getProperty().getOwner() != null
+                ? rental.getProperty().getOwner().getId() : null;
+        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
+        boolean isAdmin = userRepository.findById(currentUserId)
+                .map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        if (!currentUserId.equals(ownerId) && !currentUserId.equals(tenantId) && !isAdmin) {
+            throw new ForbiddenException("Cette location ne vous appartient pas.");
+        }
+    }
 
     /**
      * Remplit un template avec les données d'une location
@@ -283,6 +298,7 @@ public class ContractTemplateService {
 
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", "unknown"));
+        assertRentalAccess(rental);
 
         String filledContent = fillTemplate(template, rental);
 
@@ -299,6 +315,7 @@ public class ContractTemplateService {
     public PreviewTemplateResponse previewCustomContent(String customContent, UUID rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", "unknown"));
+        assertRentalAccess(rental);
 
         Map<String, String> variables = buildVariablesMap(rental);
         String filledContent = replaceVariables(customContent, variables);
