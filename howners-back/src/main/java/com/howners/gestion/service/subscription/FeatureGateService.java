@@ -153,7 +153,12 @@ public class FeatureGateService {
     }
 
     private SubscriptionPlan getActivePlan(UUID userId) {
-        return userSubscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+        // Variante liste (et non Optional) : tolère d'éventuels doublons d'abonnement
+        // ACTIVE — sans garantie d'unicité en base, l'Optional lèverait une exception de
+        // cardinalité qui remonterait en 500 sur toute création (bien, bail, contrat…).
+        return userSubscriptionRepository
+                .findByUserIdAndStatusOrderByCreatedAtDesc(userId, SubscriptionStatus.ACTIVE)
+                .stream().findFirst()
                 .map(UserSubscription::getPlan)
                 .orElseGet(() -> {
                     // Default to a virtual FREE plan if no subscription exists

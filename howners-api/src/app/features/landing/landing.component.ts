@@ -18,9 +18,10 @@ export class LandingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Si déjà authentifié, rediriger vers le tableau de bord.
+    // Si déjà authentifié, rediriger vers l'accueil DU RÔLE : un locataire va dans
+    // son espace, pas sur le tableau de bord propriétaire (gestion des biens).
     if (this.auth.isAuthenticated()) {
-      this.router.navigate(['/dashboard']);
+      this.auth.resolveHomePath().subscribe(path => this.router.navigate([path]));
       return;
     }
 

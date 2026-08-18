@@ -185,6 +185,47 @@
         </div>
 
         <div class="form-group">
+          <label for="acquisitionDate">Date d'acquisition</label>
+          <input
+            type="date"
+            id="acquisitionDate"
+            formControlName="acquisitionDate"
+            class="form-control"
+          >
+          <small class="form-text">Sert de base au démarrage des amortissements (comptabilité LMNP)</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="landValue">Valeur du terrain (€)</label>
+          <input
+            type="number"
+            id="landValue"
+            formControlName="landValue"
+            class="form-control"
+            placeholder="Ex: 40000"
+            min="0"
+            step="0.01"
+          >
+          <small class="form-text">Non amortissable : exclue de la base d'amortissement du bâti (LMNP)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="notaryFees">Frais de notaire (€)</label>
+          <input
+            type="number"
+            id="notaryFees"
+            formControlName="notaryFees"
+            class="form-control"
+            placeholder="Ex: 18000"
+            min="0"
+            step="0.01"
+          >
+          <small class="form-text">Frais d'acquisition amortissables (LMNP)</small>
+        </div>
+
+        <div class="form-group">
           <label for="condoFees">Charges copropriété (€/mois)</label>
           <input
             type="number"

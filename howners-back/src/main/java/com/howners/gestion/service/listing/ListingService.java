@@ -10,6 +10,7 @@ import com.howners.gestion.dto.listing.CreateListingRequest;
 import com.howners.gestion.dto.listing.ListingPhotoResponse;
 import com.howners.gestion.dto.listing.ListingResponse;
 import com.howners.gestion.exception.BadRequestException;
+import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ListingRepository;
 import com.howners.gestion.repository.PropertyRepository;
@@ -302,7 +303,33 @@ public class ListingService {
     public ListingResponse findById(UUID id) {
         Listing listing = listingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        // Endpoint public : une annonce non publiée ne doit être visible que de son
+        // propriétaire (ou d'un admin), pas d'un visiteur anonyme ni d'un tiers.
+        if (listing.getStatus() != ListingStatus.PUBLISHED && !isOwnerOrAdmin(listing)) {
+            throw new ResourceNotFoundException("Listing not found");
+        }
         return toResponseWithPhotos(listing);
+    }
+
+    /** Vrai si l'utilisateur courant est le propriétaire du bien de l'annonce, ou un admin. */
+    private boolean isOwnerOrAdmin(Listing listing) {
+        UUID currentUserId = AuthService.getCurrentUserIdOrNull();
+        if (currentUserId == null) return false;
+        UUID ownerId = listing.getProperty() != null && listing.getProperty().getOwner() != null
+                ? listing.getProperty().getOwner().getId() : null;
+        if (currentUserId.equals(ownerId)) return true;
+        return userRepository.findById(currentUserId)
+                .map(u -> u.getRole() == Role.ADMIN).orElse(false);
+    }
+
+    /** Charge une annonce et exige que l'utilisateur courant en soit propriétaire (ou admin). */
+    private Listing requireOwnedListing(UUID id) {
+        Listing listing = listingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        if (!isOwnerOrAdmin(listing)) {
+            throw new ForbiddenException("Cette annonce ne vous appartient pas.");
+        }
+        return listing;
     }
 
     @Transactional(readOnly = true)
@@ -342,6 +369,10 @@ public class ListingService {
 
         Property property = propertyRepository.findById(request.propertyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+        // On ne peut publier une annonce que pour SON propre bien.
+        if (property.getOwner() == null || !currentUserId.equals(property.getOwner().getId())) {
+            throw new ForbiddenException("Ce bien ne vous appartient pas.");
+        }
 
         Listing listing = Listing.builder()
                 .property(property)
@@ -365,8 +396,7 @@ public class ListingService {
 
     @Transactional
     public ListingResponse update(UUID id, CreateListingRequest request) {
-        Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        Listing listing = requireOwnedListing(id);
 
         listing.setTitle(request.title());
         listing.setDescription(request.description());
@@ -386,8 +416,7 @@ public class ListingService {
 
     @Transactional
     public ListingResponse publish(UUID id) {
-        Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        Listing listing = requireOwnedListing(id);
 
         if (listing.getStatus() != ListingStatus.DRAFT && listing.getStatus() != ListingStatus.PAUSED) {
             throw new BadRequestException("Listing must be DRAFT or PAUSED to publish");
@@ -402,8 +431,7 @@ public class ListingService {
 
     @Transactional
     public ListingResponse pause(UUID id) {
-        Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        Listing listing = requireOwnedListing(id);
         listing.setStatus(ListingStatus.PAUSED);
         listing = listingRepository.save(listing);
         return toResponseWithPhotos(listing);
@@ -411,8 +439,7 @@ public class ListingService {
 
     @Transactional
     public ListingResponse close(UUID id) {
-        Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        Listing listing = requireOwnedListing(id);
         listing.setStatus(ListingStatus.CLOSED);
         listing = listingRepository.save(listing);
         return toResponseWithPhotos(listing);
@@ -420,8 +447,7 @@ public class ListingService {
 
     @Transactional
     public void delete(UUID id) {
-        Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Listing not found"));
+        Listing listing = requireOwnedListing(id);
         listingRepository.delete(listing);
         log.info("Listing deleted: {}", id);
     }

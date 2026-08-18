@@ -54,8 +54,10 @@ export class RegisterComponent implements OnInit {
     this.error = null;
 
     this.authService.register(this.registerForm.value).subscribe({
-      next: () => {
-        this.router.navigate(['/dashboard']);
+      next: (response) => {
+        // Accueil selon le rôle : un locataire fraîchement inscrit n'a pas encore de
+        // location — on l'envoie chercher un logement, pas sur l'espace propriétaire.
+        this.router.navigate([response.user?.role === 'TENANT' ? '/listings' : '/dashboard']);
       },
       error: (err) => {
         this.error = err.error?.message || 'Registration failed';

@@ -100,6 +100,9 @@ public class PropertyService {
                 .businessTax(request.businessTax())
                 .homeInsurance(request.homeInsurance())
                 .purchasePrice(request.purchasePrice())
+                .acquisitionDate(request.acquisitionDate())
+                .landValue(request.landValue())
+                .notaryFees(request.notaryFees())
                 .dpeRating(request.dpeRating())
                 .dpeDate(request.dpeDate())
                 .gesRating(request.gesRating())
@@ -166,6 +169,15 @@ public class PropertyService {
         }
         if (request.purchasePrice() != null) {
             property.setPurchasePrice(request.purchasePrice());
+        }
+        if (request.acquisitionDate() != null) {
+            property.setAcquisitionDate(request.acquisitionDate());
+        }
+        if (request.landValue() != null) {
+            property.setLandValue(request.landValue());
+        }
+        if (request.notaryFees() != null) {
+            property.setNotaryFees(request.notaryFees());
         }
         if (request.dpeRating() != null) {
             property.setDpeRating(request.dpeRating());

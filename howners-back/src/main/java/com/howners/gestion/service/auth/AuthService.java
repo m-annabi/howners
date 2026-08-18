@@ -165,4 +165,13 @@ public class AuthService {
         }
         throw new BusinessException("User not authenticated");
     }
+
+    /** Id de l'utilisateur courant, ou null s'il n'est pas authentifié (route publique). */
+    public static UUID getCurrentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return null;
+    }
 }

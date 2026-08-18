@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, of, tap } from 'rxjs';
+import { catchError, filter, map, take, timeout } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, LoginRequest, RegisterRequest, User } from '../models/user.model';
@@ -68,6 +69,28 @@ export class AuthService {
   hasRole(role: string): boolean {
     const user = this.currentUserSubject.value;
     return user?.role === role;
+  }
+
+  /**
+   * Accueil selon le rôle : un locataire atterrit dans SON espace (jamais sur le
+   * tableau de bord propriétaire) ; propriétaire, admin et concierge sur /dashboard.
+   */
+  homePathFor(user: User | null): string {
+    return user?.role === 'TENANT' ? '/tenant/dashboard' : '/dashboard';
+  }
+
+  /**
+   * Résout l'accueil du compte courant en attendant le chargement du profil
+   * (sur un refresh, /auth/me est asynchrone : le rôle n'est pas connu tout de suite).
+   */
+  resolveHomePath(): Observable<string> {
+    return this.currentUser$.pipe(
+      filter((user): user is User => user !== null),
+      take(1),
+      timeout(5000),
+      map(user => this.homePathFor(user)),
+      catchError(() => of('/auth/login'))
+    );
   }
 
   private handleAuthResponse(response: AuthResponse): void {
