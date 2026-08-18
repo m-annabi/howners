@@ -297,6 +297,22 @@ public class RegularisationChargesService {
         return storageService.downloadFile(regul.getDocument().getFileKey());
     }
 
+    /**
+     * Supprime une régularisation encore au brouillon (le message d'erreur de calcul
+     * invite à la supprimer avant d'en recréer une). Une régularisation déjà envoyée ou
+     * soldée est conservée (elle a une valeur probante côté locataire).
+     */
+    @Transactional
+    public void supprimer(UUID regularisationId) {
+        ChargeRegularisation regul = getRegulAndCheckOwnerAccess(regularisationId);
+        if (regul.getStatut() != StatutRegularisation.BROUILLON) {
+            throw new BadRequestException(
+                    "Seule une régularisation au brouillon peut être supprimée (celle-ci est "
+                    + regul.getStatut() + ").");
+        }
+        regularisationRepository.delete(regul);
+    }
+
     // ----- Helpers -----
 
     private static LocalDate max(LocalDate a, LocalDate b) { return a.isAfter(b) ? a : b; }
