@@ -141,6 +141,18 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public List<ApplicationResponse> findByListingId(UUID listingId) {
+        // Les candidatures (avec identités, lettres et pièces justificatives) ne sont
+        // consultables que par le propriétaire de l'annonce (ou un admin).
+        UUID currentUserId = AuthService.getCurrentUserId();
+        com.howners.gestion.domain.listing.Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Listing", "id", listingId.toString()));
+        UUID ownerId = listing.getProperty() != null && listing.getProperty().getOwner() != null
+                ? listing.getProperty().getOwner().getId() : null;
+        boolean isAdmin = userRepository.findById(currentUserId)
+                .map(u -> u.getRole() == com.howners.gestion.domain.user.Role.ADMIN).orElse(false);
+        if (!currentUserId.equals(ownerId) && !isAdmin) {
+            throw new ForbiddenException("Ces candidatures ne vous appartiennent pas.");
+        }
         return applicationRepository.findByListingIdOrderByCreatedAtDesc(listingId)
                 .stream().map(this::toResponseWithDocuments).toList();
     }

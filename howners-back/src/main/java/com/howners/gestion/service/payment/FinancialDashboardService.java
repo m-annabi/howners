@@ -99,10 +99,13 @@ public class FinancialDashboardService {
             ));
         }
 
-        // Expenses by category (all time for the owner)
-        // Note: We aggregate across all properties
+        // Expenses by category — sur la MÊME fenêtre de 12 mois que totalExpenses, pour
+        // que la ventilation par catégorie soit cohérente avec le total affiché.
         List<FinancialDashboardResponse.CategoryBreakdown> expensesByCategory =
                 expenseRepository.findByOwnerId(currentUserId).stream()
+                        .filter(e -> e.getExpenseDate() != null
+                                && !e.getExpenseDate().isBefore(twelveMonthsAgo)
+                                && e.getExpenseDate().isBefore(now.plusDays(1)))
                         .collect(Collectors.groupingBy(
                                 e -> e.getCategory().name(),
                                 Collectors.reducing(BigDecimal.ZERO, e -> e.getAmount(), BigDecimal::add)

@@ -100,9 +100,25 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public List<PaymentResponse> findByRentalId(UUID rentalId) {
+        Rental rental = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", rentalId.toString()));
+        assertRentalAccess(rental);
         return paymentRepository.findByRentalId(rentalId).stream()
                 .map(PaymentResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    /** Autorise le propriétaire du bien, le locataire du bail, ou un admin. */
+    private void assertRentalAccess(Rental rental) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        UUID ownerId = rental.getProperty() != null && rental.getProperty().getOwner() != null
+                ? rental.getProperty().getOwner().getId() : null;
+        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
+        boolean isAdmin = userRepository.findById(currentUserId)
+                .map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        if (!currentUserId.equals(ownerId) && !currentUserId.equals(tenantId) && !isAdmin) {
+            throw new ForbiddenException("Vous n'êtes pas autorisé à accéder à ce bail.");
+        }
     }
 
     @Transactional

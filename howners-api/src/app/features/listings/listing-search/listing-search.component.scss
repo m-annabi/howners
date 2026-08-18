@@ -2,6 +2,10 @@
   max-width: var(--hw-content-max-width);
   margin: 0 auto;
   padding: var(--hw-space-6);
+
+  @media (max-width: 560px) {
+    padding: var(--hw-space-4);
+  }
 }
 
 // ── Bandeau de recherche ────────────────────────────────────────────────────
@@ -12,9 +16,14 @@
   margin-bottom: var(--hw-space-4);
   box-shadow: var(--hw-shadow-md);
 
+  @media (max-width: 560px) {
+    padding: var(--hw-space-4);
+  }
+
   &__title {
     font-family: var(--hw-font-display);
     font-size: var(--hw-fs-2xl);
+    @media (max-width: 560px) { font-size: var(--hw-fs-xl); }
     font-weight: var(--hw-fw-semibold);
     color: #fff;
     margin: 0 0 var(--hw-space-1);
@@ -439,7 +448,9 @@ $control-height: 40px;
 // ── Cartes annonces ─────────────────────────────────────────────────────────
 .listing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  // min(280px, 100%) : sur un écran plus étroit que 280 px de piste, la carte
+  // rétrécit au lieu d'imposer un défilement horizontal à toute la page.
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: var(--hw-space-4);
 }
 

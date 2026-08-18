@@ -40,16 +40,18 @@ public class AffiliateController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AffiliatePartner> update(@PathVariable UUID id, @RequestBody AffiliatePartner update) {
         return repository.findById(id).map(existing -> {
-            existing.setName(update.getName());
-            existing.setSlug(update.getSlug());
-            existing.setCategory(update.getCategory());
-            existing.setTagline(update.getTagline());
-            existing.setDescription(update.getDescription());
-            existing.setAffiliateUrl(update.getAffiliateUrl());
-            existing.setCommissionRate(update.getCommissionRate());
-            existing.setLogoUrl(update.getLogoUrl());
-            existing.setIsActive(update.getIsActive());
-            existing.setDisplayOrder(update.getDisplayOrder());
+            // Fusion : un champ absent (null) ne remplace pas la valeur existante, sinon une
+            // mise à jour partielle écraserait une colonne obligatoire (affiliate_url…) → 500.
+            if (update.getName() != null) existing.setName(update.getName());
+            if (update.getSlug() != null) existing.setSlug(update.getSlug());
+            if (update.getCategory() != null) existing.setCategory(update.getCategory());
+            if (update.getTagline() != null) existing.setTagline(update.getTagline());
+            if (update.getDescription() != null) existing.setDescription(update.getDescription());
+            if (update.getAffiliateUrl() != null) existing.setAffiliateUrl(update.getAffiliateUrl());
+            if (update.getCommissionRate() != null) existing.setCommissionRate(update.getCommissionRate());
+            if (update.getLogoUrl() != null) existing.setLogoUrl(update.getLogoUrl());
+            if (update.getIsActive() != null) existing.setIsActive(update.getIsActive());
+            if (update.getDisplayOrder() != null) existing.setDisplayOrder(update.getDisplayOrder());
             return ResponseEntity.ok(repository.save(existing));
         }).orElseGet(() -> ResponseEntity.notFound().build());
     }

@@ -48,6 +48,13 @@ public class ChargeRegularisationController {
         return ResponseEntity.ok(regularisationService.creerPaiementComplementaire(id));
     }
 
+    @DeleteMapping("/regularisations/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
+        regularisationService.supprimer(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/regularisations/{id}/decompte")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> downloadDecompte(@PathVariable UUID id) throws IOException {

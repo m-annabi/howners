@@ -17,6 +17,7 @@ import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.DocumentRepository;
 import com.howners.gestion.repository.PaymentRepository;
 import com.howners.gestion.repository.ReceiptRepository;
+import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.contract.PdfService;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 public class ReceiptService {
 
     private final ReceiptRepository receiptRepository;
+    private final RentalRepository rentalRepository;
     private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
     private final PaymentRepository paymentRepository;
     private final DocumentRepository documentRepository;
@@ -199,6 +201,19 @@ public class ReceiptService {
 
     @Transactional(readOnly = true)
     public List<ReceiptResponse> findByRentalId(UUID rentalId) {
+        // Les quittances (et leurs URLs S3 pré-signées) ne sont accessibles qu'au
+        // propriétaire du bien, au locataire du bail, ou à un admin.
+        com.howners.gestion.domain.rental.Rental rental = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", rentalId.toString()));
+        UUID currentUserId = AuthService.getCurrentUserId();
+        UUID ownerId = rental.getProperty() != null && rental.getProperty().getOwner() != null
+                ? rental.getProperty().getOwner().getId() : null;
+        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
+        boolean isAdmin = userRepository.findById(currentUserId)
+                .map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        if (!currentUserId.equals(ownerId) && !currentUserId.equals(tenantId) && !isAdmin) {
+            throw new ForbiddenException("Vous n'êtes pas autorisé à accéder à ce bail.");
+        }
         return receiptRepository.findByRentalId(rentalId).stream()
                 .map(r -> toResponseWithUrl(r))
                 .collect(Collectors.toList());

@@ -11,7 +11,9 @@ import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.contract.AmendmentResponse;
 import com.howners.gestion.dto.contract.CreateAmendmentRequest;
 import com.howners.gestion.util.PdfFormat;
+import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.exception.BadRequestException;
+import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.ContractAmendmentRepository;
 import com.howners.gestion.repository.ContractRepository;
@@ -48,8 +50,26 @@ public class ContractAmendmentService {
     private final AuditService auditService;
     private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
 
+    /** Autorise le propriétaire du bien, le locataire du bail, ou un admin. */
+    private void assertContractAccess(Contract contract) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        UUID ownerId = contract.getRental() != null && contract.getRental().getProperty() != null
+                && contract.getRental().getProperty().getOwner() != null
+                ? contract.getRental().getProperty().getOwner().getId() : null;
+        UUID tenantId = contract.getRental() != null && contract.getRental().getTenant() != null
+                ? contract.getRental().getTenant().getId() : null;
+        boolean isAdmin = userRepository.findById(currentUserId)
+                .map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        if (!currentUserId.equals(ownerId) && !currentUserId.equals(tenantId) && !isAdmin) {
+            throw new ForbiddenException("Ce contrat ne vous appartient pas.");
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<AmendmentResponse> findByContractId(UUID contractId) {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contract not found"));
+        assertContractAccess(contract);
         return amendmentRepository.findByContractIdOrderByAmendmentNumberDesc(contractId)
                 .stream()
                 .map(AmendmentResponse::from)
@@ -60,6 +80,7 @@ public class ContractAmendmentService {
     public AmendmentResponse findById(UUID id) {
         ContractAmendment amendment = amendmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Amendment not found"));
+        assertContractAccess(amendment.getContract());
         return AmendmentResponse.from(amendment);
     }
 
@@ -71,6 +92,7 @@ public class ContractAmendmentService {
 
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contract not found"));
+        assertContractAccess(contract);
 
         if (contract.getStatus() != ContractStatus.ACTIVE && contract.getStatus() != ContractStatus.SIGNED) {
             throw new BadRequestException("Contract must be ACTIVE or SIGNED to create an amendment");
@@ -129,6 +151,7 @@ public class ContractAmendmentService {
     public AmendmentResponse sign(UUID amendmentId) {
         ContractAmendment amendment = amendmentRepository.findById(amendmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Amendment not found"));
+        assertContractAccess(amendment.getContract());
 
         if (amendment.getStatus() != AmendmentStatus.DRAFT && amendment.getStatus() != AmendmentStatus.SENT) {
             throw new BadRequestException("Amendment must be DRAFT or SENT to sign");
@@ -155,6 +178,7 @@ public class ContractAmendmentService {
     public byte[] downloadPdf(UUID amendmentId) throws IOException {
         ContractAmendment amendment = amendmentRepository.findById(amendmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Amendment not found"));
+        assertContractAccess(amendment.getContract());
 
         if (amendment.getDocument() == null) {
             throw new BadRequestException("No PDF document for this amendment");

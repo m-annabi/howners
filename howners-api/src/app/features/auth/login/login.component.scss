@@ -13,6 +13,12 @@
   border-radius: var(--hw-radius-xl);
   box-shadow: var(--hw-shadow-lg);
   width: 100%;
+  min-width: 0; // enfant flex : sans ça la carte refuse de rétrécir sous sa largeur intrinsèque
+
+  // Petits écrans : padding réduit pour que carte + marges tiennent dans 320 px.
+  @media (max-width: 380px) {
+    padding: var(--hw-space-6) var(--hw-space-4);
+  }
   max-width: 420px;
 
   &__header {

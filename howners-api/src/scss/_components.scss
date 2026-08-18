@@ -778,7 +778,10 @@
   border: var(--hw-border);
   border-radius: var(--hw-radius-xl);
   box-shadow: var(--hw-shadow-xs);
-  overflow: hidden;
+  // Défilement horizontal sur petits écrans : `hidden` couperait les colonnes
+  // des tables larges (elles deviendraient inaccessibles sur mobile).
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .hw-table {

@@ -41,7 +41,10 @@ const routes: Routes = [
   {
     path: 'dashboard',
     loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule),
-    canActivate: [AuthGuard]
+    // Tableau de bord propriétaire : un locataire est redirigé vers son espace
+    // (RoleGuard renvoie vers l'accueil du rôle en cas de non-correspondance).
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['OWNER', 'ADMIN', 'CONCIERGE'] }
   },
   {
     path: 'properties',

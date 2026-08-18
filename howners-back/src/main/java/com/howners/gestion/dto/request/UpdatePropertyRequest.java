@@ -44,6 +44,15 @@ public record UpdatePropertyRequest(
         @Min(value = 0, message = "Purchase price must be positive")
         BigDecimal purchasePrice,
 
+        // Données LMNP (base d'amortissement) — cf. GUIDE-COMPTABILITE-LMNP.md
+        java.time.LocalDate acquisitionDate,
+
+        @Min(value = 0, message = "Land value must be positive")
+        BigDecimal landValue,
+
+        @Min(value = 0, message = "Notary fees must be positive")
+        BigDecimal notaryFees,
+
         @Pattern(regexp = "[A-G]", message = "DPE rating must be between A and G")
         String dpeRating,
 

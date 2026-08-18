@@ -161,7 +161,7 @@ public class SignatureService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Contract not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Contract not found"));
 
         // Vérifier les permissions (propriétaire ou locataire)
         UUID ownerId = contract.getRental().getProperty().getOwner().getId();
@@ -169,7 +169,7 @@ public class SignatureService {
                 contract.getRental().getTenant().getId() : null;
 
         if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId)) {
-            throw new RuntimeException("You are not authorized to view signatures for this contract");
+            throw new ForbiddenException("You are not authorized to view signatures for this contract");
         }
 
         return signatureRepository.findByContractId(contractId).stream()
@@ -195,14 +195,14 @@ public class SignatureService {
         UUID currentUserId = AuthService.getCurrentUserId();
 
         Signature signature = signatureRepository.findById(signatureId)
-                .orElseThrow(() -> new RuntimeException("Signature not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Signature not found"));
 
         // Vérifier les permissions
         UUID ownerId = signature.getContract().getRental().getProperty().getOwner().getId();
         UUID signerId = signature.getSigner().getId();
 
         if (!ownerId.equals(currentUserId) && !signerId.equals(currentUserId)) {
-            throw new RuntimeException("You are not authorized to view this signature");
+            throw new ForbiddenException("You are not authorized to view this signature");
         }
 
         return SignatureResponse.from(signature);

@@ -85,7 +85,7 @@ class PropertyServiceTest {
                 name, PropertyType.APARTMENT, address,
                 null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
     }
 
     // --- create ---
@@ -123,7 +123,7 @@ class PropertyServiceTest {
                 "Chalet Geneve", PropertyType.HOUSE, address,
                 null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
 
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
         when(propertyRepository.save(any(Property.class))).thenAnswer(inv -> {
@@ -178,7 +178,7 @@ class PropertyServiceTest {
                 null, null, newAddress,
                 null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
 
         when(propertyRepository.findById(existing.getId())).thenReturn(Optional.of(existing));
         when(propertyRepository.save(any(Property.class))).thenAnswer(inv -> inv.getArgument(0));

@@ -29,7 +29,9 @@ export class RoleGuard implements CanActivate {
       timeout(5000),
       map(user => {
         const hasRole = requiredRoles.some(role => user?.role === role);
-        return hasRole ? true : this.router.createUrlTree(['/dashboard']);
+        // Mauvais rôle → accueil DU rôle (un locataire ne doit jamais être renvoyé
+        // vers le tableau de bord propriétaire).
+        return hasRole ? true : this.router.createUrlTree([this.authService.homePathFor(user)]);
       }),
       catchError(() => of(this.router.createUrlTree(['/auth/login'])))
     );

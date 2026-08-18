@@ -10,6 +10,7 @@ import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.dto.response.AuthResponse;
 import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.service.email.EmailService;
+import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.BusinessException;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.security.UserPrincipal;
@@ -52,6 +53,14 @@ public class AuthService {
             throw new BusinessException("Email already exists");
         }
 
+        // Auto-inscription publique : seuls OWNER et TENANT sont autorisés. ADMIN et
+        // CONCIERGE ne peuvent pas être auto-attribués (élévation de privilèges) —
+        // ces rôles sont accordés par un administrateur, jamais via ce formulaire.
+        Role role = request.role();
+        if (role != Role.OWNER && role != Role.TENANT) {
+            throw new BadRequestException("Rôle d'inscription invalide : choisissez propriétaire ou locataire.");
+        }
+
         // Créer l'utilisateur
         User user = User.builder()
                 .email(request.email())
@@ -59,7 +68,7 @@ public class AuthService {
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .phone(request.phone())
-                .role(request.role())
+                .role(role)
                 .enabled(true)
                 .build();
 
@@ -164,5 +173,14 @@ public class AuthService {
             return userPrincipal.getId();
         }
         throw new BusinessException("User not authenticated");
+    }
+
+    /** Id de l'utilisateur courant, ou null s'il n'est pas authentifié (route publique). */
+    public static UUID getCurrentUserIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return null;
     }
 }

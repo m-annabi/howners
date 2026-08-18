@@ -53,6 +53,9 @@ export interface Property {
   businessTax?: number;
   homeInsurance?: number;
   purchasePrice?: number;
+  acquisitionDate?: string;
+  landValue?: number;
+  notaryFees?: number;
   dpeRating?: string;
   dpeDate?: string;
   gesRating?: string;
@@ -84,6 +87,9 @@ export interface CreatePropertyRequest {
   businessTax?: number;
   homeInsurance?: number;
   purchasePrice?: number;
+  acquisitionDate?: string;
+  landValue?: number;
+  notaryFees?: number;
   dpeRating?: string;
   dpeDate?: string;
   gesRating?: string;
@@ -110,6 +116,9 @@ export interface UpdatePropertyRequest {
   businessTax?: number;
   homeInsurance?: number;
   purchasePrice?: number;
+  acquisitionDate?: string;
+  landValue?: number;
+  notaryFees?: number;
   dpeRating?: string;
   dpeDate?: string;
   gesRating?: string;

@@ -65,13 +65,19 @@
   width: 100%;
   margin: 0 auto;
 
-  // Guest pages handle their own full-viewport layout
+  @media (max-width: 767px) {
+    padding: var(--hw-space-4);
+  }
+
+  // Guest pages handle their own full-viewport layout.
+  // Déclaré APRÈS le media query : à spécificité égale, c'est l'ordre source qui
+  // tranche — sinon le padding mobile ré-écrase le padding 0 des pages publiques.
   &--guest {
     padding: 0;
     max-width: 100%;
-  }
 
-  @media (max-width: 767px) {
-    padding: var(--hw-space-4);
+    @media (max-width: 767px) {
+      padding: 0;
+    }
   }
 }
