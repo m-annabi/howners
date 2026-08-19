@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Bail longue durée sans date de fin : la phrase « Il prendra fin de plein droit
+         le {{rental.endDate}} » rendait « …le Indéterminée ». On utilise la variable
+         dédiée {{rental.endDateClause}}, qui produit « le 31/08/2029 » ou, à défaut,
+         « à l'échéance convenue, par renouvellement tacite annuel ». REPLACE ciblé
+         (le 098 est déjà exécuté ; on n'édite pas un changeset verrouillé). -->
+    <changeSet id="099-01-end-date-clause" author="claude">
+        <sql>
+            UPDATE contract_templates
+            SET content = REPLACE(
+                content,
+                'Il prendra fin de plein droit le {{rental.endDate}}, sauf renouvellement ou résiliation dans les conditions prévues par la loi.',
+                'Il prendra fin {{rental.endDateClause}}, sauf renouvellement ou résiliation dans les conditions prévues par la loi.')
+            WHERE content LIKE '%Il prendra fin de plein droit le {{rental.endDate}}%';
+        </sql>
+        <rollback>
+            <sql>
+                UPDATE contract_templates
+                SET content = REPLACE(
+                    content,
+                    'Il prendra fin {{rental.endDateClause}}, sauf renouvellement ou résiliation dans les conditions prévues par la loi.',
+                    'Il prendra fin de plein droit le {{rental.endDate}}, sauf renouvellement ou résiliation dans les conditions prévues par la loi.')
+                WHERE content LIKE '%Il prendra fin {{rental.endDateClause}}%';
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

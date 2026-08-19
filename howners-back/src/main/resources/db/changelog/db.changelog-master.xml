@@ -102,5 +102,6 @@
     <include file="db/changelog/096-revision-numero.xml"/>
     <include file="db/changelog/097-mise-en-demeure-numero.xml"/>
     <include file="db/changelog/098-contract-templates-html-format.xml"/>
+    <include file="db/changelog/099-contract-template-end-date-clause.xml"/>
 
 </databaseChangeLog>
