@@ -225,6 +225,20 @@ public class ContractESignatureService {
             // L'email pourra être renvoyé manuellement via la fonction resend
         }
 
+        // 9. Notifier le locataire dans l'application (en plus de l'email)
+        try {
+            notificationService.create(
+                    tenant.getId(),
+                    NotificationType.SIGNATURE_REQUESTED,
+                    "Contrat à signer",
+                    owner.getFirstName() + " " + owner.getLastName() + " vous invite à signer le contrat "
+                            + contract.getContractNumber() + " (" + rental.getProperty().getName() + ").",
+                    "/contracts/" + contract.getId());
+        } catch (Exception e) {
+            log.error("Échec de la création de la notification de demande de signature pour le contrat {}",
+                    contract.getId(), e);
+        }
+
         log.info("Contract {} sent for signature successfully. Signature request ID: {}",
                 contractId, signatureRequest.getId());
 
@@ -581,6 +595,19 @@ public class ContractESignatureService {
 
         emailService.sendSignatureRequestEmail(emailData);
         signatureRequestRepository.save(signatureRequest);
+
+        // Rappeler au locataire dans l'application
+        try {
+            notificationService.create(
+                    tenant.getId(),
+                    NotificationType.SIGNATURE_REQUESTED,
+                    "Rappel : contrat à signer",
+                    getFullName(owner) + " vous rappelle de signer le contrat "
+                            + contract.getContractNumber() + " (" + rental.getProperty().getName() + ").",
+                    "/contracts/" + contract.getId());
+        } catch (Exception e) {
+            log.error("Échec de la notification de rappel de signature pour le contrat {}", contract.getId(), e);
+        }
 
         log.info("Signature request resent successfully");
     }
