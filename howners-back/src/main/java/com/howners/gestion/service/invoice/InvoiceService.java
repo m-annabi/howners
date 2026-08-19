@@ -1,6 +1,7 @@
 package com.howners.gestion.service.invoice;
 
 import com.howners.gestion.domain.invoice.Invoice;
+import com.howners.gestion.util.PdfDoc;
 import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.invoice.InvoiceStatus;
 import com.howners.gestion.domain.rental.Rental;
@@ -206,56 +207,23 @@ public class InvoiceService {
         User owner = property.getOwner();
         User tenant = rental.getTenant();
 
-        return """
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <h1 style="margin-bottom: 4px;">FACTURE</h1>
-                    <p style="font-size: 10pt; color: #666;">N° %s</p>
-                </div>
+        String emetteur = PdfDoc.escape(owner.getFullName()) + PdfFormat.blocAdresse(owner);
+        String destinataire = PdfDoc.escape(tenant != null ? tenant.getFullName() : "Locataire non renseigné")
+                + (tenant != null ? PdfFormat.blocAdresse(tenant) : "");
 
-                <table style="border: none; margin-bottom: 16px;">
-                    <tr>
-                        <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Émetteur (bailleur) :</strong><br/>%s%s
-                        </td>
-                        <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Destinataire (locataire) :</strong><br/>%s%s
-                        </td>
-                    </tr>
-                </table>
+        java.util.LinkedHashMap<String, String> lignes = new java.util.LinkedHashMap<>();
+        lignes.put(libelleType(invoice.getInvoiceType()), PdfFormat.montant(invoice.getAmount()));
 
-                <p><strong>Bien concerné :</strong> %s — %s</p>
-                <p><strong>Date d'émission :</strong> %s &nbsp;·&nbsp; <strong>Date d'échéance :</strong> %s</p>
-
-                <table style="margin-top: 16px;">
-                    <tr>
-                        <th>Description</th>
-                        <th class="text-right">Montant</th>
-                    </tr>
-                    <tr>
-                        <td>%s</td>
-                        <td class="text-right">%s</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Total à payer</strong></td>
-                        <td class="text-right"><strong>%s</strong></td>
-                    </tr>
-                </table>
-
-                <p class="legal-note">TVA non applicable, article 293 B du CGI. Facture émise entre particuliers dans le cadre d'une location à usage d'habitation.</p>
-                """.formatted(
-                invoice.getInvoiceNumber(),
-                owner.getFullName(),
-                PdfFormat.blocAdresse(owner),
-                tenant != null ? tenant.getFullName() : "Locataire non renseigné",
-                tenant != null ? PdfFormat.blocAdresse(tenant) : "",
-                property.getName(),
-                PdfFormat.adressePostale(property),
-                invoice.getIssueDate().format(FR_DATE),
-                invoice.getDueDate() != null ? invoice.getDueDate().format(FR_DATE) : "à réception",
-                libelleType(invoice.getInvoiceType()),
-                PdfFormat.montant(invoice.getAmount()),
-                PdfFormat.montant(invoice.getAmount())
-        );
+        return PdfDoc.header("Facture", invoice.getInvoiceNumber())
+                + PdfDoc.parties("Émetteur (bailleur)", emetteur, "Destinataire (locataire)", destinataire)
+                + "<p><strong>Bien concerné :</strong> " + PdfDoc.escape(property.getName())
+                + " — " + PdfDoc.escape(PdfFormat.adressePostale(property)) + "</p>"
+                + "<p><strong>Date d'émission :</strong> " + invoice.getIssueDate().format(FR_DATE)
+                + " &nbsp;·&nbsp; <strong>Date d'échéance :</strong> "
+                + (invoice.getDueDate() != null ? invoice.getDueDate().format(FR_DATE) : "à réception") + "</p>"
+                + PdfDoc.amounts(lignes, "Total à payer", PdfFormat.montant(invoice.getAmount()))
+                + PdfDoc.legalNote("TVA non applicable, article 293 B du CGI. Facture émise entre "
+                + "particuliers dans le cadre d'une location à usage d'habitation.");
     }
 
     private String libelleType(com.howners.gestion.domain.invoice.InvoiceType type) {

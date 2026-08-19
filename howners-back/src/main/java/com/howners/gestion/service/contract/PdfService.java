@@ -86,11 +86,46 @@ public class PdfService {
         html.append("td, th { border: 1px solid #D1D5DB; padding: 6px 9px; }");
         html.append(".title { font-size: 17pt; font-weight: bold; text-align: center; margin-bottom: 20px; }");
         html.append(".doc-footer { margin-top: 36px; padding-top: 8px; border-top: 1px solid #E5E7EB; font-size: 8pt; color: #9CA3AF; text-align: center; }");
+        // ---- Design system PDF (source unique) : identité de marque + blocs réutilisables.
+        //      Les générateurs composent avec ces classes (via PdfDoc) plutôt qu'avec des
+        //      styles inline, pour un rendu homogène sur TOUS les documents. ----
+        // Bandeau de marque en tête de chaque document.
+        html.append(".pdf-brand { text-align: center; letter-spacing: 3px; font-size: 10pt; font-weight: bold; color: #1E3A5F; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 14px; border-bottom: 2px solid #1E3A5F; }");
+        // En-tête de document : titre + référence (« N° … »).
+        html.append(".doc-header { text-align: center; margin-bottom: 22px; }");
+        html.append(".doc-header h1 { margin: 0 0 4px; }");
+        html.append(".doc-ref { font-size: 10pt; color: #6B7280; margin: 0; text-align: center; }");
+        html.append(".doc-lead { text-align: center; color: #6B7280; font-size: 9.5pt; margin: -2px 0 16px; }");
+        // Bloc « parties » : deux colonnes sans bordure (bailleur / locataire).
+        html.append(".parties { margin: 6px 0 14px; }");
+        html.append(".parties td { border: none; vertical-align: top; width: 50%; }");
+        html.append(".party-label { color: #6B7280; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .5px; }");
+        // Tableau clé/valeur (fiche descriptive) : 1re colonne en libellé grisé.
+        html.append(".kv th { width: 38%; }");
+        // Tableau de montants : plus étroit, centré, dernière colonne alignée à droite.
+        html.append(".amounts { width: 70%; margin-left: auto; margin-right: auto; }");
+        html.append(".total-row td { border-top: 2px solid #9CA3AF; font-weight: bold; }");
+        html.append(".badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 8.5pt; font-weight: bold; }");
+        html.append(".badge-paid { background: #DCFCE7; color: #166534; }");
+        html.append(".badge-due { background: #FEF3C7; color: #92400E; }");
+        html.append(".badge-overdue { background: #FEE2E2; color: #991B1B; }");
+        html.append(".muted { color: #6B7280; }");
+        html.append(".mt-1 { margin-top: 10px; } .mt-2 { margin-top: 18px; } .mt-3 { margin-top: 28px; }");
+        // Sous-titre juste sous le titre du contrat (base légale / nature du bail)
+        html.append(".contract-lead { text-align: center; color: #6B7280; font-size: 9.5pt; margin: -2px 0 16px; }");
+        html.append(".contract-place { margin-top: 20px; }");
+        // Bloc de signature (deux colonnes) : pas de bordures, contrairement aux autres tables
+        html.append(".signatures { margin-top: 30px; }");
+        html.append(".signatures td { border: none; vertical-align: top; }");
         // nowrap : un montant (« 200 000,00 € ») ne doit jamais se couper sur deux lignes
         html.append(".text-right { text-align: right; white-space: nowrap; }");
+        html.append(".text-center { text-align: center; }");
         html.append(".legal-note { font-size: 8.5pt; color: #6B7280; font-style: italic; margin-top: 20px; }");
         html.append("</style>");
         html.append("</head><body>");
+
+        // Bandeau de marque, en tête de CHAQUE document (identité homogène).
+        html.append("<div class=\"pdf-brand\">Howners</div>");
 
         // Ajouter le titre si fourni
         if (title != null && !title.isEmpty()) {
@@ -130,6 +165,12 @@ public class PdfService {
         for (String block : normalized.split("\n[ \t]*\n")) {
             String trimmed = block.strip();
             if (trimmed.isEmpty()) continue;
+            // Filet de sécurité pour du texte brut resté hors des templates HTML :
+            // une ligne isolée « ARTICLE X - … » devient un vrai titre de section.
+            if (!trimmed.contains("\n") && trimmed.matches("(?i)^article\\b.*")) {
+                out.append("<h2>").append(escapeHtml(trimmed)).append("</h2>");
+                continue;
+            }
             String escaped = escapeHtml(trimmed).replace("\n", "<br/>");
             // Préserve les alignements par espaces des templates texte (ex. la ligne
             // « Signature du Bailleur          Signature du Locataire ») : en HTML,

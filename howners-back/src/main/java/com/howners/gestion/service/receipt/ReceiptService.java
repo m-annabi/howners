@@ -3,6 +3,7 @@ package com.howners.gestion.service.receipt;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.payment.Payment;
+import com.howners.gestion.util.PdfDoc;
 import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.payment.PaymentStatus;
 import com.howners.gestion.domain.receipt.Receipt;
@@ -286,53 +287,27 @@ public class ReceiptService {
         String totalAmount = PdfFormat.montant(payment.getAmount());
         String paidDate = payment.getPaidAt() != null ? payment.getPaidAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : LocalDate.now().format(FR_DATE);
 
-        return """
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="font-size: 18pt; margin-bottom: 5px;">QUITTANCE DE LOYER</h1>
-                    <p style="font-size: 10pt; color: #666;">N° %s</p>
-                </div>
+        java.util.LinkedHashMap<String, String> lignes = new java.util.LinkedHashMap<>();
+        lignes.put("Loyer", rentAmount);
+        lignes.put("Charges", chargesAmount);
 
-                <table style="width: 100%%; border: none; margin-bottom: 20px;">
-                    <tr>
-                        <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Bailleur :</strong><br/>
-                            %s%s
-                        </td>
-                        <td style="border: none; width: 50%%; vertical-align: top;">
-                            <strong>Locataire :</strong><br/>
-                            %s%s
-                        </td>
-                    </tr>
-                </table>
-
-                <p><strong>Adresse du bien :</strong> %s</p>
-
-                <p style="margin-top: 15px;">Je soussigné(e), <strong>%s</strong>, propriétaire du logement désigné ci-dessus, déclare avoir reçu de <strong>%s</strong> la somme indiquée ci-dessous, en paiement du loyer et des charges du logement pour la période du <strong>%s</strong> au <strong>%s</strong>.</p>
-
-                <table style="margin-top: 20px; width: 70%%; margin-left: auto; margin-right: auto;">
-                    <tr><td><strong>Loyer</strong></td><td class="text-right">%s</td></tr>
-                    <tr><td><strong>Charges</strong></td><td class="text-right">%s</td></tr>
-                    <tr><td><strong>Total réglé</strong></td><td class="text-right"><strong>%s</strong></td></tr>
-                </table>
-
-                <p style="margin-top: 25px;">Cette quittance vaut preuve du paiement pour la période indiquée. Date du paiement : <strong>%s</strong>.</p>
-
-                <p style="margin-top: 30px;">Fait à %s, le %s.</p>
-
-                <p class="legal-note">
-                    Cette quittance annule tous les reçus qui auraient pu être établis précédemment en cas de paiement partiel du loyer. Elle ne préjuge pas de l'existence d'une dette locative antérieure.
-                </p>
-                """.formatted(receiptNumber,
-                ownerName, adresseHtml(owner), tenantName, adresseHtml(tenant),
-                address, ownerName, tenantName,
-                periodStart.format(FR_DATE), periodEnd.format(FR_DATE),
-                rentAmount, chargesAmount, totalAmount, paidDate,
-                ville.isEmpty() ? "—" : ville, LocalDate.now().format(FR_DATE));
-    }
-
-    /** Suffixe HTML « <br/>adresse » si l'utilisateur a une adresse, sinon vide. */
-    private String adresseHtml(User user) {
-        String addr = PdfFormat.adressePostale(user);
-        return addr != null ? "<br/><span style=\"color:#555;\">" + addr + "</span>" : "";
+        return PdfDoc.header("Quittance de loyer", receiptNumber)
+                + PdfDoc.parties(
+                        "Bailleur", PdfDoc.escape(ownerName) + PdfFormat.blocAdresse(owner),
+                        "Locataire", PdfDoc.escape(tenantName) + PdfFormat.blocAdresse(tenant))
+                + "<p><strong>Adresse du bien :</strong> " + PdfDoc.escape(address) + "</p>"
+                + "<p class=\"mt-1\">Je soussigné(e), <strong>" + PdfDoc.escape(ownerName)
+                + "</strong>, propriétaire du logement désigné ci-dessus, déclare avoir reçu de <strong>"
+                + PdfDoc.escape(tenantName) + "</strong> la somme indiquée ci-dessous, en paiement du loyer et des charges "
+                + "du logement pour la période du <strong>" + periodStart.format(FR_DATE)
+                + "</strong> au <strong>" + periodEnd.format(FR_DATE) + "</strong>.</p>"
+                + PdfDoc.amounts(lignes, "Total réglé", totalAmount)
+                + "<p class=\"mt-2\">Cette quittance vaut preuve du paiement pour la période indiquée. "
+                + "Date du paiement : <strong>" + PdfDoc.escape(paidDate) + "</strong>.</p>"
+                + "<p class=\"mt-3\">Fait à " + PdfDoc.escape(ville.isEmpty() ? "—" : ville)
+                + ", le " + LocalDate.now().format(FR_DATE) + ".</p>"
+                + PdfDoc.legalNote("Cette quittance annule tous les reçus qui auraient pu être établis "
+                + "précédemment en cas de paiement partiel du loyer. Elle ne préjuge pas de l'existence "
+                + "d'une dette locative antérieure.");
     }
 }
