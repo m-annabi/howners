@@ -211,10 +211,15 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
             }
         }
 
-        // Stripe : une clé de test en prod est une erreur de configuration
+        // Stripe : une clé de test en prod est une erreur de configuration… sauf sur un
+        // environnement de staging (profil prod mais données de test), qui l'autorise
+        // explicitement via STRIPE_ALLOW_TEST_KEY=true. La vraie prod laisse ce flag à
+        // false → une clé sk_test_ y reste refusée.
         String stripeKey = environment.getProperty("stripe.api-key");
-        if (!isBlank(stripeKey) && stripeKey.startsWith("sk_test_")) {
-            errors.add("STRIPE_SECRET_KEY is a TEST key (sk_test_…) — use a live key (sk_live_…) in production");
+        boolean allowTestKey = environment.getProperty("stripe.allow-test-key", Boolean.class, false);
+        if (!isBlank(stripeKey) && stripeKey.startsWith("sk_test_") && !allowTestKey) {
+            errors.add("STRIPE_SECRET_KEY is a TEST key (sk_test_…) — use a live key (sk_live_…) in production, "
+                    + "or set STRIPE_ALLOW_TEST_KEY=true on a staging environment");
         }
 
         // JWT : longueur/format déjà validés ; on rejette en plus les valeurs d'exemple

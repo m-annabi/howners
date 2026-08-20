@@ -81,6 +81,9 @@ stripe:
   public-key: ${STRIPE_PUBLIC_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   platform-fee-percent: ${STRIPE_PLATFORM_FEE_PERCENT:2.5}
+  # Autorise une clé de TEST (sk_test_) en profil prod : réservé au staging.
+  # Laisser à false en production réelle (une clé de test y sera refusée au démarrage).
+  allow-test-key: ${STRIPE_ALLOW_TEST_KEY:false}
 
 # YouSign Configuration
 yousign:
