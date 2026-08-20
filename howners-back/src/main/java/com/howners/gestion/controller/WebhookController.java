@@ -98,8 +98,8 @@ public class WebhookController {
                                 sub.getId(),
                                 sub.getCustomer(),
                                 priceId,
-                                sub.getCurrentPeriodStart(),
-                                sub.getCurrentPeriodEnd()
+                                subscriptionPeriod(sub, "current_period_start", sub.getCurrentPeriodStart()),
+                                subscriptionPeriod(sub, "current_period_end", sub.getCurrentPeriodEnd())
                         );
                     }
                 });
@@ -122,6 +122,27 @@ public class WebhookController {
             log.error("Error processing Stripe webhook", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Webhook processing failed");
         }
+    }
+
+    /**
+     * Récupère un timestamp de période d'abonnement (epoch secondes). Depuis l'API Stripe
+     * 2025+ (« dahlia »), {@code current_period_start/end} ne sont plus portés par
+     * l'abonnement mais par la ligne d'abonnement (subscription item), que le SDK ne type
+     * pas encore — on lit alors le JSON brut de l'item. Repli sur le champ de l'abonnement
+     * pour les versions d'API antérieures.
+     */
+    private Long subscriptionPeriod(Subscription sub, String field, Long subscriptionLevel) {
+        if (subscriptionLevel != null) {
+            return subscriptionLevel;
+        }
+        if (sub.getItems() != null && sub.getItems().getData() != null
+                && !sub.getItems().getData().isEmpty()) {
+            com.google.gson.JsonObject raw = sub.getItems().getData().get(0).getRawJsonObject();
+            if (raw != null && raw.has(field) && !raw.get(field).isJsonNull()) {
+                return raw.get(field).getAsLong();
+            }
+        }
+        return null;
     }
 
     /**
