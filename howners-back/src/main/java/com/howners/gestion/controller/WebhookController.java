@@ -9,7 +9,6 @@ import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Account;
 import com.stripe.model.Event;
 import com.stripe.model.StripeObject;
-import com.stripe.model.Subscription;
 import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +30,7 @@ public class WebhookController {
     private final PaymentService paymentService;
     private final SubscriptionService subscriptionService;
     private final StripeConnectService stripeConnectService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
@@ -84,31 +84,17 @@ public class WebhookController {
         }
 
         try {
-            // La version d'API du webhook (récente) peut différer de celle figée dans le SDK,
-            // auquel cas getObject() renvoie vide et l'événement serait ignoré en silence. On
-            // résout l'objet une fois, avec repli forcé sur deserializeUnsafe().
-            StripeObject eventObject = resolveEventObject(event);
-
-            // Événements d'abonnement -> SubscriptionService (à partir d'un événement vérifié)
-            if (event.getType() != null && event.getType().startsWith("customer.subscription.")
-                    && eventObject instanceof Subscription sub) {
-                String priceId = null;
-                if (sub.getItems() != null && sub.getItems().getData() != null
-                        && !sub.getItems().getData().isEmpty()
-                        && sub.getItems().getData().get(0).getPrice() != null) {
-                    priceId = sub.getItems().getData().get(0).getPrice().getId();
-                }
-                subscriptionService.processSubscriptionWebhook(
-                        event.getType(),
-                        sub.getId(),
-                        sub.getCustomer(),
-                        priceId,
-                        subscriptionPeriod(sub, "current_period_start", sub.getCurrentPeriodStart()),
-                        subscriptionPeriod(sub, "current_period_end", sub.getCurrentPeriodEnd()));
+            // Abonnements : on lit le JSON BRUT du payload (getRawJson) plutôt que l'objet typé.
+            // getObject() renvoie vide quand la version d'API de l'événement diffère de celle du
+            // SDK, et depuis l'API 2025+ la période est portée par la ligne d'abonnement (non
+            // typée dans le SDK) : le JSON brut est la source fiable, indépendante de ces écarts.
+            if (event.getType() != null && event.getType().startsWith("customer.subscription.")) {
+                handleSubscriptionEvent(event);
             }
 
             // Statut des comptes Connect (bailleurs) -> StripeConnectService
-            if ("account.updated".equals(event.getType()) && eventObject instanceof Account account) {
+            if ("account.updated".equals(event.getType())
+                    && resolveEventObject(event) instanceof Account account) {
                 stripeConnectService.processAccountUpdate(
                         account.getId(), account.getChargesEnabled(), account.getPayoutsEnabled());
             }
@@ -140,24 +126,45 @@ public class WebhookController {
     }
 
     /**
-     * Récupère un timestamp de période d'abonnement (epoch secondes). Depuis l'API Stripe
-     * 2025+ (« dahlia »), {@code current_period_start/end} ne sont plus portés par
-     * l'abonnement mais par la ligne d'abonnement (subscription item), que le SDK ne type
-     * pas encore — on lit alors le JSON brut de l'item. Repli sur le champ de l'abonnement
-     * pour les versions d'API antérieures.
+     * Traite un événement d'abonnement à partir du JSON brut du payload. On extrait
+     * l'identifiant d'abonnement, le client, le price et la période. La période provient de
+     * l'abonnement (API historique) ou, à défaut, de la 1re ligne d'abonnement (API 2025+),
+     * où Stripe l'a déplacée.
      */
-    private Long subscriptionPeriod(Subscription sub, String field, Long subscriptionLevel) {
-        if (subscriptionLevel != null) {
-            return subscriptionLevel;
+    private void handleSubscriptionEvent(Event event) {
+        String rawJson = event.getDataObjectDeserializer().getRawJson();
+        if (rawJson == null || rawJson.isBlank()) {
+            log.warn("Événement d'abonnement {} sans données JSON exploitables", event.getType());
+            return;
         }
-        if (sub.getItems() != null && sub.getItems().getData() != null
-                && !sub.getItems().getData().isEmpty()) {
-            com.google.gson.JsonObject raw = sub.getItems().getData().get(0).getRawJsonObject();
-            if (raw != null && raw.has(field) && !raw.get(field).isJsonNull()) {
-                return raw.get(field).getAsLong();
+        try {
+            com.fasterxml.jackson.databind.JsonNode sub = objectMapper.readTree(rawJson);
+            String subscriptionId = asText(sub.get("id"));
+            String customerId = asText(sub.get("customer"));
+            Long periodStart = asLong(sub.get("current_period_start"));
+            Long periodEnd = asLong(sub.get("current_period_end"));
+            String priceId = null;
+
+            com.fasterxml.jackson.databind.JsonNode item = sub.path("items").path("data").path(0);
+            if (!item.isMissingNode()) {
+                priceId = asText(item.path("price").get("id"));
+                if (periodStart == null) periodStart = asLong(item.get("current_period_start"));
+                if (periodEnd == null) periodEnd = asLong(item.get("current_period_end"));
             }
+
+            subscriptionService.processSubscriptionWebhook(
+                    event.getType(), subscriptionId, customerId, priceId, periodStart, periodEnd);
+        } catch (Exception e) {
+            log.error("Échec du traitement de l'événement d'abonnement {}", event.getType(), e);
         }
-        return null;
+    }
+
+    private static String asText(com.fasterxml.jackson.databind.JsonNode node) {
+        return node != null && !node.isNull() ? node.asText() : null;
+    }
+
+    private static Long asLong(com.fasterxml.jackson.databind.JsonNode node) {
+        return node != null && node.isNumber() ? node.asLong() : null;
     }
 
     /**
