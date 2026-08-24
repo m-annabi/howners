@@ -13,6 +13,8 @@ import { Payment, PaymentStatus } from '../../../core/models/payment.model';
 import { Receipt } from '../../../core/models/receipt.model';
 import { DashboardStats } from '../../../core/models/dashboard.model';
 import { TenantContract } from '../../../core/services/tenant-api.service';
+import { InAppNotificationService } from '../../../core/services/in-app-notification.service';
+import { InAppNotification } from '../../../core/models/in-app-notification.model';
 
 @Component({
   selector: 'app-tenant-dashboard',
@@ -34,6 +36,10 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
   error: string | null = null;
   downloadingReceipt = false;
 
+  /** Alertes « à consulter » : documents/contrats reçus non lus, mis en avant sur le dashboard. */
+  documentAlerts: InAppNotification[] = [];
+  private notifSub?: Subscription;
+
   readonly RentalStatus = RentalStatus;
   readonly PaymentStatus = PaymentStatus;
 
@@ -43,7 +49,8 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
     private dashboardService: DashboardService,
     private paymentService: PaymentService,
     private receiptService: ReceiptService,
-    private router: Router
+    private router: Router,
+    private inAppNotificationService: InAppNotificationService
   ) {}
 
   ngOnInit(): void {
@@ -51,10 +58,39 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
       this.currentUser = user;
     });
     this.loadData();
+
+    // Alertes documents/contrats reçus : rafraîchir puis écouter les notifications.
+    this.inAppNotificationService.loadNotifications();
+    this.notifSub = this.inAppNotificationService.notifications$.subscribe(notifs => {
+      this.documentAlerts = notifs.filter(n => !n.isRead && this.isDocumentAlert(n));
+    });
+  }
+
+  /** Notification concernant un document/contrat/signature/état des lieux reçu. */
+  private isDocumentAlert(n: InAppNotification): boolean {
+    const t = (n.type || '').toLowerCase();
+    return ['document', 'contract', 'contrat', 'signature', 'inventory', 'lease', 'edl']
+      .some(k => t.includes(k));
+  }
+
+  /** Ouvre l'élément lié à l'alerte et la marque comme lue. */
+  openAlert(n: InAppNotification): void {
+    this.inAppNotificationService.markAsRead(n.id);
+    this.documentAlerts = this.documentAlerts.filter(a => a.id !== n.id);
+    if (n.route) {
+      this.router.navigateByUrl(n.route);
+    }
+  }
+
+  dismissAlert(n: InAppNotification, event: MouseEvent): void {
+    event.stopPropagation();
+    this.inAppNotificationService.markAsRead(n.id);
+    this.documentAlerts = this.documentAlerts.filter(a => a.id !== n.id);
   }
 
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
+    this.notifSub?.unsubscribe();
   }
 
   private loadData(): void {

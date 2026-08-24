@@ -11,6 +11,22 @@
 
   <ng-container *ngIf="!loading && !error">
 
+    <!-- ══ Alertes : documents / contrats reçus ══ -->
+    <div class="tenant-alerts" *ngIf="documentAlerts.length > 0">
+      <div class="tenant-alert" *ngFor="let alert of documentAlerts" (click)="openAlert(alert)">
+        <span class="tenant-alert__icon"><i class="bi" [ngClass]="alert.icon || 'bi-bell-fill'"></i></span>
+        <div class="tenant-alert__body">
+          <div class="tenant-alert__title">{{ alert.title }}</div>
+          <div class="tenant-alert__text">{{ alert.body }}</div>
+        </div>
+        <span class="tenant-alert__cta" *ngIf="alert.route">Voir <i class="bi bi-arrow-right"></i></span>
+        <button class="tenant-alert__dismiss" (click)="dismissAlert(alert, $event)"
+                aria-label="Marquer comme lu" title="Marquer comme lu">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- ══ Bandeau d'accueil ══ -->
     <div class="tenant-hero">
       <div class="tenant-hero__greeting">
