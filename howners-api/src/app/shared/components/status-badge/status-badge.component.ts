@@ -85,6 +85,16 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
   },
 };
 
+/**
+ * Surcharges de libellé selon le point de vue de l'utilisateur.
+ * Clé : `${type}.${status}.${context}`. Permet, par exemple, d'afficher côté
+ * locataire « En attente de signature » là où le propriétaire voit « Envoyé »
+ * (le contrat lui a été envoyé et attend sa signature).
+ */
+const CONTEXT_OVERRIDES: Record<string, StatusConfig> = {
+  'contract.SENT.tenant': { label: 'En attente de signature', icon: 'bi-hourglass-split', color: 'warning' },
+};
+
 @Component({
   selector: 'app-status-badge',
   templateUrl: './status-badge.component.html',
@@ -93,10 +103,20 @@ const STATUS_MAP: Record<string, Record<string, StatusConfig>> = {
 export class StatusBadgeComponent implements OnChanges {
   @Input() status = '';
   @Input() type: string = 'payment';
+  /** Point de vue de l'affichage (ex. 'owner' | 'tenant') pour d'éventuelles surcharges de libellé. */
+  @Input() context = '';
 
   config: StatusConfig = { label: '', icon: 'bi-circle', color: 'neutral' };
 
   ngOnChanges(): void {
+    const override = this.context
+      ? CONTEXT_OVERRIDES[`${this.type}.${this.status}.${this.context}`]
+      : undefined;
+    if (override) {
+      this.config = override;
+      return;
+    }
+
     const typeMap = STATUS_MAP[this.type] || {};
     this.config = typeMap[this.status] || {
       label: this.status,

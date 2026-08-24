@@ -147,7 +147,7 @@
         <td>{{ contract.createdAt | date:'dd/MM/yyyy' }}</td>
 
         <td class="contract-table__col-status">
-          <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
+          <app-status-badge [status]="contract.status" type="contract" [context]="isOwner ? 'owner' : 'tenant'"></app-status-badge>
         </td>
 
         <td *ngIf="isOwner" class="hw-table__col-actions" (click)="$event.stopPropagation()">
