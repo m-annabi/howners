@@ -51,6 +51,14 @@
           </div>
         </div>
 
+        <!-- Installation du locataire : barre d'étapes après acceptation -->
+        <div class="hw-card onboarding-card" *ngIf="isOwner && showOnboarding">
+          <h2 class="hw-section-title">
+            <i class="bi bi-signpost-2 me-1"></i> Installation du locataire
+          </h2>
+          <app-stepper [steps]="onboardingSteps"></app-stepper>
+        </div>
+
         <div class="detail-section" *ngIf="isOwner">
           <h2>Locataire</h2>
           <div *ngIf="rental.tenantName" class="tenant-info">

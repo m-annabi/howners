@@ -1,0 +1,23 @@
+<div class="hw-stepper" *ngIf="steps.length">
+  <div class="hw-stepper__track" role="list">
+    <div class="hw-stepper__step" *ngFor="let step of steps; let i = index; let last = last"
+         role="listitem"
+         [class.is-done]="step.state === 'done'"
+         [class.is-current]="step.state === 'current'"
+         [class.is-todo]="step.state === 'todo'"
+         [attr.aria-current]="step.state === 'current' ? 'step' : null">
+      <div class="hw-stepper__marker-row">
+        <span class="hw-stepper__bullet">
+          <i *ngIf="step.state === 'done'" class="bi bi-check-lg"></i>
+          <i *ngIf="step.state !== 'done' && step.icon" class="bi {{ step.icon }}"></i>
+          <span *ngIf="step.state !== 'done' && !step.icon">{{ i + 1 }}</span>
+        </span>
+        <span class="hw-stepper__connector" *ngIf="!last"></span>
+      </div>
+      <div class="hw-stepper__labels">
+        <span class="hw-stepper__label">{{ step.label }}</span>
+        <span class="hw-stepper__hint" *ngIf="step.hint">{{ step.hint }}</span>
+      </div>
+    </div>
+  </div>
+</div>

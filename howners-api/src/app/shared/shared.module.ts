@@ -26,6 +26,7 @@ import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dial
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { TopbarComponent } from './components/topbar/topbar.component';
 import { GuestTopbarComponent } from './components/guest-topbar/guest-topbar.component';
+import { StepperComponent } from './components/stepper/stepper.component';
 import { QuickFiltersComponent } from './components/quick-filters/quick-filters.component';
 import { NpsPromptComponent } from './components/nps-prompt/nps-prompt.component';
 import { UpgradeModalComponent } from './components/upgrade-modal/upgrade-modal.component';
@@ -53,6 +54,7 @@ import { OnboardingChecklistComponent } from './components/onboarding-checklist/
     SidebarComponent,
     TopbarComponent,
     GuestTopbarComponent,
+    StepperComponent,
     QuickFiltersComponent,
     NpsPromptComponent,
     WidgetConfiguratorComponent,
@@ -87,6 +89,7 @@ import { OnboardingChecklistComponent } from './components/onboarding-checklist/
     SidebarComponent,
     TopbarComponent,
     GuestTopbarComponent,
+    StepperComponent,
     QuickFiltersComponent,
     NpsPromptComponent,
     WidgetConfiguratorComponent,
