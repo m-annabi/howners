@@ -1,0 +1,87 @@
+.hw-stepper {
+  width: 100%;
+  overflow-x: auto;         // mobile : défile plutôt que de casser
+  padding: var(--hw-space-2, 0.5rem) 0;
+}
+
+.hw-stepper__track {
+  display: flex;
+  align-items: flex-start;
+  min-width: max-content;    // garde les étapes alignées sur une ligne
+}
+
+.hw-stepper__step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1 1 0;
+  min-width: 120px;
+}
+
+.hw-stepper__marker-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.hw-stepper__bullet {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: var(--hw-fw-semibold, 600);
+  border: 2px solid var(--hw-border, #d1d5db);
+  background: var(--hw-surface, #fff);
+  color: var(--hw-text-muted, #6b7280);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.hw-stepper__connector {
+  flex: 1 1 auto;
+  height: 2px;
+  margin: 0 0.35rem;
+  background: var(--hw-border, #e5e7eb);
+}
+
+.hw-stepper__labels {
+  display: flex;
+  flex-direction: column;
+  padding-right: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.hw-stepper__label {
+  font-size: var(--hw-fs-sm, 0.875rem);
+  font-weight: var(--hw-fw-medium, 500);
+  color: var(--hw-text, #374151);
+  line-height: 1.2;
+}
+
+.hw-stepper__hint {
+  font-size: var(--hw-fs-xs, 0.75rem);
+  color: var(--hw-text-muted, #6b7280);
+  margin-top: 0.1rem;
+}
+
+// --- États ---
+.hw-stepper__step.is-done {
+  .hw-stepper__bullet {
+    background: var(--hw-success, #16a34a);
+    border-color: var(--hw-success, #16a34a);
+    color: #fff;
+  }
+  .hw-stepper__connector { background: var(--hw-success, #16a34a); }
+}
+
+.hw-stepper__step.is-current {
+  .hw-stepper__bullet {
+    border-color: var(--hw-primary, #2563eb);
+    color: var(--hw-primary, #2563eb);
+    box-shadow: 0 0 0 4px var(--hw-primary-50, #eff6ff);
+  }
+  .hw-stepper__label { color: var(--hw-primary-700, #1d4ed8); font-weight: var(--hw-fw-semibold, 600); }
+}

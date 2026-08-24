@@ -7,7 +7,10 @@ import { ContractService } from '../../../core/services/contract.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Rental, RentalStatus, RENTAL_STATUS_LABELS, RENTAL_STATUS_COLORS } from '../../../core/models/rental.model';
-import { Contract } from '../../../core/models/contract.model';
+import { Contract, ContractStatus } from '../../../core/models/contract.model';
+import { EtatDesLieuxService } from '../../../core/services/etat-des-lieux.service';
+import { EtatDesLieux, EtatDesLieuxType } from '../../../core/models/etat-des-lieux.model';
+import { StepItem } from '../../../shared/components/stepper/stepper.component';
 
 @Component({
   selector: 'app-rental-detail',
@@ -19,6 +22,7 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
 
   rental: Rental | null = null;
   contracts: Contract[] = [];
+  edls: EtatDesLieux[] = [];
   loading = true;
   error: string | null = null;
   loadingContracts = false;
@@ -52,7 +56,8 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private edlService: EtatDesLieuxService
   ) {}
 
   ngOnInit(): void {
@@ -64,7 +69,50 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     if (id) {
       this.loadRental(id);
       this.loadContracts(id);
+      this.loadEdls(id);
     }
+  }
+
+  loadEdls(rentalId: string): void {
+    this.edlService.getByRental(rentalId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (edls) => this.edls = edls || [],
+      error: () => this.edls = []
+    });
+  }
+
+  /**
+   * Étapes d'installation du locataire, calculées à partir de l'état réel du bail
+   * (bail créé → contrat généré → signé → état des lieux d'entrée → bail actif).
+   * La première étape non terminée est « current », les précédentes « done ».
+   */
+  get onboardingSteps(): StepItem[] {
+    const hasContract = this.contracts.length > 0;
+    const signed = this.contracts.some(c => c.status === ContractStatus.SIGNED);
+    const edlEntree = this.edls.some(e => e.type === EtatDesLieuxType.ENTREE);
+    const active = this.rental?.status === RentalStatus.ACTIVE;
+
+    const defs = [
+      { label: 'Candidature acceptée', done: true },
+      { label: 'Bail créé', done: !!this.rental },
+      { label: 'Contrat généré', done: hasContract, hint: hasContract ? undefined : 'Générez le contrat de bail' },
+      { label: 'Contrat signé', done: signed, hint: signed ? undefined : 'Envoyez le contrat à la signature' },
+      { label: 'État des lieux d\'entrée', done: edlEntree, hint: edlEntree ? undefined : 'Réalisez l\'état des lieux d\'entrée' },
+      { label: 'Bail actif', done: active }
+    ];
+
+    const firstTodo = defs.findIndex(d => !d.done);
+    return defs.map((d, i) => ({
+      label: d.label,
+      hint: d.hint,
+      state: d.done ? 'done' : (i === firstTodo ? 'current' : 'todo')
+    }));
+  }
+
+  /** Le bail est-il encore en cours d'installation (stepper pertinent) ? */
+  get showOnboarding(): boolean {
+    const s = this.rental?.status;
+    return !!s && s !== RentalStatus.TERMINATED && s !== RentalStatus.CANCELLED
+        && s !== RentalStatus.VACANT && s !== RentalStatus.LISTED;
   }
 
   loadRental(id: string): void {
