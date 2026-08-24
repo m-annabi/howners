@@ -21,15 +21,21 @@
           <div>
             <h1>{{ rental.propertyName }}</h1>
             <div class="badges">
-              <span class="status-badge" [style.background-color]="getStatusColor(rental.status)">
+              <!-- Propriétaire : statut réel du bail -->
+              <span *ngIf="isOwner" class="status-badge" [style.background-color]="getStatusColor(rental.status)">
                 {{ rentalStatusLabels[rental.status] }}
+              </span>
+              <!-- Locataire : libellé adapté (pas de « Libre » / « En annonce ») -->
+              <span *ngIf="!isOwner" class="status-badge"
+                    [style.background-color]="tenantLocationReady ? '#4CAF50' : '#FFA500'">
+                {{ tenantStatusLabel }}
               </span>
             </div>
           </div>
         </div>
 
-        <!-- Workflow progression -->
-        <div class="workflow-steps">
+        <!-- Workflow progression (vue propriétaire uniquement) -->
+        <div class="workflow-steps" *ngIf="isOwner">
           <div class="workflow-step" [class.active]="rental.status === RentalStatus.VACANT" [class.done]="rental.status !== RentalStatus.VACANT">
             <span class="step-dot"></span><span class="step-label">Libre</span>
           </div>
@@ -51,12 +57,27 @@
           </div>
         </div>
 
-        <!-- Installation du locataire : barre d'étapes après acceptation -->
+        <!-- Installation du locataire : barre d'étapes après acceptation (propriétaire) -->
         <div class="hw-card onboarding-card" *ngIf="isOwner && showOnboarding">
           <h2 class="hw-section-title">
             <i class="bi bi-signpost-2 me-1"></i> Installation du locataire
           </h2>
           <app-stepper [steps]="onboardingSteps"></app-stepper>
+        </div>
+
+        <!-- Locataire : bail en attente de signature (la location n'apparaît qu'une fois signé) -->
+        <div class="hw-card signature-pending" *ngIf="!isOwner && !tenantLocationReady">
+          <h2 class="signature-pending__title">
+            <i class="bi bi-pen"></i> Votre bail est prêt à être signé
+          </h2>
+          <p class="signature-pending__text">
+            Votre location sera finalisée dès que vous aurez signé votre contrat.
+            Suivez les étapes ci-dessous.
+          </p>
+          <app-stepper [steps]="onboardingSteps"></app-stepper>
+          <button class="hw-btn hw-btn--primary signature-pending__cta" (click)="goToContract()">
+            <i class="bi bi-pen"></i> {{ hasContract() ? 'Signer mon contrat' : 'Voir mes contrats' }}
+          </button>
         </div>
 
         <div class="detail-section" *ngIf="isOwner">
@@ -84,55 +105,139 @@
           <p *ngIf="!rental.ownerName" class="no-tenant">Propriétaire non renseigné</p>
         </div>
 
-        <div class="detail-section">
-          <h2>Période</h2>
-          <div class="dates-grid">
-            <div class="date-item">
-              <span class="label">Date de début</span>
-              <span class="value">{{ rental.startDate ? (rental.startDate | date:'dd/MM/yyyy') : '—' }}</span>
-            </div>
-            <div class="date-item">
-              <span class="label">Date de fin</span>
-              <span class="value">{{ rental.endDate ? (rental.endDate | date:'dd/MM/yyyy') : 'Indéterminée' }}</span>
+        <!--
+          Contenu « location active » : toujours visible côté propriétaire ;
+          côté locataire, seulement une fois le contrat signé (avant, on affiche
+          uniquement l'état « à finaliser » ci-dessus).
+        -->
+        <ng-container *ngIf="isOwner || tenantLocationReady">
+
+          <div class="detail-section">
+            <h2>Période</h2>
+            <div class="dates-grid">
+              <div class="date-item">
+                <span class="label">Date de début</span>
+                <span class="value">{{ rental.startDate ? (rental.startDate | date:'dd/MM/yyyy') : '—' }}</span>
+              </div>
+              <div class="date-item">
+                <span class="label">Date de fin</span>
+                <span class="value">{{ rental.endDate ? (rental.endDate | date:'dd/MM/yyyy') : 'Indéterminée' }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="detail-section">
-          <h2>Montants</h2>
-          <div class="amounts-grid">
-            <div class="amount-item">
-              <span class="label">Loyer mensuel</span>
-              <span class="value primary">{{ rental.monthlyRent }} {{ rental.currency }}</span>
-            </div>
-            <div class="amount-item" *ngIf="rental.depositAmount">
-              <span class="label">Dépôt de garantie</span>
-              <span class="value">{{ rental.depositAmount }} {{ rental.currency }}</span>
-            </div>
-            <div class="amount-item" *ngIf="rental.charges">
-              <span class="label">Charges</span>
-              <span class="value">{{ rental.charges }} {{ rental.currency }}</span>
-            </div>
-            <div class="amount-item" *ngIf="rental.paymentDay">
-              <span class="label">Jour de paiement</span>
-              <span class="value">{{ rental.paymentDay }} du mois</span>
+          <div class="detail-section">
+            <h2>Montants</h2>
+            <div class="amounts-grid">
+              <div class="amount-item">
+                <span class="label">Loyer mensuel</span>
+                <span class="value primary">{{ rental.monthlyRent }} {{ rental.currency }}</span>
+              </div>
+              <div class="amount-item" *ngIf="rental.depositAmount">
+                <span class="label">Dépôt de garantie</span>
+                <span class="value">{{ rental.depositAmount }} {{ rental.currency }}</span>
+              </div>
+              <div class="amount-item" *ngIf="rental.charges">
+                <span class="label">Charges</span>
+                <span class="value">{{ rental.charges }} {{ rental.currency }}</span>
+              </div>
+              <div class="amount-item" *ngIf="rental.paymentDay">
+                <span class="label">Jour de paiement</span>
+                <span class="value">{{ rental.paymentDay }} du mois</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="detail-section">
-          <app-document-list [rentalId]="rental.id"></app-document-list>
-        </div>
+          <!-- ══ Paiements : aperçu regroupé dans la location ══ -->
+          <div class="detail-section">
+            <div class="hub-head">
+              <h2>Paiements</h2>
+              <a routerLink="/payments" class="hub-head__link">Tout voir</a>
+            </div>
 
-        <!-- Révision de loyer IRL -->
-        <div class="detail-section">
-          <app-rent-revision-panel [rentalId]="rental.id"></app-rent-revision-panel>
-        </div>
+            <div class="payment-summary">
+              <div class="payment-summary__block" [class.payment-summary__block--late]="isPaymentLate" *ngIf="nextPayment; else uptodate">
+                <span class="payment-summary__label">Prochaine échéance</span>
+                <span class="payment-summary__amount">{{ formatAmount(nextPayment.amount, nextPayment.currency) }}</span>
+                <span class="payment-summary__due">
+                  {{ isPaymentLate ? 'En retard — échéance du' : 'À régler pour le' }}
+                  {{ nextPayment.dueDate | date:'dd/MM/yyyy' }}
+                </span>
+              </div>
+              <ng-template #uptodate>
+                <div class="payment-summary__block payment-summary__block--ok">
+                  <i class="bi bi-check-circle-fill"></i>
+                  <span>{{ payments.length ? 'Aucune échéance en attente, tout est à jour.' : 'Aucun paiement pour le moment.' }}</span>
+                </div>
+              </ng-template>
+            </div>
 
-        <!-- Régularisation annuelle des charges -->
-        <div class="detail-section">
-          <app-charge-regularisation-panel [rentalId]="rental.id"></app-charge-regularisation-panel>
-        </div>
+            <ul class="payment-list" *ngIf="recentPayments.length > 0">
+              <li class="payment-list__row" *ngFor="let p of recentPayments">
+                <span class="payment-list__dot"
+                      [class.payment-list__dot--paid]="p.status === PaymentStatus.PAID"
+                      [class.payment-list__dot--late]="p.status === PaymentStatus.LATE || p.status === PaymentStatus.FAILED"
+                      [class.payment-list__dot--pending]="p.status === PaymentStatus.PENDING"></span>
+                <span class="payment-list__date">{{ (p.paidAt || p.dueDate) | date:'dd/MM/yyyy' }}</span>
+                <span class="payment-list__status">{{ paymentStatusLabel(p.status) }}</span>
+                <span class="payment-list__amount">{{ formatAmount(p.amount, p.currency) }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- ══ Contrat de bail ══ -->
+          <div class="detail-section">
+            <h2>Contrat de bail</h2>
+            <div class="hub-row" *ngIf="hasContract(); else noContract">
+              <div class="hub-row__info">
+                <span class="hub-row__title">{{ getMainContract()!.contractNumber }}</span>
+                <app-status-badge [status]="getMainContract()!.status" type="contract"
+                                  [context]="isOwner ? 'owner' : 'tenant'"></app-status-badge>
+              </div>
+              <button class="hw-btn hw-btn--ghost hw-btn--sm" (click)="viewContract(getMainContract()!.id)">
+                <i class="bi bi-file-earmark-text"></i> Voir le contrat
+              </button>
+            </div>
+            <ng-template #noContract>
+              <p class="no-tenant">{{ isOwner ? 'Aucun contrat généré pour le moment.' : 'Votre contrat n\'est pas encore disponible.' }}</p>
+            </ng-template>
+          </div>
+
+          <!-- ══ États des lieux ══ -->
+          <div class="detail-section">
+            <h2>États des lieux</h2>
+            <div class="hub-row" *ngFor="let e of edls">
+              <div class="hub-row__info">
+                <span class="hub-row__title">État des lieux d'{{ edlTypeLabels[e.type] === 'Entrée' ? 'entrée' : 'sortie' }}</span>
+                <span class="hub-row__meta">
+                  {{ e.inspectionDate | date:'dd/MM/yyyy' }} ·
+                  <span class="hub-tag" [class.hub-tag--ok]="e.ownerSigned && e.tenantSigned">
+                    {{ e.ownerSigned && e.tenantSigned ? 'Signé' : 'À signer' }}
+                  </span>
+                </span>
+              </div>
+              <a class="hw-btn hw-btn--ghost hw-btn--sm" [routerLink]="['/inventory', rental.id, e.id]">
+                <i class="bi bi-clipboard-check"></i> Ouvrir
+              </a>
+            </div>
+            <p *ngIf="edls.length === 0" class="no-tenant">Aucun état des lieux pour le moment.</p>
+          </div>
+
+          <div class="detail-section">
+            <app-document-list [rentalId]="rental.id"></app-document-list>
+          </div>
+
+          <!-- Révision de loyer IRL (gestion propriétaire) -->
+          <div class="detail-section" *ngIf="isOwner">
+            <app-rent-revision-panel [rentalId]="rental.id"></app-rent-revision-panel>
+          </div>
+
+          <!-- Régularisation annuelle des charges (gestion propriétaire) -->
+          <div class="detail-section" *ngIf="isOwner">
+            <app-charge-regularisation-panel [rentalId]="rental.id"></app-charge-regularisation-panel>
+          </div>
+
+        </ng-container>
       </div>
 
       <div class="detail-sidebar">
@@ -204,14 +309,25 @@
           </ng-container>
 
           <ng-container *ngIf="!isOwner">
+            <!-- Contrat non signé : action prioritaire = signer -->
             <button
-              *ngIf="hasContract()"
-              class="action-btn"
-              (click)="viewContract(getMainContract()!.id)">
-              Voir le contrat
+              *ngIf="!tenantLocationReady"
+              class="action-btn action-btn--highlight"
+              (click)="goToContract()">
+              {{ hasContract() ? 'Signer mon contrat' : 'Voir mes contrats' }}
             </button>
-            <button class="action-btn" (click)="viewPayments()">Voir les paiements</button>
-            <button class="action-btn" [routerLink]="['/inventory']">États des lieux</button>
+
+            <!-- Location active : accès rapides -->
+            <ng-container *ngIf="tenantLocationReady">
+              <button
+                *ngIf="hasContract()"
+                class="action-btn"
+                (click)="viewContract(getMainContract()!.id)">
+                Voir le contrat
+              </button>
+              <button class="action-btn" (click)="viewPayments()">Voir mes paiements</button>
+              <button class="action-btn" [routerLink]="['/receipts']">Mes quittances</button>
+            </ng-container>
           </ng-container>
         </div>
       </div>
