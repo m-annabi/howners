@@ -25,10 +25,10 @@
       <span class="referral-hero__code-label">Votre code</span>
       <code class="referral-hero__code-value">{{ summary.code }}</code>
       <div class="referral-hero__actions">
-        <button type="button" class="btn btn-primary" (click)="share()">
+        <button type="button" class="hw-btn referral-hero__btn referral-hero__btn--solid" (click)="share()">
           <i class="bi bi-send"></i> Partager
         </button>
-        <button type="button" class="btn btn-outline-secondary"
+        <button type="button" class="hw-btn referral-hero__btn"
                 (click)="copyLink()"
                 [class.active]="copied">
           <i class="bi" [ngClass]="copied ? 'bi-check2' : 'bi-link-45deg'"></i>

@@ -137,8 +137,11 @@
 
 @media (max-width: 768px) {
   .modal-dialog {
-    margin: 0.5rem;
-    max-width: calc(100% - 1rem);
+    margin: 0.5rem auto;
+    // 100vw et non 100% : si un ancêtre déborde, 100% se résout contre lui
+    // et le dialogue sort de l'écran.
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
   }
 
   .contract-preview .contract-content {

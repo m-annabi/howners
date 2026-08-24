@@ -6,6 +6,7 @@
     justify-content: space-between;
     gap: var(--hw-space-4);
     margin-bottom: var(--hw-space-4);
+    flex-wrap: wrap; // mobile : les actions passent sous le titre
   }
 
   &__header-actions {
@@ -183,6 +184,7 @@
 .widget-cell {
   position: relative;
   min-height: 80px;
+  min-width: 0; // le contenu du widget ne doit pas élargir la grille sur mobile
 
   &.widget-sm { grid-column: span 1; }
   &.widget-lg { grid-column: 1 / -1; }

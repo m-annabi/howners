@@ -42,6 +42,10 @@
 
 .hw-main {
   flex: 1;
+  // Un enfant flex a min-width:auto : sans ce 0, tout contenu large (tableau,
+  // stepper…) étire la colonne et fait défiler TOUTE la page horizontalement
+  // sur mobile, au lieu de laisser les conteneurs internes scroller.
+  min-width: 0;
   margin-left: var(--hw-sidebar-width);
   display: flex;
   flex-direction: column;
@@ -60,6 +64,7 @@
 
 .hw-content {
   flex: 1;
+  min-width: 0;
   padding: var(--hw-space-6);
   max-width: var(--hw-content-max-width);
   width: 100%;

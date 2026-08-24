@@ -14,6 +14,9 @@ const routes: Routes = [
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
   },
+  // Raccourcis usuels (tapés à la main ou depuis d'anciens liens) vers l'auth.
+  { path: 'login', redirectTo: 'auth/login' },
+  { path: 'register', redirectTo: 'auth/register' },
   {
     path: 'tenant',
     loadChildren: () => import('./features/tenant/tenant.module').then(m => m.TenantModule),

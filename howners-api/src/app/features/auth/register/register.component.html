@@ -61,7 +61,7 @@
             id="password"
             formControlName="password"
             class="form-control"
-            placeholder="Min. 8 caractères (majuscule, minuscule, chiffre)"
+            placeholder="8 caractères min."
             [class.is-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
           >
           <button

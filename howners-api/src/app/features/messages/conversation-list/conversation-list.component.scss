@@ -1,6 +1,8 @@
 // ── Vue scindée ─────────────────────────────────────────────────────────────
 .msg-page {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   height: calc(100vh - var(--hw-topbar-height) - 2 * var(--hw-space-6));
   min-height: 480px;
   background: var(--hw-surface);
