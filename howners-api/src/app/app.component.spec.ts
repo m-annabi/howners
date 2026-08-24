@@ -2,7 +2,16 @@ import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { SwUpdate } from '@angular/service-worker';
+import { EMPTY } from 'rxjs';
 import { AppComponent } from './app.component';
+
+// Le service worker n'est pas actif dans TestBed : SwUpdate doit être mocké.
+const swUpdateMock = {
+  isEnabled: false,
+  versionUpdates: EMPTY,
+  unrecoverable: EMPTY
+};
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -13,6 +22,9 @@ describe('AppComponent', () => {
       ],
       declarations: [
         AppComponent
+      ],
+      providers: [
+        { provide: SwUpdate, useValue: swUpdateMock }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     }).compileComponents();
