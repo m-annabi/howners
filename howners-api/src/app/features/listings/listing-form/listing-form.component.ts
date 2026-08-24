@@ -134,6 +134,9 @@ export class ListingFormComponent implements OnInit {
     this.autoAmenities.forEach(k => this.selectedAmenities.delete(k));
 
     const derived = new Set<string>();
+    // Équipements saisis sur la fiche du bien.
+    (property.amenities || []).forEach(k => derived.add(k));
+    // Équipements portés par des champs dédiés du bien.
     if (property.hasParking) derived.add('parking');
     if (property.hasElevator) derived.add('ascenseur');
     if (property.heatingType === HeatingType.COLLECTIVE_GAS

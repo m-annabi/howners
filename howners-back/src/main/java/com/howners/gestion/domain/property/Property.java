@@ -119,6 +119,10 @@ public class Property {
     @Column(name = "is_furnished")
     private Boolean isFurnished;
 
+    /** Équipements du bien (clés normalisées, JSON) — pré-cochés sur les annonces du bien. */
+    @Column(name = "amenities", columnDefinition = "text")
+    private String amenities;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "property_condition", length = 20)
     private PropertyCondition propertyCondition;

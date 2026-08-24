@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PropertyService } from '../property.service';
 import { PropertyType, PROPERTY_TYPE_LABELS, HeatingType, HEATING_TYPE_LABELS, PropertyCondition, PROPERTY_CONDITION_LABELS } from '../../../core/models/property.model';
 import { COUNTRIES, Department, getDepartmentsByCountry, getDepartmentFromPostalCode, getDepartmentLabel } from '../../../core/data/geo-reference';
+import { PREDEFINED_AMENITIES } from '../../../core/models/listing-amenities.model';
 
 @Component({
   selector: 'app-property-form',
@@ -33,6 +34,14 @@ export class PropertyFormComponent implements OnInit {
   }));
 
   dpeGesRatings = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
+  // Équipements du bien. Parking, ascenseur et chauffage collectif sont déjà couverts
+  // par des champs dédiés (hasParking, hasElevator, heatingType) — exclus d'ici pour
+  // éviter les doublons ; ils sont fusionnés au pré-cochage des annonces.
+  propertyAmenities = PREDEFINED_AMENITIES.filter(
+    a => !['parking', 'ascenseur', 'chauffage_collectif'].includes(a.key)
+  );
+  selectedAmenities = new Set<string>();
 
   countries = COUNTRIES;
   filteredDepartments: Department[] = [];
@@ -147,6 +156,7 @@ export class PropertyFormComponent implements OnInit {
           isFurnished: property.isFurnished,
           propertyCondition: property.propertyCondition
         });
+        this.selectedAmenities = new Set(property.amenities || []);
         this.updateDepartments();
         this.loading = false;
       },
@@ -155,6 +165,14 @@ export class PropertyFormComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  toggleAmenity(key: string): void {
+    if (this.selectedAmenities.has(key)) {
+      this.selectedAmenities.delete(key);
+    } else {
+      this.selectedAmenities.add(key);
+    }
   }
 
   onSubmit(): void {
@@ -199,6 +217,7 @@ export class PropertyFormComponent implements OnInit {
       hasParking: formValue.hasParking,
       hasElevator: formValue.hasElevator,
       isFurnished: formValue.isFurnished,
+      amenities: Array.from(this.selectedAmenities),
       propertyCondition: formValue.propertyCondition
     };
 

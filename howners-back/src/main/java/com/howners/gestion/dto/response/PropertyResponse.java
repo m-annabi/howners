@@ -38,6 +38,7 @@ public record PropertyResponse(
         Boolean hasParking,
         Boolean hasElevator,
         Boolean isFurnished,
+        java.util.List<String> amenities,
         PropertyCondition propertyCondition,
         BigDecimal currentMonthlyRent,
         BigDecimal grossYieldPercent,
@@ -93,11 +94,23 @@ public record PropertyResponse(
                 property.getHasParking(),
                 property.getHasElevator(),
                 property.getIsFurnished(),
+                parseJsonList(property.getAmenities()),
                 property.getPropertyCondition(),
                 currentMonthlyRent,
                 yield,
                 property.getCreatedAt(),
                 property.getUpdatedAt()
         );
+    }
+
+    /** Désérialise la colonne JSON des équipements (tolérante : liste vide si absent/illisible). */
+    private static java.util.List<String> parseJsonList(String raw) {
+        if (raw == null || raw.isBlank()) return java.util.List.of();
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(raw, new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {});
+        } catch (Exception e) {
+            return java.util.List.of();
+        }
     }
 }

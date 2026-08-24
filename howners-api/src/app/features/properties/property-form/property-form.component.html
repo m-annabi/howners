@@ -431,6 +431,23 @@
           </label>
         </div>
       </div>
+
+      <!-- Équipements du bien -->
+      <h3 class="form-section-subtitle">Équipements</h3>
+      <p class="hw-text-muted hw-text-sm">
+        Renseignés une fois ici, ces équipements seront pré-cochés à la création d'une annonce pour ce bien.
+      </p>
+      <div class="amenities-grid">
+        <div class="form-check" *ngFor="let amenity of propertyAmenities"
+             (click)="toggleAmenity(amenity.key)" style="cursor:pointer;">
+          <input type="checkbox" class="form-check-input"
+                 [checked]="selectedAmenities.has(amenity.key)"
+                 [id]="'prop-amenity-' + amenity.key">
+          <label class="form-check-label" [for]="'prop-amenity-' + amenity.key" style="cursor:pointer;">
+            <i class="bi {{ amenity.icon }} me-1"></i>{{ amenity.label }}
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="form-actions">
