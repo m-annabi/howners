@@ -12,7 +12,7 @@
 <div *ngIf="!loading && !error && contract" class="hw-card">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <h3 class="mb-0">Contrat {{ contract.contractNumber }}</h3>
-    <app-status-badge [status]="contract.status" type="contract"></app-status-badge>
+    <app-status-badge [status]="contract.status" type="contract" [context]="isOwner ? 'owner' : 'tenant'"></app-status-badge>
   </div>
 
   <div class="hw-detail-grid mb-4">
