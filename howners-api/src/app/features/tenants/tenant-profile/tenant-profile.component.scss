@@ -68,6 +68,16 @@
     }
   }
 
+  // Contacter : c'est depuis la fiche qu'on ouvre la discussion.
+  // Doré plutôt que bleu, sinon le bouton se noie dans le dégradé du bandeau.
+  &__contact {
+    margin-top: var(--hw-space-3);
+    background: var(--hw-accent-500);
+    color: var(--hw-primary-800);
+
+    &:hover { background: var(--hw-accent-400); }
+  }
+
   &__score {
     text-align: center;
     flex-shrink: 0;

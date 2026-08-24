@@ -21,6 +21,9 @@
             <span><i class="bi bi-envelope"></i> {{ owner.email }}</span>
             <span *ngIf="owner.phone"><i class="bi bi-telephone"></i> {{ owner.phone }}</span>
           </div>
+          <button type="button" class="hw-btn hw-btn--primary hw-btn--sm tp-hero__contact" (click)="contact()">
+            <i class="bi bi-chat-dots"></i> Contacter
+          </button>
         </div>
         <div *ngIf="ratings.length > 0" class="tp-hero__score">
           <div class="tp-hero__score-value">{{ averageOverall | number:'1.1-1' }}</div>

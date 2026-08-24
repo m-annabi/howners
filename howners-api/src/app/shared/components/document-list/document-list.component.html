@@ -1,80 +1,105 @@
-<div class="document-list-container">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">Documents</h5>
-    <button *ngIf="showUpload" class="hw-btn hw-btn--sm hw-btn--primary" (click)="toggleUploadForm()">
-      {{ showUploadForm ? 'Annuler' : '+ Ajouter un document' }}
+<div class="doc">
+  <div class="doc__head">
+    <h3 class="doc__title">
+      Documents
+      <span class="doc__count" *ngIf="documents.length">{{ documents.length }}</span>
+    </h3>
+    <button *ngIf="showUpload" class="hw-btn hw-btn--sm"
+            [class.hw-btn--ghost]="showUploadForm"
+            [class.hw-btn--primary]="!showUploadForm"
+            (click)="toggleUploadForm()">
+      <i class="bi" [class.bi-plus-lg]="!showUploadForm" [class.bi-x-lg]="showUploadForm"></i>
+      {{ showUploadForm ? 'Annuler' : 'Ajouter' }}
     </button>
   </div>
 
-  <div *ngIf="showUploadForm" class="mb-3">
-    <app-document-upload [propertyId]="propertyId" [rentalId]="rentalId" (uploadComplete)="onUploadComplete()"></app-document-upload>
-  </div>
+  <app-document-upload *ngIf="showUploadForm"
+                       [propertyId]="propertyId" [rentalId]="rentalId"
+                       (uploadComplete)="onUploadComplete()"></app-document-upload>
 
-  <div *ngIf="loading" class="hw-text-sm hw-text-muted">Chargement des documents…</div>
+  <p *ngIf="loading" class="doc__empty">Chargement des documents…</p>
 
   <div *ngIf="error" class="hw-alert hw-alert--danger">
-    <i class="bi bi-exclamation-triangle-fill"></i>
-    <span>{{ error }}</span>
+    <i class="bi bi-exclamation-triangle-fill"></i><span>{{ error }}</span>
   </div>
 
-  <div *ngIf="!loading && !error">
-    <div *ngIf="documents.length === 0" class="hw-text-sm hw-text-muted">Aucun document disponible.</div>
+  <p *ngIf="!loading && !error && documents.length === 0" class="doc__empty">
+    Aucun document pour le moment.
+  </p>
 
-    <div *ngIf="documents.length > 0" style="overflow-x: auto;">
-      <table class="hw-table">
-        <thead>
-          <tr>
-            <th>Fichier</th><th>Type</th><th>Description</th><th>Taille</th><th>Uploadé par</th><th>Date</th>
-            <th *ngIf="showArchiveActions">Statut</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let document of documents">
-            <td><span class="me-2">{{ documentService.getFileIcon(document.mimeType) }}</span>{{ document.fileName }}</td>
-            <td><span class="hw-badge hw-badge--neutral">{{ getDocumentTypeLabel(document.documentType) }}</span></td>
-            <td class="hw-text-sm hw-text-muted">{{ document.description || '—' }}</td>
-            <td>{{ documentService.formatFileSize(document.fileSize) }}</td>
-            <td>{{ document.uploaderName }}</td>
-            <td>{{ document.uploadedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
-            <td *ngIf="showArchiveActions">
-              <span *ngIf="document.isArchived" class="hw-badge hw-badge--neutral me-1">Archivé</span>
-              <span *ngIf="document.legalHold" class="hw-badge hw-badge--danger me-1">Blocage légal</span>
-              <span *ngIf="document.retentionEndDate" class="hw-badge hw-badge--info me-1"
-                    title="Rétention jusqu'au {{ document.retentionEndDate | date:'dd/MM/yyyy' }}">
-                Rétention : {{ document.retentionEndDate | date:'dd/MM/yyyy' }}
-              </span>
-              <span *ngIf="!document.isArchived && !document.legalHold && !document.retentionEndDate" class="hw-badge hw-badge--success">Actif</span>
-            </td>
-            <td>
-              <div class="d-flex gap-1 flex-wrap align-items-center">
-                <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="downloadDocument(document)" title="Télécharger">
-                  <i class="bi bi-download"></i>
-                </button>
-                <button *ngIf="!document.isArchived" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteDocument(document, $event)" title="Supprimer">
-                  <i class="bi bi-trash"></i>
-                </button>
-                <ng-container *ngIf="showArchiveActions && !document.isArchived">
-                  <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="startSetRetention(document.id)" title="Définir la rétention">
-                    <i class="bi bi-clock-history"></i>
-                  </button>
-                  <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="archiveDocument(document, $event)" title="Archiver">
-                    <i class="bi bi-archive"></i>
-                  </button>
-                  <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="toggleLegalHold(document, $event)"
-                          [title]="document.legalHold ? 'Retirer le blocage légal' : 'Blocage légal'">
-                    <i class="bi bi-shield-lock"></i>
-                  </button>
-                </ng-container>
-              </div>
-              <div *ngIf="retentionDocId === document.id" class="mt-2 d-flex gap-1 align-items-center">
-                <input type="date" class="form-control form-control-sm" [(ngModel)]="retentionDate" style="width: 150px;">
-                <button class="hw-btn hw-btn--sm hw-btn--primary" (click)="saveRetention()" [disabled]="!retentionDate"><i class="bi bi-check"></i></button>
-                <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="cancelRetention()"><i class="bi bi-x"></i></button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- Barre de tri : n'apparaît que si la liste est assez longue pour la mériter. -->
+  <div class="doc__tools" *ngIf="!loading && !error && documents.length > pageSize">
+    <div class="doc__search">
+      <i class="bi bi-search"></i>
+      <input type="search" placeholder="Rechercher un document…"
+             [(ngModel)]="search" (ngModelChange)="onFilterChange()">
     </div>
+    <select [(ngModel)]="filterType" (ngModelChange)="onFilterChange()">
+      <option value="">Tous les types ({{ documents.length }})</option>
+      <option *ngFor="let t of types" [value]="t.value">{{ t.label }} ({{ t.count }})</option>
+    </select>
   </div>
+
+  <p *ngIf="!loading && !error && documents.length > 0 && filtered.length === 0" class="doc__empty">
+    Aucun document ne correspond à cette recherche.
+  </p>
+
+  <ul class="doc__list" *ngIf="!loading && !error && visible.length > 0">
+    <li class="doc-item" *ngFor="let document of visible">
+      <i class="doc-item__icon bi" [ngClass]="documentService.getFileIcon(document.mimeType)" aria-hidden="true"></i>
+
+      <div class="doc-item__body">
+        <span class="doc-item__name" [title]="document.fileName">{{ document.fileName }}</span>
+        <span class="doc-item__meta">
+          <span class="doc-item__type">{{ getDocumentTypeLabel(document.documentType) }}</span>
+          <span>{{ document.uploadedAt | date: 'dd/MM/yyyy' }}</span>
+          <span>{{ documentService.formatFileSize(document.fileSize) }}</span>
+        </span>
+        <span class="doc-item__desc" *ngIf="document.description">{{ document.description }}</span>
+
+        <span class="doc-item__meta" *ngIf="showArchiveActions">
+          <span class="doc-item__flag" *ngIf="document.isArchived">Archivé</span>
+          <span class="doc-item__flag doc-item__flag--hold" *ngIf="document.legalHold">Blocage légal</span>
+          <span class="doc-item__flag" *ngIf="document.retentionEndDate">
+            Rétention jusqu'au {{ document.retentionEndDate | date:'dd/MM/yyyy' }}
+          </span>
+        </span>
+      </div>
+
+      <div class="doc-item__actions">
+        <button class="doc-item__btn" (click)="downloadDocument(document)" title="Télécharger">
+          <i class="bi bi-download"></i>
+        </button>
+        <button *ngIf="canDelete(document)" class="doc-item__btn doc-item__btn--danger"
+                (click)="deleteDocument(document, $event)" title="Supprimer">
+          <i class="bi bi-trash"></i>
+        </button>
+        <ng-container *ngIf="showArchiveActions && !document.isArchived">
+          <button class="doc-item__btn" (click)="startSetRetention(document.id)" title="Définir la rétention">
+            <i class="bi bi-clock-history"></i>
+          </button>
+          <button class="doc-item__btn" (click)="archiveDocument(document, $event)" title="Archiver">
+            <i class="bi bi-archive"></i>
+          </button>
+          <button class="doc-item__btn" (click)="toggleLegalHold(document, $event)"
+                  [title]="document.legalHold ? 'Retirer le blocage légal' : 'Blocage légal'">
+            <i class="bi bi-shield-lock"></i>
+          </button>
+        </ng-container>
+      </div>
+
+      <div *ngIf="retentionDocId === document.id" class="doc-item__retention">
+        <input type="date" [(ngModel)]="retentionDate">
+        <button class="hw-btn hw-btn--sm hw-btn--primary" (click)="saveRetention()" [disabled]="!retentionDate">
+          Valider
+        </button>
+        <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="cancelRetention()">Annuler</button>
+      </div>
+    </li>
+  </ul>
+
+  <button *ngIf="hiddenCount > 0 || expanded" class="doc__more" (click)="toggleExpanded()">
+    <i class="bi" [class.bi-chevron-down]="!expanded" [class.bi-chevron-up]="expanded"></i>
+    {{ expanded ? 'Réduire la liste' : 'Voir les ' + hiddenCount + ' autres documents' }}
+  </button>
 </div>

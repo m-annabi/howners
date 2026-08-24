@@ -257,29 +257,52 @@ public class DocumentService {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
-        // Vérifier les permissions
-        boolean isOwner = false;
-
-        if (document.getProperty() != null) {
-            isOwner = document.getProperty().getOwner().getId().equals(currentUserId);
-        } else if (document.getRental() != null) {
-            UUID ownerId = document.getRental().getProperty().getOwner().getId();
-            UUID tenantId = document.getRental().getTenant() != null ?
-                    document.getRental().getTenant().getId() : null;
-            isOwner = ownerId.equals(currentUserId) || currentUserId.equals(tenantId);
-        } else if (document.getApplication() != null) {
-            boolean isApplicant = document.getApplication().getApplicant().getId().equals(currentUserId);
-            boolean isListingOwner = document.getApplication().getListing().getProperty().getOwner().getId().equals(currentUserId);
-            isOwner = isApplicant || isListingOwner;
-        }
-
-        boolean isUploader = document.getUploader().getId().equals(currentUserId);
-
-        if (!isOwner && !isUploader && !isDossierReviewer(document, currentUserId)) {
+        if (!canRead(document, currentUserId)) {
             throw new ForbiddenException("You are not authorized to view this document");
         }
 
         return toResponse(document);
+    }
+
+    /**
+     * Qui peut lire un document.
+     *
+     * Chaque rattachement est évalué indépendamment : les documents générés par
+     * l'application (quittance, mise en demeure, révision de loyer…) portent à la
+     * fois `property` ET `rental`. Une cascade if/else if s'arrêtait au bien et
+     * ne laissait passer que le propriétaire — le locataire recevait un 403 sur
+     * ses propres quittances.
+     */
+    private boolean canRead(Document document, UUID currentUserId) {
+        if (document.getUploader().getId().equals(currentUserId)) {
+            return true;
+        }
+
+        if (document.getProperty() != null
+                && document.getProperty().getOwner().getId().equals(currentUserId)) {
+            return true;
+        }
+
+        if (document.getRental() != null) {
+            if (document.getRental().getProperty().getOwner().getId().equals(currentUserId)) {
+                return true;
+            }
+            User tenant = document.getRental().getTenant();
+            if (tenant != null && tenant.getId().equals(currentUserId)) {
+                return true;
+            }
+        }
+
+        if (document.getApplication() != null) {
+            if (document.getApplication().getApplicant().getId().equals(currentUserId)) {
+                return true;
+            }
+            if (document.getApplication().getListing().getProperty().getOwner().getId().equals(currentUserId)) {
+                return true;
+            }
+        }
+
+        return isDossierReviewer(document, currentUserId);
     }
 
     /**
@@ -291,25 +314,7 @@ public class DocumentService {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
-        // Vérifier les permissions (même logique que getDocument)
-        boolean isOwner = false;
-
-        if (document.getProperty() != null) {
-            isOwner = document.getProperty().getOwner().getId().equals(currentUserId);
-        } else if (document.getRental() != null) {
-            UUID ownerId = document.getRental().getProperty().getOwner().getId();
-            UUID tenantId = document.getRental().getTenant() != null ?
-                    document.getRental().getTenant().getId() : null;
-            isOwner = ownerId.equals(currentUserId) || currentUserId.equals(tenantId);
-        } else if (document.getApplication() != null) {
-            boolean isApplicant = document.getApplication().getApplicant().getId().equals(currentUserId);
-            boolean isListingOwner = document.getApplication().getListing().getProperty().getOwner().getId().equals(currentUserId);
-            isOwner = isApplicant || isListingOwner;
-        }
-
-        boolean isUploader = document.getUploader().getId().equals(currentUserId);
-
-        if (!isOwner && !isUploader && !isDossierReviewer(document, currentUserId)) {
+        if (!canRead(document, currentUserId)) {
             throw new ForbiddenException("You are not authorized to download this document");
         }
 

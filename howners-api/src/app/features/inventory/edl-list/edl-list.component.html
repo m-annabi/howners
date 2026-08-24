@@ -1,7 +1,14 @@
 <app-page-header
   title="États des lieux"
-  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'États des lieux'}]">
+  [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'États des lieux'}]"
+  [actions]="headerActions">
 </app-page-header>
+
+<ng-template #headerActions>
+  <button *ngIf="canCreate" class="hw-btn hw-btn--primary" (click)="openPicker()">
+    <i class="bi bi-plus-lg"></i> Nouvel état des lieux
+  </button>
+</ng-template>
 
 <!-- Toolbar: filter chips + search -->
 <div *ngIf="!loading && edls.length > 0" class="hw-list-toolbar">
@@ -35,7 +42,7 @@
   *ngIf="!loading && !error && edls.length === 0"
   icon="bi-clipboard-check"
   title="Aucun état des lieux"
-  message="Les états des lieux sont créés depuis la page d'une location.">
+  message="Créez-en un depuis le bouton « Nouvel état des lieux », ou depuis la page d'une location.">
 </app-empty-state>
 
 <!-- No results -->
@@ -93,4 +100,43 @@
       </tr>
     </tbody>
   </table>
+</div>
+
+<!-- Choix du bail : un état des lieux se rattache toujours à une location -->
+<div *ngIf="showPicker" class="edl-picker" (click)="closePicker()">
+  <div class="edl-picker__box" (click)="$event.stopPropagation()">
+    <div class="edl-picker__head">
+      <h2>Nouvel état des lieux</h2>
+      <button class="edl-picker__close" (click)="closePicker()" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="edl-picker__body">
+      <p *ngIf="rentalsLoading" class="edl-picker__hint">Chargement des locations…</p>
+
+      <div *ngIf="rentalsError" class="hw-alert hw-alert--danger">
+        <i class="bi bi-exclamation-triangle-fill"></i><span>{{ rentalsError }}</span>
+      </div>
+
+      <p *ngIf="!rentalsLoading && !rentalsError && rentals.length === 0" class="edl-picker__hint">
+        Aucune location occupée. Un état des lieux se fait sur un bail avec locataire.
+      </p>
+
+      <label *ngIf="rentals.length > 0" class="edl-picker__field">
+        <span>Location concernée</span>
+        <select [(ngModel)]="selectedRentalId">
+          <option value="">Choisir une location…</option>
+          <option *ngFor="let r of rentals" [value]="r.id">
+            {{ r.propertyName }} — {{ r.tenantName }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="edl-picker__foot">
+      <button class="hw-btn hw-btn--ghost" (click)="closePicker()">Annuler</button>
+      <button class="hw-btn hw-btn--primary" [disabled]="!selectedRentalId" (click)="startEdl()">
+        Continuer
+      </button>
+    </div>
+  </div>
 </div>

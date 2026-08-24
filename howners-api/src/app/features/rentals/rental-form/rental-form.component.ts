@@ -17,6 +17,7 @@ export class RentalFormComponent implements OnInit {
   error: string | null = null;
   rentalId: string | null = null;
   isEditMode = false;
+  deleting = false;
   properties: Property[] = [];
 
   rentalStatuses = Object.keys(RentalStatus).map(key => ({
@@ -120,5 +121,20 @@ export class RentalFormComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/rentals']);
+  }
+
+  /** Suppression définitive du bail, depuis la zone dédiée en bas du formulaire. */
+  deleteRental(): void {
+    if (!this.rentalId) return;
+    if (!confirm('Supprimer définitivement ce bail et son historique ?')) return;
+
+    this.deleting = true;
+    this.rentalService.deleteRental(this.rentalId).subscribe({
+      next: () => this.router.navigate(['/rentals']),
+      error: (err) => {
+        this.deleting = false;
+        this.error = err.error?.message || 'Erreur lors de la suppression du bail';
+      }
+    });
   }
 }

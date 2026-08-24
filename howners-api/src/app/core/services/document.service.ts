@@ -125,13 +125,15 @@ export class DocumentService {
   }
 
   /**
-   * Obtenir l'icône pour un type MIME
+   * Classe Bootstrap Icons correspondant à un type MIME.
+   * mimeType peut être absent sur d'anciens documents : on retombe sur l'icône générique.
    */
-  getFileIcon(mimeType: string): string {
-    if (mimeType.startsWith('image/')) return '🖼️';
-    if (mimeType === 'application/pdf') return '📄';
-    if (mimeType.includes('word')) return '📝';
-    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
-    return '📎';
+  getFileIcon(mimeType?: string | null): string {
+    if (!mimeType) return 'bi-file-earmark';
+    if (mimeType.startsWith('image/')) return 'bi-file-earmark-image';
+    if (mimeType === 'application/pdf') return 'bi-file-earmark-pdf';
+    if (mimeType.includes('word')) return 'bi-file-earmark-word';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'bi-file-earmark-spreadsheet';
+    return 'bi-file-earmark';
   }
 }

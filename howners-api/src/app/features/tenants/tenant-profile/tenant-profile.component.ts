@@ -40,6 +40,13 @@ export class TenantProfileComponent implements OnInit {
     private notif: NotificationService
   ) {}
 
+  /** Ouvre le fil de discussion avec ce locataire. */
+  contact(): void {
+    if (this.tenant) {
+      this.router.navigate(['/messages', this.tenant.id]);
+    }
+  }
+
   ngOnInit(): void {
     const tenantId = this.route.snapshot.paramMap.get('id')!;
 

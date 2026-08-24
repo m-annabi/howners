@@ -98,5 +98,18 @@
         {{ loading ? 'Enregistrement...' : (isEditMode ? 'Mettre à jour' : 'Créer la location') }}
       </button>
     </div>
+
+    <!-- Suppression : à l'écart des actions du formulaire, jamais sur le détail. -->
+    <div class="danger-zone" *ngIf="isEditMode">
+      <div class="danger-zone__text">
+        <span class="danger-zone__title">Supprimer ce bail</span>
+        <span class="danger-zone__hint">
+          Le bail et son historique seront définitivement retirés. Cette action est irréversible.
+        </span>
+      </div>
+      <button type="button" class="danger-zone__btn" [disabled]="deleting" (click)="deleteRental()">
+        <i class="bi bi-trash"></i> {{ deleting ? 'Suppression…' : 'Supprimer' }}
+      </button>
+    </div>
   </form>
 </div>

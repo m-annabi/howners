@@ -756,6 +756,36 @@
 
 // ── Pages de liste (GESTION) : barre d'outils + tableau dense ──────────────
 // Styles partagés par biens / locations / contrats / états des lieux.
+// Bandeau « liste restreinte » : une page globale ouverte depuis un objet précis
+// (les paiements d'un bail, par exemple) doit dire sur quoi elle est filtrée.
+.hw-scope-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hw-space-3);
+  flex-wrap: wrap;
+  padding: var(--hw-space-3) var(--hw-space-4);
+  margin-bottom: var(--hw-space-3);
+  background: var(--hw-primary-50);
+  border: 1px solid var(--hw-primary-100);
+  border-radius: var(--hw-radius-xl);
+  font-size: var(--hw-fs-sm);
+  color: var(--hw-primary-700);
+
+  i { margin-right: var(--hw-space-2); color: var(--hw-primary-500); }
+
+  button {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: var(--hw-fs-sm);
+    font-weight: var(--hw-fw-medium);
+    color: var(--hw-primary-600);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
 .hw-list-toolbar {
   display: flex;
   align-items: center;

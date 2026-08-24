@@ -3,6 +3,12 @@
   [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Factures'}]">
 </app-page-header>
 
+<!-- Filtre hérité du détail d'une location : on dit d'où l'on vient et comment sortir -->
+<div *ngIf="rentalId" class="hw-scope-banner">
+  <span><i class="bi bi-funnel-fill"></i> Factures de cette location uniquement</span>
+  <button type="button" (click)="clearRentalFilter()">Voir toutes les factures</button>
+</div>
+
 <!-- Toolbar: filter chips + search -->
 <div *ngIf="!loading && invoices.length > 0" class="hw-list-toolbar">
   <app-quick-filters

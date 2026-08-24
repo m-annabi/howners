@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { InvoiceService } from '../../../core/services/invoice.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import {
@@ -30,14 +30,26 @@ export class InvoiceListComponent implements OnInit {
   statusColors = INVOICE_STATUS_COLORS;
   typeLabels = INVOICE_TYPE_LABELS;
 
+  /** Bail sur lequel la liste est restreinte (arrivée depuis un détail de location). */
+  rentalId: string | null = null;
+
   constructor(
     private invoiceService: InvoiceService,
     private notifications: NotificationService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.loadInvoices();
+    this.route.queryParams.subscribe(params => {
+      this.rentalId = params['rentalId'] || null;
+      this.loadInvoices();
+    });
+  }
+
+  /** Retire le filtre par bail et revient à toutes les factures. */
+  clearRentalFilter(): void {
+    this.router.navigate(['/invoices']);
   }
 
   get filters(): QuickFilter[] {
@@ -62,7 +74,11 @@ export class InvoiceListComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.invoiceService.getAll().subscribe({
+    const source = this.rentalId
+      ? this.invoiceService.getByRental(this.rentalId)
+      : this.invoiceService.getAll();
+
+    source.subscribe({
       next: (invoices) => {
         this.invoices = invoices;
         this.applyFilters();

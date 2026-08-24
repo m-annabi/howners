@@ -5,12 +5,17 @@
     justify-content: space-between;
     margin-bottom: var(--hw-space-3);
 
+    // Même micro-label que les autres panneaux du détail de location.
     h2 {
-      font-size: var(--hw-fs-lg);
       margin: 0;
+      font-size: var(--hw-fs-xs);
+      font-weight: var(--hw-fw-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--hw-gray-500);
 
       i {
-        color: var(--hw-primary-600);
+        color: var(--hw-accent-500);
         margin-right: var(--hw-space-2);
       }
     }

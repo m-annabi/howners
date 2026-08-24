@@ -6,6 +6,7 @@ import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.listing.Listing;
 import com.howners.gestion.domain.property.Property;
+import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.document.DocumentResponse;
@@ -443,5 +444,68 @@ class DocumentServiceTest {
         byte[] result = documentService.downloadDocument(docId);
 
         assertThat(result).isEqualTo("file-content".getBytes());
+    }
+
+    /**
+     * Les documents générés par l'application (quittance, mise en demeure…) portent
+     * à la fois property et rental, et sont déposés par le propriétaire. Le locataire
+     * doit pouvoir les télécharger.
+     */
+    @Test
+    void downloadDocument_rentalDocumentWithProperty_asTenant_shouldSucceed() throws IOException {
+        UUID docId = UUID.randomUUID();
+        Property property = Property.builder().id(UUID.randomUUID()).owner(ownerUser).name("Apt").build();
+        Rental rental = Rental.builder()
+                .id(UUID.randomUUID())
+                .property(property)
+                .tenant(currentUser)
+                .build();
+
+        Document doc = Document.builder()
+                .id(docId)
+                .fileName("quittance.pdf")
+                .fileKey("key")
+                .filePath("key")
+                .documentType(DocumentType.RECEIPT)
+                .property(property)
+                .rental(rental)
+                .uploader(ownerUser)
+                .build();
+
+        when(documentRepository.findById(docId)).thenReturn(Optional.of(doc));
+        when(storageService.downloadFile("key")).thenReturn("quittance".getBytes());
+
+        byte[] result = documentService.downloadDocument(docId);
+
+        assertThat(result).isEqualTo("quittance".getBytes());
+    }
+
+    @Test
+    void downloadDocument_rentalDocument_asUnrelatedUser_shouldThrow() {
+        UUID docId = UUID.randomUUID();
+        Property property = Property.builder().id(UUID.randomUUID()).owner(ownerUser).name("Apt").build();
+        Rental rental = Rental.builder()
+                .id(UUID.randomUUID())
+                .property(property)
+                .tenant(User.builder().id(UUID.randomUUID()).email("other@test.com")
+                        .passwordHash("hash").role(Role.TENANT).build())
+                .build();
+
+        Document doc = Document.builder()
+                .id(docId)
+                .fileName("quittance.pdf")
+                .fileKey("key")
+                .filePath("key")
+                .documentType(DocumentType.RECEIPT)
+                .property(property)
+                .rental(rental)
+                .uploader(ownerUser)
+                .build();
+
+        when(documentRepository.findById(docId)).thenReturn(Optional.of(doc));
+
+        assertThatThrownBy(() -> documentService.downloadDocument(docId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("not authorized");
     }
 }

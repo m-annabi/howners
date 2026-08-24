@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
@@ -33,11 +33,19 @@ export class OwnerProfileComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private fb: FormBuilder,
     private http: HttpClient,
     private ratingService: OwnerRatingService,
     private notif: NotificationService
   ) {}
+
+  /** Ouvre le fil de discussion avec ce propriétaire. */
+  contact(): void {
+    if (this.owner) {
+      this.router.navigate(['/messages', this.owner.id]);
+    }
+  }
 
   ngOnInit(): void {
     const ownerId = this.route.snapshot.paramMap.get('id')!;

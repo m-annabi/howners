@@ -3,6 +3,7 @@ import { DocumentService } from '../../../core/services/document.service';
 import {
   DocumentType,
   DOCUMENT_TYPE_LABELS,
+  UPLOADABLE_DOCUMENT_TYPES,
   UploadDocumentRequest
 } from '../../../core/models/document.model';
 
@@ -25,9 +26,9 @@ export class DocumentUploadComponent {
   // Enums et constantes pour le template
   DocumentType = DocumentType;
   documentTypeLabels = DOCUMENT_TYPE_LABELS;
-  documentTypes = Object.keys(DocumentType).map(key => ({
-    value: DocumentType[key as keyof typeof DocumentType],
-    label: DOCUMENT_TYPE_LABELS[DocumentType[key as keyof typeof DocumentType]]
+  documentTypes = UPLOADABLE_DOCUMENT_TYPES.map(type => ({
+    value: type,
+    label: DOCUMENT_TYPE_LABELS[type]
   }));
 
   constructor(private documentService: DocumentService) {}

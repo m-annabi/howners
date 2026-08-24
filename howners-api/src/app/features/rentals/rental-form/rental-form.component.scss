@@ -181,3 +181,54 @@
     }
   }
 }
+
+// Zone de suppression : séparée des actions du formulaire pour qu'on ne la
+// confonde jamais avec « Annuler ».
+.danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hw-space-4);
+  flex-wrap: wrap;
+  margin-top: var(--hw-space-6);
+  padding: var(--hw-space-4);
+  border: 1px solid rgba(166, 51, 46, 0.2);
+  border-radius: var(--hw-radius-xl);
+  background: var(--hw-danger-light);
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__title {
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-danger);
+  }
+
+  &__hint {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-700);
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    min-height: 40px;
+    padding: 0 var(--hw-space-4);
+    border: 1px solid var(--hw-danger);
+    border-radius: var(--hw-radius-lg);
+    background: transparent;
+    color: var(--hw-danger);
+    font-size: var(--hw-fs-sm);
+    font-weight: var(--hw-fw-medium);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover:not(:disabled) { background: var(--hw-danger); color: #fff; }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+}

@@ -1,6 +1,5 @@
 .hw-stepper {
   width: 100%;
-  overflow-x: auto;         // mobile : défile plutôt que de casser
   padding: var(--hw-space-2, 0.5rem) 0;
 }
 
@@ -84,4 +83,42 @@
     box-shadow: 0 0 0 4px var(--hw-primary-50, #eff6ff);
   }
   .hw-stepper__label { color: var(--hw-primary-700, #1d4ed8); font-weight: var(--hw-fw-semibold, 600); }
+}
+
+// --- Mobile : la frise bascule à la verticale ---
+// Six étapes côte à côte ne tiennent pas sous 640 px ; plutôt qu'un défilement
+// latéral (qu'on ne remarque pas et qui déborde du panneau), on empile.
+@media (max-width: 640px) {
+  .hw-stepper__track {
+    flex-direction: column;
+    min-width: 0;
+    align-items: stretch;
+  }
+
+  .hw-stepper__step {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .hw-stepper__marker-row {
+    flex-direction: column;
+    align-items: center;
+    width: auto;
+  }
+
+  .hw-stepper__connector {
+    width: 2px;
+    height: auto;
+    min-height: 0.75rem;
+    margin: 0.25rem 0;
+  }
+
+  .hw-stepper__labels {
+    padding: 0 0 0.9rem;
+    margin-top: 0.35rem;
+  }
+
+  .hw-stepper__step:last-child .hw-stepper__labels { padding-bottom: 0; }
 }

@@ -43,13 +43,23 @@ export class PaymentListComponent implements OnInit {
     private authService: AuthService
   ) {}
 
+  /** Bail sur lequel la liste est restreinte (arrivée depuis un détail de location). */
+  rentalId: string | null = null;
+
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       const f = params['filter'];
       if (f === 'late') this.selectedStatus = 'LATE';
       else if (Object.values(PaymentStatus).includes(f)) this.selectedStatus = f;
+
+      this.rentalId = params['rentalId'] || null;
+      this.loadPayments();
     });
-    this.loadPayments();
+  }
+
+  /** Retire le filtre par bail et revient à tous les paiements. */
+  clearRentalFilter(): void {
+    this.router.navigate(['/payments']);
   }
 
   get filters(): QuickFilter[] {
@@ -82,7 +92,11 @@ export class PaymentListComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.paymentService.getAll().subscribe({
+    const source = this.rentalId
+      ? this.paymentService.getByRental(this.rentalId)
+      : this.paymentService.getAll();
+
+    source.subscribe({
       next: (payments) => {
         this.payments = payments;
         this.applyFilters();

@@ -17,7 +17,9 @@ import { StepItem } from '../../../shared/components/stepper/stepper.component';
 @Component({
   selector: 'app-rental-detail',
   templateUrl: './rental-detail.component.html',
-  styleUrls: ['./rental-detail.component.scss']
+  // Les modales sont dans leur propre feuille : le budget CSS d'Angular est
+  // évalué par fichier, et la page seule frôlait déjà le plafond.
+  styleUrls: ['./rental-detail.component.scss', './rental-detail.modals.scss']
 })
 export class RentalDetailComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -47,6 +49,9 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
 
   // Confirm exit
   confirmExitLoading = false;
+
+  /** Gestion annuelle (révision IRL, régularisation des charges) : repliée par défaut. */
+  showAnnual = false;
 
   RentalStatus = RentalStatus;
   ContractStatus = ContractStatus;
@@ -102,7 +107,7 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
    */
   get onboardingSteps(): StepItem[] {
     const hasContract = this.contracts.length > 0;
-    const signed = this.contracts.some(c => c.status === ContractStatus.SIGNED);
+    const signed = this.hasSignedContract;
     const edlEntree = this.edls.some(e => e.type === EtatDesLieuxType.ENTREE);
     const active = this.rental?.status === RentalStatus.ACTIVE;
 
@@ -123,16 +128,37 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     }));
   }
 
-  /** Le bail est-il encore en cours d'installation (stepper pertinent) ? */
+  /**
+   * Le stepper n'a d'intérêt que pendant l'installation : dès que toutes les
+   * étapes sont franchies, il n'apprend plus rien et encombre la page.
+   */
   get showOnboarding(): boolean {
     const s = this.rental?.status;
-    return !!s && s !== RentalStatus.TERMINATED && s !== RentalStatus.CANCELLED
+    const inSetup = !!s && s !== RentalStatus.TERMINATED && s !== RentalStatus.CANCELLED
         && s !== RentalStatus.VACANT && s !== RentalStatus.LISTED;
+    return inSetup && this.onboardingSteps.some(step => step.state !== 'done');
   }
 
-  /** Le contrat de bail a-t-il été signé ? (signé ou bail devenu actif) */
+  /**
+   * Source unique de vérité : un contrat du bail porte-t-il une signature ?
+   *
+   * Le cycle est DRAFT → SENT → SIGNED → ACTIVE : un contrat ACTIVE a donc
+   * forcément été signé, et `signedAt` fait foi sur les baux repris en base.
+   */
+  get hasSignedContract(): boolean {
+    return this.contracts.some(c =>
+      !!c.signedAt || c.status === ContractStatus.SIGNED || c.status === ContractStatus.ACTIVE);
+  }
+
+  /**
+   * Le bail peut-il être considéré comme signé ?
+   *
+   * Plus large que `hasSignedContract` : le statut du bail sert de repli pour
+   * les locations reprises sans contrat en base — un bail actif ou terminé n'a
+   * pas pu le devenir sans signature.
+   */
   get contractSigned(): boolean {
-    return this.contracts.some(c => c.status === ContractStatus.SIGNED || c.status === ContractStatus.ACTIVE)
+    return this.hasSignedContract
         || this.rental?.status === RentalStatus.ACTIVE
         || this.rental?.status === RentalStatus.EXITING
         || this.rental?.status === RentalStatus.TERMINATED;
@@ -177,6 +203,32 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     const p = this.nextPayment;
     return !!p && (p.status === PaymentStatus.LATE
       || (p.status === PaymentStatus.PENDING && !!p.dueDate && new Date(p.dueDate) < new Date()));
+  }
+
+  /** Initiales pour l'avatar d'un interlocuteur (2 lettres max). */
+  private initials(name?: string): string {
+    return (name || '')
+      .split(/\s+/)
+      .filter(part => !!part)
+      .slice(0, 2)
+      .map(part => part[0].toUpperCase())
+      .join('');
+  }
+
+  // ── L'autre partie du bail : le locataire vu du propriétaire, et l'inverse.
+  // Un seul jeu d'accesseurs évite de dupliquer les deux cas dans le template.
+
+  get partyLabel(): string { return this.isOwner ? 'Locataire' : 'Propriétaire'; }
+  get partyId(): string | undefined { return this.isOwner ? this.rental?.tenantId : this.rental?.ownerId; }
+  get partyName(): string | undefined { return this.isOwner ? this.rental?.tenantName : this.rental?.ownerName; }
+  get partyInitials(): string { return this.initials(this.partyName); }
+
+  /**
+   * Fiche de la contrepartie : /tenants/:id côté propriétaire, /owners/:id côté
+   * locataire. C'est de là qu'on la contacte.
+   */
+  get partyRoute(): unknown[] {
+    return [this.isOwner ? '/tenants' : '/owners', this.partyId];
   }
 
   /** État des lieux d'entrée du bail, s'il existe. */
@@ -367,9 +419,15 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  viewPayments(): void { this.router.navigate(['/payments']); }
-  viewInvoices(): void { this.router.navigate(['/invoices']); }
-  viewStats(): void { this.router.navigate(['/financial']); }
+  // Les listes globales acceptent un filtre par bail : depuis un bail précis,
+  // on n'envoie pas le propriétaire sur l'historique de tout son portefeuille.
+  viewPayments(): void {
+    this.router.navigate(['/payments'], { queryParams: { rentalId: this.rental?.id } });
+  }
+
+  viewInvoices(): void {
+    this.router.navigate(['/invoices'], { queryParams: { rentalId: this.rental?.id } });
+  }
   goBack(): void {
     // /rentals redirige le locataire vers ce détail : retour vers Mon espace
     if (this.authService.hasRole('TENANT')) {

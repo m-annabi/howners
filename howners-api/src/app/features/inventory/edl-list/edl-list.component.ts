@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { EtatDesLieuxService } from '../../../core/services/etat-des-lieux.service';
+import { RentalService } from '../../rentals/rental.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Rental } from '../../../core/models/rental.model';
 import {
   EtatDesLieux,
   EtatDesLieuxType,
@@ -25,13 +28,57 @@ export class EdlListComponent implements OnInit {
   sortDir: 'asc' | 'desc' = 'desc';
   typeLabels = EDL_TYPE_LABELS;
 
+  // Création d'un état des lieux : elle part d'un bail, on le choisit ici.
+  canCreate = false;
+  showPicker = false;
+  rentals: Rental[] = [];
+  rentalsLoading = false;
+  rentalsError: string | null = null;
+  selectedRentalId = '';
+
   constructor(
     private edlService: EtatDesLieuxService,
+    private rentalService: RentalService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.canCreate = this.authService.hasRole('OWNER') || this.authService.hasRole('ADMIN');
     this.loadEdls();
+  }
+
+  openPicker(): void {
+    this.showPicker = true;
+    this.selectedRentalId = '';
+    if (this.rentals.length === 0) {
+      this.loadRentals();
+    }
+  }
+
+  closePicker(): void {
+    this.showPicker = false;
+  }
+
+  private loadRentals(): void {
+    this.rentalsLoading = true;
+    this.rentalsError = null;
+    // Un état des lieux se fait sur un bail occupé : les biens libres sont écartés.
+    this.rentalService.getRentals(0, 200).subscribe({
+      next: (page) => {
+        this.rentals = (page.content || []).filter(r => !!r.tenantId);
+        this.rentalsLoading = false;
+      },
+      error: () => {
+        this.rentalsError = 'Impossible de charger les locations';
+        this.rentalsLoading = false;
+      }
+    });
+  }
+
+  startEdl(): void {
+    if (!this.selectedRentalId) return;
+    this.router.navigate(['/inventory', 'new', this.selectedRentalId]);
   }
 
   private buildFilters(): void {

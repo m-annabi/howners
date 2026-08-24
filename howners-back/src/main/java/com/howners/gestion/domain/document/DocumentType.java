@@ -17,5 +17,7 @@ public enum DocumentType {
     EMPLOYMENT_CONTRACT,  // Contrat de travail
     PHOTOS,               // Photos
     MISE_EN_DEMEURE,      // Mise en demeure de payer
+    INSURANCE,            // Attestation d'assurance habitation
+    MAINTENANCE,          // Entretien chauffage (chaudière, pompe à chaleur, ramonage…)
     OTHER          // Autre
 }
