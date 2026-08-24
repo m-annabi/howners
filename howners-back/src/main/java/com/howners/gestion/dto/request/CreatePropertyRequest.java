@@ -82,5 +82,8 @@ public record CreatePropertyRequest(
 
         Boolean isFurnished,
 
-        PropertyCondition propertyCondition
+        PropertyCondition propertyCondition,
+
+        /** Équipements du bien (clés normalisées) — pré-cochés sur ses annonces. */
+        java.util.List<String> amenities
 ) {}

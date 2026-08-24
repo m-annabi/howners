@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ListingService } from '../../../core/services/listing.service';
 import { ListingPhotoService } from '../../../core/services/listing-photo.service';
 import { PropertyService } from '../../properties/property.service';
-import { Property } from '../../../core/models/property.model';
+import { Property, HeatingType } from '../../../core/models/property.model';
 import { ListingPhoto } from '../../../core/models/listing.model';
 import { ListingPhotoUploadComponent } from '../../../shared/components/listing-photo-upload/listing-photo-upload.component';
 import {
@@ -31,6 +31,8 @@ export class ListingFormComponent implements OnInit {
   predefinedRequirements = PREDEFINED_REQUIREMENTS;
   selectedAmenities = new Set<string>();
   selectedRequirements = new Set<string>();
+  /** Équipements pré-cochés automatiquement d'après le bien sélectionné (retirables). */
+  private autoAmenities = new Set<string>();
 
   // Photos
   listingPhotos: ListingPhoto[] = [];
@@ -64,8 +66,20 @@ export class ListingFormComponent implements OnInit {
     this.isEditMode = !!this.listingId;
 
     this.propertyService.getProperties().subscribe({
-      next: (page) => this.properties = page.content,
+      next: (page) => {
+        this.properties = page.content;
+        // Si un bien est déjà sélectionné (chargement direct), pré-coche ses équipements.
+        const current = this.form.get('propertyId')?.value;
+        if (!this.isEditMode && current) this.deriveAmenitiesFromProperty(current);
+      },
       error: () => {} // silent — dropdown stays empty
+    });
+
+    // À la sélection d'un bien, pré-cocher les équipements qu'il déclare. En édition,
+    // le patch initial est fait sans émettre d'événement pour ne pas écraser les
+    // équipements déjà enregistrés sur l'annonce.
+    this.form.get('propertyId')!.valueChanges.subscribe(id => {
+      if (id) this.deriveAmenitiesFromProperty(id);
     });
 
     if (this.isEditMode && this.listingId) {
@@ -82,7 +96,7 @@ export class ListingFormComponent implements OnInit {
             minStay: listing.minStay,
             maxStay: listing.maxStay,
             availableFrom: listing.availableFrom
-          });
+          }, { emitEvent: false }); // ne pas re-dériver : on garde les équipements enregistrés
 
           this.listingStatus = listing.status;
 
@@ -105,6 +119,39 @@ export class ListingFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  /**
+   * Pré-coche les équipements déductibles du bien sélectionné (parking, ascenseur,
+   * chauffage collectif). Les équipements déduits d'un bien précédemment choisi sont
+   * d'abord retirés ; l'utilisateur reste libre de décocher ou d'ajouter les autres.
+   */
+  private deriveAmenitiesFromProperty(propertyId: string): void {
+    const property = this.properties.find(p => p.id === propertyId);
+    if (!property) return;
+
+    // Retire les équipements auto-déduits du bien précédent (sans toucher aux choix manuels).
+    this.autoAmenities.forEach(k => this.selectedAmenities.delete(k));
+
+    const derived = new Set<string>();
+    // Équipements saisis sur la fiche du bien.
+    (property.amenities || []).forEach(k => derived.add(k));
+    // Équipements portés par des champs dédiés du bien.
+    if (property.hasParking) derived.add('parking');
+    if (property.hasElevator) derived.add('ascenseur');
+    if (property.heatingType === HeatingType.COLLECTIVE_GAS
+        || property.heatingType === HeatingType.COLLECTIVE_ELECTRIC
+        || property.heatingType === HeatingType.DISTRICT_HEATING) {
+      derived.add('chauffage_collectif');
+    }
+
+    derived.forEach(k => this.selectedAmenities.add(k));
+    this.autoAmenities = derived;
+  }
+
+  /** Vrai si l'équipement a été pré-coché automatiquement d'après le bien. */
+  isAutoAmenity(key: string): boolean {
+    return this.autoAmenities.has(key) && this.selectedAmenities.has(key);
   }
 
   toggleAmenity(key: string): void {

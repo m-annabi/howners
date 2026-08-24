@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Équipements du bien (clés normalisées, stockées en JSON texte comme les annonces).
+         Renseignés une fois sur la fiche du bien, ils sont pré-cochés à la création
+         d'une annonce pour ce bien (avec possibilité de les ajuster). -->
+    <changeSet id="100-property-amenities" author="claude">
+        <addColumn tableName="properties">
+            <column name="amenities" type="text"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="properties" columnName="amenities"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

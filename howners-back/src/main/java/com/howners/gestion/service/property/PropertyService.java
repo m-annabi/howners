@@ -103,6 +103,7 @@ public class PropertyService {
                 .acquisitionDate(request.acquisitionDate())
                 .landValue(request.landValue())
                 .notaryFees(request.notaryFees())
+                .amenities(toJson(request.amenities()))
                 .dpeRating(request.dpeRating())
                 .dpeDate(request.dpeDate())
                 .gesRating(request.gesRating())
@@ -179,6 +180,9 @@ public class PropertyService {
         if (request.notaryFees() != null) {
             property.setNotaryFees(request.notaryFees());
         }
+        if (request.amenities() != null) {
+            property.setAmenities(toJson(request.amenities()));
+        }
         if (request.dpeRating() != null) {
             property.setDpeRating(request.dpeRating());
         }
@@ -248,5 +252,15 @@ public class PropertyService {
         }
 
         return property;
+    }
+
+    /** Sérialise les équipements en JSON pour la colonne texte (null si vide). */
+    private static String toJson(java.util.List<String> values) {
+        if (values == null || values.isEmpty()) return null;
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(values);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

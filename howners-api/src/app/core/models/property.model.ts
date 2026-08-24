@@ -66,6 +66,7 @@ export interface Property {
   hasParking?: boolean;
   hasElevator?: boolean;
   isFurnished?: boolean;
+  amenities?: string[];
   propertyCondition?: PropertyCondition;
   currentMonthlyRent?: number;
   grossYieldPercent?: number;
@@ -100,6 +101,7 @@ export interface CreatePropertyRequest {
   hasParking?: boolean;
   hasElevator?: boolean;
   isFurnished?: boolean;
+  amenities?: string[];
   propertyCondition?: PropertyCondition;
 }
 
@@ -129,6 +131,7 @@ export interface UpdatePropertyRequest {
   hasParking?: boolean;
   hasElevator?: boolean;
   isFurnished?: boolean;
+  amenities?: string[];
   propertyCondition?: PropertyCondition;
 }
 
