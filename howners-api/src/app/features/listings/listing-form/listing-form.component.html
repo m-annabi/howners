@@ -102,6 +102,9 @@
       <!-- Équipements -->
       <div class="hw-card mb-4">
         <h5 class="form-section-title"><i class="bi bi-check2-square me-2"></i>Équipements</h5>
+        <p class="hw-text-muted hw-text-sm mb-2">
+          Certains équipements sont pré-cochés d'après le bien sélectionné. Ajustez-les si besoin.
+        </p>
         <div class="row g-2">
           <div *ngFor="let amenity of predefinedAmenities" class="col-6">
             <div class="form-check" (click)="toggleAmenity(amenity.key)" style="cursor: pointer;">
@@ -110,6 +113,8 @@
                      [id]="'amenity-' + amenity.key">
               <label class="form-check-label" [for]="'amenity-' + amenity.key" style="cursor: pointer;">
                 <i class="bi {{ amenity.icon }} me-1"></i>{{ amenity.label }}
+                <span *ngIf="isAutoAmenity(amenity.key)" class="hw-badge hw-badge--neutral ms-1"
+                      title="Renseigné sur la fiche du bien">du bien</span>
               </label>
             </div>
           </div>
