@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, Input, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, Output, EventEmitter, Input, AfterViewInit } from '@angular/core';
 import SignaturePad from 'signature_pad';
 
 @Component({
@@ -6,7 +6,7 @@ import SignaturePad from 'signature_pad';
   templateUrl: './signature-pad.component.html',
   styleUrls: ['./signature-pad.component.scss']
 })
-export class SignaturePadComponent implements OnInit, AfterViewInit {
+export class SignaturePadComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('signatureCanvas', { static: false }) signatureCanvas!: ElementRef<HTMLCanvasElement>;
   @Output() signatureChange = new EventEmitter<string>();
   @Input() disabled = false;
@@ -14,6 +14,7 @@ export class SignaturePadComponent implements OnInit, AfterViewInit {
   signaturePad!: SignaturePad;
   canvasWidth = 600;
   canvasHeight = 200;
+  private resizeObserver?: ResizeObserver;
 
   ngOnInit(): void {
     // Adjust canvas size for mobile
@@ -25,6 +26,34 @@ export class SignaturePadComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.initializeSignaturePad();
+
+    // Le pad vit souvent dans un dialogue masqué à l'initialisation : la vraie
+    // largeur du conteneur n'est connue qu'à l'ouverture (puis change en
+    // rotation d'écran). On adapte le canvas à son conteneur, sinon il déborde
+    // du dialogue sur mobile.
+    const parent = this.signatureCanvas.nativeElement.parentElement;
+    if (parent && typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.fitToContainer());
+      this.resizeObserver.observe(parent);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
+
+  private fitToContainer(): void {
+    const canvas = this.signatureCanvas.nativeElement;
+    const parent = canvas.parentElement;
+    if (!parent || !this.signaturePad) return;
+    const target = Math.min(Math.floor(parent.clientWidth), 600);
+    if (target > 0 && target !== canvas.width) {
+      // Redimensionner le canvas efface son contenu : on préserve le tracé.
+      const data = this.signaturePad.isEmpty() ? null : this.signaturePad.toDataURL('image/png');
+      canvas.width = target;
+      this.signaturePad.clear();
+      if (data) this.signaturePad.fromDataURL(data);
+    }
   }
 
   initializeSignaturePad(): void {

@@ -41,6 +41,7 @@
 
 .signature-canvas {
   display: block;
+  max-width: 100%; // jamais plus large que le dialogue, même avant le resize JS
   cursor: crosshair;
   touch-action: none;
   background: white;
