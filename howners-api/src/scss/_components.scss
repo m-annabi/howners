@@ -2,14 +2,25 @@
 // Bootstrap Overrides & Component Styles
 // ==========================================================================
 
-// --- Bootstrap Buttons (mapped to Trust palette) ---
+// --- Boutons `.btn-*` (héritage Bootstrap) ---
+// Bootstrap n'est PAS chargé dans ce projet : ces classes doivent porter leurs
+// vraies propriétés (les anciennes déclarations `--bs-*` étaient inertes et
+// laissaient les boutons sans fond ni bordure — ex. CTA landing illisible).
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-family: var(--hw-font-family);
   font-size: var(--hw-fs-base);
   font-weight: var(--hw-fw-medium);
+  border: 1px solid transparent;
   border-radius: var(--hw-radius-md);
   padding: 0.5rem 1rem;
+  min-height: 40px;
   letter-spacing: 0.005em;
+  cursor: pointer;
+  text-decoration: none;
   transition: background-color 0.15s ease, border-color 0.15s ease,
               color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
 
@@ -18,6 +29,7 @@
     box-shadow: 0 0 0 3px var(--hw-primary-100);
     outline: none;
   }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 
 .btn-lg {
@@ -28,80 +40,111 @@
 .btn-sm {
   font-size: var(--hw-fs-sm);
   padding: 0.35rem 0.75rem;
+  min-height: 0;
 }
 
 .btn-primary {
-  --bs-btn-bg: var(--hw-primary-600);
-  --bs-btn-border-color: var(--hw-primary-600);
-  --bs-btn-hover-bg: var(--hw-primary-700);
-  --bs-btn-hover-border-color: var(--hw-primary-700);
-  --bs-btn-active-bg: var(--hw-primary-800);
-  --bs-btn-active-border-color: var(--hw-primary-800);
-  --bs-btn-disabled-bg: var(--hw-primary-300);
-  --bs-btn-disabled-border-color: var(--hw-primary-300);
+  background: var(--hw-primary-600);
+  border-color: var(--hw-primary-600);
   color: #fff;
+
+  &:hover { background: var(--hw-primary-700); border-color: var(--hw-primary-700); color: #fff; }
+  &:active { background: var(--hw-primary-800); border-color: var(--hw-primary-800); }
+  &:disabled { background: var(--hw-primary-300); border-color: var(--hw-primary-300); }
 }
 
 .btn-outline-primary {
-  --bs-btn-color: var(--hw-primary-700);
-  --bs-btn-border-color: var(--hw-primary-200);
-  --bs-btn-hover-bg: var(--hw-primary-50);
-  --bs-btn-hover-border-color: var(--hw-primary-300);
-  --bs-btn-hover-color: var(--hw-primary-800);
-  --bs-btn-active-bg: var(--hw-primary-100);
-  --bs-btn-active-border-color: var(--hw-primary-300);
-  --bs-btn-active-color: var(--hw-primary-800);
+  background: transparent;
+  border-color: var(--hw-primary-200);
+  color: var(--hw-primary-700);
+
+  &:hover { background: var(--hw-primary-50); border-color: var(--hw-primary-300); color: var(--hw-primary-800); }
+  &:active { background: var(--hw-primary-100); }
 }
 
 .btn-secondary {
-  --bs-btn-bg: var(--hw-surface);
-  --bs-btn-border-color: var(--hw-gray-300);
-  --bs-btn-color: var(--hw-gray-800);
-  --bs-btn-hover-bg: var(--hw-gray-50);
-  --bs-btn-hover-border-color: var(--hw-gray-400);
-  --bs-btn-hover-color: var(--hw-gray-900);
-  --bs-btn-active-bg: var(--hw-gray-100);
-  --bs-btn-active-border-color: var(--hw-gray-400);
-  --bs-btn-active-color: var(--hw-gray-900);
+  background: var(--hw-surface);
+  border-color: var(--hw-gray-300);
+  color: var(--hw-gray-800);
+
+  &:hover { background: var(--hw-gray-50); border-color: var(--hw-gray-400); color: var(--hw-gray-900); }
+  &:active { background: var(--hw-gray-100); }
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  border-color: var(--hw-gray-300);
+  color: var(--hw-gray-700);
+
+  &:hover { background: var(--hw-gray-50); border-color: var(--hw-gray-400); color: var(--hw-gray-900); }
+  &:active { background: var(--hw-gray-100); }
 }
 
 .btn-success {
-  --bs-btn-bg: var(--hw-success);
-  --bs-btn-border-color: var(--hw-success);
-  --bs-btn-hover-bg: #245636;
-  --bs-btn-hover-border-color: #245636;
-  --bs-btn-active-bg: #1c4129;
-  --bs-btn-active-border-color: #1c4129;
+  background: var(--hw-success);
+  border-color: var(--hw-success);
+  color: #fff;
+
+  &:hover { background: #245636; border-color: #245636; color: #fff; }
+  &:active { background: #1c4129; border-color: #1c4129; }
 }
 
 .btn-danger {
-  --bs-btn-bg: var(--hw-danger);
-  --bs-btn-border-color: var(--hw-danger);
-  --bs-btn-hover-bg: #872925;
-  --bs-btn-hover-border-color: #872925;
+  background: var(--hw-danger);
+  border-color: var(--hw-danger);
+  color: #fff;
+
+  &:hover { background: #872925; border-color: #872925; color: #fff; }
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border-color: rgba(166, 51, 46, 0.35);
+  color: var(--hw-danger);
+
+  &:hover { background: var(--hw-danger-light); border-color: var(--hw-danger); color: var(--hw-danger); }
 }
 
 .btn-warning {
-  --bs-btn-bg: var(--hw-warning);
-  --bs-btn-border-color: var(--hw-warning);
-  --bs-btn-color: #fff;
-  --bs-btn-hover-bg: #8E6118;
-  --bs-btn-hover-border-color: #8E6118;
-  --bs-btn-hover-color: #fff;
+  background: var(--hw-warning);
+  border-color: var(--hw-warning);
+  color: #fff;
+
+  &:hover { background: #8E6118; border-color: #8E6118; color: #fff; }
+}
+
+.btn-link {
+  background: transparent;
+  border-color: transparent;
+  color: var(--hw-primary-600);
+
+  &:hover { color: var(--hw-primary-800); text-decoration: underline; }
+}
+
+// Croix de fermeture (modales) — Bootstrap la dessinait via background-image.
+.btn-close {
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  min-height: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--hw-gray-500);
+  cursor: pointer;
+
+  &::before { content: '\00d7'; }
+  &:hover { color: var(--hw-gray-900); }
 }
 
 // Accent gold — usage parcimonieux (CTA premium, mise en avant brand)
 .btn-accent {
-  --bs-btn-bg: var(--hw-accent-500);
-  --bs-btn-border-color: var(--hw-accent-500);
-  --bs-btn-color: var(--hw-primary-800);
-  --bs-btn-hover-bg: var(--hw-accent-600);
-  --bs-btn-hover-border-color: var(--hw-accent-600);
-  --bs-btn-hover-color: var(--hw-primary-800);
-  --bs-btn-active-bg: var(--hw-accent-700);
-  --bs-btn-active-border-color: var(--hw-accent-700);
-  --bs-btn-active-color: #fff;
+  background: var(--hw-accent-500);
+  border-color: var(--hw-accent-500);
+  color: var(--hw-primary-800);
   font-weight: var(--hw-fw-semibold);
+
+  &:hover { background: var(--hw-accent-600); border-color: var(--hw-accent-600); color: var(--hw-primary-800); }
+  &:active { background: var(--hw-accent-700); border-color: var(--hw-accent-700); color: #fff; }
 }
 
 // --- Bootstrap Cards — refined institutional look ---
@@ -736,7 +779,8 @@
   &__search {
     position: relative;
     flex: 0 1 340px;
-    min-width: 220px;
+    min-width: min(220px, 100%);
+    max-width: 100%;
     margin-left: auto;
 
     > i {

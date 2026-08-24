@@ -46,7 +46,11 @@
     gap: var(--hw-space-3);
     flex-wrap: wrap;
     margin-top: 2px;
+    min-width: 0;
     i { margin-right: 3px; }
+
+    // Un email long ne doit pas pousser la carte hors de l'écran mobile.
+    span { overflow-wrap: anywhere; }
   }
 
   &__chev { font-size: 0.85rem; }

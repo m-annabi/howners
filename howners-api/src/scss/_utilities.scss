@@ -71,6 +71,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--hw-space-2);
+  // Cible tactile : 40px minimum (WCAG/mobile), les variantes --sm y dérogent.
+  min-height: 40px;
   padding: var(--hw-space-2) var(--hw-space-4);
   font-family: var(--hw-font-family);
   font-size: var(--hw-fs-base);
@@ -122,6 +124,7 @@
   }
 
   &--sm {
+    min-height: 0;
     padding: var(--hw-space-1) var(--hw-space-3);
     font-size: var(--hw-fs-sm);
     i { font-size: var(--hw-fs-base); }
@@ -310,3 +313,7 @@
 .hw-gap-3 { gap: var(--hw-space-3); }
 .hw-gap-4 { gap: var(--hw-space-4); }
 .hw-gap-6 { gap: var(--hw-space-6); }
+
+// Masquage utilitaire (utilisé notamment pour les input[type=file] derrière
+// un label-bouton — sans lui, le contrôle natif reste visible et déborde).
+.d-none { display: none !important; }

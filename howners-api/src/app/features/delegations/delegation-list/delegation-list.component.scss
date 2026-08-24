@@ -27,9 +27,11 @@
     display: flex;
     gap: var(--hw-space-3);
     max-width: 480px;
+    flex-wrap: wrap; // mobile : le bouton passe sous le champ email
 
     input {
       flex: 1;
+      min-width: 0;
     }
   }
 
