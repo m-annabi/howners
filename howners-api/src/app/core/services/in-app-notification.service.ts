@@ -15,6 +15,7 @@ const ICON_MAP: Record<string, string> = {
   APPLICATION_REJECTED: 'bi-x-circle',
   SIGNATURE_REQUESTED:  'bi-pen',
   SIGNATURE_COMPLETED:  'bi-check2-circle',
+  DOCUMENT_SHARED:      'bi-file-earmark-arrow-down',
   RATING_RECEIVED:      'bi-star',
   SYSTEM:               'bi-info-circle',
   message:     'bi-chat-dots',

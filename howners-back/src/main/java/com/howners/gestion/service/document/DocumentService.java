@@ -44,6 +44,7 @@ public class DocumentService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final com.howners.gestion.service.notification.NotificationService notificationService;
 
     @org.springframework.beans.factory.annotation.Value("${howners.upload.max-documents-per-owner:500}")
     private long maxDocumentsPerOwner;
@@ -149,6 +150,26 @@ public class DocumentService {
         document = documentRepository.save(document);
 
         log.info("Document uploaded: {} by user {}", fileName, currentUser.getEmail());
+
+        // Notifier le locataire quand le propriétaire dépose un document sur son bail.
+        if (rental != null && rental.getTenant() != null
+                && !rental.getTenant().getId().equals(currentUserId)) {
+            try {
+                String docLabel = description != null && !description.isBlank()
+                        ? description : (fileName != null ? fileName : "un document");
+                notificationService.create(
+                        rental.getTenant().getId(),
+                        com.howners.gestion.domain.notification.NotificationType.DOCUMENT_SHARED,
+                        "Nouveau document reçu",
+                        currentUser.getFirstName() + " " + currentUser.getLastName()
+                                + " a partagé « " + docLabel + " » pour "
+                                + rental.getProperty().getName() + ".",
+                        "/rentals/" + rental.getId());
+            } catch (Exception e) {
+                log.error("Échec de la notification de partage de document au locataire (bail {}) : {}",
+                        rental.getId(), e.getMessage());
+            }
+        }
 
         return toResponse(document);
     }

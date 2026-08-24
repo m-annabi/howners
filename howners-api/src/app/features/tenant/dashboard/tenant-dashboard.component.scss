@@ -376,3 +376,51 @@
     line-height: 1.4;
   }
 }
+
+/* ══ Alertes documents / contrats reçus ══ */
+.tenant-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-2, 0.5rem);
+  margin-bottom: var(--hw-space-4, 1rem);
+}
+
+.tenant-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3, 0.75rem);
+  padding: var(--hw-space-3, 0.75rem) var(--hw-space-4, 1rem);
+  background: var(--hw-primary-50, #eff6ff);
+  border: 1px solid var(--hw-primary-200, #bfdbfe);
+  border-left: 4px solid var(--hw-primary, #2563eb);
+  border-radius: var(--hw-radius-lg, 12px);
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover { background: var(--hw-primary-100, #dbeafe); box-shadow: var(--hw-shadow-sm, 0 1px 3px rgba(0,0,0,.08)); }
+
+  &__icon {
+    flex: 0 0 auto;
+    width: 40px; height: 40px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: var(--hw-primary, #2563eb); color: #fff;
+    font-size: 1.1rem;
+  }
+  &__body { flex: 1 1 auto; min-width: 0; }
+  &__title { font-weight: var(--hw-fw-semibold, 600); color: var(--hw-primary-800, #1e3a8a); }
+  &__text { font-size: var(--hw-fs-sm, 0.875rem); color: var(--hw-text, #374151); }
+  &__cta {
+    flex: 0 0 auto; white-space: nowrap; font-weight: 600;
+    color: var(--hw-primary-700, #1d4ed8); font-size: var(--hw-fs-sm, 0.875rem);
+  }
+  &__dismiss {
+    flex: 0 0 auto; border: none; background: transparent; cursor: pointer;
+    color: var(--hw-text-muted, #6b7280); padding: 0.25rem; border-radius: 6px;
+    &:hover { background: rgba(0,0,0,0.06); color: var(--hw-text, #374151); }
+  }
+
+  @media (max-width: 560px) {
+    &__cta { display: none; }
+  }
+}

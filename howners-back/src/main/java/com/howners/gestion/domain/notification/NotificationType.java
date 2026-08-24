@@ -14,6 +14,7 @@ public enum NotificationType {
     MISE_EN_DEMEURE,
     REFERRAL_REWARD,
     RATING_RECEIVED,
+    DOCUMENT_SHARED,
     DPE_EXPIRY,
     INSURANCE_RENEWAL,
     LEASE_END,

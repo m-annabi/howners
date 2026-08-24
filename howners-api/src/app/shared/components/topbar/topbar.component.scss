@@ -223,7 +223,8 @@
     position: absolute;
     top: calc(100% + 6px);
     right: -8px;
-    width: 320px;
+    width: 420px;
+    max-width: calc(100vw - var(--hw-space-6));
     background: var(--hw-surface);
     border: var(--hw-border);
     border-radius: var(--hw-radius-lg);
@@ -231,9 +232,14 @@
     z-index: 1050;
     overflow: hidden;
 
-    @media (max-width: 480px) {
-      width: calc(100vw - var(--hw-space-8));
-      right: -50px;
+    // Mobile : panneau quasi plein écran, ancré au bord droit pour rester lisible.
+    @media (max-width: 560px) {
+      position: fixed;
+      top: 56px;
+      right: 8px;
+      left: 8px;
+      width: auto;
+      max-width: none;
     }
   }
 
@@ -252,7 +258,7 @@
   }
 
   &__notif-title {
-    font-size: var(--hw-fs-sm);
+    font-size: var(--hw-fs-base);
     font-weight: var(--hw-fw-semibold);
     color: var(--hw-gray-800);
   }
@@ -284,7 +290,7 @@
   }
 
   &__notif-list {
-    max-height: 360px;
+    max-height: min(70vh, 560px);
     overflow-y: auto;
 
     &::-webkit-scrollbar { width: 4px; }
