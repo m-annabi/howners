@@ -504,3 +504,182 @@
 .onboarding-card {
   margin: var(--hw-space-4, 1rem) 0;
 }
+
+// Locataire : bail en attente de signature
+.signature-pending {
+  margin: 0 0 var(--hw-space-6);
+  padding: var(--hw-space-6);
+  border: 1px solid var(--hw-primary-200);
+  background: var(--hw-primary-50);
+  border-radius: var(--hw-radius-md);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-2);
+    margin: 0 0 var(--hw-space-2);
+    font-family: var(--hw-font-display);
+    font-size: 1.2rem;
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-primary-800);
+  }
+
+  &__text {
+    margin: 0 0 var(--hw-space-4);
+    color: var(--hw-gray-600);
+    font-size: 0.925rem;
+  }
+
+  &__cta {
+    margin-top: var(--hw-space-4);
+  }
+}
+
+// En-tête de section avec lien « tout voir »
+.hub-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hw-space-3);
+
+  h2 { margin-bottom: var(--hw-space-3); }
+
+  &__link {
+    font-size: 0.8rem;
+    color: var(--hw-primary-600);
+    text-decoration: none;
+    font-weight: var(--hw-fw-medium);
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// Ligne « objet lié » (contrat, état des lieux)
+.hub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hw-space-3);
+  padding: var(--hw-space-3) var(--hw-space-4);
+  background: var(--hw-gray-50);
+  border: var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  margin-bottom: var(--hw-space-2);
+
+  &:last-child { margin-bottom: 0; }
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-3);
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  &__title {
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-gray-900);
+  }
+
+  &__meta {
+    font-size: 0.825rem;
+    color: var(--hw-gray-500);
+  }
+}
+
+.hub-tag {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--hw-radius-full);
+  font-size: 0.7rem;
+  font-weight: var(--hw-fw-medium);
+  background: var(--hw-gray-200);
+  color: var(--hw-gray-700);
+
+  &--ok {
+    background: #e3f5e9;
+    color: #1c7a45;
+  }
+}
+
+// Aperçu paiements
+.payment-summary {
+  margin-bottom: var(--hw-space-3);
+
+  &__block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: var(--hw-space-4);
+    border: var(--hw-border);
+    border-radius: var(--hw-radius-md);
+    background: var(--hw-gray-50);
+
+    &--late {
+      border-color: rgba(166, 51, 46, 0.3);
+      background: var(--hw-danger-light);
+    }
+
+    &--ok {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--hw-space-2);
+      color: #1c7a45;
+      i { font-size: 1.1rem; }
+    }
+  }
+
+  &__label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--hw-gray-500);
+    font-weight: var(--hw-fw-medium);
+  }
+
+  &__amount {
+    font-family: var(--hw-font-display);
+    font-size: 1.5rem;
+    font-weight: var(--hw-fw-semibold);
+    color: var(--hw-primary-800);
+
+    .payment-summary__block--late & { color: var(--hw-danger); }
+  }
+
+  &__due {
+    font-size: 0.825rem;
+    color: var(--hw-gray-600);
+  }
+}
+
+.payment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: var(--hw-space-3);
+    padding: var(--hw-space-2) 0;
+    border-bottom: 1px solid var(--hw-gray-100);
+    font-size: 0.875rem;
+
+    &:last-child { border-bottom: none; }
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--hw-gray-300);
+    flex-shrink: 0;
+
+    &--paid { background: #34c759; }
+    &--late { background: var(--hw-danger); }
+    &--pending { background: #ffa500; }
+  }
+
+  &__date { color: var(--hw-gray-600); min-width: 88px; }
+  &__status { color: var(--hw-gray-700); flex: 1; }
+  &__amount { font-weight: var(--hw-fw-semibold); color: var(--hw-gray-900); }
+}
