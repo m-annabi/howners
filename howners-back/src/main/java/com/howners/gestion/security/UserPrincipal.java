@@ -20,6 +20,7 @@ public class UserPrincipal implements UserDetails {
     private String password;
     private String role;
     private boolean enabled;
+    private int tokenVersion;
 
     public static UserPrincipal create(User user) {
         return new UserPrincipal(
@@ -27,7 +28,8 @@ public class UserPrincipal implements UserDetails {
             user.getEmail(),
             user.getPasswordHash(),
             user.getRole().name(),
-            user.getEnabled()
+            user.getEnabled(),
+            user.getTokenVersion() != null ? user.getTokenVersion() : 0
         );
     }
 

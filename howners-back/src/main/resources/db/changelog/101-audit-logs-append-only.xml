@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Intégrité / non-répudiation des logs d'audit : la table est écrite en INSERT seul par
+         l'application (AuditService), aucune mise à jour ni suppression légitime n'existe dans le
+         code. On rend audit_logs APPEND-ONLY au niveau base via un trigger qui refuse UPDATE/DELETE,
+         de sorte qu'une altération a posteriori (même avec un accès data direct) soit bloquée. -->
+    <changeSet id="101-audit-append-only" author="claude" runOnChange="true">
+        <sql splitStatements="false"><![CDATA[
+            CREATE OR REPLACE FUNCTION audit_logs_append_only() RETURNS trigger AS $$
+            BEGIN
+                RAISE EXCEPTION 'audit_logs est append-only : % interdit', TG_OP;
+            END;
+            $$ LANGUAGE plpgsql;
+        ]]></sql>
+        <sql splitStatements="false"><![CDATA[
+            DROP TRIGGER IF EXISTS audit_logs_no_mutation ON audit_logs;
+            CREATE TRIGGER audit_logs_no_mutation
+                BEFORE UPDATE OR DELETE ON audit_logs
+                FOR EACH ROW EXECUTE FUNCTION audit_logs_append_only();
+        ]]></sql>
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS audit_logs_no_mutation ON audit_logs;</sql>
+            <sql>DROP FUNCTION IF EXISTS audit_logs_append_only();</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

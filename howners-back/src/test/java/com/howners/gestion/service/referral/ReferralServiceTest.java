@@ -54,7 +54,7 @@ class ReferralServiceTest {
         newUser = User.builder().id(newUserId).email("c@d.test").firstName("Carl").lastName("Newman").build();
 
         // Mock auth context — getMySummary uses AuthService.getCurrentUserId() statically.
-        UserPrincipal principal = new UserPrincipal(referrerId, "a@b.test", "x", "OWNER", true);
+        UserPrincipal principal = new UserPrincipal(referrerId, "a@b.test", "x", "OWNER", true, 0);
         Authentication auth = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
                 .authenticated(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);

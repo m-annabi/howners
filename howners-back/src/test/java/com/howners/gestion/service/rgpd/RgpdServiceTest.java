@@ -74,7 +74,7 @@ class RgpdServiceTest {
                 .id(userId).email("jean@test.fr").firstName("Jean").lastName("Dupont")
                 .phone("0600000000").role(Role.TENANT).build();
 
-        UserPrincipal principal = new UserPrincipal(userId, "jean@test.fr", "x", "TENANT", true);
+        UserPrincipal principal = new UserPrincipal(userId, "jean@test.fr", "x", "TENANT", true, 0);
         Authentication auth = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
                 .authenticated(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);

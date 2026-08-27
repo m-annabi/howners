@@ -141,6 +141,27 @@ public class AuthService {
         return UserResponse.from(user);
     }
 
+    /**
+     * Révoque tous les jetons existants de l'utilisateur courant en incrémentant sa version de jeton.
+     * Après cet appel, le JWT ayant servi à l'appeler (et tout autre jeton actif) est refusé par le
+     * filtre : l'utilisateur doit se reconnecter. Utile en cas de suspicion de compromission.
+     */
+    @Transactional
+    public void logoutAllSessions() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
+            throw new BusinessException("User not authenticated");
+        }
+
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new BusinessException("User not found"));
+
+        user.setTokenVersion((user.getTokenVersion() == null ? 0 : user.getTokenVersion()) + 1);
+        userRepository.save(user);
+    }
+
     @Transactional
     public UserResponse updateCurrentUser(UpdateProfileRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

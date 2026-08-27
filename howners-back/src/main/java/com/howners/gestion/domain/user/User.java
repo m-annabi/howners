@@ -81,6 +81,13 @@ public class User {
     @Builder.Default
     private String stripeConnectStatus = "NONE";
 
+    // Version de jeton : incrémentée pour révoquer d'un coup tous les JWT existants de l'utilisateur
+    // (« déconnexion de toutes les sessions »). Le JWT embarque cette valeur ; le filtre la compare
+    // à celle en base et rejette tout jeton dont la version est périmée.
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private Integer tokenVersion = 0;
+
     public String getFullName() {
         return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");
     }

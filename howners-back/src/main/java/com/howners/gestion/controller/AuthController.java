@@ -37,4 +37,11 @@ public class AuthController {
     public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(authService.updateCurrentUser(request));
     }
+
+    /** Révoque toutes les sessions/jetons de l'utilisateur courant (déconnexion globale). */
+    @PostMapping("/logout-all")
+    public ResponseEntity<Void> logoutAllSessions() {
+        authService.logoutAllSessions();
+        return ResponseEntity.noContent().build();
+    }
 }

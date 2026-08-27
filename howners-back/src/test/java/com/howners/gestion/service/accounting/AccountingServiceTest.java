@@ -64,7 +64,7 @@ class AccountingServiceTest {
         FiscalActivity activity = FiscalActivity.builder().id(UUID.randomUUID()).owner(owner)
                 .startDate(LocalDate.of(2024, 1, 1)).build();
 
-        UserPrincipal principal = new UserPrincipal(ownerId, "o@t.fr", "x", "OWNER", true);
+        UserPrincipal principal = new UserPrincipal(ownerId, "o@t.fr", "x", "OWNER", true, 0);
         Authentication auth = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
                 .authenticated(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);
