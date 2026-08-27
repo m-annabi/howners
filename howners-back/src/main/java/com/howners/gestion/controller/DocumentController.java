@@ -11,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+
+import java.nio.charset.StandardCharsets;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -125,8 +128,15 @@ public class DocumentController {
 
             ByteArrayResource resource = new ByteArrayResource(data);
 
+            // Nom de fichier encodé (RFC 5987) : le nom d'origine vient du client et pouvait,
+            // concaténé brut, casser l'en-tête (guillemets/CR-LF) et injecter des directives.
+            String safeName = document.fileName() != null && !document.fileName().isBlank()
+                    ? document.fileName() : "document";
+            ContentDisposition disposition = ContentDisposition.attachment()
+                    .filename(safeName, StandardCharsets.UTF_8)
+                    .build();
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.fileName() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                     .contentType(MediaType.parseMediaType(document.mimeType()))
                     .contentLength(data.length)
                     .body(resource);

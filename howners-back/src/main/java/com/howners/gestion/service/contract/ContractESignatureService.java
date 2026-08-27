@@ -305,13 +305,15 @@ public class ContractESignatureService {
         if (rawToken == null || rawToken.isBlank()) {
             throw new InvalidTokenException("Token is missing", "INVALID_TOKEN");
         }
+        // Ne scanner QUE les demandes encore actives : la résolution d'un raw token compare
+        // BCrypt(coût 12) sur chaque ligne renvoyée. Inclure les statuts terminaux (SIGNED,
+        // DECLINED, EXPIRED), jamais purgés, ferait croître ce scan sans borne → DoS par
+        // amplification CPU non authentifiée. Un token dont la demande est terminale est de
+        // toute façon inexploitable et renvoie « token invalide ».
         List<SignatureRequestStatus> lookupStatuses = List.of(
                 SignatureRequestStatus.PENDING,
                 SignatureRequestStatus.SENT,
-                SignatureRequestStatus.VIEWED,
-                SignatureRequestStatus.SIGNED,
-                SignatureRequestStatus.DECLINED,
-                SignatureRequestStatus.EXPIRED
+                SignatureRequestStatus.VIEWED
         );
         return signatureRequestRepository.findActiveWithDetails(lookupStatuses).stream()
                 .filter(req -> tokenProvider.validateToken(rawToken, req.getAccessToken()))

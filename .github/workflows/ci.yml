@@ -156,8 +156,15 @@ jobs:
         # la saturer ; désormais : login GHCR (jeton éphémère du run), pull des
         # images :latest / :staging, redémarrage. FRONTEND_TAG=staging cible la
         # variante frontend construite avec le domaine du staging.
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         run: |
-          ssh ubuntu@51.44.0.177 "echo '${{ secrets.GITHUB_TOKEN }}' | sudo docker login ghcr.io -u '${{ github.actor }}' --password-stdin \
+          # Le jeton est transmis par STDIN du canal SSH à `docker login --password-stdin`,
+          # jamais interpolé dans la ligne de commande (ni argv de ssh sur le runner, ni
+          # commande distante) — évite son exposition via ps/accounting de processus.
+          printf '%s' "$GHCR_TOKEN" | ssh ubuntu@51.44.0.177 \
+            "sudo docker login ghcr.io -u '$GHCR_USER' --password-stdin \
             && cd ~/howners \
             && sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml pull backend frontend \
             && sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans \

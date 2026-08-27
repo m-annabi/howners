@@ -89,15 +89,17 @@ public class PublicContractController {
     }
 
     private String getClientIpAddress(HttpServletRequest request) {
+        // Cette IP est conservée comme preuve de signature : elle doit être fiable. Derrière un
+        // unique proxy de confiance (Caddy), l'IP réelle est la DERNIÈRE valeur de X-Forwarded-For
+        // (celle que Caddy ajoute) — prendre la première laisserait le signataire forger sa propre
+        // IP en envoyant un en-tête X-Forwarded-For/X-Real-IP arbitraire.
         String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("X-Real-IP");
+        if (ipAddress != null && ipAddress.contains(",")) {
+            String[] parts = ipAddress.split(",");
+            ipAddress = parts[parts.length - 1].trim();
         }
         if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
             ipAddress = request.getRemoteAddr();
-        }
-        if (ipAddress != null && ipAddress.contains(",")) {
-            ipAddress = ipAddress.split(",")[0].trim();
         }
         return ipAddress;
     }

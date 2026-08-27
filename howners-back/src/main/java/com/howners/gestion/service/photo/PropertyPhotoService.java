@@ -116,6 +116,7 @@ public class PropertyPhotoService {
      * Récupère toutes les photos d'un bien
      */
     public List<PropertyPhotoResponse> getPropertyPhotos(UUID propertyId) {
+        requireOwnership(propertyId);
         return photoRepository.findByPropertyIdOrderByDisplayOrderAsc(propertyId)
                 .stream()
                 .map(this::toResponse)
@@ -126,9 +127,24 @@ public class PropertyPhotoService {
      * Récupère la photo de couverture d'un bien
      */
     public PropertyPhotoResponse getPrimaryPhoto(UUID propertyId) {
+        requireOwnership(propertyId);
         return photoRepository.findByPropertyIdAndIsPrimaryTrue(propertyId)
                 .map(this::toResponse)
                 .orElse(null);
+    }
+
+    /**
+     * Vérifie que le bien appartient à l'utilisateur courant (ou admin). Les lectures de photos
+     * doivent appliquer le même contrôle de propriété que les écritures : sans lui, un bailleur
+     * pouvait lire les photos (et URLs présignées) des biens d'un autre en énumérant les UUID (IDOR).
+     */
+    private void requireOwnership(UUID propertyId) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property", "id", propertyId.toString()));
+        if (!property.getOwner().getId().equals(currentUserId) && !isAdmin(currentUserId)) {
+            throw new ForbiddenException("Vous n'êtes pas autorisé à consulter les photos de ce bien");
+        }
     }
 
     /**

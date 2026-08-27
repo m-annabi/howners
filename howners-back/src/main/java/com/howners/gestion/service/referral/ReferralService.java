@@ -73,7 +73,7 @@ public class ReferralService {
                     .status(ReferralStatus.PENDING)
                     .build();
             referralRepository.save(r);
-            log.info("Referral recorded — referrer={} referee={}", referrer.getEmail(), newUser.getEmail());
+            log.info("Referral recorded — referrer={} referee={}", referrer.getId(), newUser.getId());
         });
     }
 
@@ -168,7 +168,7 @@ public class ReferralService {
                 .status(ReferralStatus.PENDING)
                 .build();
         referralRepository.save(r);
-        log.info("Referral applied via code — referrer={} referee={}", referrer.getEmail(), currentUser.getEmail());
+        log.info("Referral applied via code — referrer={} referee={}", referrer.getId(), currentUser.getId());
     }
 
     private static String generateCode() {
