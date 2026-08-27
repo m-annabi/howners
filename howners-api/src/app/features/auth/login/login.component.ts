@@ -17,6 +17,10 @@ export class LoginComponent {
   loading = false;
   error: string | null = null;
   showPassword = false;
+  // Connexion refusée faute de vérification d'e-mail → on propose de renvoyer le lien.
+  unverified = false;
+  resendLoading = false;
+  resendDone = false;
 
   constructor(
     private fb: FormBuilder,
@@ -35,6 +39,8 @@ export class LoginComponent {
 
     this.loading = true;
     this.error = null;
+    this.unverified = false;
+    this.resendDone = false;
 
     this.authService.login(this.loginForm.value).pipe(
       switchMap(response => {
@@ -55,9 +61,22 @@ export class LoginComponent {
     ).subscribe({
       next: (destination) => this.router.navigate([destination]),
       error: (err) => {
-        this.error = err.error?.message || 'Login failed';
+        this.error = err.error?.message || 'La connexion a échoué';
+        this.unverified = /v[ée]rifi/i.test(this.error || '');
         this.loading = false;
       }
+    });
+  }
+
+  resendVerification(): void {
+    const email = this.loginForm.get('email')?.value;
+    if (!email || this.resendLoading || this.resendDone) {
+      return;
+    }
+    this.resendLoading = true;
+    this.authService.resendVerification(email).subscribe({
+      next: () => { this.resendLoading = false; this.resendDone = true; },
+      error: () => { this.resendLoading = false; this.resendDone = true; }
     });
   }
 }

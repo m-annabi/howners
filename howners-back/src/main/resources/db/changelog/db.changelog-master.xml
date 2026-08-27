@@ -106,5 +106,6 @@
     <include file="db/changelog/100-property-amenities.xml"/>
     <include file="db/changelog/101-audit-logs-append-only.xml"/>
     <include file="db/changelog/102-user-token-version.xml"/>
+    <include file="db/changelog/103-email-verification.xml"/>
 
 </databaseChangeLog>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Vérification d'e-mail à l'inscription : supprime l'oracle d'énumération de comptes
+         (l'inscription renvoie désormais une réponse générique et n'auto-connecte plus). Le lien
+         de vérification porte un token aléatoire ; seul son hash SHA-256 est stocké. -->
+    <changeSet id="103-email-verification" author="claude">
+        <addColumn tableName="users">
+            <column name="email_verified" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email_verification_token_hash" type="varchar(64)"/>
+            <column name="email_verification_expires_at" type="timestamp"/>
+        </addColumn>
+        <!-- Grandfather : les comptes déjà créés sont considérés vérifiés (ne pas les bloquer). -->
+        <update tableName="users">
+            <column name="email_verified" valueBoolean="true"/>
+        </update>
+        <createIndex tableName="users" indexName="idx_users_email_verification_token_hash">
+            <column name="email_verification_token_hash"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

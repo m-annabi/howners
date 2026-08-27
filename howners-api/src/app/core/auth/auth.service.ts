@@ -30,11 +30,22 @@ export class AuthService {
     this.loadUserFromStorage();
   }
 
-  register(request: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/register`, request)
-      .pipe(
-        tap(response => this.handleAuthResponse(response))
-      );
+  /**
+   * L'inscription n'auto-connecte plus : le compte doit être activé via le lien reçu par e-mail.
+   * La réponse est un simple message générique (aucun jeton, aucune info sur l'existence du compte).
+   */
+  register(request: RegisterRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/register`, request);
+  }
+
+  /** Confirme l'adresse à partir du token du lien e-mail. */
+  verifyEmail(token: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/verify-email`, { token });
+  }
+
+  /** Renvoie un lien de vérification (réponse générique). */
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/resend-verification`, { email });
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {

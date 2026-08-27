@@ -27,6 +27,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByStripeConnectAccountId(String stripeConnectAccountId);
 
+    Optional<User> findByEmailVerificationTokenHash(String emailVerificationTokenHash);
+
     @Query("SELECT DISTINCT r.tenant FROM Rental r WHERE r.property.owner.id = :ownerId AND r.tenant IS NOT NULL")
     List<User> findTenantsByOwnerId(@Param("ownerId") UUID ownerId);
 

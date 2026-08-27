@@ -1,12 +1,14 @@
 package com.howners.gestion.service.auth;
 
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.dto.email.GenericNotificationEmailData;
 import com.howners.gestion.dto.email.WelcomeOwnerEmailData;
 import com.howners.gestion.dto.request.LoginRequest;
 import com.howners.gestion.dto.request.RegisterRequest;
 import com.howners.gestion.dto.request.UpdateProfileRequest;
 import com.howners.gestion.domain.audit.AuditAction;
 import com.howners.gestion.domain.user.Role;
+import com.howners.gestion.dto.response.AuthMessageResponse;
 import com.howners.gestion.dto.response.AuthResponse;
 import com.howners.gestion.dto.response.UserResponse;
 import com.howners.gestion.service.email.EmailService;
@@ -25,6 +27,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.HexFormat;
 import java.util.UUID;
 
 @Service
@@ -46,13 +53,16 @@ public class AuthService {
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
 
-    @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        // Vérifier si l'email existe déjà
-        if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException("Email already exists");
-        }
+    private static final int VERIFICATION_TTL_HOURS = 24;
 
+    // Réponse neutre, strictement identique que l'adresse soit nouvelle, déjà prise, ou invalide :
+    // c'est ce qui supprime l'oracle d'énumération de comptes à l'inscription.
+    private static final AuthMessageResponse VERIFICATION_SENT_RESPONSE = new AuthMessageResponse(
+            "Si cette adresse peut être utilisée, un e-mail de vérification vient d'être envoyé. "
+                    + "Consultez votre boîte de réception pour activer votre compte.");
+
+    @Transactional
+    public AuthMessageResponse register(RegisterRequest request) {
         // Auto-inscription publique : seuls OWNER et TENANT sont autorisés. ADMIN et
         // CONCIERGE ne peuvent pas être auto-attribués (élévation de privilèges) —
         // ces rôles sont accordés par un administrateur, jamais via ce formulaire.
@@ -61,7 +71,27 @@ public class AuthService {
             throw new BadRequestException("Rôle d'inscription invalide : choisissez propriétaire ou locataire.");
         }
 
-        // Créer l'utilisateur
+        // Anti-énumération : la réponse est identique que l'adresse existe déjà ou non. On ne lève
+        // jamais « email déjà pris » et on n'auto-connecte plus — l'activation passe par l'e-mail.
+        if (userRepository.existsByEmail(request.email())) {
+            // Équilibrage grossier du temps de réponse : on effectue tout de même un hachage coûteux
+            // (comme sur le chemin nominal) pour ne pas transformer la latence en oracle d'existence.
+            passwordEncoder.encode(request.password());
+            // On prévient le véritable titulaire (l'attaquant, lui, ne reçoit pas cet e-mail).
+            try {
+                emailService.sendNotificationEmail(new GenericNotificationEmailData(
+                        request.email(), null,
+                        "Tentative d'inscription avec votre adresse — Howners",
+                        "Vous avez déjà un compte",
+                        "Une inscription vient d'être tentée avec cette adresse, qui possède déjà un compte Howners. "
+                                + "Si c'était vous, connectez-vous simplement. Sinon, vous pouvez ignorer ce message.",
+                        null, "Se connecter", frontendUrl + "/login", false));
+            } catch (Exception ignored) {
+            }
+            return VERIFICATION_SENT_RESPONSE;
+        }
+
+        String rawToken = generateVerificationToken();
         User user = User.builder()
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
@@ -70,6 +100,9 @@ public class AuthService {
                 .phone(request.phone())
                 .role(role)
                 .enabled(true)
+                .emailVerified(false)
+                .emailVerificationTokenHash(sha256Hex(rawToken))
+                .emailVerificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS))
                 .build();
 
         user = userRepository.save(user);
@@ -85,9 +118,53 @@ public class AuthService {
             // Never block registration on referral side-effects.
         }
 
-        // Welcome email pour les bailleurs (les tenants reçoivent un email distinct
-        // au moment où un owner les ajoute à une location).
-        if (request.role() == Role.OWNER) {
+        sendVerificationEmail(user, rawToken);
+
+        return VERIFICATION_SENT_RESPONSE;
+    }
+
+    public AuthResponse login(LoginRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new BusinessException("User not found"));
+
+        // Connexion refusée tant que l'adresse n'est pas vérifiée.
+        if (Boolean.FALSE.equals(user.getEmailVerified())) {
+            throw new BusinessException(
+                    "Veuillez vérifier votre adresse e-mail avant de vous connecter. Un lien vous a été envoyé.");
+        }
+
+        String token = tokenProvider.generateToken(authentication);
+        auditService.logAction(AuditAction.LOGIN, "User", user.getId());
+
+        return new AuthResponse(token, jwtExpiration, UserResponse.from(user));
+    }
+
+    /** Confirme l'adresse à partir du token reçu par e-mail : le compte devient utilisable. */
+    @Transactional
+    public AuthMessageResponse verifyEmail(String rawToken) {
+        String hash = sha256Hex(rawToken);
+        User user = userRepository.findByEmailVerificationTokenHash(hash)
+                .orElseThrow(() -> new BadRequestException("Lien de vérification invalide ou déjà utilisé."));
+
+        if (user.getEmailVerificationExpiresAt() == null
+                || user.getEmailVerificationExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Lien de vérification expiré. Demandez un nouveau lien.");
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailVerificationTokenHash(null);
+        user.setEmailVerificationExpiresAt(null);
+        userRepository.save(user);
+
+        // E-mail de bienvenue déplacé ici (une fois l'adresse confirmée) pour les bailleurs.
+        if (user.getRole() == Role.OWNER) {
             try {
                 emailService.sendWelcomeOwnerEmail(WelcomeOwnerEmailData.builder()
                         .recipientEmail(user.getEmail())
@@ -97,34 +174,58 @@ public class AuthService {
                         .pricingUrl(frontendUrl + "/billing/pricing")
                         .build());
             } catch (Exception ignored) {
-                // SmtpEmailService logs already — never block registration on email failure.
             }
         }
 
-        // Générer le token
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = tokenProvider.generateToken(authentication);
-
-        return new AuthResponse(token, jwtExpiration, UserResponse.from(user));
+        return new AuthMessageResponse("Votre adresse e-mail est vérifiée. Vous pouvez maintenant vous connecter.");
     }
 
-    public AuthResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+    /** Renvoie un lien de vérification. Réponse générique (aucune information sur l'existence du compte). */
+    @Transactional
+    public AuthMessageResponse resendVerification(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            if (Boolean.FALSE.equals(user.getEmailVerified())) {
+                String rawToken = generateVerificationToken();
+                user.setEmailVerificationTokenHash(sha256Hex(rawToken));
+                user.setEmailVerificationExpiresAt(LocalDateTime.now().plusHours(VERIFICATION_TTL_HOURS));
+                userRepository.save(user);
+                sendVerificationEmail(user, rawToken);
+            }
+        });
+        return VERIFICATION_SENT_RESPONSE;
+    }
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = tokenProvider.generateToken(authentication);
+    private String generateVerificationToken() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
+    }
 
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId())
-                .orElseThrow(() -> new BusinessException("User not found"));
-        auditService.logAction(AuditAction.LOGIN, "User", user.getId());
+    private String sha256Hex(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 unavailable", e);
+        }
+    }
 
-        return new AuthResponse(token, jwtExpiration, UserResponse.from(user));
+    private void sendVerificationEmail(User user, String rawToken) {
+        try {
+            emailService.sendNotificationEmail(new GenericNotificationEmailData(
+                    user.getEmail(),
+                    user.getFirstName(),
+                    "Vérifiez votre adresse e-mail — Howners",
+                    "Confirmez votre adresse e-mail",
+                    "Bienvenue sur Howners ! Pour activer votre compte, confirmez votre adresse en cliquant "
+                            + "sur le bouton ci-dessous. Ce lien expire dans " + VERIFICATION_TTL_HOURS + " heures.",
+                    null,
+                    "Vérifier mon adresse",
+                    frontendUrl + "/auth/verify-email?token=" + rawToken,
+                    false));
+        } catch (Exception e) {
+            // best-effort : ne jamais faire échouer l'inscription sur un envoi d'e-mail.
+        }
     }
 
     public UserResponse getCurrentUser() {
