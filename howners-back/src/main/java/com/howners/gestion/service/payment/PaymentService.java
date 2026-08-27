@@ -307,6 +307,15 @@ public class PaymentService {
             if (!"paid".equals(session.getPaymentStatus())) {
                 throw new BadRequestException("Le paiement n'a pas encore été confirmé par Stripe.");
             }
+            // La session doit correspondre AU paiement ciblé : sans ce lien, n'importe quelle
+            // session « paid » à laquelle l'appelant a accès validerait ce paiement (rejeu / paiement
+            // d'un loyer réglé par la session d'un autre). Le metadata payment_id est posé à la création.
+            String sessionPaymentId = session.getMetadata() != null ? session.getMetadata().get("payment_id") : null;
+            if (!paymentId.toString().equals(sessionPaymentId)) {
+                log.warn("Session Stripe {} non liée au paiement {} (metadata payment_id={})",
+                        sessionId, paymentId, sessionPaymentId);
+                throw new BadRequestException("Cette session de paiement ne correspond pas à ce règlement.");
+            }
 
             payment.setStatus(PaymentStatus.PAID);
             payment.setPaidAt(LocalDateTime.now());

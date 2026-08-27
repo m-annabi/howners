@@ -221,6 +221,14 @@ public class StartupConfigValidator implements ApplicationListener<ApplicationRe
             errors.add("STRIPE_SECRET_KEY is a TEST key (sk_test_…) — use a live key (sk_live_…) in production, "
                     + "or set STRIPE_ALLOW_TEST_KEY=true on a staging environment");
         }
+        // Sans STRIPE_WEBHOOK_SECRET, la vérification de signature des webhooks Stripe est
+        // « fail-open » (un payload forgé non signé serait accepté). Si Stripe est configuré,
+        // on EXIGE le secret webhook en prod pour ne pas démarrer dans cet état vulnérable.
+        String stripeWebhookSecret = environment.getProperty("stripe.webhook-secret");
+        if (!isBlank(stripeKey) && isBlank(stripeWebhookSecret)) {
+            errors.add("STRIPE_WEBHOOK_SECRET is missing while Stripe is configured — webhook signature "
+                    + "verification would fail open (forged events accepted). Set the webhook signing secret.");
+        }
 
         // JWT : longueur/format déjà validés ; on rejette en plus les valeurs d'exemple
         String jwtSecret = environment.getProperty("jwt.secret");
