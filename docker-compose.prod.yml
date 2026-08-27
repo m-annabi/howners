@@ -11,7 +11,9 @@ services:
   # Reverse proxy TLS — seul service exposé sur l'hôte (80/443).
   # Cf. Caddyfile à la racine. TLS Let's Encrypt automatique.
   caddy:
-    image: caddy:2-alpine
+    # Image tierce figée par digest (immuable) : `latest`/tags mobiles pouvaient tirer un binaire
+    # modifié au prochain `pull` sans revue. Mettre à jour le digest via une PR relue.
+    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: howners-caddy
     env_file: .env.prod
     ports:
@@ -100,7 +102,7 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:latest@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     container_name: howners-minio
     command: server /data --console-address ":9001"
     environment:
@@ -118,7 +120,7 @@ services:
       retries: 3
 
   minio-setup:
-    image: minio/mc:latest
+    image: minio/mc:latest@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
     container_name: howners-minio-setup
     depends_on:
       minio:
