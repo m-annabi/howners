@@ -60,7 +60,25 @@ export class GeolocationService {
   }
 
   /**
+   * État de la permission de géolocalisation (via l'API Permissions), sans jamais déclencher
+   * de prompt navigateur. Permet de détecter un refus déjà enregistré (session précédente
+   * incluse) avant de rappeler getCurrentPosition, dont le comportement en cas de refus déjà
+   * acté varie selon les navigateurs (échec immédiat, ou blocage jusqu'au timeout).
+   * 'unsupported' si l'API Permissions n'existe pas ou refuse de répondre pour 'geolocation'.
+   */
+  checkPermissionState(): Observable<PermissionState | 'unsupported'> {
+    const permissions = (navigator as any).permissions;
+    if (!permissions?.query) return of('unsupported');
+    return from((permissions.query({ name: 'geolocation' }) as Promise<PermissionStatus>)).pipe(
+      map(status => status.state),
+      catchError(() => of('unsupported' as const))
+    );
+  }
+
+  /**
    * Récupère la position via le navigateur puis la convertit en adresse (ville + CP).
+   * L'erreur renvoyée porte un `code` (1 = refusé, 2 = indisponible, 3 = expiré) repris de
+   * l'API native, pour permettre à l'appelant de distinguer un refus d'une simple panne.
    */
   detectUserLocation(): Observable<ReverseGeocodeResult> {
     if (!navigator.geolocation) {
@@ -78,9 +96,14 @@ export class GeolocationService {
         map(r => ({ ...r, latitude: pos.coords.latitude, longitude: pos.coords.longitude }))
       )),
       catchError(err => {
-        if (err?.code === 1) return throwError(() => new Error('Autorisation refusée. Activez la géolocalisation pour ce site.'));
-        if (err?.code === 2) return throwError(() => new Error('Position indisponible.'));
-        if (err?.code === 3) return throwError(() => new Error('La géolocalisation a expiré.'));
+        const withCode = (message: string, code: number) => {
+          const e: Error & { code?: number } = new Error(message);
+          e.code = code;
+          return throwError(() => e);
+        };
+        if (err?.code === 1) return withCode('Autorisation refusée. Activez la géolocalisation pour ce site dans les réglages de votre navigateur, puis réessayez.', 1);
+        if (err?.code === 2) return withCode('Position indisponible.', 2);
+        if (err?.code === 3) return withCode('La géolocalisation a expiré.', 3);
         return throwError(() => err);
       })
     );

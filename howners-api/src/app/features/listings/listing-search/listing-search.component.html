@@ -23,8 +23,8 @@
           class="search-hero__locate"
           [class.is-loading]="geolocating"
           (mousedown)="locateMe()"
-          title="Autour de ma position">
-          <i class="bi" [ngClass]="geolocating ? 'bi-arrow-clockwise' : 'bi-crosshair'"></i>
+          [title]="geoDenied ? 'Géolocalisation refusée — à activer dans les réglages de votre navigateur' : 'Autour de ma position'">
+          <i class="bi" [ngClass]="geolocating ? 'bi-arrow-clockwise' : (geoDenied ? 'bi-geo-alt-fill' : 'bi-crosshair')"></i>
         </button>
 
         <!-- Suggestions -->
