@@ -42,7 +42,7 @@
 
 <!-- Dense table -->
 <div *ngIf="!loading && !error && filteredReceipts.length > 0" class="hw-table-card">
-  <table class="hw-table receipt-table">
+  <table class="hw-table hw-table--stacked receipt-table">
     <thead>
       <tr>
         <th>Numéro</th>
@@ -57,13 +57,13 @@
       <tr *ngFor="let receipt of filteredReceipts"
           (click)="viewReceipt(receipt)">
         <td><div class="hw-table__strong">{{ receipt.receiptNumber }}</div></td>
-        <td>{{ receipt.propertyName }}</td>
-        <td>{{ receipt.tenantName }}</td>
-        <td class="receipt-table__col-period">
+        <td data-label="Bien">{{ receipt.propertyName }}</td>
+        <td data-label="Locataire">{{ receipt.tenantName }}</td>
+        <td class="receipt-table__col-period" data-label="Période">
           <div>{{ receipt.periodStart | date:'dd/MM/yyyy' }}</div>
           <div class="hw-table__muted">→ {{ receipt.periodEnd | date:'dd/MM/yyyy' }}</div>
         </td>
-        <td class="receipt-table__col-amount">
+        <td class="receipt-table__col-amount" data-label="Montant">
           <div class="hw-table__amount">{{ receipt.amount | number:'1.2-2' }} {{ receipt.currency }}</div>
         </td>
         <td class="hw-table__col-actions" (click)="$event.stopPropagation()">

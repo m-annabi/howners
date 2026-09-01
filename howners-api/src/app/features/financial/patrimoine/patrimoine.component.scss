@@ -68,3 +68,49 @@
     &--negatif { background: var(--hw-danger); }
   }
 }
+
+// Mobile : une fiche par bien avec les métriques en mini-grille 2 colonnes, plutôt qu'un
+// tableau à 8 colonnes à faire défiler horizontalement (illisible sur petit écran).
+@media (max-width: 640px) {
+  .patrimoine-table {
+    min-width: 0;
+
+    thead { display: none; }
+    tbody, tr, td { display: block; width: 100%; }
+
+    tr {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--hw-space-3) var(--hw-space-4);
+      padding: var(--hw-space-4);
+    }
+
+    tr + tr {
+      border-top: 1px solid var(--hw-gray-100);
+    }
+
+    th, td {
+      padding: 0 !important;
+      border-bottom: none !important;
+      white-space: normal;
+    }
+
+    td:first-child {
+      grid-column: 1 / -1;
+      padding-bottom: var(--hw-space-2) !important;
+      margin-bottom: 2px;
+      border-bottom: 1px dashed var(--hw-gray-100) !important;
+    }
+
+    td:not(:first-child)::before {
+      content: attr(data-label);
+      display: block;
+      font-size: var(--hw-fs-xs);
+      font-weight: var(--hw-fw-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--hw-gray-500);
+      margin-bottom: 2px;
+    }
+  }
+}

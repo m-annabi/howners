@@ -942,6 +942,68 @@
   }
 }
 
+// Mode empilé mobile pour .hw-table : chaque <tr> devient une fiche étiquette/valeur au lieu
+// d'imposer un défilement horizontal — adapté aux listes où une ligne = une entité qu'on ouvre
+// (paiements, factures…), pas aux tableaux de données denses à comparer colonne à colonne
+// (ceux-là gardent le défilement horizontal standard de .hw-table-card, qui reste inchangé).
+// Usage : ajouter la classe sur <table>, et un attribut data-label="…" sur chaque <td> à
+// étiqueter (la 1re colonne sert d'en-tête de fiche sans étiquette, .hw-table__col-actions non
+// plus). Voir payment-list/invoice-list/receipt-list/expense-list pour des exemples.
+@media (max-width: 640px) {
+  .hw-table--stacked {
+    thead { display: none; }
+
+    tbody, tr, td { display: block; width: 100%; }
+
+    tbody tr {
+      padding: var(--hw-space-3) var(--hw-space-4);
+    }
+
+    tbody tr + tr {
+      border-top: 1px solid var(--hw-gray-100);
+    }
+
+    tbody td {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 4px var(--hw-space-2);
+      padding: 4px 0 !important;
+      border-bottom: none !important;
+    }
+
+    tbody td::before {
+      content: attr(data-label);
+      margin-right: auto;
+      font-size: var(--hw-fs-xs);
+      font-weight: var(--hw-fw-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--hw-gray-500);
+      flex-shrink: 0;
+    }
+
+    // 1re colonne : en-tête de la fiche (numéro, nom…), pas une paire étiquette/valeur.
+    tbody td:first-child {
+      justify-content: flex-start;
+      padding-bottom: var(--hw-space-2) !important;
+      margin-bottom: var(--hw-space-2);
+      border-bottom: 1px dashed var(--hw-gray-100) !important;
+
+      &::before { content: none; margin-right: 0; }
+    }
+
+    // Colonne actions : pas d'étiquette, boutons en pied de fiche. Les boutons sont déjà
+    // visibles en permanence sur tactile (.row-actions, @media (hover: none)).
+    tbody td.hw-table__col-actions {
+      padding-top: var(--hw-space-2) !important;
+
+      &::before { content: none; margin-right: 0; }
+    }
+  }
+}
+
 // Actions en ligne — révélées au survol de la ligne, toujours visibles au tactile
 .row-actions {
   display: inline-flex;
