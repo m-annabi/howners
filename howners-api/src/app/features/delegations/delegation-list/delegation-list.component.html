@@ -39,7 +39,7 @@
       <i class="bi bi-people"></i>
       <p>Aucune délégation. Invitez un collaborateur pour partager votre compte en lecture seule.</p>
     </div>
-    <div *ngIf="!loading && mesDelegations.length > 0" class="hw-card" style="padding: 0; overflow: hidden;">
+    <div *ngIf="!loading && mesDelegations.length > 0" class="hw-card delegations-table-wrap" style="padding: 0;">
       <table class="delegations-table">
         <thead>
           <tr>
@@ -75,7 +75,7 @@
 
   <section class="delegations-section" *ngIf="delegationsRecues.length > 0">
     <h3>Comptes partagés avec moi</h3>
-    <div class="hw-card" style="padding: 0; overflow: hidden;">
+    <div class="hw-card delegations-table-wrap" style="padding: 0;">
       <table class="delegations-table">
         <thead>
           <tr>

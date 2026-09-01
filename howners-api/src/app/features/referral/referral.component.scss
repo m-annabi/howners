@@ -130,6 +130,10 @@
     text-align: center;
     padding: var(--hw-space-4) !important;
   }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .referral-stat {
@@ -166,6 +170,13 @@
 
   i { font-size: 2.5rem; display: block; margin-bottom: var(--hw-space-2); color: var(--hw-gray-400); }
   p { margin: 0; }
+}
+
+// Défilement horizontal sur petit écran (comme .hw-table-card) : `hidden` couperait des
+// colonnes du tableau au lieu de les rendre accessibles par scroll.
+.referral-table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .referral-table {

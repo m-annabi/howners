@@ -135,6 +135,8 @@
   &__header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    row-gap: var(--hw-space-2);
     gap: var(--hw-space-2);
     padding: var(--hw-space-3) var(--hw-space-5);
     border-bottom: 1px solid var(--hw-gray-100);
@@ -145,7 +147,7 @@
     color: var(--hw-primary-800);
 
     i { color: var(--hw-accent-600); font-size: 1rem; flex-shrink: 0; }
-    span { flex: 1; }
+    span { flex: 1; min-width: 0; }
   }
 
   &__header-link {

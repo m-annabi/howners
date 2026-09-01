@@ -25,6 +25,9 @@
 
   &__section {
     padding: var(--hw-space-5);
+    // Défilement horizontal sur petit écran plutôt que de laisser le tableau
+    // déborder de la carte (même logique que .hw-table-card).
+    overflow-x: auto;
 
     h3 {
       font-size: var(--hw-fs-lg);
@@ -34,6 +37,7 @@
 
   &__table {
     width: 100%;
+    min-width: 420px;
     border-collapse: collapse;
     font-size: var(--hw-fs-sm);
 

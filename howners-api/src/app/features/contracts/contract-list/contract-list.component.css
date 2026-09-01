@@ -146,6 +146,11 @@
   text-align: left;
   margin-bottom: 24px;
 }
+@media (max-width: 480px) {
+  .upgrade-modal__compare {
+    grid-template-columns: 1fr;
+  }
+}
 .upgrade-modal__col {
   padding: 14px 16px;
   background: var(--hw-gray-50);
