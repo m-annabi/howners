@@ -7,6 +7,7 @@ import { NotificationCenterService, ServerNotification } from './notification-ce
 import { StorageService } from './storage.service';
 
 const ICON_MAP: Record<string, string> = {
+  PAYMENT_DUE:          'bi-credit-card',
   PAYMENT_REMINDER:     'bi-credit-card',
   PAYMENT_OVERDUE:      'bi-exclamation-triangle',
   CONTRACT_EXPIRY:      'bi-file-earmark-text',

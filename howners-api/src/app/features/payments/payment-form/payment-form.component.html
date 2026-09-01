@@ -55,14 +55,17 @@
     </div>
 
     <div class="mb-3">
-      <label for="paymentMethod" class="form-label">Méthode de paiement</label>
+      <label for="paymentMethod" class="form-label">Méthode de paiement attendue</label>
       <select id="paymentMethod" class="form-select" formControlName="paymentMethod">
         <option value="BANK_TRANSFER">Virement bancaire</option>
-        <option value="CARD">Carte bancaire</option>
         <option value="CHECK">Chèque</option>
         <option value="CASH">Espèces</option>
-        <option value="STRIPE">Stripe</option>
+        <option value="OTHER">Autre</option>
       </select>
+      <div class="form-text">
+        Information indicative pour le locataire. Le paiement carte en ligne, s'il est activé,
+        reste disponible indépendamment de ce choix (réglages dans votre profil).
+      </div>
     </div>
 
     <div class="d-flex gap-2">

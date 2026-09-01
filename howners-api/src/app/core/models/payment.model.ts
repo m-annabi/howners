@@ -32,6 +32,8 @@ export interface Payment {
   relanceNiveau: number;
   derniereRelanceLe?: string;
   createdAt: string;
+  paymentInstructions?: string;
+  onlinePaymentAvailable: boolean;
 }
 
 export interface CreatePaymentRequest {

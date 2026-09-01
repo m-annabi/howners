@@ -27,9 +27,14 @@ public record PaymentResponse(
         Integer relanceNiveau,
         LocalDateTime derniereRelanceLe,
         String miseEnDemeureNumero,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String paymentInstructions,
+        boolean onlinePaymentAvailable
 ) {
     public static PaymentResponse from(Payment p) {
+        var owner = p.getRental().getProperty().getOwner();
+        boolean onlinePaymentAvailable = Boolean.TRUE.equals(owner.getAcceptOnlinePayments())
+                && "COMPLETED".equals(owner.getStripeConnectStatus());
         return new PaymentResponse(
                 p.getId(),
                 p.getRental().getId(),
@@ -48,7 +53,9 @@ public record PaymentResponse(
                 p.getRelanceNiveau(),
                 p.getDerniereRelanceLe(),
                 p.getMiseEnDemeureNumero(),
-                p.getCreatedAt()
+                p.getCreatedAt(),
+                owner.getPaymentInstructions(),
+                onlinePaymentAvailable
         );
     }
 }

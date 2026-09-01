@@ -93,6 +93,18 @@ public class User {
     @Builder.Default
     private String stripeConnectStatus = "NONE";
 
+    // Coordonnées de paiement du bailleur (IBAN/RIB en texte libre), affichées au locataire
+    // pour régler son loyer directement, hors plateforme.
+    @Column(name = "payment_instructions", columnDefinition = "TEXT")
+    private String paymentInstructions;
+
+    // Active explicitement le paiement carte en ligne (Stripe Connect direct charge) pour ses
+    // locations. Reste à false même une fois l'onboarding Connect complété : c'est le bailleur
+    // qui choisit, pas un effet de bord de la complétion Connect.
+    @Column(name = "accept_online_payments", nullable = false)
+    @Builder.Default
+    private Boolean acceptOnlinePayments = false;
+
     // Version de jeton : incrémentée pour révoquer d'un coup tous les JWT existants de l'utilisateur
     // (« déconnexion de toutes les sessions »). Le JWT embarque cette valeur ; le filtre la compare
     // à celle en base et rejette tout jeton dont la version est périmée.

@@ -40,6 +40,17 @@
     </div>
   </div>
 
+  <div *ngIf="showPaymentInstructions" class="hw-alert hw-alert--info mb-4">
+    <i class="bi bi-info-circle-fill"></i>
+    <div>
+      <div><strong>Ce loyer se règle directement auprès de votre propriétaire</strong> (pas de paiement en ligne sur la plateforme).</div>
+      <div *ngIf="payment.paymentInstructions" style="white-space: pre-line; margin-top: 6px;">{{ payment.paymentInstructions }}</div>
+      <div *ngIf="!payment.paymentInstructions" style="margin-top: 6px;">
+        Rapprochez-vous de votre propriétaire pour connaître le mode de règlement souhaité.
+      </div>
+    </div>
+  </div>
+
   <div class="d-flex gap-2 flex-wrap">
     <button *ngIf="canPay()" class="hw-btn hw-btn--primary" (click)="payNow()" [disabled]="paying">
       <i class="bi bi-credit-card"></i>

@@ -99,10 +99,17 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
     return this.payment?.status === PaymentStatus.PENDING || this.payment?.status === PaymentStatus.LATE;
   }
 
-  /** Le locataire (payeur) peut régler en ligne un loyer non encore payé. */
+  /** Le locataire (payeur) peut régler en ligne un loyer non encore payé, si le propriétaire a activé le paiement carte. */
   canPay(): boolean {
-    if (this.isOwner) return false;
+    if (this.isOwner || !this.payment?.onlinePaymentAvailable) return false;
     return this.payment?.status === PaymentStatus.PENDING || this.payment?.status === PaymentStatus.LATE;
+  }
+
+  /** Le locataire doit régler hors plateforme (déclaratif) : on lui affiche les coordonnées du propriétaire. */
+  get showPaymentInstructions(): boolean {
+    if (this.isOwner || !this.payment) return false;
+    const pending = this.payment.status === PaymentStatus.PENDING || this.payment.status === PaymentStatus.LATE;
+    return pending && !this.payment.onlinePaymentAvailable;
   }
 
   payNow(): void {

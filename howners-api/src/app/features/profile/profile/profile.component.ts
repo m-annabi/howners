@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, of } from 'rxjs';
 import { takeUntil, finalize, first, filter, catchError } from 'rxjs/operators';
 import { TenantService } from '../../../core/services/tenant.service';
@@ -7,6 +8,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { TenantRatingService } from '../../../core/services/tenant-rating.service';
 import { OwnerRatingService } from '../../../core/services/owner-rating.service';
+import { StripeConnectService, StripeConnectStatus } from '../../../core/services/stripe-connect.service';
 import { User } from '../../../core/models/user.model';
 
 @Component({
@@ -18,6 +20,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   profileForm: FormGroup;
+  paymentSettingsForm: FormGroup;
   user: User | null = null;
   loading = false;
   saving = false;
@@ -27,13 +30,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
   averageOverall = 0;
   readonly stars = [1, 2, 3, 4, 5];
 
+  // Réglages de paiement (bailleur uniquement) : coordonnées déclaratives + activation carte en ligne.
+  connectStatus: StripeConnectStatus | null = null;
+  loadingConnect = false;
+  startingOnboarding = false;
+  savingPaymentSettings = false;
+
   constructor(
     private fb: FormBuilder,
     private tenantService: TenantService,
     private authService: AuthService,
     private notificationService: NotificationService,
     private tenantRatingService: TenantRatingService,
-    private ownerRatingService: OwnerRatingService
+    private ownerRatingService: OwnerRatingService,
+    private stripeConnectService: StripeConnectService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.profileForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -46,6 +58,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
       city: [''],
       country: ['']
     });
+
+    this.paymentSettingsForm = this.fb.group({
+      paymentInstructions: ['', Validators.maxLength(2000)],
+      acceptOnlinePayments: [false]
+    });
+  }
+
+  get isOwner(): boolean {
+    return this.user?.role === 'OWNER';
   }
 
   ngOnInit(): void {
@@ -58,6 +79,98 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.isTenant = user?.role === 'TENANT';
       this.loadProfile();
       this.loadRatings(user!.role);
+      if (user?.role === 'OWNER') {
+        this.handleStripeConnectReturn();
+        this.loadConnectStatus();
+      }
+    });
+  }
+
+  /** Retour d'onboarding Stripe Connect (?stripe-connect=return|refresh|not-configured). */
+  private handleStripeConnectReturn(): void {
+    const status = this.route.snapshot.queryParamMap.get('stripe-connect');
+    if (!status) return;
+
+    if (status === 'return') {
+      this.notificationService.success('Compte Stripe mis à jour. Vérification du statut…');
+    } else if (status === 'refresh') {
+      this.notificationService.info('Onboarding Stripe interrompu — vous pouvez le reprendre.');
+    } else if (status === 'not-configured') {
+      this.notificationService.error('Le paiement en ligne n\'est pas encore configuré sur la plateforme.');
+    }
+    // Nettoie l'URL pour ne pas re-déclencher le message au prochain rafraîchissement.
+    this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+  }
+
+  loadConnectStatus(): void {
+    this.loadingConnect = true;
+    this.stripeConnectService.getStatus().pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.loadingConnect = false)
+    ).subscribe({
+      next: (status) => {
+        this.connectStatus = status;
+        this.paymentSettingsForm.patchValue({
+          paymentInstructions: status.paymentInstructions || '',
+          acceptOnlinePayments: status.acceptOnlinePayments
+        });
+      },
+      error: () => {
+        this.notificationService.error('Erreur lors du chargement du statut de paiement en ligne');
+      }
+    });
+  }
+
+  get connectBadgeClass(): string {
+    switch (this.connectStatus?.status) {
+      case 'COMPLETED': return 'hw-badge--success';
+      case 'PENDING': return 'hw-badge--warning';
+      default: return 'hw-badge--secondary';
+    }
+  }
+
+  get connectStatusLabel(): string {
+    switch (this.connectStatus?.status) {
+      case 'COMPLETED': return 'Compte vérifié';
+      case 'PENDING': return 'Vérification en cours';
+      default: return 'Non connecté';
+    }
+  }
+
+  startOnboarding(): void {
+    this.startingOnboarding = true;
+    this.stripeConnectService.startOnboarding().pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.startingOnboarding = false)
+    ).subscribe({
+      next: (status) => {
+        if (status.onboardingUrl) {
+          window.location.href = status.onboardingUrl;
+        } else {
+          this.notificationService.error('Impossible de démarrer l\'onboarding Stripe');
+        }
+      },
+      error: (err) => {
+        this.notificationService.error(err.error?.message || 'Erreur lors du démarrage de l\'onboarding Stripe');
+      }
+    });
+  }
+
+  onSubmitPaymentSettings(): void {
+    if (this.paymentSettingsForm.invalid) return;
+
+    this.savingPaymentSettings = true;
+    this.stripeConnectService.updatePaymentSettings(this.paymentSettingsForm.value).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.savingPaymentSettings = false)
+    ).subscribe({
+      next: (status) => {
+        this.connectStatus = status;
+        this.notificationService.success('Réglages de paiement enregistrés');
+      },
+      error: (err) => {
+        this.notificationService.error(err.error?.message || 'Erreur lors de l\'enregistrement des réglages de paiement');
+      }
     });
   }
 

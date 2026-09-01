@@ -1,6 +1,7 @@
 package com.howners.gestion.domain.notification;
 
 public enum NotificationType {
+    PAYMENT_DUE,
     PAYMENT_REMINDER,
     CONTRACT_EXPIRY,
     APPLICATION_RECEIVED,
