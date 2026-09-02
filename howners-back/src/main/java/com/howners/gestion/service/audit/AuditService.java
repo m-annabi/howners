@@ -100,11 +100,8 @@ public class AuditService {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 HttpServletRequest request = attrs.getRequest();
-                String xForwardedFor = request.getHeader("X-Forwarded-For");
-                if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                    return xForwardedFor.split(",")[0].trim();
-                }
-                return request.getRemoteAddr();
+                // Dernière valeur de X-Forwarded-For (non forgeable par l'appelant) — cf. ClientIp.
+                return com.howners.gestion.util.ClientIp.resolve(request);
             }
         } catch (Exception e) {
             // No request context

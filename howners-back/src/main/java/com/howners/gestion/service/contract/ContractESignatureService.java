@@ -155,7 +155,7 @@ public class ContractESignatureService {
 
         // 4. Créer la demande de signature chez le provider
         ESignatureProvider provider = providerFactory.getProvider();
-        String returnUrl = frontendUrl + "/contracts/sign/complete?token=" + rawToken;
+        String returnUrl = frontendUrl + "/sign/complete?token=" + rawToken;
 
         ESignatureRequest esignRequest = ESignatureRequest.builder()
                 .documentName("Contrat_" + contract.getContractNumber() + ".pdf")
@@ -803,7 +803,7 @@ public class ContractESignatureService {
             String rawToken = tokenPair[0];
             String hashedToken = tokenPair[1];
 
-            String returnUrl = frontendUrl + "/contracts/sign/complete?token=" + rawToken;
+            String returnUrl = frontendUrl + "/sign/complete?token=" + rawToken;
 
             ESignatureRequest esignRequest = ESignatureRequest.builder()
                     .documentName("Contrat_" + contract.getContractNumber() + ".pdf")

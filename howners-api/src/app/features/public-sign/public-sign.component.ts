@@ -80,8 +80,9 @@ export class PublicSignComponent implements OnInit {
     this.signing = true;
     this.error = null;
 
-    // URL de retour après signature
-    const returnUrl = `${window.location.origin}/contracts/sign/complete?token=${this.token}`;
+    // URL de retour après signature : page publique (le module /contracts est derrière
+    // AuthGuard — un retour DocuSign non connecté y tombait en 404/login).
+    const returnUrl = `${window.location.origin}/sign/complete?token=${this.token}`;
 
     this.publicContractService.getSigningRedirect(this.token, returnUrl).subscribe({
       next: (response: SigningRedirectResponse) => {

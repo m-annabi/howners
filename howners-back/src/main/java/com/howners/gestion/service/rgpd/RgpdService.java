@@ -416,8 +416,8 @@ public class RgpdService {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 HttpServletRequest request = attrs.getRequest();
-                String xff = request.getHeader("X-Forwarded-For");
-                return (xff != null && !xff.isEmpty()) ? xff.split(",")[0].trim() : request.getRemoteAddr();
+                // Dernière valeur de X-Forwarded-For (non forgeable par l'appelant) — cf. ClientIp.
+                return com.howners.gestion.util.ClientIp.resolve(request);
             }
         } catch (Exception e) {
             // No request context
