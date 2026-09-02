@@ -161,8 +161,8 @@
 
         <div class="tenant-panel__divider"></div>
 
-        <a routerLink="/receipts" class="tenant-panel__footer-link">
-          <i class="bi bi-file-earmark-check"></i> Toutes mes quittances
+        <a routerLink="/payments" class="tenant-panel__footer-link">
+          <i class="bi bi-file-earmark-check"></i> Mes paiements et quittances
         </a>
       </div>
 
@@ -173,8 +173,7 @@
       <span class="tenant-quicklinks__label">Accès rapides</span>
       <nav class="tenant-quicklinks__nav">
         <a routerLink="/listings"><i class="bi bi-search"></i> Rechercher</a>
-        <a routerLink="/payments"><i class="bi bi-credit-card"></i> Paiements</a>
-        <a routerLink="/receipts"><i class="bi bi-file-earmark-check"></i> Quittances</a>
+        <a routerLink="/payments"><i class="bi bi-credit-card"></i> Mes paiements</a>
         <a routerLink="/messages">
           <i class="bi bi-chat-dots"></i> Messages
           <span *ngIf="unreadMessages > 0" class="tenant-quicklinks__badge">{{ unreadMessages }}</span>

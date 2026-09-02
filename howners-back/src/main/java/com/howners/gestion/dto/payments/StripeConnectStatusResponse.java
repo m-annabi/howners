@@ -5,5 +5,9 @@ public record StripeConnectStatusResponse(
         String status,
         String onboardingUrl,
         String paymentInstructions,
-        boolean acceptOnlinePayments
+        boolean acceptOnlinePayments,
+        /** Jour d'envoi des quittances (null = immédiat). */
+        Integer receiptSendDay,
+        /** Commission plateforme (%) appliquée aux paiements carte de ce bailleur. */
+        java.math.BigDecimal platformFeePercent
 ) {}

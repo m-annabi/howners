@@ -9,11 +9,16 @@ export interface StripeConnectStatus {
   onboardingUrl: string | null;
   paymentInstructions: string | null;
   acceptOnlinePayments: boolean;
+  /** Jour d'envoi des quittances (1-28) ; null = envoi immédiat à la confirmation du paiement. */
+  receiptSendDay: number | null;
+  /** Commission plateforme (%) sur les paiements carte. */
+  platformFeePercent: number | null;
 }
 
 export interface UpdatePaymentSettingsRequest {
   paymentInstructions: string;
   acceptOnlinePayments: boolean;
+  receiptSendDay: number | null;
 }
 
 @Injectable({

@@ -40,6 +40,7 @@ import java.util.UUID;
 public class StripeConnectService {
 
     private final UserRepository userRepository;
+    private final com.howners.gestion.service.payment.PlatformFeeService platformFeeService;
 
     @Value("${stripe.api-key:}")
     private String stripeApiKey;
@@ -58,7 +59,8 @@ public class StripeConnectService {
             userRepository.save(user);
             return new StripeConnectStatusResponse(false, "NONE",
                     frontendUrl + "/profile?stripe-connect=not-configured",
-                    user.getPaymentInstructions(), Boolean.TRUE.equals(user.getAcceptOnlinePayments()));
+                    user.getPaymentInstructions(), Boolean.TRUE.equals(user.getAcceptOnlinePayments()),
+                    user.getReceiptSendDay(), platformFeeService.getFeePercentPourProprietaire(userId));
         }
 
         try {
@@ -89,7 +91,8 @@ public class StripeConnectService {
             AccountLink link = AccountLink.create(linkParams);
 
             return new StripeConnectStatusResponse(true, user.getStripeConnectStatus(), link.getUrl(),
-                    user.getPaymentInstructions(), Boolean.TRUE.equals(user.getAcceptOnlinePayments()));
+                    user.getPaymentInstructions(), Boolean.TRUE.equals(user.getAcceptOnlinePayments()),
+                    user.getReceiptSendDay(), platformFeeService.getFeePercentPourProprietaire(userId));
         } catch (StripeException e) {
             log.error("Stripe Connect onboarding failed for {}: {}", user.getEmail(), e.getMessage());
             throw new RuntimeException("Stripe Connect onboarding failed: " + e.getMessage(), e);
@@ -127,7 +130,9 @@ public class StripeConnectService {
                 user.getStripeConnectStatus() != null ? user.getStripeConnectStatus() : "NONE",
                 null,
                 user.getPaymentInstructions(),
-                Boolean.TRUE.equals(user.getAcceptOnlinePayments())
+                Boolean.TRUE.equals(user.getAcceptOnlinePayments()),
+                user.getReceiptSendDay(),
+                platformFeeService.getFeePercentPourProprietaire(userId)
         );
     }
 
@@ -150,6 +155,7 @@ public class StripeConnectService {
 
         user.setPaymentInstructions(request.paymentInstructions());
         user.setAcceptOnlinePayments(Boolean.TRUE.equals(request.acceptOnlinePayments()));
+        user.setReceiptSendDay(request.receiptSendDay());
         userRepository.save(user);
 
         return new StripeConnectStatusResponse(
@@ -157,7 +163,9 @@ public class StripeConnectService {
                 user.getStripeConnectStatus() != null ? user.getStripeConnectStatus() : "NONE",
                 null,
                 user.getPaymentInstructions(),
-                user.getAcceptOnlinePayments()
+                user.getAcceptOnlinePayments(),
+                user.getReceiptSendDay(),
+                platformFeeService.getFeePercentPourProprietaire(userId)
         );
     }
 

@@ -13,6 +13,11 @@ import {
   PAYMENT_TYPE_LABELS
 } from '../../../core/models/payment.model';
 import { QuickFilter } from '../../../shared/components/quick-filters/quick-filters.component';
+import { ReceiptService } from '../../../core/services/receipt.service';
+import { InvoiceService } from '../../../core/services/invoice.service';
+import { Receipt } from '../../../core/models/receipt.model';
+import { Invoice, INVOICE_TYPE_LABELS } from '../../../core/models/invoice.model';
+import { downloadBlob } from '../../../shared/utils/file.utils';
 
 @Component({
   selector: 'app-payment-list',
@@ -26,6 +31,11 @@ export class PaymentListComponent implements OnInit {
   error: string | null = null;
   searchTerm = '';
   selectedStatus: string = 'ALL';
+
+  /** Vue locataire unifiée : quittance rattachée à chaque échéance payée, factures diverses en dessous. */
+  receiptsByPayment = new Map<string, Receipt>();
+  invoices: Invoice[] = [];
+  invoiceTypeLabels = INVOICE_TYPE_LABELS;
 
   PaymentStatus = PaymentStatus;
   statusLabels = PAYMENT_STATUS_LABELS;
@@ -42,7 +52,9 @@ export class PaymentListComponent implements OnInit {
     private route: ActivatedRoute,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private receiptService: ReceiptService,
+    private invoiceService: InvoiceService
   ) {}
 
   /** Bail sur lequel la liste est restreinte (arrivée depuis un détail de location). */
@@ -56,6 +68,44 @@ export class PaymentListComponent implements OnInit {
 
       this.rentalId = params['rentalId'] || null;
       this.loadPayments();
+      if (this.isTenant) this.loadReceiptsAndInvoices();
+    });
+  }
+
+  private loadReceiptsAndInvoices(): void {
+    this.receiptService.getAll().subscribe({
+      next: (receipts) => {
+        this.receiptsByPayment = new Map(receipts.map(r => [r.paymentId, r]));
+      },
+      error: () => {}
+    });
+    this.invoiceService.getAll().subscribe({
+      next: (invoices) => {
+        this.invoices = this.rentalId ? invoices.filter(i => i.rentalId === this.rentalId) : invoices;
+      },
+      error: () => {}
+    });
+  }
+
+  receiptFor(payment: Payment): Receipt | undefined {
+    return this.receiptsByPayment.get(payment.id);
+  }
+
+  downloadReceipt(payment: Payment, event: Event): void {
+    event.stopPropagation();
+    const receipt = this.receiptFor(payment);
+    if (!receipt) return;
+    this.receiptService.downloadPdf(receipt.id).subscribe({
+      next: (blob) => downloadBlob(blob, `quittance-${receipt.receiptNumber}.pdf`),
+      error: () => this.notificationService.error('Quittance indisponible')
+    });
+  }
+
+  downloadInvoice(invoice: Invoice, event: Event): void {
+    event.stopPropagation();
+    this.invoiceService.downloadPdf(invoice.id).subscribe({
+      next: (blob) => downloadBlob(blob, `facture-${invoice.invoiceNumber}.pdf`),
+      error: () => this.notificationService.error('Facture indisponible')
     });
   }
 

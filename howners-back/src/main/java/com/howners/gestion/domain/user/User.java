@@ -105,6 +105,11 @@ public class User {
     @Builder.Default
     private Boolean acceptOnlinePayments = false;
 
+    // Jour du mois (1-28) auquel les quittances sont envoyées au locataire ; null = envoi
+    // immédiat dès la confirmation du paiement.
+    @Column(name = "receipt_send_day")
+    private Integer receiptSendDay;
+
     // Version de jeton : incrémentée pour révoquer d'un coup tous les JWT existants de l'utilisateur
     // (« déconnexion de toutes les sessions »). Le JWT embarque cette valeur ; le filtre la compare
     // à celle en base et rejette tout jeton dont la version est périmée.

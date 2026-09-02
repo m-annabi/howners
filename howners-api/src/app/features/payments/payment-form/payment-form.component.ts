@@ -43,8 +43,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       paymentType: [PaymentType.RENT, Validators.required],
       amount: ['', [Validators.required, Validators.min(0.01)]],
       currency: ['EUR'],
-      dueDate: [''],
-      paymentMethod: ['BANK_TRANSFER']
+      dueDate: ['']
     });
 
     // Arrivée depuis la fiche d'un bail : le bail est présélectionné.

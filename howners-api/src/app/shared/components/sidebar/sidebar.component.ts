@@ -150,9 +150,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
         {
           title: 'FINANCES',
           items: [
-            { label: 'Paiements', icon: 'bi-credit-card', route: '/payments' },
-            { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts' },
-            { label: 'Factures', icon: 'bi-receipt', route: '/invoices' },
+            // Paiements, quittances et factures sont réunis dans une seule vue.
+            { label: 'Mes paiements', icon: 'bi-credit-card', route: '/payments' },
           ]
         },
         {
@@ -202,11 +201,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
       {
         title: 'FINANCES',
         items: [
-          { label: 'Paiements', icon: 'bi-credit-card', route: '/payments', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Factures', icon: 'bi-receipt', route: '/invoices', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Quittances', icon: 'bi-file-earmark-check', route: '/receipts', roles: ['OWNER', 'ADMIN'] },
+          // Les paiements, factures et quittances se consultent par bail (fiche « Ma location »)
+          // et globalement depuis la Trésorerie.
+          { label: 'Trésorerie', icon: 'bi-graph-up', route: '/financial', roles: ['OWNER', 'ADMIN'] },
           { label: 'Dépenses', icon: 'bi-wallet2', route: '/expenses', roles: ['OWNER', 'ADMIN'] },
-          { label: 'Synthèse', icon: 'bi-graph-up', route: '/financial', roles: ['OWNER', 'ADMIN'] },
           { label: 'Patrimoine', icon: 'bi-pie-chart', route: '/financial/patrimoine', roles: ['OWNER', 'ADMIN'] },
           { label: 'Comptabilité', icon: 'bi-calculator', route: '/accounting', roles: ['OWNER', 'ADMIN'] },
           { label: 'Export fiscal', icon: 'bi-file-earmark-spreadsheet', route: '/financial/fiscal-2044', roles: ['OWNER', 'ADMIN'] },

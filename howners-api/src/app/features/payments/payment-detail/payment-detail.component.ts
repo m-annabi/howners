@@ -12,7 +12,8 @@ import {
   PaymentStatus,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_COLORS,
-  PAYMENT_TYPE_LABELS
+  PAYMENT_TYPE_LABELS,
+  DECLARED_METHOD_LABELS
 } from '../../../core/models/payment.model';
 
 @Component({
@@ -29,6 +30,12 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
   confirming = false;
   paying = false;
   finalizing = false;
+  declaring = false;
+  declaredMethodLabels = DECLARED_METHOD_LABELS;
+
+  /** Frais Stripe indicatifs (cartes européennes) : 1,5 % + 0,25 € par transaction. */
+  readonly stripeFeePercent = 1.5;
+  readonly stripeFeeFixed = 0.25;
 
   PaymentStatus = PaymentStatus;
   statusLabels = PAYMENT_STATUS_LABELS;
@@ -154,6 +161,44 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
     if (this.isOwner || !this.payment) return false;
     const pending = this.payment.status === PaymentStatus.PENDING || this.payment.status === PaymentStatus.LATE;
     return pending && !this.payment.onlinePaymentAvailable;
+  }
+
+  /** Le locataire peut déclarer un règlement hors plateforme tant que le paiement est en attente et non déjà déclaré. */
+  canDeclare(): boolean {
+    if (this.isOwner || !this.payment || this.payment.declaredAt) return false;
+    return this.payment.status === PaymentStatus.PENDING || this.payment.status === PaymentStatus.LATE;
+  }
+
+  declare(method: 'BANK_TRANSFER' | 'CHECK' | 'CASH' = 'BANK_TRANSFER'): void {
+    if (!this.payment || this.declaring) return;
+    const label = this.declaredMethodLabels[method];
+    this.confirmDialog.confirm('Déclarer le règlement',
+      `Confirmez-vous avoir réglé ${this.payment.amount} ${this.payment.currency} par ${label} ? Votre propriétaire sera prévenu et confirmera la réception.`,
+      'warning').subscribe(ok => {
+      if (!ok) return;
+      this.declaring = true;
+      this.paymentService.declare(this.payment!.id, method).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (payment) => {
+          this.payment = payment;
+          this.declaring = false;
+          this.notificationService.success('Règlement déclaré. Votre propriétaire confirmera la réception.');
+        },
+        error: (err) => {
+          this.declaring = false;
+          this.notificationService.error(err.error?.message || 'Impossible de déclarer ce règlement');
+        }
+      });
+    });
+  }
+
+  /** Frais estimés d'un paiement carte (commission plateforme + Stripe), à la charge du bailleur. */
+  get onlineFees(): { platform: number; stripe: number; total: number; net: number } | null {
+    if (!this.payment || this.payment.platformFeePercent == null) return null;
+    const amount = this.payment.amount;
+    const platform = Math.round(amount * this.payment.platformFeePercent) / 100;
+    const stripe = Math.round((amount * this.stripeFeePercent / 100 + this.stripeFeeFixed) * 100) / 100;
+    const total = Math.round((platform + stripe) * 100) / 100;
+    return { platform, stripe, total, net: Math.round((amount - total) * 100) / 100 };
   }
 
   payNow(): void {

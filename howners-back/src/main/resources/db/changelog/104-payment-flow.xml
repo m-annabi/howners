@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Parcours paiement :
+         - le locataire peut déclarer un règlement hors plateforme (virement, chèque…) que le
+           bailleur confirme ensuite ;
+         - le bailleur choisit le jour d'envoi des quittances (null = envoi immédiat à la
+           confirmation du paiement) ; l'envoi effectif est tracé sur la quittance. -->
+    <changeSet id="104-payment-flow" author="claude">
+        <addColumn tableName="payments">
+            <column name="declared_at" type="timestamp"/>
+            <column name="declared_method" type="varchar(30)"/>
+        </addColumn>
+        <addColumn tableName="users">
+            <column name="receipt_send_day" type="int"/>
+        </addColumn>
+        <addColumn tableName="receipts">
+            <column name="emailed_at" type="timestamp"/>
+        </addColumn>
+        <!-- Les quittances existantes ont été envoyées à leur création. -->
+        <sql>UPDATE receipts SET emailed_at = created_at WHERE emailed_at IS NULL</sql>
+    </changeSet>
+
+</databaseChangeLog>

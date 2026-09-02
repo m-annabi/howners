@@ -21,6 +21,8 @@ public interface ReceiptRepository extends JpaRepository<Receipt, UUID> {
 
     Optional<Receipt> findByPaymentId(UUID paymentId);
 
+    List<Receipt> findByEmailedAtIsNull();
+
     @Query("SELECT r FROM Receipt r WHERE r.rental.property.owner.id = :ownerId ORDER BY r.periodEnd DESC")
     List<Receipt> findByOwnerId(@Param("ownerId") UUID ownerId);
 

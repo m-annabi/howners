@@ -3,9 +3,14 @@
   <!-- En-tête -->
   <div class="fin-dash__header">
     <app-page-header
-      title="Tableau de bord financier"
-      [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Finances'}]">
+      title="Trésorerie"
+      [breadcrumbs]="[{label: 'Tableau de bord', route: '/dashboard'}, {label: 'Trésorerie'}]">
     </app-page-header>
+    <nav class="fin-dash__quicklinks" aria-label="Listes détaillées">
+      <a routerLink="/payments" class="hw-btn hw-btn--sm hw-btn--outline"><i class="bi bi-credit-card"></i> Paiements</a>
+      <a routerLink="/invoices" class="hw-btn hw-btn--sm hw-btn--outline"><i class="bi bi-receipt"></i> Factures</a>
+      <a routerLink="/receipts" class="hw-btn hw-btn--sm hw-btn--outline"><i class="bi bi-file-earmark-check"></i> Quittances</a>
+    </nav>
 
     <div class="fin-dash__header-actions">
       <ng-container *ngIf="!editMode">
