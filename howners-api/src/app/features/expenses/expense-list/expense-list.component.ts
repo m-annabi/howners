@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ExpenseService } from '../../../core/services/expense.service';
@@ -50,7 +51,8 @@ export class ExpenseListComponent implements OnInit {
   constructor(
     private expenseService: ExpenseService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -109,7 +111,8 @@ export class ExpenseListComponent implements OnInit {
 
   deleteExpense(expense: Expense, event: Event): void {
     event.stopPropagation();
-    if (confirm('Supprimer cette dépense ?')) {
+    this.confirmDialog.confirm('Confirmer la suppression', 'Supprimer cette dépense ?', 'danger').subscribe(ok => {
+      if (!ok) return;
       this.expenseService.delete(expense.id).subscribe({
         next: () => {
           this.notificationService.success('Dépense supprimée');
@@ -119,6 +122,6 @@ export class ExpenseListComponent implements OnInit {
           this.notificationService.error('Erreur lors de la suppression');
         }
       });
-    }
+    });
   }
 }

@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -38,7 +39,8 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private paymentService: PaymentService,
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   get isOwner(): boolean {
@@ -76,9 +78,10 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
   confirmPayment(): void {
     if (!this.payment) return;
 
-    if (confirm('Confirmer ce paiement comme reçu ?')) {
+    this.confirmDialog.confirm('Confirmation', 'Confirmer ce paiement comme reçu ?', 'warning').subscribe(ok => {
+      if (!ok) return;
       this.confirming = true;
-      this.paymentService.confirmPayment(this.payment.id).pipe(takeUntil(this.destroy$)).subscribe({
+      this.paymentService.confirmPayment(this.payment!.id).pipe(takeUntil(this.destroy$)).subscribe({
         next: (payment) => {
           this.payment = payment;
           this.confirming = false;
@@ -89,7 +92,46 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
           this.notificationService.error('Erreur lors de la confirmation du paiement');
         }
       });
-    }
+    });
+  }
+
+  // ── Relance des impayés (propriétaire) ────────────────────────────────────
+  relancing = false;
+
+  /** Une relance (niveau 1) puis une mise en demeure (niveau 2) sont possibles tant que l'impayé court. */
+  canRelancer(): boolean {
+    if (!this.isOwner || !this.payment) return false;
+    const unpaid = this.payment.status === PaymentStatus.LATE || this.payment.status === PaymentStatus.PENDING;
+    return unpaid && (this.payment.relanceNiveau ?? 0) < 2;
+  }
+
+  get relanceLabel(): string {
+    return (this.payment?.relanceNiveau ?? 0) === 0 ? 'Envoyer une relance' : 'Envoyer la mise en demeure';
+  }
+
+  relancer(): void {
+    if (!this.payment || this.relancing) return;
+    const niveau = this.payment.relanceNiveau ?? 0;
+    const question = niveau === 0
+      ? 'Envoyer une relance amiable au locataire par e-mail ?'
+      : 'Envoyer la mise en demeure (courrier PDF horodaté, joint au bail) ?';
+    this.confirmDialog.confirm('Confirmation', question, 'warning').subscribe(ok => {
+      if (!ok) return;
+      this.relancing = true;
+      this.paymentService.relancer(this.payment!.id).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (payment) => {
+          this.payment = payment;
+          this.relancing = false;
+          this.notificationService.success(niveau === 0
+            ? 'Relance envoyée au locataire.'
+            : 'Mise en demeure envoyée. Le courrier est disponible dans les documents du bail.');
+        },
+        error: (err) => {
+          this.relancing = false;
+          this.notificationService.error(err.error?.message || 'Impossible d\'envoyer la relance');
+        }
+      });
+    });
   }
 
   canConfirm(): boolean {

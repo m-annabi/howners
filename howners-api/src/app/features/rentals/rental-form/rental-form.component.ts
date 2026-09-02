@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -30,7 +31,8 @@ export class RentalFormComponent implements OnInit {
     private rentalService: RentalService,
     private propertyService: PropertyService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private confirmDialog: ConfirmDialogService
   ) {
     this.rentalForm = this.fb.group({
       propertyId: ['', [Validators.required]],
@@ -126,15 +128,17 @@ export class RentalFormComponent implements OnInit {
   /** Suppression définitive du bail, depuis la zone dédiée en bas du formulaire. */
   deleteRental(): void {
     if (!this.rentalId) return;
-    if (!confirm('Supprimer définitivement ce bail et son historique ?')) return;
+    this.confirmDialog.confirm('Confirmer la suppression', 'Supprimer définitivement ce bail et son historique ?', 'danger').subscribe(ok => {
+      if (!ok) return;
 
-    this.deleting = true;
-    this.rentalService.deleteRental(this.rentalId).subscribe({
-      next: () => this.router.navigate(['/rentals']),
-      error: (err) => {
-        this.deleting = false;
-        this.error = err.error?.message || 'Erreur lors de la suppression du bail';
-      }
+      this.deleting = true;
+      this.rentalService.deleteRental(this.rentalId!).subscribe({
+        next: () => this.router.navigate(['/rentals']),
+        error: (err) => {
+          this.deleting = false;
+          this.error = err.error?.message || 'Erreur lors de la suppression du bail';
+        }
+      });
     });
   }
 }

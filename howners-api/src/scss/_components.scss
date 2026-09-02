@@ -824,6 +824,13 @@
     min-width: 0;
   }
 
+  // Sélecteurs de filtre dans la barre : largeur au contenu (le form-select global fait 100 %).
+  &__select {
+    width: auto;
+    min-width: 160px;
+    flex: 0 0 auto;
+  }
+
   &__search {
     position: relative;
     flex: 0 1 340px;

@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -60,7 +62,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     private applicationService: ApplicationService,
     private documentService: DocumentService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -103,7 +106,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
 
   // --- Tenant actions ---
   withdraw(id: string): void {
-    if (confirm('Retirer cette candidature ?')) {
+    this.confirmDialog.confirm('Confirmation', 'Retirer cette candidature ?', 'danger').subscribe(ok => {
+      if (!ok) return;
       this.applicationService.withdraw(id).subscribe({
         next: () => {
           this.notificationService.success('Candidature retirée');
@@ -113,7 +117,7 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
           this.error = err.error?.message || 'Erreur lors du retrait de la candidature';
         }
       });
-    }
+    });
   }
 
   canWithdraw(app: Application): boolean {
@@ -224,14 +228,7 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
 
   downloadDocument(docId: string, fileName: string): void {
     this.documentService.downloadDocument(docId).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
+      next: (blob) => downloadBlob(blob, fileName)
     });
   }
 

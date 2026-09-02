@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../utils/file.utils';
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -50,7 +52,8 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   constructor(
     public documentService: DocumentService,
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -158,14 +161,7 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   downloadDocument(doc: Document): void {
     this.documentService.downloadDocument(doc.id).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = window.document.createElement('a');
-        a.href = url;
-        a.download = doc.fileName;
-        window.document.body.appendChild(a);
-        a.click();
-        window.document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        downloadBlob(blob, doc.fileName);
       },
       error: () => {
         this.notificationService.error('Erreur lors du téléchargement du document');
@@ -176,7 +172,8 @@ export class DocumentListComponent implements OnInit, OnDestroy {
   deleteDocument(document: Document, event: Event): void {
     event.stopPropagation();
 
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${document.fileName} ?`)) {
+    this.confirmDialog.confirm('Confirmer la suppression', `Êtes-vous sûr de vouloir supprimer ${document.fileName} ?`, 'danger').subscribe(ok => {
+      if (!ok) return;
       this.documentService.deleteDocument(document.id).subscribe({
         next: () => {
           this.loadDocuments();
@@ -185,7 +182,7 @@ export class DocumentListComponent implements OnInit, OnDestroy {
           this.notificationService.error('Erreur lors de la suppression du document');
         }
       });
-    }
+    });
   }
 
   getDocumentTypeLabel(type: string): string {
@@ -194,27 +191,29 @@ export class DocumentListComponent implements OnInit, OnDestroy {
 
   archiveDocument(doc: Document, event: Event): void {
     event.stopPropagation();
-    if (confirm(`Archiver le document ${doc.fileName} ?`)) {
+    this.confirmDialog.confirm('Confirmation', `Archiver le document ${doc.fileName} ?`, 'warning').subscribe(ok => {
+      if (!ok) return;
       this.documentService.archiveDocument(doc.id).subscribe({
         next: () => this.loadDocuments(),
         error: () => {
           this.notificationService.error('Erreur lors de l\'archivage du document');
         }
       });
-    }
+    });
   }
 
   toggleLegalHold(doc: Document, event: Event): void {
     event.stopPropagation();
     const action = doc.legalHold ? 'retirer le blocage légal de' : 'mettre un blocage légal sur';
-    if (confirm(`${action} ${doc.fileName} ?`)) {
+    this.confirmDialog.confirm('Confirmation', `${action} ${doc.fileName} ?`, 'warning').subscribe(ok => {
+      if (!ok) return;
       this.documentService.setLegalHold(doc.id, !doc.legalHold).subscribe({
         next: () => this.loadDocuments(),
         error: () => {
           this.notificationService.error('Erreur lors de la modification du blocage légal');
         }
       });
-    }
+    });
   }
 
   startSetRetention(docId: string): void {

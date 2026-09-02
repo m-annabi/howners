@@ -31,6 +31,7 @@ export interface Payment {
   paidAt?: string;
   relanceNiveau: number;
   derniereRelanceLe?: string;
+  miseEnDemeureNumero?: string;
   createdAt: string;
   paymentInstructions?: string;
   onlinePaymentAvailable: boolean;

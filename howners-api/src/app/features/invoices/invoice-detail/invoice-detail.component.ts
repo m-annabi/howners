@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -57,14 +58,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
   downloadPdf(): void {
     if (!this.invoice) return;
     this.invoiceService.downloadPdf(this.invoice.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `facture-${this.invoice!.invoiceNumber}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, `facture-${this.invoice!.invoiceNumber}.pdf`),
       error: () => {
         // Handled by error interceptor
       }

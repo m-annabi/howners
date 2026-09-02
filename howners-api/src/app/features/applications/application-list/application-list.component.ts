@@ -1,6 +1,8 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApplicationService } from '../../../core/services/application.service';
+import { Rental } from '../../../core/models/rental.model';
 import { DocumentService } from '../../../core/services/document.service';
 import { MessageService } from '../../../core/services/message.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -89,6 +91,7 @@ export class ApplicationListComponent implements OnInit {
     private documentService: DocumentService,
     private messageService: MessageService,
     private notificationService: NotificationService,
+    private router: Router,
     private route: ActivatedRoute
   ) {}
 
@@ -142,16 +145,45 @@ export class ApplicationListComponent implements OnInit {
       status,
       notes: this.reviewNotes || undefined
     };
+    const reviewed = this.applications.find(a => a.id === id) ?? null;
     this.applicationService.review(id, request).subscribe({
       next: () => {
         this.reviewingId = null;
         this.reviewNotes = '';
         this.loadApplications();
+        if (status === ApplicationStatus.ACCEPTED) {
+          // Enchaînement direct : la location se crée depuis la candidature, sans ressaisie.
+          this.notificationService.success('Candidature acceptée. Créez maintenant la location pour ce candidat.');
+          if (reviewed) this.openCreateRentalModal({ ...reviewed, status: ApplicationStatus.ACCEPTED });
+        } else {
+          this.notificationService.success('Candidature refusée.');
+        }
       },
       error: () => {
         this.error = 'Erreur lors du traitement de la candidature';
       }
     });
+  }
+
+  // ── Création de la location depuis une candidature acceptée ──────────────
+  showCreateRentalModal = false;
+  acceptedApplication: Application | null = null;
+
+  openCreateRentalModal(app: Application): void {
+    this.acceptedApplication = app;
+    this.showCreateRentalModal = true;
+  }
+
+  onRentalCreated(rental: Rental): void {
+    this.showCreateRentalModal = false;
+    this.acceptedApplication = null;
+    this.notificationService.success('Location créée. Prochaine étape : générer le contrat de bail.');
+    this.router.navigate(['/rentals', rental.id]);
+  }
+
+  onRentalModalCancelled(): void {
+    this.showCreateRentalModal = false;
+    this.acceptedApplication = null;
   }
 
   // Backwards-compat for template references to `applications` count
@@ -195,14 +227,7 @@ export class ApplicationListComponent implements OnInit {
 
   downloadDocument(docId: string, fileName: string): void {
     this.documentService.downloadDocument(docId).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, fileName),
       error: () => {
         this.error = 'Erreur lors du telechargement du document';
       }

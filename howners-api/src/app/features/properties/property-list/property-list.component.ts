@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
@@ -35,7 +36,8 @@ export class PropertyListComponent implements OnInit, OnDestroy {
     private photoService: PropertyPhotoService,
     private photoStateService: PropertyPhotoStateService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -201,18 +203,18 @@ export class PropertyListComponent implements OnInit, OnDestroy {
   deleteProperty(id: string, event: Event): void {
     event.stopPropagation();
 
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce bien ?')) {
-      return;
-    }
+    this.confirmDialog.confirm('Confirmer la suppression', 'Êtes-vous sûr de vouloir supprimer ce bien ?', 'danger').subscribe(ok => {
+      if (!ok) return;
 
-    this.propertyService.deleteProperty(id).subscribe({
-      next: () => {
-        this.properties = this.properties.filter(p => p.id !== id);
-        this.applyFilters();
-      },
-      error: (err) => {
-        this.notificationService.error(err.error?.message || 'Erreur lors de la suppression');
-      }
+      this.propertyService.deleteProperty(id).subscribe({
+        next: () => {
+          this.properties = this.properties.filter(p => p.id !== id);
+          this.applyFilters();
+        },
+        error: (err) => {
+          this.notificationService.error(err.error?.message || 'Erreur lors de la suppression');
+        }
+      });
     });
   }
 

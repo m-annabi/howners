@@ -1,5 +1,5 @@
 <div class="property-detail-container">
-  <div *ngIf="loading" class="loading">Chargement...</div>
+  <app-loading-skeleton *ngIf="loading" type="card" [count]="2"></app-loading-skeleton>
 
   <div *ngIf="error" class="error-message">
     {{ error }}
@@ -8,9 +8,16 @@
 
   <div *ngIf="!loading && !error && property" class="property-detail">
     <div class="detail-header">
-      <button (click)="goBack()" class="btn-back">← Retour</button>
+      <button (click)="goBack()" class="hw-btn hw-btn--ghost hw-btn--sm">
+        <i class="bi bi-arrow-left"></i> Retour
+      </button>
       <div class="detail-actions">
-        <button (click)="editProperty()" class="hw-btn hw-btn--primary">Modifier</button>
+        <button (click)="publishListing()" class="hw-btn hw-btn--secondary">
+          <i class="bi bi-megaphone"></i> Publier une annonce
+        </button>
+        <button (click)="editProperty()" class="hw-btn hw-btn--primary">
+          <i class="bi bi-pencil"></i> Modifier
+        </button>
         <button (click)="deleteProperty()" class="hw-btn hw-btn--ghost">Supprimer</button>
       </div>
     </div>
@@ -25,7 +32,7 @@
         </div>
 
         <div class="detail-section">
-          <h2>📍 Adresse</h2>
+          <h2><i class="bi bi-geo-alt"></i> Adresse</h2>
           <p class="address">
             {{ property.address.addressLine1 }}<br>
             <span *ngIf="property.address.addressLine2">
@@ -37,25 +44,25 @@
         </div>
 
         <div class="detail-section" *ngIf="property.description">
-          <h2>📝 Description</h2>
+          <h2><i class="bi bi-card-text"></i> Description</h2>
           <p>{{ property.description }}</p>
         </div>
 
         <div class="detail-section">
-          <h2>🏠 Caractéristiques</h2>
+          <h2><i class="bi bi-house-door"></i> Caractéristiques</h2>
           <div class="characteristics">
             <div class="characteristic" *ngIf="property.surfaceArea">
-              <span class="icon">📏</span>
+              <span class="icon"><i class="bi bi-rulers"></i></span>
               <span class="label">Surface</span>
               <span class="value">{{ property.surfaceArea }} m²</span>
             </div>
             <div class="characteristic" *ngIf="property.bedrooms">
-              <span class="icon">🛏️</span>
+              <span class="icon"><i class="bi bi-moon"></i></span>
               <span class="label">Chambres</span>
               <span class="value">{{ property.bedrooms }}</span>
             </div>
             <div class="characteristic" *ngIf="property.bathrooms">
-              <span class="icon">🚿</span>
+              <span class="icon"><i class="bi bi-droplet"></i></span>
               <span class="label">Salles de bain</span>
               <span class="value">{{ property.bathrooms }}</span>
             </div>
@@ -64,7 +71,7 @@
 
         <!-- Section Informations Techniques -->
         <div class="detail-section" *ngIf="hasTechnicalInfo()">
-          <h2>🔧 Informations Techniques</h2>
+          <h2><i class="bi bi-tools"></i> Informations Techniques</h2>
 
           <!-- DPE et GES -->
           <div class="energy-ratings" *ngIf="property.dpeRating || property.gesRating">
@@ -87,7 +94,7 @@
           <!-- Grille d'informations techniques -->
           <div class="technical-grid">
             <div class="tech-item" *ngIf="property.constructionYear">
-              <span class="tech-icon">🏗️</span>
+              <span class="tech-icon"><i class="bi bi-bricks"></i></span>
               <div class="tech-content">
                 <span class="tech-label">Année de construction</span>
                 <span class="tech-value">{{ property.constructionYear }}</span>
@@ -95,7 +102,7 @@
             </div>
 
             <div class="tech-item" *ngIf="property.floorNumber !== null && property.floorNumber !== undefined">
-              <span class="tech-icon">🏢</span>
+              <span class="tech-icon"><i class="bi bi-building"></i></span>
               <div class="tech-content">
                 <span class="tech-label">Étage</span>
                 <span class="tech-value">
@@ -105,7 +112,7 @@
             </div>
 
             <div class="tech-item" *ngIf="property.heatingType">
-              <span class="tech-icon">🔥</span>
+              <span class="tech-icon"><i class="bi bi-fire"></i></span>
               <div class="tech-content">
                 <span class="tech-label">Chauffage</span>
                 <span class="tech-value">{{ getHeatingTypeLabel(property.heatingType) }}</span>
@@ -113,7 +120,7 @@
             </div>
 
             <div class="tech-item" *ngIf="property.propertyCondition">
-              <span class="tech-icon">⭐</span>
+              <span class="tech-icon"><i class="bi bi-star"></i></span>
               <div class="tech-content">
                 <span class="tech-label">État</span>
                 <span class="tech-value">{{ getPropertyConditionLabel(property.propertyCondition) }}</span>
@@ -121,7 +128,7 @@
             </div>
 
             <div class="tech-item" *ngIf="property.hasParking !== null && property.hasParking !== undefined">
-              <span class="tech-icon">🅿️</span>
+              <span class="tech-icon"><i class="bi bi-p-square"></i></span>
               <div class="tech-content">
                 <span class="tech-label">Parking</span>
                 <span class="tech-value">{{ property.hasParking ? 'Oui' : 'Non' }}</span>
@@ -129,7 +136,7 @@
             </div>
 
             <div class="tech-item" *ngIf="property.hasElevator !== null && property.hasElevator !== undefined">
-              <span class="tech-icon">🛗</span>
+              <span class="tech-icon"><i class="bi bi-arrow-down-up"></i></span>
               <div class="tech-content">
                 <span class="tech-label">Ascenseur</span>
                 <span class="tech-value">{{ property.hasElevator ? 'Oui' : 'Non' }}</span>
@@ -137,7 +144,7 @@
             </div>
 
             <div class="tech-item" *ngIf="property.isFurnished !== null && property.isFurnished !== undefined">
-              <span class="tech-icon">🛋️</span>
+              <span class="tech-icon"><i class="bi bi-lamp"></i></span>
               <div class="tech-content">
                 <span class="tech-label">Meublé</span>
                 <span class="tech-value">{{ property.isFurnished ? 'Oui' : 'Non' }}</span>
@@ -181,14 +188,14 @@
 
         <div class="sidebar-card">
           <h3>Actions rapides</h3>
-          <button class="action-btn" (click)="viewDocuments()">📄 Voir les documents</button>
-          <button class="action-btn" (click)="viewRentals()">🏷️ Voir les locations</button>
-          <button class="action-btn" (click)="viewStats()">📊 Statistiques</button>
+          <button class="action-btn" (click)="viewDocuments()"><i class="bi bi-file-earmark-text"></i> Voir les documents</button>
+          <button class="action-btn" (click)="viewRentals()"><i class="bi bi-tag"></i> Voir les locations</button>
+          <button class="action-btn" (click)="viewStats()"><i class="bi bi-bar-chart"></i> Statistiques</button>
         </div>
 
         <!-- Informations du locataire -->
         <div class="sidebar-card tenant-card" *ngIf="activeRental">
-          <h3>👤 Locataire Actuel</h3>
+          <h3><i class="bi bi-person"></i> Locataire Actuel</h3>
 
           <div class="tenant-status">
             <span class="status-badge status-active">

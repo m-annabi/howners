@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ContractAmendmentService } from '../../../core/services/contract-amendment.service';
@@ -21,7 +23,8 @@ export class AmendmentListComponent implements OnInit {
   constructor(
     private amendmentService: ContractAmendmentService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -47,23 +50,17 @@ export class AmendmentListComponent implements OnInit {
   }
 
   signAmendment(amendment: ContractAmendment): void {
-    if (confirm('Êtes-vous sûr de vouloir signer cet avenant ?')) {
+    this.confirmDialog.confirm('Confirmation', 'Êtes-vous sûr de vouloir signer cet avenant ?', 'warning').subscribe(ok => {
+      if (!ok) return;
       this.amendmentService.sign(this.contractId, amendment.id).subscribe({
         next: () => this.loadAmendments()
       });
-    }
+    });
   }
 
   downloadPdf(amendment: ContractAmendment): void {
     this.amendmentService.downloadPdf(this.contractId, amendment.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `avenant-${amendment.amendmentNumber}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
+      next: (blob) => downloadBlob(blob, `avenant-${amendment.amendmentNumber}.pdf`)
     });
   }
 

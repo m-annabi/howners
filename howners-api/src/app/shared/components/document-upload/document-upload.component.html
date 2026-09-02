@@ -62,7 +62,7 @@
         [disabled]="!selectedFile || uploading"
       >
         <span *ngIf="uploading">Upload en cours...</span>
-        <span *ngIf="!uploading">📤 Uploader</span>
+        <span *ngIf="!uploading"><i class="bi bi-cloud-arrow-up"></i> Uploader</span>
       </button>
       <button
         type="button"

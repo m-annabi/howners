@@ -49,6 +49,7 @@
   .detail-actions {
     display: flex;
     gap: var(--hw-space-2);
+    flex-wrap: wrap; // trois actions : passage à la ligne sur mobile plutôt qu'un débordement horizontal
 
     .btn {
       padding: 0.5rem 1.25rem;
@@ -92,6 +93,13 @@
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
+}
+
+// Enfants de grille : sans min-width:0, un contenu insécable (e-mail du locataire…)
+// élargit la colonne au-delà de l'écran sur mobile.
+.detail-main,
+.detail-sidebar {
+  min-width: 0;
 }
 
 .detail-main {

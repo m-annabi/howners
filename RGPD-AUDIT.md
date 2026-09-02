@@ -66,7 +66,7 @@ Obligation légale si > 250 employés OU traitement à grande échelle. Probable
 - Avec qui elles sont partagées (Stripe, DocuSign, MailHog/SendGrid, MinIO/S3)
 
 ### 6. DPO ou personne référente
-Si > 250 employés ou activité à grande échelle, DPO obligatoire. Sinon, désigner une personne avec un email `dpo@howners.fr` qui répond.
+Si > 250 employés ou activité à grande échelle, DPO obligatoire. Sinon, désigner une personne avec un email `dpo@howners.com` qui répond.
 
 ### 7. Cookie banner conforme
 Pas vérifié, mais la landing n'a pas de cookie banner visible. Si Howners pose des cookies (analytics, marketing), il faut un banner conforme CNIL (refus = clic 1, pas dark pattern).

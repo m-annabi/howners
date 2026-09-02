@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -47,14 +48,7 @@ export class ReceiptDetailComponent implements OnInit, OnDestroy {
   downloadPdf(): void {
     if (!this.receipt) return;
     this.receiptService.downloadPdf(this.receipt.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `quittance-${this.receipt!.receiptNumber}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, `quittance-${this.receipt!.receiptNumber}.pdf`),
       error: () => {
       }
     });

@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../../shared/components/confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { AccountingService, AmortizableAsset, AssetSuggestion, FiscalActivity, LmnpResult, Loan, LoanYear, ReadinessCheck } from '../../core/services/accounting.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -35,7 +37,7 @@ export class AccountingComponent implements OnInit {
   expandedLoanId: string | null = null;
   loanSchedule: LoanYear[] = [];
 
-  constructor(private accounting: AccountingService, private notify: NotificationService) {}
+  constructor(private accounting: AccountingService, private notify: NotificationService, private confirmDialog: ConfirmDialogService) {}
 
   ngOnInit(): void {
     this.load();
@@ -117,10 +119,12 @@ export class AccountingComponent implements OnInit {
   }
 
   deleteLoan(l: Loan): void {
-    if (!confirm(`Supprimer l'emprunt « ${l.label} » ?`)) return;
-    this.accounting.deleteLoan(l.id).subscribe({
-      next: () => { if (this.expandedLoanId === l.id) this.expandedLoanId = null; this.loadAssets(); this.compute(); },
-      error: () => this.notify.error('Erreur lors de la suppression')
+    this.confirmDialog.confirm('Confirmer la suppression', `Supprimer l'emprunt « ${l.label} » ?`, 'danger').subscribe(ok => {
+      if (!ok) return;
+      this.accounting.deleteLoan(l.id).subscribe({
+        next: () => { if (this.expandedLoanId === l.id) this.expandedLoanId = null; this.loadAssets(); this.compute(); },
+        error: () => this.notify.error('Erreur lors de la suppression')
+      });
     });
   }
 
@@ -188,10 +192,12 @@ export class AccountingComponent implements OnInit {
   }
 
   deleteAsset(a: AmortizableAsset): void {
-    if (!confirm(`Supprimer « ${a.label} » ?`)) return;
-    this.accounting.deleteAsset(a.id).subscribe({
-      next: () => { this.loadAssets(); this.compute(); },
-      error: () => this.notify.error('Erreur lors de la suppression')
+    this.confirmDialog.confirm('Confirmer la suppression', `Supprimer « ${a.label} » ?`, 'danger').subscribe(ok => {
+      if (!ok) return;
+      this.accounting.deleteAsset(a.id).subscribe({
+        next: () => { this.loadAssets(); this.compute(); },
+        error: () => this.notify.error('Erreur lors de la suppression')
+      });
     });
   }
 
@@ -210,10 +216,7 @@ export class AccountingComponent implements OnInit {
     this.accounting.downloadLiasse(this.year).subscribe({
       next: (blob) => {
         this.downloading = false;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `liasse-lmnp-${this.year}.zip`; a.click();
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, `liasse-lmnp-${this.year}.zip`);
       },
       error: () => { this.downloading = false; this.notify.error('Erreur lors du téléchargement'); }
     });

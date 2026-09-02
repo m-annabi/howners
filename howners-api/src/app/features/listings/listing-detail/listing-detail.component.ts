@@ -80,10 +80,49 @@ export class ListingDetailComponent implements OnInit, OnDestroy {
 
     this.seoService.setMetaTags({ title, description, url, image });
     this.seoService.setCanonical(url);
+    this.seoService.setJsonLd('listing', this.buildListingJsonLd(listing, url, description));
+  }
+
+  /** Données structurées schema.org (RealEstateListing + Offer) pour les moteurs de recherche. */
+  private buildListingJsonLd(listing: Listing, url: string, description: string): Record<string, unknown> {
+    const priceValue = listing.pricePerMonth ?? listing.pricePerNight;
+    const offer = priceValue == null ? undefined : {
+      '@type': 'Offer',
+      price: priceValue,
+      priceCurrency: listing.currency || 'EUR',
+      availability: 'https://schema.org/InStock',
+      ...(listing.availableFrom ? { availabilityStarts: listing.availableFrom } : {}),
+      ...(listing.pricePerMonth ? { priceSpecification: { '@type': 'UnitPriceSpecification', price: listing.pricePerMonth, priceCurrency: listing.currency || 'EUR', unitCode: 'MON' } } : {}),
+    };
+    const address = {
+      '@type': 'PostalAddress',
+      addressLocality: listing.propertyCity,
+      ...(listing.propertyPostalCode ? { postalCode: listing.propertyPostalCode } : {}),
+      addressCountry: listing.propertyCountry || 'FR',
+    };
+    return {
+      '@type': 'RealEstateListing',
+      name: listing.title,
+      description,
+      url,
+      ...(listing.publishedAt ? { datePosted: listing.publishedAt } : {}),
+      ...(listing.photos?.length ? { image: listing.photos.map(p => p.fileUrl) } : {}),
+      ...(offer ? { offers: offer } : {}),
+      mainEntity: {
+        '@type': 'Accommodation',
+        name: listing.propertyName,
+        address,
+        ...(listing.propertySurface ? { floorSize: { '@type': 'QuantitativeValue', value: listing.propertySurface, unitCode: 'MTK' } } : {}),
+        ...(listing.propertyBedrooms != null ? { numberOfBedrooms: listing.propertyBedrooms } : {}),
+        ...(listing.propertyLatitude != null && listing.propertyLongitude != null
+          ? { geo: { '@type': 'GeoCoordinates', latitude: listing.propertyLatitude, longitude: listing.propertyLongitude } } : {}),
+      },
+    };
   }
 
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
+    this.seoService.removeJsonLd('listing');
   }
 
   get isTenant(): boolean {
@@ -113,6 +152,13 @@ export class ListingDetailComponent implements OnInit, OnDestroy {
   apply(): void {
     if (this.listing) {
       this.router.navigate(['/applications/new'], { queryParams: { listingId: this.listing.id } });
+    }
+  }
+
+  /** Visiteur anonyme : vers la connexion, avec retour sur cette annonce une fois connecté. */
+  loginToApply(): void {
+    if (this.listing) {
+      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: `/listings/${this.listing.id}` } });
     }
   }
 

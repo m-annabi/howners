@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContractTemplateService } from '../../../core/services/contract-template.service';
@@ -36,7 +37,8 @@ export class TemplateListComponent implements OnInit {
   constructor(
     private templateService: ContractTemplateService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -134,7 +136,8 @@ export class TemplateListComponent implements OnInit {
       return;
     }
 
-    if (confirm(`Êtes-vous sûr de vouloir supprimer le template "${template.name}" ?`)) {
+    this.confirmDialog.confirm('Confirmer la suppression', `Êtes-vous sûr de vouloir supprimer le template "${template.name}" ?`, 'danger').subscribe(ok => {
+      if (!ok) return;
       this.templateService.deleteTemplate(template.id).subscribe({
         next: () => {
           this.loadTemplates();
@@ -143,6 +146,6 @@ export class TemplateListComponent implements OnInit {
           this.notificationService.error('Erreur lors de la suppression du template');
         }
       });
-    }
+    });
   }
 }

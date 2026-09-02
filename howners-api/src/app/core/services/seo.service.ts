@@ -9,7 +9,7 @@ import { DOCUMENT } from '@angular/common';
 @Injectable({ providedIn: 'root' })
 export class SeoService {
 
-  private readonly defaultImage = 'https://howners.fr/assets/og-howners.png';
+  private readonly defaultImage = 'https://howners.com/assets/og-howners.png';
   private readonly siteName = 'Howners';
 
   constructor(
@@ -59,6 +59,26 @@ export class SeoService {
     this.meta.updateTag({ name: 'twitter:title', content: title });
     this.meta.updateTag({ name: 'twitter:description', content: description });
     this.meta.updateTag({ name: 'twitter:image', content: image });
+  }
+
+  /**
+   * Injecte (ou remplace) un bloc de données structurées JSON-LD identifié par `id`
+   * (ex. : fiche annonce → RealEstateListing). À retirer via removeJsonLd() en quittant la page.
+   */
+  setJsonLd(id: string, data: Record<string, unknown>): void {
+    const attr = `data-jsonld-${id}`;
+    let script: HTMLScriptElement | null = this.document.head.querySelector(`script[${attr}]`);
+    if (!script) {
+      script = this.document.createElement('script');
+      script.type = 'application/ld+json';
+      script.setAttribute(attr, '');
+      this.document.head.appendChild(script);
+    }
+    script.text = JSON.stringify({ '@context': 'https://schema.org', ...data });
+  }
+
+  removeJsonLd(id: string): void {
+    this.document.head.querySelector(`script[data-jsonld-${id}]`)?.remove();
   }
 
   /**

@@ -1,11 +1,11 @@
-<div class="toast-container">
+<div class="toast-container" role="status" aria-live="polite">
   <div
     *ngFor="let notification of notifications"
     class="toast toast-{{notification.type}}"
     [@slideIn]
   >
-    <div class="toast-icon">{{ getIcon(notification.type) }}</div>
+    <div class="toast-icon" aria-hidden="true">{{ getIcon(notification.type) }}</div>
     <div class="toast-message">{{ notification.message }}</div>
-    <button class="toast-close" (click)="remove(notification.id)">×</button>
+    <button type="button" class="toast-close" aria-label="Fermer la notification" (click)="remove(notification.id)">×</button>
   </div>
 </div>

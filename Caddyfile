@@ -18,8 +18,18 @@
 	# HSTS (Caddy est le terminateur TLS : c'est ici qu'on impose le HTTPS strict)
 	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 
-	reverse_proxy frontend:80 {
-		header_up X-Forwarded-Proto https
+	# Le sitemap est généré dynamiquement par le backend (SitemapController) à partir des
+	# annonces publiées : on le sert sous le domaine du site, comme l'annonce robots.txt.
+	handle /sitemap.xml {
+		reverse_proxy backend:8080 {
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	handle {
+		reverse_proxy frontend:80 {
+			header_up X-Forwarded-Proto https
+		}
 	}
 }
 

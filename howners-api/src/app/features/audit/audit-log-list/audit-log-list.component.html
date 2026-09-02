@@ -1,21 +1,16 @@
 <app-page-header title="Journal d'audit" [breadcrumbs]="[{label: 'Administration'}, {label: 'Audit'}]"></app-page-header>
 
-<div class="row mb-3">
-  <div class="col-md-3 mb-2">
-    <select class="form-select" [(ngModel)]="selectedEntityType" (ngModelChange)="onFilterChange()">
-      <option *ngFor="let type of entityTypes" [value]="type.value">{{ type.label }}</option>
-    </select>
-  </div>
-  <div class="col-md-3 mb-2">
-    <select class="form-select" [(ngModel)]="selectedAction" (ngModelChange)="onFilterChange()">
-      <option *ngFor="let action of actions" [value]="action.value">{{ action.label }}</option>
-    </select>
-  </div>
-  <div class="col-md-3 mb-2">
-    <input type="text" class="form-control" placeholder="ID utilisateur…" [(ngModel)]="selectedUserId" (ngModelChange)="onFilterChange()">
-  </div>
-  <div class="col-md-3 mb-2 d-flex align-items-center">
-    <span class="hw-text-sm hw-text-muted">{{ totalElements }} résultat{{ totalElements > 1 ? 's' : '' }}</span>
+<div class="hw-list-toolbar">
+  <select class="form-select form-select-sm hw-list-toolbar__select" [(ngModel)]="selectedEntityType" (ngModelChange)="onFilterChange()" aria-label="Type d'entité">
+    <option *ngFor="let type of entityTypes" [value]="type.value">{{ type.label }}</option>
+  </select>
+  <select class="form-select form-select-sm hw-list-toolbar__select" [(ngModel)]="selectedAction" (ngModelChange)="onFilterChange()" aria-label="Action">
+    <option *ngFor="let action of actions" [value]="action.value">{{ action.label }}</option>
+  </select>
+  <span class="hw-text-sm hw-text-muted">{{ totalElements }} résultat{{ totalElements > 1 ? 's' : '' }}</span>
+  <div class="hw-list-toolbar__search">
+    <i class="bi bi-search"></i>
+    <input type="text" placeholder="ID utilisateur…" [(ngModel)]="selectedUserId" (ngModelChange)="onFilterChange()" aria-label="Filtrer par identifiant utilisateur">
   </div>
 </div>
 
@@ -47,7 +42,7 @@
     </table>
   </div>
 
-  <div *ngIf="totalPages > 1" class="d-flex justify-content-center gap-1 mt-3">
+  <div *ngIf="totalPages > 1" class="d-flex flex-wrap justify-content-center gap-1 mt-3">
     <button class="hw-btn hw-btn--sm hw-btn--ghost" [disabled]="currentPage === 0" (click)="goToPage(currentPage - 1)">Précédent</button>
     <button *ngFor="let p of [].constructor(totalPages); let i = index"
             class="hw-btn hw-btn--sm" [class.hw-btn--primary]="i === currentPage" [class.hw-btn--ghost]="i !== currentPage"

@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { InvoiceService } from '../../../core/services/invoice.service';
@@ -124,14 +125,7 @@ export class InvoiceListComponent implements OnInit {
   downloadPdf(invoice: Invoice, event: Event): void {
     event.stopPropagation();
     this.invoiceService.downloadPdf(invoice.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `facture-${invoice.invoiceNumber}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, `facture-${invoice.invoiceNumber}.pdf`),
       error: () => {
         this.notifications.error(
           `Impossible de télécharger la facture ${invoice.invoiceNumber}. Réessayez ou contactez le support.`);

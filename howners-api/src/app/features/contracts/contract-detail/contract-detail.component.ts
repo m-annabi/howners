@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -71,7 +72,8 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     private signatureService: SignatureService,
     private esignatureService: EsignatureService,
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -129,12 +131,13 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   sendContract(): void {
     if (!this.contract) return;
 
-    if (confirm('Êtes-vous sûr de vouloir envoyer ce contrat au locataire ?')) {
+    this.confirmDialog.confirm('Confirmation', 'Êtes-vous sûr de vouloir envoyer ce contrat au locataire ?', 'warning').subscribe(ok => {
+      if (!ok) return;
       const request: UpdateContractRequest = {
         status: ContractStatus.SENT
       };
 
-      this.contractService.updateContract(this.contract.id, request).pipe(takeUntil(this.destroy$)).subscribe({
+      this.contractService.updateContract(this.contract!.id, request).pipe(takeUntil(this.destroy$)).subscribe({
         next: (updatedContract) => {
           this.contract = updatedContract;
           this.notificationService.success('Contrat envoyé avec succès');
@@ -143,7 +146,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           alert('Erreur lors de l\'envoi du contrat');
         }
       });
-    }
+    });
   }
 
   downloadPdf(): void {
@@ -179,8 +182,9 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (confirm(`Êtes-vous sûr de vouloir supprimer le contrat ${this.contract.contractNumber} ?`)) {
-      this.contractService.deleteContract(this.contract.id).pipe(takeUntil(this.destroy$)).subscribe({
+    this.confirmDialog.confirm('Confirmer la suppression', `Êtes-vous sûr de vouloir supprimer le contrat ${this.contract.contractNumber} ?`, 'danger').subscribe(ok => {
+      if (!ok) return;
+      this.contractService.deleteContract(this.contract!.id).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.notificationService.success('Contrat supprimé avec succès');
           this.goBack();
@@ -189,7 +193,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.notificationService.error('Erreur lors de la suppression du contrat');
         }
       });
-    }
+    });
   }
 
   loadSignatures(contractId: string): void {
@@ -356,10 +360,11 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (confirm('Envoyer ce contrat au locataire pour signature ? Un email avec un lien de signature lui sera envoyé.')) {
+    this.confirmDialog.confirm('Confirmation', 'Envoyer ce contrat au locataire pour signature ? Un email avec un lien de signature lui sera envoyé.', 'warning').subscribe(ok => {
+      if (!ok) return;
       this.sendingForSignature = true;
 
-      this.esignatureService.sendForSignature(this.contract.id).pipe(
+      this.esignatureService.sendForSignature(this.contract!.id).pipe(
         takeUntil(this.destroy$)
       ).subscribe({
         next: (request) => {
@@ -373,7 +378,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           this.notificationService.error(err.userMessage || err.error?.message || 'Erreur lors de l\'envoi du contrat');
         }
       });
-    }
+    });
   }
 
   // === E-Signature Methods ===
@@ -407,10 +412,11 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (confirm('Envoyer ce contrat au locataire pour signature électronique via DocuSign ?')) {
+    this.confirmDialog.confirm('Confirmation', 'Envoyer ce contrat au locataire pour signature électronique via DocuSign ?', 'warning').subscribe(ok => {
+      if (!ok) return;
       this.sendingForSignature = true;
 
-      this.esignatureService.sendForSignature(this.contract.id).pipe(takeUntil(this.destroy$)).subscribe({
+      this.esignatureService.sendForSignature(this.contract!.id).pipe(takeUntil(this.destroy$)).subscribe({
         next: (request) => {
           this.signatureRequest = request;
           this.sendingForSignature = false;
@@ -424,7 +430,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           alert(err.error?.message || 'Erreur lors de l\'envoi pour signature');
         }
       });
-    }
+    });
   }
 
   /**
@@ -433,10 +439,11 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   resendSignatureRequest(): void {
     if (!this.contract || !this.signatureRequest) return;
 
-    if (confirm('Renvoyer l\'email de signature au locataire ?')) {
+    this.confirmDialog.confirm('Confirmation', 'Renvoyer l\'email de signature au locataire ?', 'warning').subscribe(ok => {
+      if (!ok) return;
       this.esignatureService.resendSignatureRequest(
-        this.contract.id,
-        this.signatureRequest.id
+        this.contract!.id,
+        this.signatureRequest!.id
       ).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.notificationService.success('Email de signature renvoyé avec succès');
@@ -446,7 +453,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           alert('Erreur lors du renvoi de l\'email');
         }
       });
-    }
+    });
   }
 
   /**
@@ -455,10 +462,11 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   cancelSignatureRequest(): void {
     if (!this.contract || !this.signatureRequest) return;
 
-    if (confirm('Êtes-vous sûr de vouloir annuler cette demande de signature ?')) {
+    this.confirmDialog.confirm('Confirmation', 'Êtes-vous sûr de vouloir annuler cette demande de signature ?', 'danger').subscribe(ok => {
+      if (!ok) return;
       this.esignatureService.cancelSignatureRequest(
-        this.contract.id,
-        this.signatureRequest.id
+        this.contract!.id,
+        this.signatureRequest!.id
       ).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.notificationService.success('Demande de signature annulée');
@@ -469,7 +477,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
           alert('Erreur lors de l\'annulation');
         }
       });
-    }
+    });
   }
 
   /**

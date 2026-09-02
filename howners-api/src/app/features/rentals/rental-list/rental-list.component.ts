@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RentalService } from '../rental.service';
@@ -34,7 +35,8 @@ export class RentalListComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -162,18 +164,18 @@ export class RentalListComponent implements OnInit {
   deleteRental(id: string, event: Event): void {
     event.stopPropagation();
 
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette location ?')) {
-      return;
-    }
+    this.confirmDialog.confirm('Confirmer la suppression', 'Êtes-vous sûr de vouloir supprimer cette location ?', 'danger').subscribe(ok => {
+      if (!ok) return;
 
-    this.rentalService.deleteRental(id).subscribe({
-      next: () => {
-        this.rentals = this.rentals.filter(r => r.id !== id);
-        this.applyFilters();
-      },
-      error: (err) => {
-        this.notificationService.error(err.error?.message || 'Erreur lors de la suppression');
-      }
+      this.rentalService.deleteRental(id).subscribe({
+        next: () => {
+          this.rentals = this.rentals.filter(r => r.id !== id);
+          this.applyFilters();
+        },
+        error: (err) => {
+          this.notificationService.error(err.error?.message || 'Erreur lors de la suppression');
+        }
+      });
     });
   }
 

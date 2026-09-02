@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ContractService } from '../../../core/services/contract.service';
@@ -43,7 +44,8 @@ export class ContractListComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private notificationService: NotificationService,
-    public authService: AuthService
+    public authService: AuthService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   get quotaLabel(): string {
@@ -240,13 +242,14 @@ export class ContractListComponent implements OnInit {
       return;
     }
 
-    if (confirm(`Êtes-vous sûr de vouloir supprimer le contrat ${contract.contractNumber} ?`)) {
+    this.confirmDialog.confirm('Confirmer la suppression', `Êtes-vous sûr de vouloir supprimer le contrat ${contract.contractNumber} ?`, 'danger').subscribe(ok => {
+      if (!ok) return;
       this.contractService.deleteContract(contract.id).subscribe({
         next: () => this.loadContracts(),
         error: () => {
           this.notificationService.error('Erreur lors de la suppression du contrat');
         }
       });
-    }
+    });
   }
 }
