@@ -85,7 +85,7 @@ export class ListingSearchComponent implements OnInit, OnDestroy {
       'Parcourez les annonces de location disponibles sur Howners. ' +
       'Appartements, maisons, studios — trouvez votre prochain logement.';
     this.seoService.setMetaTags({ title, description, url: window.location.href });
-    this.seoService.setCanonical('https://howners.fr/listings');
+    this.seoService.setCanonical('https://howners.com/listings');
 
     this.suggestionsSub = this.locationInput$.pipe(
       debounceTime(350),

@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, Input, OnInit } from '@angular/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -94,14 +95,7 @@ export class ChargeRegularisationPanelComponent implements OnInit {
 
   telecharger(regul: Regularisation): void {
     this.regulService.downloadDecompte(regul.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `decompte-charges-${regul.annee}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, `decompte-charges-${regul.annee}.pdf`),
       error: () => this.notifications.error('Décompte indisponible.')
     });
   }

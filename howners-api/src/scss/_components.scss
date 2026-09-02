@@ -274,14 +274,22 @@
 }
 
 // --- Form Controls ---
+// Bootstrap n'étant pas chargé, ces classes doivent porter le comportement
+// qu'il fournissait : bloc pleine largeur (sinon les champs restent à leur
+// largeur intrinsèque ~200px et les labels inline se collent dessus — pages
+// login/register illisibles sur mobile).
 .form-control,
 .form-select {
+  display: block;
+  width: 100%;
+  min-height: 42px; // cible tactile confortable
   font-family: var(--hw-font-family);
   font-size: var(--hw-fs-base);
   padding: var(--hw-space-2) var(--hw-space-3);
   border: 1px solid var(--hw-gray-300);
   border-radius: var(--hw-radius-md);
   color: var(--hw-gray-800);
+  background: var(--hw-surface);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &::placeholder {
@@ -303,6 +311,7 @@
 }
 
 .form-label {
+  display: block; // un <label> est inline par défaut : sans bloc, il se colle au champ
   font-size: var(--hw-fs-sm);
   font-weight: var(--hw-fw-medium);
   color: var(--hw-gray-700);
@@ -310,8 +319,17 @@
 }
 
 .invalid-feedback {
+  display: block;
+  margin-top: var(--hw-space-1);
   font-size: var(--hw-fs-xs);
   color: var(--hw-danger);
+}
+
+// Variante compacte (filtres, toolbars).
+.form-select-sm {
+  min-height: 34px;
+  padding: var(--hw-space-1) var(--hw-space-2);
+  font-size: var(--hw-fs-sm);
 }
 
 // --- Bootstrap Modal Overrides ---
@@ -804,6 +822,13 @@
     margin-bottom: 0;
     flex: 1;
     min-width: 0;
+  }
+
+  // Sélecteurs de filtre dans la barre : largeur au contenu (le form-select global fait 100 %).
+  &__select {
+    width: auto;
+    min-width: 160px;
+    flex: 0 0 auto;
   }
 
   &__search {

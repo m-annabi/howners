@@ -1,0 +1,211 @@
+// ==========================================================================
+// Compatibilité Bootstrap — implémentation minimale des classes utilisées
+// ==========================================================================
+// L'application est écrite en markup Bootstrap (grille row/col, utilitaires
+// d'espacement et de flex, spinners…) mais Bootstrap n'a jamais été chargé :
+// ces classes étaient inertes et les mises en page s'affichaient dégradées
+// (colonnes empilées sur desktop, espacements absents, spinners invisibles).
+// On implémente ici, avec la sémantique Bootstrap 5, uniquement ce que les
+// templates utilisent réellement. Les `!important` sur les utilitaires
+// reproduisent le comportement Bootstrap (l'utilitaire gagne toujours).
+
+// ── Grille ─────────────────────────────────────────────────────────────────
+// Mobile-first : toute colonne fait 100 % ; les variantes sm/md/lg prennent
+// leur fraction à partir de leur point de rupture. Gouttières via --g.
+.row {
+  --g: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: calc(var(--g) / -2);
+  margin-right: calc(var(--g) / -2);
+  row-gap: var(--g);
+
+  > * {
+    padding-left: calc(var(--g) / 2);
+    padding-right: calc(var(--g) / 2);
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.g-0 { --g: 0; }
+.g-1 { --g: 0.25rem; }
+.g-2 { --g: 0.5rem; }
+.g-3 { --g: 1rem; }
+.g-4 { --g: 1.5rem; }
+.g-5 { --g: 3rem; }
+.g-6 { --g: 2rem; }
+
+.col { flex: 1 0 0%; width: auto; }
+
+@for $i from 1 through 12 {
+  .col-#{$i} { width: calc(#{$i} / 12 * 100%); }
+}
+@media (min-width: 576px) {
+  @for $i from 1 through 12 {
+    .col-sm-#{$i} { width: calc(#{$i} / 12 * 100%); }
+  }
+}
+@media (min-width: 768px) {
+  @for $i from 1 through 12 {
+    .col-md-#{$i} { width: calc(#{$i} / 12 * 100%); }
+  }
+}
+@media (min-width: 992px) {
+  @for $i from 1 through 12 {
+    .col-lg-#{$i} { width: calc(#{$i} / 12 * 100%); }
+  }
+}
+
+// ── Espacements (échelle Bootstrap : 0, .25, .5, 1, 1.5, 3 rem) ───────────
+$bs-space: (0: 0, 1: 0.25rem, 2: 0.5rem, 3: 1rem, 4: 1.5rem, 5: 3rem);
+
+@each $k, $v in $bs-space {
+  .m-#{$k}  { margin: $v !important; }
+  .mt-#{$k} { margin-top: $v !important; }
+  .mb-#{$k} { margin-bottom: $v !important; }
+  .ms-#{$k} { margin-left: $v !important; }
+  .me-#{$k} { margin-right: $v !important; }
+  .mx-#{$k} { margin-left: $v !important; margin-right: $v !important; }
+  .my-#{$k} { margin-top: $v !important; margin-bottom: $v !important; }
+  .p-#{$k}  { padding: $v !important; }
+  .pt-#{$k} { padding-top: $v !important; }
+  .pb-#{$k} { padding-bottom: $v !important; }
+  .ps-#{$k} { padding-left: $v !important; }
+  .pe-#{$k} { padding-right: $v !important; }
+  .px-#{$k} { padding-left: $v !important; padding-right: $v !important; }
+  .py-#{$k} { padding-top: $v !important; padding-bottom: $v !important; }
+}
+
+// ── Display & flex ─────────────────────────────────────────────────────────
+.d-flex        { display: flex !important; }
+.d-inline-flex { display: inline-flex !important; }
+.d-block       { display: block !important; }
+.d-inline      { display: inline !important; }
+.d-grid        { display: grid !important; }
+
+.flex-column   { flex-direction: column !important; }
+.flex-wrap     { flex-wrap: wrap !important; }
+.flex-grow-1   { flex-grow: 1 !important; }
+.flex-shrink-0 { flex-shrink: 0 !important; }
+
+.align-items-start  { align-items: flex-start !important; }
+.align-items-center { align-items: center !important; }
+.align-items-end    { align-items: flex-end !important; }
+.align-self-start   { align-self: flex-start !important; }
+.align-self-center  { align-self: center !important; }
+.align-self-end     { align-self: flex-end !important; }
+
+.justify-content-start   { justify-content: flex-start !important; }
+.justify-content-center  { justify-content: center !important; }
+.justify-content-end     { justify-content: flex-end !important; }
+.justify-content-between { justify-content: space-between !important; }
+.justify-content-around  { justify-content: space-around !important; }
+
+// ── Texte & divers ─────────────────────────────────────────────────────────
+.text-start  { text-align: left !important; }
+.text-center { text-align: center !important; }
+.text-end    { text-align: right !important; }
+.text-muted  { color: var(--hw-gray-500) !important; }
+
+.fw-bold     { font-weight: var(--hw-fw-bold) !important; }
+.fw-semibold { font-weight: var(--hw-fw-semibold) !important; }
+.fw-medium   { font-weight: var(--hw-fw-medium) !important; }
+
+.w-100 { width: 100% !important; }
+.h-100 { height: 100% !important; }
+
+.position-relative { position: relative !important; }
+.position-absolute { position: absolute !important; }
+.top-0 { top: 0 !important; }
+.end-0 { right: 0 !important; }
+
+.rounded { border-radius: var(--hw-radius-md) !important; }
+.border-start { border-left: var(--hw-border) !important; }
+
+.list-unstyled { list-style: none; padding-left: 0; margin: 0; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+// ── Spinner de chargement ──────────────────────────────────────────────────
+@keyframes bs-spinner-border {
+  to { transform: rotate(360deg); }
+}
+
+.spinner-border {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  vertical-align: -0.125em;
+  border: 0.2em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: bs-spinner-border 0.75s linear infinite;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+// ── Cases à cocher (form-check) ────────────────────────────────────────────
+.form-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--hw-space-2);
+  min-height: 1.5rem;
+}
+
+.form-check-input {
+  flex-shrink: 0;
+  width: 1.1em;
+  height: 1.1em;
+  margin-top: 0.2em;
+  accent-color: var(--hw-primary-600);
+  cursor: pointer;
+}
+
+.form-check-label {
+  cursor: pointer;
+  font-size: var(--hw-fs-sm);
+  color: var(--hw-gray-700);
+}
+
+// ── Groupes de champs (input-group) ────────────────────────────────────────
+.input-group {
+  display: flex;
+  width: 100%;
+
+  > .form-control,
+  > .form-select {
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+  }
+
+  > :not(:first-child) { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; }
+  > :not(:last-child)  { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: var(--hw-space-2) var(--hw-space-3);
+  font-size: var(--hw-fs-base);
+  color: var(--hw-gray-600);
+  background: var(--hw-gray-50);
+  border: 1px solid var(--hw-gray-300);
+  border-radius: var(--hw-radius-md);
+  white-space: nowrap;
+}

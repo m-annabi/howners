@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -69,7 +70,8 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private authService: AuthService,
     private edlService: EtatDesLieuxService,
-    private paymentService: PaymentService
+    private paymentService: PaymentService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -396,26 +398,31 @@ export class RentalDetailComponent implements OnInit, OnDestroy {
 
   deleteRental(): void {
     if (!this.rental) return;
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette location ?')) return;
-    this.rentalService.deleteRental(this.rental.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => this.router.navigate(['/rentals']),
-      error: (err) => this.notificationService.error(err.error?.message || 'Erreur lors de la suppression')
+    this.confirmDialog.confirm('Confirmer la suppression', 'Êtes-vous sûr de vouloir supprimer cette location ?', 'danger').subscribe(ok => {
+      if (!ok) return;
+      this.rentalService.deleteRental(this.rental!.id).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => this.router.navigate(['/rentals']),
+        error: (err) => this.notificationService.error(err.error?.message || 'Erreur lors de la suppression')
+      });
     });
   }
 
   confirmExit(): void {
-    if (!this.rental || !confirm('Confirmer la sortie du locataire ?')) return;
-    this.confirmExitLoading = true;
-    this.rentalService.confirmExit(this.rental.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.confirmExitLoading = false;
-        this.notificationService.success('Sortie confirmée.');
-        this.loadRental(this.rental!.id);
-      },
-      error: (err) => {
-        this.confirmExitLoading = false;
-        this.notificationService.error(err.error?.message || 'Erreur lors de la confirmation');
-      }
+    if (!this.rental) return;
+    this.confirmDialog.confirm('Confirmation', 'Confirmer la sortie du locataire ?', 'warning').subscribe(ok => {
+      if (!ok) return;
+      this.confirmExitLoading = true;
+      this.rentalService.confirmExit(this.rental!.id).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.confirmExitLoading = false;
+          this.notificationService.success('Sortie confirmée.');
+          this.loadRental(this.rental!.id);
+        },
+        error: (err) => {
+          this.confirmExitLoading = false;
+          this.notificationService.error(err.error?.message || 'Erreur lors de la confirmation');
+        }
+      });
     });
   }
 

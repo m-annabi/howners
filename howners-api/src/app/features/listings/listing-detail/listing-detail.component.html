@@ -32,7 +32,7 @@
 
         <div class="listing-detail__body">
           <div class="listing-detail__title-row mb-3">
-            <h2 class="mb-0">{{ listing.title }}</h2>
+            <h1 class="mb-0 listing-title">{{ listing.title }}</h1>
             <app-status-badge [status]="listing.status" type="listing"></app-status-badge>
           </div>
 
@@ -81,6 +81,16 @@
         </div>
         <div *ngIf="listing.availableFrom">
           <p class="mb-1"><strong>Disponible dès :</strong> {{ listing.availableFrom | date:'dd/MM/yyyy' }}</p>
+        </div>
+
+        <!-- Visiteur non connecté : on garde l'intention (retour sur l'annonce après connexion) -->
+        <div class="d-grid gap-2 mt-3" *ngIf="!isAuthenticated">
+          <button class="hw-btn hw-btn--primary" (click)="loginToApply()">
+            <i class="bi bi-send"></i> Candidater
+          </button>
+          <p class="hw-text-sm hw-text-muted text-center mb-0">
+            Connectez-vous ou créez un compte locataire pour candidater et contacter le propriétaire.
+          </p>
         </div>
 
         <!-- Actions locataire -->

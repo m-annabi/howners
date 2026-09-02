@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -36,7 +38,8 @@ export class RgpdSettingsComponent implements OnInit, OnDestroy {
 
   constructor(
     private rgpdService: RgpdService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -75,13 +78,7 @@ export class RgpdSettingsComponent implements OnInit, OnDestroy {
     this.exporting = true;
     this.rgpdService.exportData().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'export-rgpd.json';
-        a.click();
-        window.URL.revokeObjectURL(url);
+        downloadBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), 'export-rgpd.json');
         this.exporting = false;
         this.notificationService.success('Export JSON téléchargé');
       },
@@ -96,12 +93,7 @@ export class RgpdSettingsComponent implements OnInit, OnDestroy {
     this.exportingPdf = true;
     this.rgpdService.exportDataAsPdf().pipe(takeUntil(this.destroy$)).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'export-rgpd.pdf';
-        a.click();
-        window.URL.revokeObjectURL(url);
+        downloadBlob(blob, 'export-rgpd.pdf');
         this.exportingPdf = false;
         this.notificationService.success('Export PDF téléchargé');
       },
@@ -116,12 +108,7 @@ export class RgpdSettingsComponent implements OnInit, OnDestroy {
     this.exportingArchive = true;
     this.rgpdService.exportArchive().pipe(takeUntil(this.destroy$)).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'export-rgpd.zip';
-        a.click();
-        window.URL.revokeObjectURL(url);
+        downloadBlob(blob, 'export-rgpd.zip');
         this.exportingArchive = false;
         this.notificationService.success('Archive ZIP téléchargée');
       },
@@ -133,18 +120,20 @@ export class RgpdSettingsComponent implements OnInit, OnDestroy {
   }
 
   requestErasure(): void {
-    const confirmed = confirm(
-      'ATTENTION : Cette action est IRRÉVERSIBLE.\n\n' +
-      'Toutes vos données personnelles seront anonymisées et vos fichiers supprimés.\n' +
-      'Votre compte sera désactivé.\n\n' +
-      'Êtes-vous sûr de vouloir continuer ?'
-    );
+    // Double confirmation : l'anonymisation est irréversible.
+    this.confirmDialog.confirm(
+      'Supprimer définitivement votre compte ?',
+      'ATTENTION : cette action est IRRÉVERSIBLE. Toutes vos données personnelles seront anonymisées, '
+        + 'vos fichiers supprimés et votre compte désactivé.',
+      'danger'
+    ).subscribe(first => {
+      if (!first) return;
+      this.confirmDialog.confirm('Dernière confirmation', 'Supprimer définitivement votre compte ?', 'danger')
+        .subscribe(second => { if (second) this.performErasure(); });
+    });
+  }
 
-    if (!confirmed) return;
-
-    const doubleConfirm = confirm('Dernière confirmation : supprimer définitivement votre compte ?');
-    if (!doubleConfirm) return;
-
+  private performErasure(): void {
     this.deleting = true;
     this.rgpdService.requestErasure().pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {

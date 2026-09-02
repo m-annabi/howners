@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -40,7 +41,8 @@ export class PaymentListComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private notificationService: NotificationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   /** Bail sur lequel la liste est restreinte (arrivée depuis un détail de location). */
@@ -164,38 +166,42 @@ export class PaymentListComponent implements OnInit {
   relancer(payment: Payment, event: Event): void {
     event.stopPropagation();
     const action = payment.relanceNiveau === 0 ? 'une relance' : 'la mise en demeure';
-    if (!confirm(`Envoyer ${action} à ${payment.payerName} pour ${payment.amount} ${payment.currency} ?`)) return;
+    this.confirmDialog.confirm('Confirmation', `Envoyer ${action} à ${payment.payerName} pour ${payment.amount} ${payment.currency} ?`, 'warning').subscribe(ok => {
+      if (!ok) return;
 
-    this.paymentService.relancer(payment.id).subscribe({
-      next: (updated) => {
-        const idx = this.payments.findIndex(p => p.id === updated.id);
-        if (idx >= 0) this.payments[idx] = updated;
-        this.applyFilters();
-        this.notificationService.success(payment.relanceNiveau === 0
-          ? 'Relance envoyée au locataire'
-          : 'Mise en demeure envoyée et archivée');
-      },
-      error: (err) => {
-        this.notificationService.error(err.error?.message || 'Impossible d\'envoyer la relance');
-      }
+      this.paymentService.relancer(payment.id).subscribe({
+        next: (updated) => {
+          const idx = this.payments.findIndex(p => p.id === updated.id);
+          if (idx >= 0) this.payments[idx] = updated;
+          this.applyFilters();
+          this.notificationService.success(payment.relanceNiveau === 0
+            ? 'Relance envoyée au locataire'
+            : 'Mise en demeure envoyée et archivée');
+        },
+        error: (err) => {
+          this.notificationService.error(err.error?.message || 'Impossible d\'envoyer la relance');
+        }
+      });
     });
   }
 
   markPaid(payment: Payment, event: Event): void {
     event.stopPropagation();
     if (payment.status === PaymentStatus.PAID) return;
-    if (!confirm(`Confirmer le paiement de ${payment.amount} ${payment.currency} ?`)) return;
+    this.confirmDialog.confirm('Confirmation', `Confirmer le paiement de ${payment.amount} ${payment.currency} ?`, 'warning').subscribe(ok => {
+      if (!ok) return;
 
-    this.paymentService.confirmPayment(payment.id).subscribe({
-      next: (updated) => {
-        const idx = this.payments.findIndex(p => p.id === updated.id);
-        if (idx >= 0) this.payments[idx] = updated;
-        this.applyFilters();
-        this.notificationService.success('Paiement marqué comme payé');
-      },
-      error: () => {
-        this.notificationService.error('Impossible de confirmer le paiement');
-      }
+      this.paymentService.confirmPayment(payment.id).subscribe({
+        next: (updated) => {
+          const idx = this.payments.findIndex(p => p.id === updated.id);
+          if (idx >= 0) this.payments[idx] = updated;
+          this.applyFilters();
+          this.notificationService.success('Paiement marqué comme payé');
+        },
+        error: () => {
+          this.notificationService.error('Impossible de confirmer le paiement');
+        }
+      });
     });
   }
 }

@@ -1,5 +1,8 @@
 package com.howners.gestion.service.payment;
 
+import com.howners.gestion.service.rental.RentalAccessService;
+import com.howners.gestion.service.document.GeneratedDocumentService;
+import com.howners.gestion.service.notification.NotificationDispatcher;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.notification.NotificationType;
@@ -57,6 +60,9 @@ public class RelanceImpayesService {
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
+    private final RentalAccessService rentalAccessService;
+    private final NotificationDispatcher notificationDispatcher;
+    private final GeneratedDocumentService generatedDocumentService;
 
     @Scheduled(cron = "0 30 8 * * ?")
     @Transactional
@@ -111,31 +117,24 @@ public class RelanceImpayesService {
         User tenant = payment.getPayer();
         User owner = rental.getProperty().getOwner();
 
-        if (tenant != null && tenant.getEmail() != null) {
-            emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                    tenant.getEmail(),
-                    tenant.getFullName(),
-                    "Relance — loyer impayé pour " + rental.getProperty().getName(),
-                    "Loyer impayé — relance",
-                    String.format(
-                            "Sauf erreur de notre part, le paiement de <strong>%.2f €</strong> dû le <strong>%s</strong> "
-                                    + "pour le logement situé %s n'a pas été reçu. Merci de régulariser votre situation dans les meilleurs délais.",
-                            payment.getAmount(),
-                            payment.getDueDate() != null ? payment.getDueDate().format(FR_DATE) : "—",
-                            adresse(rental)),
-                    null,
-                    "Payer maintenant",
-                    null,
-                    true
-            ));
-        }
+        notificationDispatcher.email(tenant, new NotificationDispatcher.Email(
+                "Relance — loyer impayé pour " + rental.getProperty().getName(),
+                "Loyer impayé — relance",
+                String.format(
+                        "Sauf erreur de notre part, le paiement de <strong>%.2f €</strong> dû le <strong>%s</strong> "
+                                + "pour le logement situé %s n'a pas été reçu. Merci de régulariser votre situation dans les meilleurs délais.",
+                        payment.getAmount(),
+                        payment.getDueDate() != null ? payment.getDueDate().format(FR_DATE) : "—",
+                        adresse(rental)),
+                null,
+                "Payer maintenant",
+                null,
+                true));
 
-        if (tenant != null) {
-            notificationService.create(tenant.getId(), NotificationType.PAYMENT_OVERDUE,
-                    "Relance de paiement",
-                    String.format("Le paiement de %.2f € est en retard. Merci de régulariser.", payment.getAmount()),
-                    "/payments");
-        }
+        notificationDispatcher.notify(tenant, NotificationType.PAYMENT_OVERDUE,
+                "Relance de paiement",
+                String.format("Le paiement de %.2f € est en retard. Merci de régulariser.", payment.getAmount()),
+                "/payments");
         notificationService.create(owner.getId(), NotificationType.PAYMENT_OVERDUE,
                 "Relance envoyée",
                 String.format("Une relance a été envoyée à %s pour le paiement de %.2f € (%s).",
@@ -177,53 +176,33 @@ public class RelanceImpayesService {
         }
 
         String fileName = String.format("mise_en_demeure_%s_%d.pdf", payment.getId(), System.currentTimeMillis());
-        String fileKey = storageService.uploadFile(pdfBytes, fileName, "application/pdf");
-
-        Document document = Document.builder()
-                .rental(rental)
-                .property(rental.getProperty())
-                .uploader(owner)
-                .documentType(DocumentType.MISE_EN_DEMEURE)
-                .fileName(fileName)
-                .filePath(fileKey)
-                .fileKey(fileKey)
-                .fileSize((long) pdfBytes.length)
-                .mimeType("application/pdf")
-                .documentHash(pdfService.calculateHash(pdfBytes))
-                .description(String.format("Mise en demeure — paiement de %.2f € dû le %s",
+        Document document = generatedDocumentService.storePdf(rental, owner, DocumentType.MISE_EN_DEMEURE,
+                fileName, pdfBytes,
+                String.format("Mise en demeure — paiement de %.2f € dû le %s",
                         payment.getAmount(),
-                        payment.getDueDate() != null ? payment.getDueDate().format(FR_DATE) : "—"))
-                .build();
-        documentRepository.save(document);
+                        payment.getDueDate() != null ? payment.getDueDate().format(FR_DATE) : "—"));
 
-        String documentUrl = storageService.generatePresignedUrl(fileKey);
+        String documentUrl = storageService.generatePresignedUrl(document.getFileKey());
 
-        if (tenant != null && tenant.getEmail() != null) {
-            emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                    tenant.getEmail(),
-                    tenant.getFullName(),
-                    "MISE EN DEMEURE — loyer impayé pour " + rental.getProperty().getName(),
-                    "Mise en demeure de payer",
-                    String.format(
-                            "Malgré notre relance, le paiement de <strong>%.2f €</strong> dû le <strong>%s</strong> demeure impayé. "
-                                    + "Vous êtes mis(e) en demeure de régler cette somme sous <strong>8 jours</strong>. "
-                                    + "À défaut, le bailleur pourra engager les démarches prévues par votre bail et par la loi "
-                                    + "(article 24 de la loi n° 89-462 du 6 juillet 1989).",
-                            payment.getAmount(),
-                            payment.getDueDate() != null ? payment.getDueDate().format(FR_DATE) : "—"),
-                    null,
-                    "Télécharger la mise en demeure",
-                    documentUrl,
-                    true
-            ));
-        }
+        notificationDispatcher.email(tenant, new NotificationDispatcher.Email(
+                "MISE EN DEMEURE — loyer impayé pour " + rental.getProperty().getName(),
+                "Mise en demeure de payer",
+                String.format(
+                        "Malgré notre relance, le paiement de <strong>%.2f €</strong> dû le <strong>%s</strong> demeure impayé. "
+                                + "Vous êtes mis(e) en demeure de régler cette somme sous <strong>8 jours</strong>. "
+                                + "À défaut, le bailleur pourra engager les démarches prévues par votre bail et par la loi "
+                                + "(article 24 de la loi n° 89-462 du 6 juillet 1989).",
+                        payment.getAmount(),
+                        payment.getDueDate() != null ? payment.getDueDate().format(FR_DATE) : "—"),
+                null,
+                "Télécharger la mise en demeure",
+                documentUrl,
+                true));
 
-        if (tenant != null) {
-            notificationService.create(tenant.getId(), NotificationType.MISE_EN_DEMEURE,
-                    "Mise en demeure",
-                    String.format("Une mise en demeure vous a été adressée pour le paiement de %.2f €.", payment.getAmount()),
-                    "/payments");
-        }
+        notificationDispatcher.notify(tenant, NotificationType.MISE_EN_DEMEURE,
+                "Mise en demeure",
+                String.format("Une mise en demeure vous a été adressée pour le paiement de %.2f €.", payment.getAmount()),
+                "/payments");
         notificationService.create(owner.getId(), NotificationType.MISE_EN_DEMEURE,
                 "Mise en demeure envoyée",
                 String.format("La mise en demeure a été envoyée à %s pour %.2f € (%s). Le document est archivé.",
@@ -238,13 +217,7 @@ public class RelanceImpayesService {
     }
 
     private void checkOwnerAccess(Payment payment) {
-        UUID currentUserId = AuthService.getCurrentUserId();
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
-        if (!payment.getRental().getProperty().getOwner().getId().equals(currentUserId)
-                && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("Vous n'êtes pas autorisé à relancer ce paiement.");
-        }
+        rentalAccessService.assertOwner(payment.getRental(), "Vous n'êtes pas autorisé à relancer ce paiement.");
     }
 
     private String adresse(Rental rental) {

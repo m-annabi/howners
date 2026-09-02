@@ -25,4 +25,4 @@ Disallow: /sign
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://howners.fr/sitemap.xml
+Sitemap: https://howners.com/sitemap.xml

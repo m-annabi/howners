@@ -102,4 +102,26 @@
   --hw-sidebar-width: 260px;
   --hw-topbar-height: 56px;
   --hw-content-max-width: 1200px;
+
+  // Alias sémantiques utilisés par plusieurs composants avec une valeur de repli
+  // (var(--hw-primary, #2563eb)…). Sans ces définitions, le repli — du bleu Bootstrap
+  // générique — s'appliquait silencieusement à la place de la charte.
+  --hw-primary: var(--hw-primary-600);
+  --hw-primary-rgb: 30, 58, 95;
+  --hw-primary-900-rgb: 8, 17, 28;
+  --hw-accent-rgb: 201, 169, 97;
+  --hw-info-rgb: 36, 95, 143;
+  --hw-success-rgb: 46, 107, 69;
+  --hw-warning-rgb: 176, 121, 30;
+  --hw-success-50: var(--hw-success-light);
+  --hw-success-600: var(--hw-success);
+  --hw-danger-50: var(--hw-danger-light);
+  --hw-danger-600: var(--hw-danger);
+  --hw-danger-dark: #7F2622;
+  --hw-text: var(--hw-gray-900);
+  --hw-text-muted: var(--hw-gray-500);
+  --hw-surface-alt: var(--hw-gray-50);
+  --hw-surface-hover: var(--hw-gray-100);
+  --hw-border-light: var(--hw-gray-100);   // utilisé comme couleur de fond/séparateur
+  --hw-radius: var(--hw-radius-lg);
 }

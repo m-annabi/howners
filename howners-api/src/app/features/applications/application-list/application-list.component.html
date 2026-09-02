@@ -100,6 +100,14 @@
       <small class="hw-text-muted">Notes : {{ app.notes }}</small>
     </div>
 
+    <!-- Candidature acceptée : la suite logique est la création de la location -->
+    <div *ngIf="app.status === 'ACCEPTED'" class="mt-3 d-flex gap-2 flex-wrap align-items-center">
+      <button class="hw-btn hw-btn--sm hw-btn--primary" (click)="openCreateRentalModal(app)">
+        <i class="bi bi-house-add"></i> Créer la location
+      </button>
+      <span class="hw-text-sm hw-text-muted">Les informations de la candidature sont reprises automatiquement.</span>
+    </div>
+
     <!-- Examen -->
     <div *ngIf="canReview(app) && reviewingId !== app.id" class="mt-3 d-flex gap-2 flex-wrap">
       <button class="hw-btn hw-btn--sm hw-btn--primary" (click)="startReview(app.id)">
@@ -130,3 +138,11 @@
     </div>
   </div>
 </div>
+
+<!-- Modale de création de location depuis une candidature acceptée -->
+<app-create-rental-modal
+  *ngIf="showCreateRentalModal && acceptedApplication"
+  [application]="acceptedApplication"
+  (onConfirm)="onRentalCreated($event)"
+  (onCancel)="onRentalModalCancelled()">
+</app-create-rental-modal>

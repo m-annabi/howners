@@ -94,7 +94,7 @@
           >
           <button
             type="button"
-            class="password-toggle"
+            class="password-toggle" aria-label="Afficher ou masquer le mot de passe"
             (click)="showPassword = !showPassword"
             tabindex="-1"
           >
@@ -123,6 +123,7 @@
       <div class="auth-field">
         <label class="form-label" for="role">Je suis</label>
         <select id="role" formControlName="role" class="form-control form-select">
+          <option value="" disabled>Choisissez votre profil…</option>
           <option *ngFor="let role of roles" [value]="role.value">
             {{ role.label }}
           </option>

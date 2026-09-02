@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PropertyService } from '../property.service';
@@ -26,7 +27,8 @@ export class PropertyDetailComponent implements OnInit {
     private rentalService: RentalService,
     private route: ActivatedRoute,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -86,22 +88,29 @@ export class PropertyDetailComponent implements OnInit {
   deleteProperty(): void {
     if (!this.property) return;
 
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce bien ?')) {
-      return;
-    }
+    this.confirmDialog.confirm('Confirmer la suppression', 'Êtes-vous sûr de vouloir supprimer ce bien ?', 'danger').subscribe(ok => {
+      if (!ok) return;
 
-    this.propertyService.deleteProperty(this.property.id).subscribe({
-      next: () => {
-        this.router.navigate(['/properties']);
-      },
-      error: (err) => {
-        this.notificationService.error(err.error?.message || 'Erreur lors de la suppression');
-      }
+      this.propertyService.deleteProperty(this.property!.id).subscribe({
+        next: () => {
+          this.router.navigate(['/properties']);
+        },
+        error: (err) => {
+          this.notificationService.error(err.error?.message || 'Erreur lors de la suppression');
+        }
+      });
     });
   }
 
   goBack(): void {
     this.router.navigate(['/properties']);
+  }
+
+  /** Enchaînement naturel bien → annonce : le formulaire arrive avec le bien présélectionné. */
+  publishListing(): void {
+    if (this.property) {
+      this.router.navigate(['/listings/new'], { queryParams: { propertyId: this.property.id } });
+    }
   }
 
   viewRentals(): void {

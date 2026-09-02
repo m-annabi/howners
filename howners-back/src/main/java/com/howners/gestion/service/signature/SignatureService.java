@@ -1,7 +1,10 @@
 package com.howners.gestion.service.signature;
 
 import com.howners.gestion.domain.contract.Contract;
+import com.howners.gestion.domain.contract.ContractSignatureRequest;
 import com.howners.gestion.domain.contract.ContractStatus;
+import com.howners.gestion.domain.contract.SignatureRequestStatus;
+import com.howners.gestion.repository.ContractSignatureRequestRepository;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.signature.Signature;
@@ -45,6 +48,7 @@ public class SignatureService {
     private final UserRepository userRepository;
     private final StorageService storageService;
     private final NotificationService notificationService;
+    private final ContractSignatureRequestRepository signatureRequestRepository;
 
     /**
      * Créer une signature pour un contrat
@@ -135,6 +139,8 @@ public class SignatureService {
         contract.setSignedAt(LocalDateTime.now());
         contractRepository.save(contract);
 
+        reconcilePendingSignatureRequest(contract, request);
+
         log.info("Contract {} signed by user {}", contract.getContractNumber(), currentUser.getEmail());
 
         // Notifier le propriétaire que le contrat a été signé
@@ -152,6 +158,29 @@ public class SignatureService {
         }
 
         return SignatureResponse.from(signature);
+    }
+
+    /**
+     * Deux chemins mènent à la signature : le flux e-signature tokenisé (email, DocuSign ou
+     * canvas public) et cette signature in-app depuis l'espace locataire. Si une demande
+     * e-signature était encore en cours pour ce contrat, la laisser en attente donnerait deux
+     * traçabilités contradictoires (contrat SIGNED, demande « en attente » indéfiniment, relances
+     * automatiques). On la clôt donc ici comme signée, avec la même preuve (IP, user-agent).
+     */
+    private void reconcilePendingSignatureRequest(Contract contract, CreateSignatureRequest request) {
+        signatureRequestRepository.findByContractId(contract.getId())
+                .filter(sr -> sr.getStatus() == SignatureRequestStatus.PENDING
+                        || sr.getStatus() == SignatureRequestStatus.SENT
+                        || sr.getStatus() == SignatureRequestStatus.VIEWED)
+                .ifPresent(sr -> {
+                    sr.setStatus(SignatureRequestStatus.SIGNED);
+                    sr.setSignedAt(LocalDateTime.now());
+                    sr.setIpAddress(request.ipAddress());
+                    sr.setUserAgent(request.userAgent());
+                    signatureRequestRepository.save(sr);
+                    log.info("Demande e-signature {} clôturée : contrat {} signé in-app",
+                            sr.getId(), contract.getContractNumber());
+                });
     }
 
     /**

@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { UserSubscription, UsageLimits, PLAN_COLORS } from '../../../core/models/subscription.model';
@@ -15,7 +16,7 @@ export class CurrentPlanComponent implements OnInit {
 
   planColors = PLAN_COLORS;
 
-  constructor(private subscriptionService: SubscriptionService) {}
+  constructor(private subscriptionService: SubscriptionService, private confirmDialog: ConfirmDialogService) {}
 
   ngOnInit(): void {
     this.loadData();
@@ -63,7 +64,8 @@ export class CurrentPlanComponent implements OnInit {
   }
 
   cancelSubscription(): void {
-    if (confirm('Annuler votre abonnement ? Vous conserverez l\'accès jusqu\'à la fin de la période en cours.')) {
+    this.confirmDialog.confirm('Confirmation', 'Annuler votre abonnement ? Vous conserverez l\'accès jusqu\'à la fin de la période en cours.', 'danger').subscribe(ok => {
+      if (!ok) return;
       this.cancelling = true;
       this.subscriptionService.cancelSubscription().subscribe({
         next: () => {
@@ -72,7 +74,7 @@ export class CurrentPlanComponent implements OnInit {
         },
         error: () => this.cancelling = false
       });
-    }
+    });
   }
 
   formatLimit(value: number): string {

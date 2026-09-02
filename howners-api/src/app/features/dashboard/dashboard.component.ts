@@ -97,7 +97,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get showOnboarding(): boolean {
-    return !this.isTenant && !this.loading && !!this.stats && (this.stats.totalProperties || 0) === 0;
+    // Parcours de démarrage du bailleur uniquement (pas pour ADMIN / CONCIERGE).
+    return this.isOwner && !this.loading && !!this.stats && (this.stats.totalProperties || 0) === 0;
   }
 
   get onboardingStepProperty(): boolean { return !!this.stats && (this.stats.totalProperties || 0) > 0; }

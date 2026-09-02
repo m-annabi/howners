@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -46,7 +47,8 @@ export class ListingFormComponent implements OnInit {
     private router: Router,
     private listingService: ListingService,
     private listingPhotoService: ListingPhotoService,
-    private propertyService: PropertyService
+    private propertyService: PropertyService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -64,6 +66,13 @@ export class ListingFormComponent implements OnInit {
 
     this.listingId = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!this.listingId;
+
+    // Arrivée depuis la fiche d'un bien (« Publier une annonce ») : bien présélectionné,
+    // ses équipements seront pré-cochés au chargement de la liste des biens.
+    const preselected = this.route.snapshot.queryParamMap.get('propertyId');
+    if (!this.isEditMode && preselected) {
+      this.form.patchValue({ propertyId: preselected });
+    }
 
     this.propertyService.getProperties().subscribe({
       next: (page) => {
@@ -175,15 +184,16 @@ export class ListingFormComponent implements OnInit {
   }
 
   deletePhoto(photo: ListingPhoto): void {
-    if (!this.listingId || !confirm('Voulez-vous vraiment supprimer cette photo ?')) {
-      return;
-    }
+    if (!this.listingId) return;
+    this.confirmDialog.confirm('Confirmer la suppression', 'Voulez-vous vraiment supprimer cette photo ?', 'danger').subscribe(ok => {
+      if (!ok) return;
 
-    this.listingPhotoService.deletePhoto(this.listingId, photo.id).subscribe({
-      next: () => {
-        this.listingPhotos = this.listingPhotos.filter(p => p.id !== photo.id);
-      },
-      error: () => {}
+      this.listingPhotoService.deletePhoto(this.listingId!, photo.id).subscribe({
+        next: () => {
+          this.listingPhotos = this.listingPhotos.filter(p => p.id !== photo.id);
+        },
+        error: () => {}
+      });
     });
   }
 

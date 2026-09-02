@@ -36,7 +36,8 @@ export class RegisterComponent implements OnInit {
       firstName: ['', [Validators.required]],
       lastName: ['', [Validators.required]],
       phone: [''],
-      role: [Role.OWNER, [Validators.required]],
+      // Pas de rôle présélectionné : un locataire inattentif s'inscrivait comme propriétaire.
+      role: ['', [Validators.required]],
       referralCode: ['']
     });
   }

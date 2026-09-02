@@ -1,5 +1,6 @@
 package com.howners.gestion.service.invoice;
 
+import com.howners.gestion.service.rental.RentalAccessService;
 import com.howners.gestion.domain.invoice.Invoice;
 import com.howners.gestion.util.PdfDoc;
 import com.howners.gestion.util.PdfFormat;
@@ -41,6 +42,7 @@ public class InvoiceService {
     private final UserRepository userRepository;
     private final PdfService pdfService;
     private final DocumentSequenceService documentSequenceService;
+    private final RentalAccessService rentalAccessService;
 
     private static final DateTimeFormatter FR_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -94,12 +96,7 @@ public class InvoiceService {
         Rental rental = rentalRepository.findById(request.rentalId())
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", request.rentalId().toString()));
 
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
-
-        if (!rental.getProperty().getOwner().getId().equals(currentUserId) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to create invoices for this rental");
-        }
+        rentalAccessService.assertOwner(rental, "You are not authorized to create invoices for this rental");
 
         String invoiceNumber = generateInvoiceNumber(rental.getProperty().getOwner().getId());
 
@@ -162,29 +159,11 @@ public class InvoiceService {
     }
 
     private void checkRentalAccess(Rental rental) {
-        UUID currentUserId = AuthService.getCurrentUserId();
-        UUID ownerId = rental.getProperty().getOwner().getId();
-        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
-
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
-
-        if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to access invoices for this rental");
-        }
+        rentalAccessService.assertParticipant(rental, "You are not authorized to access invoices for this rental");
     }
 
     private void checkAccess(Invoice invoice) {
-        UUID currentUserId = AuthService.getCurrentUserId();
-        UUID ownerId = invoice.getRental().getProperty().getOwner().getId();
-        UUID tenantId = invoice.getRental().getTenant() != null ? invoice.getRental().getTenant().getId() : null;
-
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
-
-        if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to access this invoice");
-        }
+        rentalAccessService.assertParticipant(invoice.getRental(), "You are not authorized to access this invoice");
     }
 
     /**

@@ -37,17 +37,11 @@ public class ContractTemplateService {
     private final com.howners.gestion.repository.UserRepository userRepository;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    private final com.howners.gestion.service.rental.RentalAccessService rentalAccessService;
+
     /** Autorise le propriétaire du bien, le locataire du bail, ou un admin. */
     private void assertRentalAccess(Rental rental) {
-        UUID currentUserId = com.howners.gestion.service.auth.AuthService.getCurrentUserId();
-        UUID ownerId = rental.getProperty() != null && rental.getProperty().getOwner() != null
-                ? rental.getProperty().getOwner().getId() : null;
-        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
-        boolean isAdmin = userRepository.findById(currentUserId)
-                .map(u -> u.getRole() == Role.ADMIN).orElse(false);
-        if (!currentUserId.equals(ownerId) && !currentUserId.equals(tenantId) && !isAdmin) {
-            throw new ForbiddenException("Cette location ne vous appartient pas.");
-        }
+        rentalAccessService.assertParticipant(rental, "Cette location ne vous appartient pas.");
     }
 
     /**

@@ -1,0 +1,55 @@
+<div class="psc">
+  <div class="psc__card" [ngClass]="'psc__card--' + state">
+
+    <div class="psc__icon">
+      <i class="bi"
+         [ngClass]="{
+           'bi-check-circle-fill': state === 'success',
+           'bi-x-circle-fill': state === 'declined',
+           'bi-exclamation-circle-fill': state === 'aborted',
+           'bi-hourglass-split': state === 'processing'
+         }"></i>
+    </div>
+
+    <ng-container [ngSwitch]="state">
+      <ng-container *ngSwitchCase="'success'">
+        <h1 class="psc__title">Contrat signé</h1>
+        <p class="psc__text">
+          Merci, votre signature a bien été enregistrée<ng-container *ngIf="contract">
+          pour le contrat <strong>{{ contract.contractNumber }}</strong>
+          ({{ contract.propertyName }})</ng-container>.
+          Vous recevrez une confirmation par e-mail avec le document signé.
+        </p>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'declined'">
+        <h1 class="psc__title">Signature refusée</h1>
+        <p class="psc__text">
+          Vous avez refusé de signer ce contrat. Le propriétaire en est informé ; vous pouvez le
+          contacter pour en discuter.
+        </p>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'aborted'">
+        <h1 class="psc__title">Signature interrompue</h1>
+        <p class="psc__text">
+          La session de signature s'est terminée sans être finalisée. Vous pouvez la reprendre à
+          tout moment depuis le lien reçu par e-mail.
+        </p>
+      </ng-container>
+
+      <ng-container *ngSwitchDefault>
+        <h1 class="psc__title">Signature en cours de traitement</h1>
+        <p class="psc__text">
+          Votre signature est en cours d'enregistrement. Vous recevrez une confirmation par e-mail
+          dans quelques instants.
+        </p>
+      </ng-container>
+    </ng-container>
+
+    <div class="psc__actions">
+      <a class="hw-btn hw-btn--primary" routerLink="/auth/login">Accéder à mon espace</a>
+      <a class="hw-btn hw-btn--ghost" routerLink="/">Retour à l'accueil</a>
+    </div>
+  </div>
+</div>

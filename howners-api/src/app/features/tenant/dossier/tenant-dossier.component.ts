@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { DocumentService } from '../../../core/services/document.service';
 import { Document, DocumentType } from '../../../core/models/document.model';
@@ -64,7 +66,7 @@ export class TenantDossierComponent implements OnInit {
   error: string | null = null;
   uploadError: string | null = null;
 
-  constructor(private documentService: DocumentService) {}
+  constructor(private documentService: DocumentService, private confirmDialog: ConfirmDialogService) {}
 
   ngOnInit(): void {
     this.loadDocuments();
@@ -115,28 +117,21 @@ export class TenantDossierComponent implements OnInit {
   }
 
   removeDoc(piece: DossierPiece, doc: Document): void {
-    if (!confirm(`Supprimer « ${doc.fileName} » de votre dossier ?`)) {
-      return;
-    }
-    this.documentService.deleteDocument(doc.id).subscribe({
-      next: () => {
-        piece.docs = piece.docs.filter(d => d.id !== doc.id);
-      },
-      error: () => {
-        this.uploadError = 'Impossible de supprimer ce document.';
-      }
+    this.confirmDialog.confirm('Confirmer la suppression', `Supprimer « ${doc.fileName} » de votre dossier ?`, 'danger').subscribe(ok => {
+      if (!ok) return;
+      this.documentService.deleteDocument(doc.id).subscribe({
+        next: () => {
+          piece.docs = piece.docs.filter(d => d.id !== doc.id);
+        },
+        error: () => {
+          this.uploadError = 'Impossible de supprimer ce document.';
+        }
+      });
     });
   }
 
   downloadDoc(doc: Document): void {
-    this.documentService.downloadDocument(doc.id).subscribe(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = window.document.createElement('a');
-      a.href = url;
-      a.download = doc.fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
+    this.documentService.downloadDocument(doc.id).subscribe(blob => downloadBlob(blob, doc.fileName));
   }
 
   get completedCount(): number {

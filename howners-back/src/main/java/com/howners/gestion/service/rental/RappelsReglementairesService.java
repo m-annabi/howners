@@ -1,5 +1,6 @@
 package com.howners.gestion.service.rental;
 
+import com.howners.gestion.service.notification.NotificationDispatcher;
 import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
@@ -40,6 +41,7 @@ public class RappelsReglementairesService {
     private final PropertyRepository propertyRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final NotificationDispatcher notificationDispatcher;
 
     @Scheduled(cron = "0 15 7 * * ?")
     @Transactional
@@ -100,9 +102,7 @@ public class RappelsReglementairesService {
             User tenant = rental.getTenant();
             boolean expiree = !echeance.isAfter(LocalDate.now());
 
-            notificationService.create(
-                    owner.getId(),
-                    NotificationType.INSURANCE_RENEWAL,
+            notificationDispatcher.notify(owner, NotificationType.INSURANCE_RENEWAL,
                     expiree ? "Assurance habitation expirée" : "Assurance habitation à renouveler",
                     String.format("L'attestation d'assurance du locataire de %s %s le %s. Demandez la nouvelle attestation.",
                             rental.getProperty().getName(),
@@ -110,25 +110,20 @@ public class RappelsReglementairesService {
                             echeance.format(FR_DATE)),
                     "/rentals/" + rental.getId());
 
-            if (tenant != null && tenant.getEmail() != null) {
-                emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                        tenant.getEmail(),
-                        tenant.getFullName(),
-                        "Votre attestation d'assurance habitation " + (expiree ? "a expiré" : "expire bientôt"),
-                        "Assurance habitation",
-                        String.format(
-                                "L'attestation d'assurance habitation de votre logement (%s) %s le <strong>%s</strong>. "
-                                        + "L'assurance du logement est une obligation légale du locataire : merci de transmettre "
-                                        + "votre nouvelle attestation à votre bailleur.",
-                                rental.getProperty().getName(),
-                                expiree ? "a expiré" : "expire",
-                                echeance.format(FR_DATE)),
-                        null,
-                        null,
-                        null,
-                        expiree
-                ));
-            }
+            notificationDispatcher.email(tenant, new NotificationDispatcher.Email(
+                    "Votre attestation d'assurance habitation " + (expiree ? "a expiré" : "expire bientôt"),
+                    "Assurance habitation",
+                    String.format(
+                            "L'attestation d'assurance habitation de votre logement (%s) %s le <strong>%s</strong>. "
+                                    + "L'assurance du logement est une obligation légale du locataire : merci de transmettre "
+                                    + "votre nouvelle attestation à votre bailleur.",
+                            rental.getProperty().getName(),
+                            expiree ? "a expiré" : "expire",
+                            echeance.format(FR_DATE)),
+                    null,
+                    null,
+                    null,
+                    expiree));
             log.info("Rappel assurance pour la location {} (échéance {})", rental.getId(), echeance);
         }
     }

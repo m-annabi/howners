@@ -68,6 +68,11 @@ class EdlComparisonServiceTest {
 
     @BeforeEach
     void setup() {
+        // Collaborateurs factorisés, câblés sur les mêmes mocks pour conserver les vérifications existantes.
+        org.springframework.test.util.ReflectionTestUtils.setField(comparisonService, "notificationDispatcher",
+                new com.howners.gestion.service.notification.NotificationDispatcher(notificationService, emailService));
+        org.springframework.test.util.ReflectionTestUtils.setField(comparisonService, "generatedDocumentService",
+                new com.howners.gestion.service.document.GeneratedDocumentService(storageService, documentRepository, pdfService));
         ownerId = UUID.randomUUID();
         rentalId = UUID.randomUUID();
         User owner = User.builder().id(ownerId).role(Role.OWNER).build();

@@ -1,3 +1,4 @@
+import { formatFileSize } from '../../shared/utils/file.utils';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -115,13 +116,7 @@ export class DocumentService {
    * Formater la taille d'un fichier
    */
   formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    return formatFileSize(bytes);
   }
 
   /**

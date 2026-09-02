@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../confirm-dialog/confirm-dialog.service';
 import { Component, Input, OnInit } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { PropertyPhotoService } from '../../../core/services/property-photo.service';
@@ -21,7 +22,8 @@ export class PropertyPhotoGalleryComponent implements OnInit {
 
   constructor(
     private photoService: PropertyPhotoService,
-    private photoStateService: PropertyPhotoStateService
+    private photoStateService: PropertyPhotoStateService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -128,19 +130,19 @@ export class PropertyPhotoGalleryComponent implements OnInit {
   deletePhoto(photo: PropertyPhoto): void {
     if (!this.editable) return;
 
-    if (!confirm('Voulez-vous vraiment supprimer cette photo ?')) {
-      return;
-    }
+    this.confirmDialog.confirm('Confirmer la suppression', 'Voulez-vous vraiment supprimer cette photo ?', 'danger').subscribe(ok => {
+      if (!ok) return;
 
-    this.photoService.deletePhoto(this.propertyId, photo.id).subscribe({
-      next: () => {
-        this.photos = this.photos.filter((p) => p.id !== photo.id);
-        // Notifier que les photos ont changé (la photo de couverture peut avoir changé)
-        this.photoStateService.notifyPhotoUpdate(this.propertyId);
-      },
-      error: () => {
-        this.error = 'Erreur lors de la suppression de la photo';
-      }
+      this.photoService.deletePhoto(this.propertyId, photo.id).subscribe({
+        next: () => {
+          this.photos = this.photos.filter((p) => p.id !== photo.id);
+          // Notifier que les photos ont changé (la photo de couverture peut avoir changé)
+          this.photoStateService.notifyPhotoUpdate(this.propertyId);
+        },
+        error: () => {
+          this.error = 'Erreur lors de la suppression de la photo';
+        }
+      });
     });
   }
 

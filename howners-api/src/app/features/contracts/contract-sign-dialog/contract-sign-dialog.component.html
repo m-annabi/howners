@@ -5,7 +5,7 @@
         <h5 class="modal-title">
           <i class="bi bi-pen"></i> Signature du Contrat
         </h5>
-        <button type="button" class="btn-close" (click)="onClose()"></button>
+        <button type="button" class="btn-close" aria-label="Fermer" (click)="onClose()"></button>
       </div>
 
       <div class="modal-body">
@@ -16,13 +16,13 @@
 
         <!-- Contract Content Preview -->
         <div class="contract-preview">
-          <h6>📄 Aperçu du Contrat</h6>
+          <h6><i class="bi bi-file-earmark-text"></i> Aperçu du Contrat</h6>
           <div class="contract-content" [innerHTML]="contractContent"></div>
         </div>
 
         <!-- Signer Information -->
         <div class="signer-info">
-          <h6>👤 Informations du Signataire</h6>
+          <h6><i class="bi bi-person"></i> Informations du Signataire</h6>
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">

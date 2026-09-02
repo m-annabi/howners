@@ -1,5 +1,6 @@
 package com.howners.gestion.service.referral;
 
+import com.howners.gestion.service.notification.NotificationDispatcher;
 import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.domain.referral.Referral;
 import com.howners.gestion.domain.referral.ReferralStatus;
@@ -35,6 +36,7 @@ public class ReferralRewardService {
     private final SubscriptionService subscriptionService;
     private final NotificationService notificationService;
     private final EmailService emailService;
+    private final NotificationDispatcher notificationDispatcher;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -85,23 +87,17 @@ public class ReferralRewardService {
                 : messageHtml.replace("vient d'être ajouté à votre compte",
                         "sera appliqué sur votre prochaine facture (abonnement en cours géré par Stripe)");
 
-        notificationService.create(
-                user.getId(),
-                NotificationType.REFERRAL_REWARD,
+        notificationDispatcher.notifyAndEmail(user, NotificationType.REFERRAL_REWARD,
                 "1 mois PRO offert",
                 "Récompense de parrainage débloquée.",
-                "/billing");
-
-        emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                user.getEmail(),
-                user.getFullName(),
-                sujet,
-                "Récompense de parrainage",
-                message,
-                null,
-                "Voir mon abonnement",
-                frontendUrl + "/billing",
-                false
-        ));
+                "/billing",
+                new NotificationDispatcher.Email(
+                        sujet,
+                        "Récompense de parrainage",
+                        message,
+                        null,
+                        "Voir mon abonnement",
+                        frontendUrl + "/billing",
+                        false));
     }
 }

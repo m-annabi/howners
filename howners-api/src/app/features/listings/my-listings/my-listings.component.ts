@@ -1,3 +1,4 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { ListingService } from '../../../core/services/listing.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -18,7 +19,8 @@ export class MyListingsComponent implements OnInit {
 
   constructor(
     private listingService: ListingService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -51,33 +53,34 @@ export class MyListingsComponent implements OnInit {
   }
 
   pause(id: string): void {
-    if (!confirm('Mettre cette annonce en pause ? Elle ne sera plus visible publiquement.')) {
-      return;
-    }
-    this.listingService.pauseListing(id).subscribe({
-      next: () => {
-        this.notificationService.success('Annonce mise en pause');
-        this.loadListings();
-      },
-      error: () => this.error = 'Erreur lors de la mise en pause'
+    this.confirmDialog.confirm('Confirmation', 'Mettre cette annonce en pause ? Elle ne sera plus visible publiquement.', 'warning').subscribe(ok => {
+      if (!ok) return;
+      this.listingService.pauseListing(id).subscribe({
+        next: () => {
+          this.notificationService.success('Annonce mise en pause');
+          this.loadListings();
+        },
+        error: () => this.error = 'Erreur lors de la mise en pause'
+      });
     });
   }
 
   close(id: string): void {
-    if (!confirm('Fermer cette annonce ? Elle n\'acceptera plus de candidatures.')) {
-      return;
-    }
-    this.listingService.closeListing(id).subscribe({
-      next: () => {
-        this.notificationService.success('Annonce fermée');
-        this.loadListings();
-      },
-      error: () => this.error = 'Erreur lors de la fermeture'
+    this.confirmDialog.confirm('Confirmation', 'Fermer cette annonce ? Elle n\'acceptera plus de candidatures.', 'danger').subscribe(ok => {
+      if (!ok) return;
+      this.listingService.closeListing(id).subscribe({
+        next: () => {
+          this.notificationService.success('Annonce fermée');
+          this.loadListings();
+        },
+        error: () => this.error = 'Erreur lors de la fermeture'
+      });
     });
   }
 
   delete(id: string): void {
-    if (confirm('Supprimer cette annonce ?')) {
+    this.confirmDialog.confirm('Confirmer la suppression', 'Supprimer cette annonce ?', 'danger').subscribe(ok => {
+      if (!ok) return;
       this.listingService.deleteListing(id).subscribe({
         next: () => {
           this.notificationService.success('Annonce supprimée');
@@ -85,7 +88,7 @@ export class MyListingsComponent implements OnInit {
         },
         error: () => this.error = 'Erreur lors de la suppression'
       });
-    }
+    });
   }
 
   canPublish(listing: Listing): boolean {

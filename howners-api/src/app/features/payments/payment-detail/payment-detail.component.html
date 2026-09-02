@@ -51,7 +51,34 @@
     </div>
   </div>
 
+  <!-- Suivi des relances (propriétaire) : où en est la procédure et quelle est la prochaine étape -->
+  <div *ngIf="isOwner && (payment.relanceNiveau || 0) > 0" class="hw-alert mb-4"
+       [ngClass]="payment.relanceNiveau >= 2 ? 'hw-alert--danger' : 'hw-alert--warning'">
+    <i class="bi" [ngClass]="payment.relanceNiveau >= 2 ? 'bi-file-earmark-text-fill' : 'bi-bell-fill'"></i>
+    <div>
+      <ng-container *ngIf="payment.relanceNiveau === 1">
+        <div><strong>Relance amiable envoyée</strong><span *ngIf="payment.derniereRelanceLe"> le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}</span>.</div>
+        <div class="hw-text-sm">Sans régularisation sous quelques jours, vous pourrez envoyer la mise en demeure.</div>
+      </ng-container>
+      <ng-container *ngIf="payment.relanceNiveau >= 2">
+        <div>
+          <strong>Mise en demeure envoyée</strong><span *ngIf="payment.derniereRelanceLe"> le {{ payment.derniereRelanceLe | date:'dd/MM/yyyy' }}</span><span *ngIf="payment.miseEnDemeureNumero"> (n° {{ payment.miseEnDemeureNumero }})</span>.
+          <a [routerLink]="['/rentals', payment.rentalId]" class="ms-1">Consulter le courrier PDF dans les documents du bail</a>
+        </div>
+        <div class="hw-text-sm mt-1">
+          <strong>Et ensuite ?</strong> Si l'impayé persiste au-delà du délai indiqué dans le courrier, les étapes suivantes
+          sortent de la plateforme : commandement de payer par commissaire de justice (clause résolutoire, délai légal de
+          6 semaines), puis saisine du juge des contentieux de la protection. Conservez ce courrier : il fait partie du dossier.
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
   <div class="d-flex gap-2 flex-wrap">
+    <button *ngIf="canRelancer()" class="hw-btn hw-btn--outline" (click)="relancer()" [disabled]="relancing">
+      <i class="bi" [ngClass]="(payment.relanceNiveau || 0) === 0 ? 'bi-bell' : 'bi-envelope-exclamation'"></i>
+      {{ relancing ? 'Envoi…' : relanceLabel }}
+    </button>
     <button *ngIf="canPay()" class="hw-btn hw-btn--primary" (click)="payNow()" [disabled]="paying">
       <i class="bi bi-credit-card"></i>
       {{ paying ? 'Redirection…' : 'Payer le loyer' }}

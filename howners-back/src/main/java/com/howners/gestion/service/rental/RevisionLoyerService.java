@@ -1,5 +1,7 @@
 package com.howners.gestion.service.rental;
 
+import com.howners.gestion.service.document.GeneratedDocumentService;
+import com.howners.gestion.service.notification.NotificationDispatcher;
 import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
@@ -65,6 +67,8 @@ public class RevisionLoyerService {
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
+    private final NotificationDispatcher notificationDispatcher;
+    private final GeneratedDocumentService generatedDocumentService;
 
     // ----- Indices IRL -----
 
@@ -179,46 +183,24 @@ public class RevisionLoyerService {
         }
 
         String fileName = String.format("revision_loyer_%s_%d.pdf", revision.getId(), System.currentTimeMillis());
-        String fileKey = storageService.uploadFile(pdfBytes, fileName, "application/pdf");
-
-        Document document = Document.builder()
-                .rental(rental)
-                .property(rental.getProperty())
-                .uploader(rental.getProperty().getOwner())
-                .documentType(DocumentType.OTHER)
-                .fileName(fileName)
-                .filePath(fileKey)
-                .fileKey(fileKey)
-                .fileSize((long) pdfBytes.length)
-                .mimeType("application/pdf")
-                .documentHash(pdfService.calculateHash(pdfBytes))
-                .description("Courrier de révision de loyer IRL")
-                .build();
-        document = documentRepository.save(document);
+        Document document = generatedDocumentService.storePdf(rental, rental.getProperty().getOwner(),
+                DocumentType.OTHER, fileName, pdfBytes, "Courrier de révision de loyer IRL");
         revision.setDocument(document);
         revision.setStatut(StatutRevision.NOTIFIEE);
         revision = revisionRepository.save(revision);
 
         // Notifications + email locataire
-        if (tenant != null) {
-            notificationService.create(
-                    tenant.getId(),
-                    NotificationType.RENT_REVISION,
-                    "Révision de votre loyer",
-                    String.format("Votre loyer passe de %.2f € à %.2f € au %s (indexation IRL).",
-                            revision.getAncienLoyer(), revision.getNouveauLoyer(),
-                            revision.getDateEffet().format(FR_DATE)),
-                    "/rentals/" + rental.getId());
-
-            if (tenant.getEmail() != null) {
-                emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                        tenant.getEmail(),
-                        tenant.getFullName(),
+        notificationDispatcher.notifyAndEmail(tenant, NotificationType.RENT_REVISION,
+                "Révision de votre loyer",
+                String.format("Votre loyer passe de %.2f € à %.2f € au %s (indexation IRL).",
+                        revision.getAncienLoyer(), revision.getNouveauLoyer(),
+                        revision.getDateEffet().format(FR_DATE)),
+                "/rentals/" + rental.getId(),
+                new NotificationDispatcher.Email(
                         "Révision annuelle de votre loyer — " + rental.getProperty().getName(),
                         "Révision de loyer",
-                        String.format(
-                                "Conformément à la clause de révision de votre bail et à l'article 17-1 de la loi n° 89-462, "
-                                        + "votre loyer est révisé selon l'indice de référence des loyers (IRL) publié par l'INSEE."),
+                        "Conformément à la clause de révision de votre bail et à l'article 17-1 de la loi n° 89-462, "
+                                + "votre loyer est révisé selon l'indice de référence des loyers (IRL) publié par l'INSEE.",
                         String.format(
                                 "Ancien loyer : <strong>%.2f €</strong><br/>"
                                         + "Nouveau loyer : <strong>%.2f €</strong><br/>"
@@ -232,10 +214,7 @@ public class RevisionLoyerService {
                                 revision.getDateEffet().format(FR_DATE)),
                         "Voir ma location",
                         null,
-                        false
-                ));
-            }
-        }
+                        false));
 
         notificationService.create(
                 rental.getProperty().getOwner().getId(),

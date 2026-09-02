@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReceiptService } from '../../../core/services/receipt.service';
@@ -63,14 +64,7 @@ export class ReceiptListComponent implements OnInit {
   downloadPdf(receipt: Receipt, event: Event): void {
     event.stopPropagation();
     this.receiptService.downloadPdf(receipt.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `quittance-${receipt.receiptNumber}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, `quittance-${receipt.receiptNumber}.pdf`),
       error: () => {
       }
     });

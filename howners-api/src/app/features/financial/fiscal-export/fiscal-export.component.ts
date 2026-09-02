@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { NotificationService } from '../../../core/services/notification.service';
 import {
@@ -46,14 +47,7 @@ export class FiscalExportComponent implements OnInit {
 
   download(format: 'pdf' | 'csv'): void {
     this.exportFiscalService.download(this.annee, format).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `declaration-2044-${this.annee}.${format}`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, `declaration-2044-${this.annee}.${format}`),
       error: () => this.notifications.error('Export indisponible.')
     });
   }

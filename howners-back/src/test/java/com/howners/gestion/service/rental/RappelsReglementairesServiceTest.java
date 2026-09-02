@@ -43,6 +43,9 @@ class RappelsReglementairesServiceTest {
 
     @BeforeEach
     void setup() {
+        // Collaborateur factorisé, câblé sur les mêmes mocks pour conserver les vérifications existantes.
+        org.springframework.test.util.ReflectionTestUtils.setField(rappelsService, "notificationDispatcher",
+                new com.howners.gestion.service.notification.NotificationDispatcher(notificationService, emailService));
         ownerId = UUID.randomUUID();
         owner = User.builder().id(ownerId).email("o@t.fr").firstName("O").lastName("W").build();
         property = new Property();

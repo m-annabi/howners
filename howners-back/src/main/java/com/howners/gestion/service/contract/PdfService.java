@@ -67,7 +67,7 @@ public class PdfService {
         // pied-de-page dans le corps pouvait provoquer.
         String generatedLine = "Document généré par Howners le "
                 + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                + " — howners.fr";
+                + " — howners.com";
         html.append("@page { size: A4; margin: 2cm 2cm 2.4cm 2cm;");
         html.append("  @bottom-left { content: '").append(generatedLine).append("'; font-family: Helvetica, Arial, sans-serif; font-size: 7.5pt; color: #9CA3AF; }");
         html.append("  @bottom-right { content: 'Page ' counter(page) ' / ' counter(pages); font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #999; } }");

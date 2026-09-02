@@ -1,5 +1,6 @@
 package com.howners.gestion.service.contract;
 
+import com.howners.gestion.service.document.GeneratedDocumentService;
 import com.howners.gestion.domain.audit.AuditAction;
 import com.howners.gestion.domain.contract.AmendmentStatus;
 import com.howners.gestion.domain.contract.Contract;
@@ -49,6 +50,7 @@ public class ContractAmendmentService {
     private final StorageService storageService;
     private final AuditService auditService;
     private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
+    private final GeneratedDocumentService generatedDocumentService;
 
     /** Autorise le propriétaire du bien, le locataire du bail, ou un admin. */
     private void assertContractAccess(Contract contract) {
@@ -123,21 +125,10 @@ public class ContractAmendmentService {
         String html = buildAmendmentHtml(amendment, contract, currentUser);
         byte[] pdfBytes = pdfService.generatePdf(html, null);
 
-        String fileKey = storageService.uploadFile(pdfBytes,
+        Document doc = generatedDocumentService.storePdf(contract.getRental(), currentUser, DocumentType.CONTRACT,
                 "amendments/avenant-" + contract.getContractNumber() + "-" + nextNumber + ".pdf",
-                "application/pdf");
-
-        Document doc = Document.builder()
-                .rental(contract.getRental())
-                .fileName("avenant-" + contract.getContractNumber() + "-" + nextNumber + ".pdf")
-                .filePath(fileKey)   // colonne NOT NULL héritée du schéma initial
-                .fileKey(fileKey)
-                .mimeType("application/pdf")
-                .fileSize((long) pdfBytes.length)
-                .documentType(DocumentType.CONTRACT)
-                .uploader(currentUser)
-                .build();
-        doc = documentRepository.save(doc);
+                "avenant-" + contract.getContractNumber() + "-" + nextNumber + ".pdf",
+                pdfBytes, "Avenant n°" + nextNumber + " au contrat " + contract.getContractNumber());
         amendment.setDocument(doc);
 
         amendment = amendmentRepository.save(amendment);

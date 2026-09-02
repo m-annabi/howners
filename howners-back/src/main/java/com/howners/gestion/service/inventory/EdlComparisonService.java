@@ -2,6 +2,8 @@ package com.howners.gestion.service.inventory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.howners.gestion.service.document.GeneratedDocumentService;
+import com.howners.gestion.service.notification.NotificationDispatcher;
 import com.howners.gestion.util.PdfFormat;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
@@ -69,6 +71,8 @@ public class EdlComparisonService {
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
+    private final NotificationDispatcher notificationDispatcher;
+    private final GeneratedDocumentService generatedDocumentService;
 
     @Transactional(readOnly = true)
     public ComparaisonEdlResponse comparer(UUID rentalId) {
@@ -139,22 +143,9 @@ public class EdlComparisonService {
         }
 
         String fileName = String.format("comparatif_edl_%s_%d.pdf", rentalId, System.currentTimeMillis());
-        String fileKey = storageService.uploadFile(pdfBytes, fileName, "application/pdf");
-
-        Document document = Document.builder()
-                .rental(rental)
-                .property(rental.getProperty())
-                .uploader(rental.getProperty().getOwner())
-                .documentType(DocumentType.INVENTORY)
-                .fileName(fileName)
-                .filePath(fileKey)
-                .fileKey(fileKey)
-                .fileSize((long) pdfBytes.length)
-                .mimeType("application/pdf")
-                .documentHash(pdfService.calculateHash(pdfBytes))
-                .description("Comparatif état des lieux entrée/sortie + retenues sur dépôt")
-                .build();
-        document = documentRepository.save(document);
+        Document document = generatedDocumentService.storePdf(rental, rental.getProperty().getOwner(),
+                DocumentType.INVENTORY, fileName, pdfBytes,
+                "Comparatif état des lieux entrée/sortie + retenues sur dépôt");
 
         comparaison.setDocument(document);
         comparaison.setStatut(StatutComparaison.VALIDEE);
@@ -165,28 +156,20 @@ public class EdlComparisonService {
             String sens = comparaison.getSoldeARestituer() != null
                     ? String.format("Solde de dépôt à restituer : %.2f €.", comparaison.getSoldeARestituer())
                     : "";
-            notificationService.create(
-                    tenant.getId(),
-                    NotificationType.SYSTEM,
+            notificationDispatcher.notifyAndEmail(tenant, NotificationType.SYSTEM,
                     "Comparatif d'état des lieux disponible",
                     "Le comparatif entrée/sortie et le décompte du dépôt de garantie sont disponibles. " + sens,
-                    "/inventory");
-
-            if (tenant.getEmail() != null) {
-                emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                        tenant.getEmail(),
-                        tenant.getFullName(),
-                        "Comparatif d'état des lieux — " + rental.getProperty().getName(),
-                        "État des lieux de sortie",
-                        "Le comparatif entre l'état des lieux d'entrée et de sortie de votre logement a été établi.",
-                        String.format("Total des retenues : <strong>%.2f €</strong><br/>Solde à restituer : <strong>%.2f €</strong>",
-                                comparaison.getTotalRetenues(),
-                                comparaison.getSoldeARestituer() != null ? comparaison.getSoldeARestituer() : BigDecimal.ZERO),
-                        null,
-                        null,
-                        false
-                ));
-            }
+                    "/inventory",
+                    new NotificationDispatcher.Email(
+                            "Comparatif d'état des lieux — " + rental.getProperty().getName(),
+                            "État des lieux de sortie",
+                            "Le comparatif entre l'état des lieux d'entrée et de sortie de votre logement a été établi.",
+                            String.format("Total des retenues : <strong>%.2f €</strong><br/>Solde à restituer : <strong>%.2f €</strong>",
+                                    comparaison.getTotalRetenues(),
+                                    comparaison.getSoldeARestituer() != null ? comparaison.getSoldeARestituer() : BigDecimal.ZERO),
+                            null,
+                            null,
+                            false));
         }
 
         log.info("Comparatif EDL validé pour la location {}", rentalId);

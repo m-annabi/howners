@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, Input, OnInit } from '@angular/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -101,14 +102,7 @@ export class RentRevisionPanelComponent implements OnInit {
 
   telechargerCourrier(revision: RevisionLoyer): void {
     this.revisionService.downloadCourrier(revision.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'revision-loyer.pdf';
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, 'revision-loyer.pdf'),
       error: () => this.notifications.error('Courrier indisponible.')
     });
   }

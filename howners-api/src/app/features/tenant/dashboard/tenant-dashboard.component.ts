@@ -1,3 +1,4 @@
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
@@ -163,12 +164,7 @@ export class TenantDashboardComponent implements OnInit, OnDestroy {
     this.downloadingReceipt = true;
     this.receiptService.downloadPdf(this.lastReceipt.id).subscribe({
       next: blob => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `quittance-${this.lastReceipt!.receiptNumber}.pdf`;
-        link.click();
-        window.URL.revokeObjectURL(url);
+        downloadBlob(blob, `quittance-${this.lastReceipt!.receiptNumber}.pdf`);
         this.downloadingReceipt = false;
       },
       error: () => {

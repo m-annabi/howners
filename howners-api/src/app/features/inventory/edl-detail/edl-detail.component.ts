@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EtatDesLieuxService } from '../../../core/services/etat-des-lieux.service';
@@ -20,7 +22,8 @@ export class EdlDetailComponent implements OnInit {
   constructor(
     private edlService: EtatDesLieuxService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -63,26 +66,20 @@ export class EdlDetailComponent implements OnInit {
   signAs(role: string): void {
     if (!this.edl) return;
     const roleLabel = role === 'OWNER' ? 'bailleur' : 'locataire';
-    if (confirm(`Êtes-vous sûr de vouloir signer en tant que ${roleLabel} ?`)) {
-      this.edlService.sign(this.rentalId, this.edl.id, role).subscribe({
+    this.confirmDialog.confirm('Confirmation', `Êtes-vous sûr de vouloir signer en tant que ${roleLabel} ?`, 'warning').subscribe(ok => {
+      if (!ok) return;
+      this.edlService.sign(this.rentalId, this.edl!.id, role).subscribe({
         next: (updated) => {
           this.edl = updated;
         }
       });
-    }
+    });
   }
 
   downloadPdf(): void {
     if (!this.edl) return;
     this.edlService.downloadPdf(this.rentalId, this.edl.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `etat-des-lieux-${this.edl!.id}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
+      next: (blob) => downloadBlob(blob, `etat-des-lieux-${this.edl!.id}.pdf`)
     });
   }
 

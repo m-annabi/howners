@@ -1,5 +1,7 @@
 package com.howners.gestion.service.payment;
 
+import com.howners.gestion.service.rental.RentalAccessService;
+import com.howners.gestion.service.notification.NotificationDispatcher;
 import com.howners.gestion.domain.payment.Payment;
 import com.howners.gestion.domain.payment.PaymentStatus;
 import com.howners.gestion.domain.payment.PaymentType;
@@ -64,6 +66,8 @@ public class PaymentService {
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final PlatformFeeService platformFeeService;
+    private final RentalAccessService rentalAccessService;
+    private final NotificationDispatcher notificationDispatcher;
 
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
@@ -104,23 +108,10 @@ public class PaymentService {
     public List<PaymentResponse> findByRentalId(UUID rentalId) {
         Rental rental = rentalRepository.findById(rentalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", rentalId.toString()));
-        assertRentalAccess(rental);
+        rentalAccessService.assertParticipant(rental);
         return paymentRepository.findByRentalId(rentalId).stream()
                 .map(PaymentResponse::from)
                 .collect(Collectors.toList());
-    }
-
-    /** Autorise le propriétaire du bien, le locataire du bail, ou un admin. */
-    private void assertRentalAccess(Rental rental) {
-        UUID currentUserId = AuthService.getCurrentUserId();
-        UUID ownerId = rental.getProperty() != null && rental.getProperty().getOwner() != null
-                ? rental.getProperty().getOwner().getId() : null;
-        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
-        boolean isAdmin = userRepository.findById(currentUserId)
-                .map(u -> u.getRole() == Role.ADMIN).orElse(false);
-        if (!currentUserId.equals(ownerId) && !currentUserId.equals(tenantId) && !isAdmin) {
-            throw new ForbiddenException("Vous n'êtes pas autorisé à accéder à ce bail.");
-        }
     }
 
     @Transactional
@@ -133,9 +124,7 @@ public class PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", request.rentalId().toString()));
 
         // Only the property owner can create payments
-        if (!rental.getProperty().getOwner().getId().equals(currentUserId) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to create payments for this rental");
-        }
+        rentalAccessService.assertOwner(rental, "You are not authorized to create payments for this rental");
 
         User payer = rental.getTenant();
         if (payer == null) {
@@ -186,33 +175,24 @@ public class PaymentService {
             String amountLabel = payment.getAmount() + " " + payment.getCurrency();
             String dueDateLabel = payment.getDueDate() != null ? payment.getDueDate().format(dateFormatter) : null;
 
-            notificationService.create(
-                    tenant.getId(),
-                    NotificationType.PAYMENT_DUE,
+            String detailsHtml = "<strong>Bien :</strong> " + property.getName() + "<br>"
+                    + "<strong>Montant :</strong> " + amountLabel
+                    + (dueDateLabel != null ? "<br><strong>Échéance :</strong> " + dueDateLabel : "");
+
+            notificationDispatcher.notifyAndEmail(tenant, NotificationType.PAYMENT_DUE,
                     "Nouvelle échéance de paiement",
                     "Un paiement de " + amountLabel
                             + (dueDateLabel != null ? " à régler avant le " + dueDateLabel : " à régler")
                             + " a été enregistré par " + owner.getFullName() + ".",
-                    "/payments/" + payment.getId());
-
-            if (tenant.getEmail() != null) {
-                String paymentUrl = frontendUrl + "/payments/" + payment.getId();
-                String detailsHtml = "<strong>Bien :</strong> " + property.getName() + "<br>"
-                        + "<strong>Montant :</strong> " + amountLabel
-                        + (dueDateLabel != null ? "<br><strong>Échéance :</strong> " + dueDateLabel : "");
-
-                emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                        tenant.getEmail(),
-                        tenant.getFullName(),
-                        "Nouvelle échéance de paiement — " + property.getName(),
-                        "Nouvelle échéance de paiement",
-                        "Votre propriétaire " + owner.getFullName() + " a enregistré une nouvelle échéance de paiement pour votre location.",
-                        detailsHtml,
-                        "Voir le paiement",
-                        paymentUrl,
-                        false
-                ));
-            }
+                    "/payments/" + payment.getId(),
+                    new NotificationDispatcher.Email(
+                            "Nouvelle échéance de paiement — " + property.getName(),
+                            "Nouvelle échéance de paiement",
+                            "Votre propriétaire " + owner.getFullName() + " a enregistré une nouvelle échéance de paiement pour votre location.",
+                            detailsHtml,
+                            "Voir le paiement",
+                            frontendUrl + "/payments/" + payment.getId(),
+                            false));
         } catch (Exception e) {
             log.error("Échec de la notification de création de paiement {}: {}", payment.getId(), e.getMessage(), e);
         }
@@ -590,15 +570,9 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment", "id", paymentId.toString()));
 
-        UUID currentUserId = AuthService.getCurrentUserId();
-        UUID ownerId = payment.getRental().getProperty().getOwner().getId();
-        UUID payerId = payment.getPayer().getId();
-
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
-
-        if (!ownerId.equals(currentUserId) && !payerId.equals(currentUserId) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to access this payment");
+        // Le payeur du paiement y accède ; sinon il faut être propriétaire du bien (ou admin).
+        if (!payment.getPayer().getId().equals(AuthService.getCurrentUserId())) {
+            rentalAccessService.assertOwner(payment.getRental(), "You are not authorized to access this payment");
         }
 
         return payment;

@@ -1,3 +1,5 @@
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -26,7 +28,8 @@ export class EdlComparisonComponent implements OnInit {
     private route: ActivatedRoute,
     private edlService: EtatDesLieuxService,
     private authService: AuthService,
-    private notifications: NotificationService
+    private notifications: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -97,32 +100,27 @@ export class EdlComparisonComponent implements OnInit {
   }
 
   valider(): void {
-    if (!confirm('Valider le comparatif ? Le PDF sera généré et envoyé au locataire.')) return;
-    this.working = true;
-    this.edlService.validerComparaison(this.rentalId).subscribe({
-      next: (comparaison) => {
-        this.working = false;
-        this.comparaison = comparaison;
-        this.notifications.success('Comparatif validé et envoyé au locataire.');
-      },
-      error: (err) => {
-        this.working = false;
-        this.notifications.error(err.error?.message || 'Échec de la validation.');
-      }
+    this.confirmDialog.confirm('Confirmation', 'Valider le comparatif ? Le PDF sera généré et envoyé au locataire.', 'warning').subscribe(ok => {
+      if (!ok) return;
+      this.working = true;
+      this.edlService.validerComparaison(this.rentalId).subscribe({
+        next: (comparaison) => {
+          this.working = false;
+          this.comparaison = comparaison;
+          this.notifications.success('Comparatif validé et envoyé au locataire.');
+        },
+        error: (err) => {
+          this.working = false;
+          this.notifications.error(err.error?.message || 'Échec de la validation.');
+        }
+      });
     });
   }
 
   telecharger(): void {
     if (!this.comparaison?.id) return;
     this.edlService.downloadComparaisonPdf(this.comparaison.id).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'comparatif-edl.pdf';
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
+      next: (blob) => downloadBlob(blob, 'comparatif-edl.pdf'),
       error: () => this.notifications.error('PDF indisponible.')
     });
   }

@@ -83,20 +83,10 @@ public class SignatureController {
     }
 
     /**
-     * Récupère l'adresse IP du client en tenant compte des proxies
+     * Adresse IP du client, conservée comme preuve de signature : résolution centralisée
+     * (dernière valeur de X-Forwarded-For, non forgeable par le signataire — cf. ClientIp).
      */
     private String getClientIpAddress(HttpServletRequest request) {
-        String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("X-Real-IP");
-        }
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
-        }
-        // Si plusieurs IPs, prendre la première
-        if (ipAddress != null && ipAddress.contains(",")) {
-            ipAddress = ipAddress.split(",")[0].trim();
-        }
-        return ipAddress;
+        return com.howners.gestion.util.ClientIp.resolve(request);
     }
 }

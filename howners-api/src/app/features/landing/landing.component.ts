@@ -31,8 +31,8 @@ export class LandingComponent implements OnInit {
       'Signature électronique, suivi des loyers, fiches locataires — sans tableurs.';
 
     // URL canonique de prod (pas window.location.origin : faux en dev, indéfini en prerender).
-    this.seoService.setMetaTags({ title, description, url: 'https://howners.fr/', type: 'website' });
-    this.seoService.setCanonical('https://howners.fr/');
+    this.seoService.setMetaTags({ title, description, url: 'https://howners.com/', type: 'website' });
+    this.seoService.setCanonical('https://howners.com/');
 
     // schema.org SoftwareApplication
     this.injectJsonLd();

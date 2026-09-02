@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -26,12 +26,22 @@ export class LoginComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private tenantApiService: TenantApiService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]]
     });
+  }
+
+  /**
+   * Destination demandée avant la redirection vers le login (posée par AuthGuard).
+   * Seul un chemin interne est accepté — jamais une URL absolue (open redirect).
+   */
+  private safeReturnUrl(): string | null {
+    const url = this.route.snapshot.queryParamMap.get('returnUrl');
+    return url && url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/auth/') ? url : null;
   }
 
   onSubmit(): void {
@@ -59,7 +69,7 @@ export class LoginComponent {
         );
       })
     ).subscribe({
-      next: (destination) => this.router.navigate([destination]),
+      next: (destination) => this.router.navigateByUrl(this.safeReturnUrl() ?? destination),
       error: (err) => {
         this.error = err.error?.message || 'La connexion a échoué';
         this.unverified = /v[ée]rifi/i.test(this.error || '');

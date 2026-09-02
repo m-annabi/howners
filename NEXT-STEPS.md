@@ -72,6 +72,26 @@ SSR-safety ; ou passer au SSR runtime (`serve:ssr`, déjà scaffoldé via `serve
 3. **#2** Stripe routing si modèle business prévoit du fee paiement
 4. **#11-15** quand un partenaire signe
 
+## Reliquats de l'audit qualité (septembre 2026)
+
+Traités : preuve IP non forgeable, réconciliation des deux systèmes de signature, retour DocuSign,
+guards de rôle, tokens CSS, parcours (returnUrl, CTA anonyme, rôle obligatoire, bien → annonce,
+candidature acceptée → location, relances dans le détail paiement, onboarding), SEO (sitemap
+proxifié, domaine unifié `howners.com`, JSON-LD sur la fiche annonce), dédoublonnage frontend
+(`downloadBlob`/`formatFileSize`, boîte de confirmation HTML) et backend (`RentalAccessService`,
+`NotificationDispatcher`, `GeneratedDocumentService`).
+
+Volontairement non traités — à arbitrer :
+
+| Item | Pourquoi |
+|---|---|
+| **SSR runtime en prod** | Le pre-rendering couvre `/` et `/listings` ; les fiches annonces (`/listings/:id`) sont rendues côté client (les méta + JSON-LD sont posés au chargement). Passer à `serve:ssr` = un conteneur Node à la place de nginx (`Dockerfile`, `docker-compose.prod.yml`, Caddyfile). À faire quand le trafic organique le justifie. |
+| **`CrudService<T>` générique** | Les services HTTP ont chacun 3-6 méthodes spécifiques ; un générique n'en factoriserait qu'une ou deux au prix d'une indirection. |
+| **Adoption de `data-table`** | Les listes ont des colonnes/actions très différentes ; migrer 8 tableaux vers le composant générique est un chantier UI à part entière (à coupler avec une refonte des filtres). |
+| **Fusion des uploads de photos (bien / annonce)** | Deux API distinctes (`/properties/:id/photos`, `/listings/:id/photos`) avec des règles de couverture différentes ; fusionner impose d'abord d'unifier le backend. |
+| **Jumeaux `TenantRating` / `OwnerRating`** | Entités et tables distinctes (changelog 089) : une abstraction commune exigerait une migration de schéma. |
+| **Vocabulaire bail / contrat** | Choix éditorial (le « contrat » couvre aussi les baux commerciaux et les avenants) — à trancher avec la relecture juridique (#4). |
+
 ## Documents produits cette session
 
 - `SECURITY-ROTATION.md` — quels secrets révoquer

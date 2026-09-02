@@ -68,6 +68,11 @@ class RevisionLoyerServiceTest {
 
     @BeforeEach
     void setup() {
+        // Collaborateurs factorisés, câblés sur les mêmes mocks pour conserver les vérifications existantes.
+        org.springframework.test.util.ReflectionTestUtils.setField(revisionLoyerService, "notificationDispatcher",
+                new com.howners.gestion.service.notification.NotificationDispatcher(notificationService, emailService));
+        org.springframework.test.util.ReflectionTestUtils.setField(revisionLoyerService, "generatedDocumentService",
+                new com.howners.gestion.service.document.GeneratedDocumentService(storageService, documentRepository, pdfService));
         org.mockito.Mockito.lenient()
                 .when(documentSequenceService.next(org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
