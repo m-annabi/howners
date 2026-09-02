@@ -950,10 +950,16 @@
 // étiqueter (la 1re colonne sert d'en-tête de fiche sans étiquette, .hw-table__col-actions non
 // plus). Voir payment-list/invoice-list/receipt-list/expense-list pour des exemples.
 @media (max-width: 640px) {
+  // !important partout sur les propriétés structurelles : les classes de colonne définies dans
+  // les fichiers .scss de chaque page (ex. .payment-table__col-amount { width: 1%; white-space:
+  // nowrap }, pensées pour le tableau desktop) héritent de l'attribut d'encapsulation Angular
+  // ([_ngcontent-xxx]) qui booste leur spécificité au-dessus d'une règle globale non scopée —
+  // sans !important ici, ce width:1% regagne la main en mode empilé et écrase les colonnes à
+  // presque rien de large (texte réduit à quelques caractères par ligne).
   .hw-table--stacked {
     thead { display: none; }
 
-    tbody, tr, td { display: block; width: 100%; }
+    tbody, tr, td { display: block !important; width: 100% !important; }
 
     tbody tr {
       padding: var(--hw-space-3) var(--hw-space-4);
@@ -964,13 +970,15 @@
     }
 
     tbody td {
-      display: flex;
+      display: flex !important;
       align-items: center;
       flex-wrap: wrap;
       justify-content: flex-end;
       gap: 4px var(--hw-space-2);
       padding: 4px 0 !important;
       border-bottom: none !important;
+      white-space: normal !important;
+      text-align: right;
     }
 
     tbody td::before {
@@ -987,6 +995,7 @@
     // 1re colonne : en-tête de la fiche (numéro, nom…), pas une paire étiquette/valeur.
     tbody td:first-child {
       justify-content: flex-start;
+      text-align: left;
       padding-bottom: var(--hw-space-2) !important;
       margin-bottom: var(--hw-space-2);
       border-bottom: 1px dashed var(--hw-gray-100) !important;
