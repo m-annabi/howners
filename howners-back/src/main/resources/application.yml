@@ -62,7 +62,10 @@ spring:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:change-this-secret-in-production-it-must-be-at-least-256-bits-long-for-hs256-algorithm}
+  # Aucune valeur de repli committée : une clé de signature en dur dans le repo permettrait de
+  # forger des tokens dans tout environnement qui l'utilise. JWT_SECRET est OBLIGATOIRE (le
+  # validateur de démarrage refuse un secret vide ou < 64 caractères, dans tous les profils).
+  secret: ${JWT_SECRET:}
   expiration: ${JWT_EXPIRATION:86400000}  # 24 heures en millisecondes
 
 # MinIO/S3 Configuration

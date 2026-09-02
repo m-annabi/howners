@@ -156,6 +156,23 @@ public class ContractService {
             throw new ForbiddenException("You are not authorized to update this contract");
         }
 
+        // Immuabilité : un contrat signé / actif / clôturé / annulé ne peut plus être modifié
+        // (invariant versioning + SHA-256 + valeur juridique du document).
+        ContractStatus current = contract.getStatus();
+        if (current == ContractStatus.SIGNED || current == ContractStatus.ACTIVE
+                || current == ContractStatus.TERMINATED || current == ContractStatus.CANCELLED) {
+            throw new BadRequestException("Ce contrat (" + current + ") est immuable et ne peut plus être modifié.");
+        }
+        // Le CONTENU n'est modifiable qu'en brouillon (avant tout envoi en signature).
+        if (request.customContent() != null && !request.customContent().isBlank()
+                && current != ContractStatus.DRAFT) {
+            throw new BadRequestException("Le contenu d'un contrat déjà envoyé en signature ne peut plus être modifié.");
+        }
+        // La signature ne se force pas par cette route : elle passe par le flux de signature dédié.
+        if (request.status() == ContractStatus.SIGNED) {
+            throw new BadRequestException("Un contrat ne peut être marqué « signé » que via le flux de signature.");
+        }
+
         boolean needsNewVersion = false;
 
         // Mettre à jour le contenu si fourni

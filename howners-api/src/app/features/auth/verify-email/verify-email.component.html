@@ -1,0 +1,37 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-card__header">
+      <div class="auth-card__logo" [ngClass]="'auth-card__logo--' + state">
+        <i class="bi" [ngClass]="{
+          'bi-arrow-repeat spin': state === 'loading',
+          'bi-check-circle-fill': state === 'success',
+          'bi-x-circle-fill': state === 'error'
+        }"></i>
+      </div>
+      <h1>Vérification de l'adresse</h1>
+    </div>
+
+    <div class="auth-verify">
+      <p *ngIf="state === 'loading'">Vérification en cours…</p>
+
+      <div *ngIf="state === 'success'" class="hw-alert hw-alert--success">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ message }}</span>
+      </div>
+
+      <div *ngIf="state === 'error'" class="hw-alert hw-alert--danger">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{{ message }}</span>
+      </div>
+
+      <a
+        *ngIf="state !== 'loading'"
+        routerLink="/auth/login"
+        class="hw-btn hw-btn--primary hw-btn--block"
+        style="margin-top: var(--hw-space-4)"
+      >
+        Aller à la connexion
+      </a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+
+    <changeSet id="100-add-payment-settings-fields" author="howners">
+        <comment>Paiement de loyer déclaratif par défaut : coordonnées de paiement du bailleur
+            (IBAN/RIB en texte libre) affichées au locataire, et bascule explicite pour activer
+            le paiement carte en ligne (Stripe Connect direct charge) — reste désactivé tant que
+            le bailleur ne l'active pas lui-même, même une fois l'onboarding Connect complété.</comment>
+        <addColumn tableName="users">
+            <column name="payment_instructions" type="TEXT"/>
+            <column name="accept_online_payments" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="users" columnName="accept_online_payments"/>
+            <dropColumn tableName="users" columnName="payment_instructions"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

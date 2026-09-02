@@ -59,6 +59,13 @@
   }
 }
 
+// Défilement horizontal sur petit écran (comme .hw-table-card) : `hidden` couperait des
+// colonnes du tableau au lieu de les rendre accessibles par scroll.
+.delegations-table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .delegations-table {
   width: 100%;
   border-collapse: collapse;

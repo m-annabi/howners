@@ -11,6 +11,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--hw-space-2);
     margin-bottom: var(--hw-space-3);
   }
 
@@ -18,10 +20,12 @@
     display: flex;
     align-items: center;
     gap: var(--hw-space-3);
+    min-width: 0;
 
     > i {
       font-size: 1.75rem;
       color: var(--hw-primary-600);
+      flex-shrink: 0;
     }
   }
 
@@ -101,6 +105,10 @@
     align-items: flex-start;
     gap: var(--hw-space-3);
     margin-bottom: var(--hw-space-3);
+
+    @media (max-width: 480px) {
+      flex-wrap: wrap;
+    }
   }
 
   &__icon {
@@ -140,6 +148,11 @@
 
   &__state {
     flex-shrink: 0;
+
+    @media (max-width: 480px) {
+      flex-basis: 100%;
+      padding-left: calc(40px + var(--hw-space-3));
+    }
   }
 
   &__docs {
@@ -155,7 +168,8 @@
   &__footer {
     display: flex;
     align-items: center;
-    gap: var(--hw-space-3);
+    flex-wrap: wrap;
+    gap: var(--hw-space-2) var(--hw-space-3);
   }
 
   &__formats {
@@ -168,6 +182,8 @@
 .dossier-doc {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 4px;
   gap: var(--hw-space-2);
 
   &__icon {
@@ -178,11 +194,18 @@
 
   &__name {
     flex: 1;
+    min-width: 120px;
     font-size: var(--hw-fs-sm);
     color: var(--hw-gray-700);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    @media (max-width: 480px) {
+      flex-basis: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
   }
 
   &__size {
@@ -200,6 +223,10 @@
     color: var(--hw-gray-400);
     transition: color 0.15s, background 0.15s;
     flex-shrink: 0;
+
+    @media (max-width: 480px) {
+      padding: 8px 10px;
+    }
 
     &:hover {
       color: var(--hw-primary-600);

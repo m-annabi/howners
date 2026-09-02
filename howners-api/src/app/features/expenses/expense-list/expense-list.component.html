@@ -69,7 +69,7 @@
 
 <!-- Dense table -->
 <div *ngIf="!loading && !error && filteredExpenses.length > 0" class="hw-table-card">
-  <table class="hw-table expense-table">
+  <table class="hw-table hw-table--stacked expense-table">
     <thead>
       <tr>
         <th class="expense-table__col-date">Date</th>
@@ -84,12 +84,12 @@
       <tr *ngFor="let expense of filteredExpenses"
           (click)="viewExpense(expense)">
         <td class="expense-table__col-date">{{ expense.expenseDate | date:'dd/MM/yyyy' }}</td>
-        <td class="expense-table__col-cat">
+        <td class="expense-table__col-cat" data-label="Catégorie">
           <span class="hw-badge hw-badge--neutral">{{ categoryLabels[expense.category] }}</span>
         </td>
-        <td>{{ expense.description || '—' }}</td>
-        <td>{{ expense.propertyName || '—' }}</td>
-        <td class="expense-table__col-amount">
+        <td data-label="Description">{{ expense.description || '—' }}</td>
+        <td data-label="Bien">{{ expense.propertyName || '—' }}</td>
+        <td class="expense-table__col-amount" data-label="Montant">
           <div class="expense-table__amount">{{ expense.amount | number:'1.2-2' }} {{ expense.currency }}</div>
         </td>
         <td class="hw-table__col-actions" (click)="$event.stopPropagation()">

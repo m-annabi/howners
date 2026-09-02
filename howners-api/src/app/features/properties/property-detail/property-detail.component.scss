@@ -222,6 +222,8 @@
   .info-item {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px var(--hw-space-2);
     padding: var(--hw-space-2) 0;
     border-bottom: 1px solid var(--hw-gray-100);
 
@@ -232,11 +234,15 @@
     .info-label {
       color: var(--hw-gray-500);
       font-size: 0.875rem;
+      flex-shrink: 0;
     }
 
     .info-value {
       color: var(--hw-gray-800);
       font-weight: var(--hw-fw-medium);
+      min-width: 0;
+      overflow-wrap: anywhere;
+      text-align: right;
     }
   }
 

@@ -71,6 +71,18 @@ public class User {
     @Column(name = "is_anonymized")
     private Boolean isAnonymized = false;
 
+    // Vérification d'e-mail : tant que false, la connexion est refusée. Le hash SHA-256 du token de
+    // vérification (jamais le token en clair) et son expiration sont stockés ici le temps de la vérif.
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private Boolean emailVerified = false;
+
+    @Column(name = "email_verification_token_hash", length = 64)
+    private String emailVerificationTokenHash;
+
+    @Column(name = "email_verification_expires_at")
+    private LocalDateTime emailVerificationExpiresAt;
+
     @Column(name = "referral_code", unique = true, length = 20)
     private String referralCode;
 
@@ -80,6 +92,25 @@ public class User {
     @Column(name = "stripe_connect_status", length = 40)
     @Builder.Default
     private String stripeConnectStatus = "NONE";
+
+    // Coordonnées de paiement du bailleur (IBAN/RIB en texte libre), affichées au locataire
+    // pour régler son loyer directement, hors plateforme.
+    @Column(name = "payment_instructions", columnDefinition = "TEXT")
+    private String paymentInstructions;
+
+    // Active explicitement le paiement carte en ligne (Stripe Connect direct charge) pour ses
+    // locations. Reste à false même une fois l'onboarding Connect complété : c'est le bailleur
+    // qui choisit, pas un effet de bord de la complétion Connect.
+    @Column(name = "accept_online_payments", nullable = false)
+    @Builder.Default
+    private Boolean acceptOnlinePayments = false;
+
+    // Version de jeton : incrémentée pour révoquer d'un coup tous les JWT existants de l'utilisateur
+    // (« déconnexion de toutes les sessions »). Le JWT embarque cette valeur ; le filtre la compare
+    // à celle en base et rejette tout jeton dont la version est périmée.
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private Integer tokenVersion = 0;
 
     public String getFullName() {
         return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");

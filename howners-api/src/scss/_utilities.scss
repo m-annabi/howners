@@ -213,6 +213,16 @@
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
   }
+
+  // Variante 3 colonnes — garde le même repli à 1 colonne sur mobile qu'un
+  // style inline écraserait sinon (grid-template-columns en inline gagne sur la règle ci-dessus).
+  &--cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+
+    @media (max-width: 720px) {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 
 // --- Alerts ---

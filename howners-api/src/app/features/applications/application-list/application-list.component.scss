@@ -20,6 +20,24 @@
 }
 
 .application-card {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--hw-space-2, 0.5rem);
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 220px;
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    flex-shrink: 0;
+  }
+
   &__letter {
     background: var(--hw-surface-hover, #f8f9fb);
     border-radius: var(--hw-radius, 8px);

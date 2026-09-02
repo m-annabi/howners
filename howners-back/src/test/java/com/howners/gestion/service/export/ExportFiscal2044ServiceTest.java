@@ -61,7 +61,7 @@ class ExportFiscal2044ServiceTest {
         property.setPostalCode("75001");
         property.setCity("Paris");
 
-        UserPrincipal principal = new UserPrincipal(ownerId, "o@t.fr", "x", "OWNER", true);
+        UserPrincipal principal = new UserPrincipal(ownerId, "o@t.fr", "x", "OWNER", true, 0);
         Authentication auth = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
                 .authenticated(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);

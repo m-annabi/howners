@@ -151,6 +151,62 @@
             </button>
           </div>
         </form>
+
+        <!-- Paiement des loyers (bailleur uniquement) -->
+        <form *ngIf="isOwner" [formGroup]="paymentSettingsForm" (ngSubmit)="onSubmitPaymentSettings()">
+          <div class="pf-form-card">
+            <div class="pf-section-title"><i class="bi bi-cash-coin"></i> Paiement des loyers</div>
+            <p class="pf-section-hint">
+              Par défaut, vos locataires règlent leur loyer directement avec vous (virement, chèque, espèces) —
+              indiquez vos coordonnées ci-dessous pour qu'ils les voient sur chaque échéance. Vous confirmez
+              vous-même la réception du paiement.
+            </p>
+
+            <div class="pf-form__row">
+              <div class="pf-form__field">
+                <label for="paymentInstructions">Coordonnées de paiement (IBAN/RIB, instructions…)</label>
+                <textarea id="paymentInstructions" formControlName="paymentInstructions" rows="3"
+                          placeholder="Ex. : IBAN FR76 XXXX XXXX XXXX XXXX XXXX XXX — merci d'indiquer le nom du bien en référence du virement."></textarea>
+              </div>
+            </div>
+
+            <div class="pf-panel__divider"></div>
+
+            <div class="pf-info-row">
+              <span class="pf-info-row__label">Paiement carte en ligne</span>
+              <span class="hw-badge" [ngClass]="connectBadgeClass">{{ connectStatusLabel }}</span>
+            </div>
+
+            <p class="pf-section-hint">
+              Optionnel : activez le paiement par carte pour que vos locataires puissent aussi régler en ligne.
+              L'argent est versé directement sur votre compte bancaire via Stripe, la plateforme ne fait que
+              prélever sa commission au passage — nécessite de connecter votre compte Stripe.
+            </p>
+
+            <div class="pf-form__row" *ngIf="connectStatus?.status !== 'COMPLETED'">
+              <button type="button" class="hw-btn hw-btn--secondary" (click)="startOnboarding()" [disabled]="startingOnboarding">
+                <i class="bi bi-bank"></i>
+                {{ startingOnboarding ? 'Redirection…' : (connectStatus?.connected ? 'Poursuivre la connexion Stripe' : 'Connecter mon compte Stripe') }}
+              </button>
+            </div>
+
+            <div class="pf-form__row" *ngIf="connectStatus?.status === 'COMPLETED'">
+              <div class="pf-form__field pf-form__field--checkbox">
+                <label class="pf-checkbox">
+                  <input type="checkbox" formControlName="acceptOnlinePayments">
+                  <span>Accepter les paiements par carte en ligne pour mes locations</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pf-form__actions">
+              <button type="submit" class="hw-btn hw-btn--primary" [disabled]="paymentSettingsForm.invalid || savingPaymentSettings || loadingConnect">
+                <span *ngIf="!savingPaymentSettings"><i class="bi bi-check-circle me-1"></i>Enregistrer</span>
+                <span *ngIf="savingPaymentSettings"><span class="spinner-border spinner-border-sm me-1"></span>Enregistrement…</span>
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
 
     </div>

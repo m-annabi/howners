@@ -11,5 +11,6 @@ public class RateLimitConfig {
 
     private boolean enabled = true;
     private int requestsPerMinute = 60;
-    private int requestsPerHour = 1000;
+    // Limite stricte, séparée, pour les endpoints d'authentification (anti brute-force login/reset).
+    private int authRequestsPerMinute = 10;
 }

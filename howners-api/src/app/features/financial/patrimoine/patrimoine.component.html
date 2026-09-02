@@ -55,13 +55,13 @@
             <a [routerLink]="['/properties', bien.propertyId]" class="patrimoine-table__nom">{{ bien.nom }}</a>
             <small *ngIf="bien.ville" class="patrimoine-table__ville">{{ bien.ville }}</small>
           </td>
-          <td>
+          <td data-label="Prix d'achat">
             <ng-container *ngIf="bien.purchasePrice != null">{{ bien.purchasePrice | number:'1.0-0' }} €</ng-container>
             <small *ngIf="bien.purchasePrice == null" class="text-muted">à renseigner</small>
           </td>
-          <td>{{ bien.revenusAnnuels | number:'1.0-0' }} €</td>
-          <td>{{ bien.chargesAnnuelles | number:'1.0-0' }} €</td>
-          <td>
+          <td data-label="Revenus 12 mois">{{ bien.revenusAnnuels | number:'1.0-0' }} €</td>
+          <td data-label="Charges 12 mois">{{ bien.chargesAnnuelles | number:'1.0-0' }} €</td>
+          <td data-label="Cash-flow/mois">
             <span [class.patrimoine-table__positif]="bien.cashFlowMensuel >= 0"
                   [class.patrimoine-table__negatif]="bien.cashFlowMensuel < 0">
               {{ bien.cashFlowMensuel | number:'1.0-0' }} €
@@ -72,9 +72,9 @@
                    [style.width.%]="getCashFlowBarWidth(bien)"></div>
             </div>
           </td>
-          <td>{{ bien.rentabiliteBrutePercent != null ? (bien.rentabiliteBrutePercent | number:'1.1-2') + ' %' : '—' }}</td>
-          <td>{{ bien.rentabiliteNettePercent != null ? (bien.rentabiliteNettePercent | number:'1.1-2') + ' %' : '—' }}</td>
-          <td>{{ bien.tauxOccupationPercent | number:'1.0-1' }} %</td>
+          <td data-label="Renta. brute">{{ bien.rentabiliteBrutePercent != null ? (bien.rentabiliteBrutePercent | number:'1.1-2') + ' %' : '—' }}</td>
+          <td data-label="Renta. nette">{{ bien.rentabiliteNettePercent != null ? (bien.rentabiliteNettePercent | number:'1.1-2') + ' %' : '—' }}</td>
+          <td data-label="Occupation">{{ bien.tauxOccupationPercent | number:'1.0-1' }} %</td>
         </tr>
       </tbody>
     </table>

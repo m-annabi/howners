@@ -40,6 +40,10 @@ export class ListingSearchComponent implements OnInit, OnDestroy {
   searchCenter: SearchCenter | null = null;
   radiusKm = 10;
   geolocating = false;
+  /** true une fois qu'on sait (session en cours ou refus déjà enregistré par le navigateur) que
+   *  la géolocalisation est bloquée : on n'appelle plus getCurrentPosition (comportement
+   *  incohérent selon les navigateurs après un refus déjà acté), on guide directement l'utilisateur. */
+  geoDenied = false;
   private locationInput$ = new Subject<string>();
   private suggestionsSub!: Subscription;
 
@@ -127,8 +131,30 @@ export class ListingSearchComponent implements OnInit, OnDestroy {
 
   locateMe(): void {
     if (this.geolocating) return;
+
+    // Refus déjà constaté cette session : inutile de rappeler l'API native (comportement
+    // incohérent selon les navigateurs une fois le refus acté) — on guide directement.
+    if (this.geoDenied) {
+      this.notificationService.error('Autorisation refusée. Activez la géolocalisation pour ce site dans les réglages de votre navigateur, puis réessayez.');
+      return;
+    }
+
     this.geolocating = true;
 
+    // Vérifie l'état de la permission (sans prompt) : couvre le cas d'un refus déjà enregistré
+    // par le navigateur lors d'une session précédente, avant même le premier essai ici.
+    this.geolocationService.checkPermissionState().subscribe(state => {
+      if (state === 'denied') {
+        this.geolocating = false;
+        this.geoDenied = true;
+        this.notificationService.error('Autorisation refusée. Activez la géolocalisation pour ce site dans les réglages de votre navigateur, puis réessayez.');
+        return;
+      }
+      this.requestLocation();
+    });
+  }
+
+  private requestLocation(): void {
     this.geolocationService.detectUserLocation().subscribe({
       next: (result) => {
         this.geolocating = false;
@@ -144,6 +170,7 @@ export class ListingSearchComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.geolocating = false;
+        if (err?.code === 1) this.geoDenied = true;
         this.notificationService.error(err?.message || 'Impossible de récupérer votre position.');
       }
     });

@@ -19,6 +19,9 @@ export interface User {
   role: Role;
   enabled: boolean;
   createdAt: string;
+  paymentInstructions?: string;
+  acceptOnlinePayments?: boolean;
+  stripeConnectStatus?: string;
 }
 
 export interface AuthResponse {

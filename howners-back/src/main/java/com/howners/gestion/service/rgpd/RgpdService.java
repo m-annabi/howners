@@ -287,6 +287,14 @@ public class RgpdService {
         user.setFirstName("Anonyme");
         user.setLastName("Utilisateur");
         user.setPhone(null);
+        // Effacer aussi l'adresse postale et l'identifiant de compte Stripe : ce sont des
+        // données personnelles/identifiantes qui doivent disparaître à l'effacement (art. 17).
+        user.setAddressLine1(null);
+        user.setAddressLine2(null);
+        user.setPostalCode(null);
+        user.setCity(null);
+        user.setCountry(null);
+        user.setStripeConnectAccountId(null);
         user.setPasswordHash("ANONYMIZED");
         user.setEnabled(false);
         user.setIsAnonymized(true);

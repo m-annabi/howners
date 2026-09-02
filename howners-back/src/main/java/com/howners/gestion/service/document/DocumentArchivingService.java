@@ -1,10 +1,14 @@
 package com.howners.gestion.service.document;
 
 import com.howners.gestion.domain.document.Document;
+import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.dto.document.DocumentResponse;
 import com.howners.gestion.exception.BadRequestException;
+import com.howners.gestion.exception.ForbiddenException;
 import com.howners.gestion.exception.ResourceNotFoundException;
 import com.howners.gestion.repository.DocumentRepository;
+import com.howners.gestion.repository.UserRepository;
+import com.howners.gestion.service.auth.AuthService;
 import com.howners.gestion.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,12 +27,38 @@ import java.util.UUID;
 public class DocumentArchivingService {
 
     private final DocumentRepository documentRepository;
+    private final UserRepository userRepository;
     private final StorageService storageService;
+
+    /**
+     * Autorise la gestion du cycle de vie d'un document (rétention/archivage/legal hold) au
+     * propriétaire du bien concerné, à l'uploader, ou à un admin. Le contrôle @PreAuthorize du
+     * contrôleur ne garantit que le rôle, pas la propriété de l'objet : sans ce contrôle, un
+     * bailleur pourrait archiver/altérer les documents d'un autre (IDOR).
+     */
+    private void requireDocumentAccess(Document document) {
+        UUID uid = AuthService.getCurrentUserId();
+        UUID ownerId = null;
+        if (document.getProperty() != null && document.getProperty().getOwner() != null) {
+            ownerId = document.getProperty().getOwner().getId();
+        } else if (document.getRental() != null && document.getRental().getProperty() != null) {
+            ownerId = document.getRental().getProperty().getOwner().getId();
+        } else if (document.getApplication() != null && document.getApplication().getListing() != null) {
+            ownerId = document.getApplication().getListing().getProperty().getOwner().getId();
+        }
+        boolean isOwner = ownerId != null && ownerId.equals(uid);
+        boolean isUploader = document.getUploader() != null && document.getUploader().getId().equals(uid);
+        boolean isAdmin = userRepository.findById(uid).map(u -> u.getRole() == Role.ADMIN).orElse(false);
+        if (!isOwner && !isUploader && !isAdmin) {
+            throw new ForbiddenException("Vous n'êtes pas autorisé à gérer ce document.");
+        }
+    }
 
     @Transactional
     public DocumentResponse setRetentionPeriod(UUID documentId, LocalDate retentionEndDate) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        requireDocumentAccess(document);
 
         if (document.getIsArchived()) {
             throw new BadRequestException("Cannot set retention on archived document");
@@ -44,6 +74,7 @@ public class DocumentArchivingService {
     public DocumentResponse archiveDocument(UUID documentId) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        requireDocumentAccess(document);
 
         if (document.getIsArchived()) {
             throw new BadRequestException("Document is already archived");
@@ -64,6 +95,7 @@ public class DocumentArchivingService {
     public DocumentResponse setLegalHold(UUID documentId, boolean hold) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        requireDocumentAccess(document);
 
         document.setLegalHold(hold);
         document = documentRepository.save(document);

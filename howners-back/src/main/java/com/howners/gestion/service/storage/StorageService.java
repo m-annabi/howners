@@ -150,14 +150,17 @@ public class StorageService {
                     .build();
 
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofDays(7)) // URL valide 7 jours
+                    // URL courte durée : une URL présignée est auto-authentifiante (contourne
+                    // Spring Security). 7 jours élargissait fortement la fenêtre en cas de fuite
+                    // (logs proxy, Referer, partage). 15 min couvre l'usage (affichage/téléchargement).
+                    .signatureDuration(Duration.ofMinutes(15))
                     .getObjectRequest(getObjectRequest)
                     .build();
 
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
             String url = presignedRequest.url().toString();
 
-            log.debug("Generated presigned URL for key: {} (valid for 7 days)", key);
+            log.debug("Generated presigned URL for key: {} (valid 15 min)", key);
             return url;
 
         } catch (Exception e) {

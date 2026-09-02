@@ -29,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(readOnly = true)
 public class DocumentService {
+
+    // Types autorisés à l'upload de documents. Exclut volontairement les types exécutables/
+    // rendus inline par le navigateur (text/html, image/svg+xml, javascript, xml) : sinon un
+    // fichier piégé, servi inline depuis le domaine de stockage, constituerait une XSS stockée.
+    private static final Set<String> ALLOWED_DOCUMENT_TYPES = Set.of(
+            "application/pdf",
+            "image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/heic",
+            "text/plain", "text/csv",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     private final DocumentRepository documentRepository;
     private final PropertyRepository propertyRepository;
@@ -73,6 +86,15 @@ public class DocumentService {
         // Valider la taille (max 10MB)
         if (file.getSize() > 10 * 1024 * 1024) {
             throw new BadRequestException("File size exceeds 10MB limit");
+        }
+
+        // Valider le type MIME contre une liste blanche (anti XSS stockée / fichiers exécutables).
+        String contentType = file.getContentType();
+        String baseType = contentType != null ? contentType.toLowerCase().split(";")[0].trim() : "";
+        if (!ALLOWED_DOCUMENT_TYPES.contains(baseType)) {
+            throw new BadRequestException(
+                    "Type de fichier non autorisé (" + (contentType != null ? contentType : "inconnu")
+                    + "). Formats acceptés : PDF, images, texte/CSV, Word, Excel.");
         }
 
         // Quota par utilisateur (anti-saturation S3). Le multipart cap par requête

@@ -32,8 +32,8 @@
 
 <div *ngIf="!loading && filteredApplications.length > 0" class="application-cards">
   <div class="hw-card" *ngFor="let app of filteredApplications">
-    <div class="d-flex justify-content-between align-items-start">
-      <div>
+    <div class="application-card__header">
+      <div class="application-card__info">
         <h5 class="mb-1">
           <a [routerLink]="['/tenants', app.applicantId]" class="applicant-link">
             <i class="bi bi-person-circle me-1"></i>{{ app.applicantName }}
@@ -51,7 +51,7 @@
           <i class="bi bi-clock"></i> Candidature du {{ app.createdAt | date:'dd/MM/yyyy à HH:mm' }}
         </p>
       </div>
-      <div class="text-end">
+      <div class="application-card__meta text-end">
         <app-status-badge [status]="app.status" type="application"></app-status-badge>
         <div class="mt-2">
           <span class="hw-badge"

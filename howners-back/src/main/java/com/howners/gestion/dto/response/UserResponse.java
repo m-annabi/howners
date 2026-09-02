@@ -19,7 +19,10 @@ public record UserResponse(
         String country,
         Role role,
         Boolean enabled,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String paymentInstructions,
+        Boolean acceptOnlinePayments,
+        String stripeConnectStatus
 ) {
     public static UserResponse from(User user) {
         return new UserResponse(
@@ -35,7 +38,10 @@ public record UserResponse(
                 user.getCountry(),
                 user.getRole(),
                 user.getEnabled(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getPaymentInstructions(),
+                user.getAcceptOnlinePayments(),
+                user.getStripeConnectStatus()
         );
     }
 }

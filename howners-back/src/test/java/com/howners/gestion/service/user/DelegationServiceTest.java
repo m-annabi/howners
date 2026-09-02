@@ -62,7 +62,7 @@ class DelegationServiceTest {
         agence = User.builder().id(agenceId).email("agence@test.fr").firstName("Agence").lastName("Immo").build();
         delegue = User.builder().id(delegueId).email("collab@test.fr").firstName("Col").lastName("Lab").build();
 
-        UserPrincipal principal = new UserPrincipal(agenceId, "agence@test.fr", "x", "OWNER", true);
+        UserPrincipal principal = new UserPrincipal(agenceId, "agence@test.fr", "x", "OWNER", true, 0);
         Authentication auth = org.springframework.security.authentication.UsernamePasswordAuthenticationToken
                 .authenticated(principal, null, Collections.emptyList());
         SecurityContextHolder.getContext().setAuthentication(auth);

@@ -71,7 +71,7 @@
 
 <!-- Dense table -->
 <div *ngIf="!loading && !error && filteredPayments.length > 0" class="hw-table-card">
-  <table class="hw-table payment-table">
+  <table class="hw-table hw-table--stacked payment-table">
     <thead>
       <tr>
         <th>Bien</th>
@@ -92,23 +92,23 @@
           <div class="hw-table__strong">{{ payment.propertyName }}</div>
         </td>
 
-        <td>{{ payment.payerName }}</td>
+        <td data-label="Payeur">{{ payment.payerName }}</td>
 
-        <td class="payment-table__col-type">
+        <td class="payment-table__col-type" data-label="Type">
           <span class="hw-badge hw-badge--neutral">{{ getTypeLabel(payment.paymentType) }}</span>
         </td>
 
-        <td class="payment-table__col-amount">
+        <td class="payment-table__col-amount" data-label="Montant">
           <div class="hw-table__amount">{{ payment.amount | number:'1.2-2' }} {{ payment.currency }}</div>
         </td>
 
-        <td class="payment-table__col-date">
+        <td class="payment-table__col-date" data-label="Échéance">
           <div [class.payment-table__overdue]="isOverdue(payment)">
             {{ payment.dueDate | date:'dd/MM/yyyy' }}
           </div>
         </td>
 
-        <td class="payment-table__col-status">
+        <td class="payment-table__col-status" data-label="Statut">
           <app-status-badge [status]="payment.status" type="payment"></app-status-badge>
           <ng-container *ngIf="payment.status !== PaymentStatus.PAID && payment.status !== PaymentStatus.REFUNDED">
             <span *ngIf="payment.relanceNiveau === 1" class="hw-badge hw-badge--warning payment-table__relance"

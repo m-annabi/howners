@@ -2,13 +2,41 @@
   <div class="auth-card">
     <div class="auth-card__header">
       <div class="auth-card__logo">
-        <i class="bi bi-house-door-fill"></i>
+        <i class="bi" [ngClass]="submitted ? 'bi-envelope-check-fill' : 'bi-house-door-fill'"></i>
       </div>
-      <h1>Créer un compte</h1>
-      <p>Rejoignez Howners</p>
+      <h1>{{ submitted ? 'Vérifiez vos e-mails' : 'Créer un compte' }}</h1>
+      <p>{{ submitted ? 'Une dernière étape' : 'Rejoignez Howners' }}</p>
     </div>
 
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <!-- Écran de confirmation : compte en attente de vérification (plus d'auto-connexion). -->
+    <div *ngIf="submitted" class="auth-verify">
+      <p>{{ successMessage }}</p>
+      <p class="hw-text-muted">
+        Un lien a été envoyé à <strong>{{ registerForm.get('email')?.value }}</strong>.
+        Cliquez dessus pour activer votre compte, puis connectez-vous.
+      </p>
+
+      <div *ngIf="resendDone" class="hw-alert hw-alert--success" style="margin: var(--hw-space-3) 0">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>Si un lien était nécessaire, il vient d'être renvoyé.</span>
+      </div>
+
+      <button
+        type="button"
+        class="hw-btn hw-btn--secondary hw-btn--block"
+        (click)="resend()"
+        [disabled]="resendLoading || resendDone"
+      >
+        <i *ngIf="resendLoading" class="bi bi-arrow-repeat spin"></i>
+        {{ resendLoading ? 'Envoi...' : 'Renvoyer le lien de vérification' }}
+      </button>
+
+      <p class="auth-card__footer">
+        <a routerLink="/auth/login">Retour à la connexion</a>
+      </p>
+    </div>
+
+    <form *ngIf="!submitted" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
       <div *ngIf="error" class="hw-alert hw-alert--danger" style="margin-bottom: var(--hw-space-4)">
         <i class="bi bi-exclamation-circle-fill"></i>
         <span>{{ error }}</span>

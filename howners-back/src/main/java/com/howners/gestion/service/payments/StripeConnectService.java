@@ -2,6 +2,8 @@ package com.howners.gestion.service.payments;
 
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.payments.StripeConnectStatusResponse;
+import com.howners.gestion.dto.payments.UpdatePaymentSettingsRequest;
+import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.repository.UserRepository;
 import com.howners.gestion.service.auth.AuthService;
 import com.stripe.exception.StripeException;
@@ -55,7 +57,8 @@ public class StripeConnectService {
             user.setStripeConnectStatus("NONE");
             userRepository.save(user);
             return new StripeConnectStatusResponse(false, "NONE",
-                    frontendUrl + "/billing?stripe-connect=not-configured");
+                    frontendUrl + "/profile?stripe-connect=not-configured",
+                    user.getPaymentInstructions(), Boolean.TRUE.equals(user.getAcceptOnlinePayments()));
         }
 
         try {
@@ -79,13 +82,14 @@ public class StripeConnectService {
 
             AccountLinkCreateParams linkParams = AccountLinkCreateParams.builder()
                     .setAccount(accountId)
-                    .setRefreshUrl(frontendUrl + "/billing?stripe-connect=refresh")
-                    .setReturnUrl(frontendUrl + "/billing?stripe-connect=return")
+                    .setRefreshUrl(frontendUrl + "/profile?stripe-connect=refresh")
+                    .setReturnUrl(frontendUrl + "/profile?stripe-connect=return")
                     .setType(AccountLinkCreateParams.Type.ACCOUNT_ONBOARDING)
                     .build();
             AccountLink link = AccountLink.create(linkParams);
 
-            return new StripeConnectStatusResponse(true, user.getStripeConnectStatus(), link.getUrl());
+            return new StripeConnectStatusResponse(true, user.getStripeConnectStatus(), link.getUrl(),
+                    user.getPaymentInstructions(), Boolean.TRUE.equals(user.getAcceptOnlinePayments()));
         } catch (StripeException e) {
             log.error("Stripe Connect onboarding failed for {}: {}", user.getEmail(), e.getMessage());
             throw new RuntimeException("Stripe Connect onboarding failed: " + e.getMessage(), e);
@@ -106,8 +110,11 @@ public class StripeConnectService {
 
                 if (chargesEnabled && payoutsEnabled) {
                     user.setStripeConnectStatus("COMPLETED");
-                } else if ("PENDING".equals(user.getStripeConnectStatus())) {
+                } else {
                     user.setStripeConnectStatus("PENDING");
+                    // Le compte n'est plus opérationnel (Stripe redemande des infos, capacité
+                    // révoquée…) : on ne laisse pas le paiement carte actif dans ce cas.
+                    user.setAcceptOnlinePayments(false);
                 }
                 userRepository.save(user);
             } catch (StripeException e) {
@@ -118,7 +125,39 @@ public class StripeConnectService {
         return new StripeConnectStatusResponse(
                 accountId != null,
                 user.getStripeConnectStatus() != null ? user.getStripeConnectStatus() : "NONE",
-                null
+                null,
+                user.getPaymentInstructions(),
+                Boolean.TRUE.equals(user.getAcceptOnlinePayments())
+        );
+    }
+
+    /**
+     * Met à jour les coordonnées de paiement déclaratives du bailleur et/ou l'activation du
+     * paiement carte en ligne. Refuse d'activer si l'onboarding Connect n'est pas complet — le
+     * bailleur ne peut pas se retrouver en attente de virement d'une carte qu'il ne peut pas
+     * encaisser.
+     */
+    @Transactional
+    public StripeConnectStatusResponse updatePaymentSettings(UpdatePaymentSettingsRequest request) {
+        UUID userId = AuthService.getCurrentUserId();
+        User user = userRepository.findById(userId).orElseThrow();
+
+        if (Boolean.TRUE.equals(request.acceptOnlinePayments())
+                && !"COMPLETED".equals(user.getStripeConnectStatus())) {
+            throw new BadRequestException(
+                    "Impossible d'activer le paiement en ligne : votre compte Stripe Connect n'est pas encore complété.");
+        }
+
+        user.setPaymentInstructions(request.paymentInstructions());
+        user.setAcceptOnlinePayments(Boolean.TRUE.equals(request.acceptOnlinePayments()));
+        userRepository.save(user);
+
+        return new StripeConnectStatusResponse(
+                user.getStripeConnectAccountId() != null,
+                user.getStripeConnectStatus() != null ? user.getStripeConnectStatus() : "NONE",
+                null,
+                user.getPaymentInstructions(),
+                user.getAcceptOnlinePayments()
         );
     }
 
@@ -135,8 +174,15 @@ public class StripeConnectService {
             boolean charges = Boolean.TRUE.equals(chargesEnabled);
             boolean payouts = Boolean.TRUE.equals(payoutsEnabled);
             String newStatus = (charges && payouts) ? "COMPLETED" : "PENDING";
-            if (!newStatus.equals(user.getStripeConnectStatus())) {
+            boolean statusChanged = !newStatus.equals(user.getStripeConnectStatus());
+            if (statusChanged) {
                 user.setStripeConnectStatus(newStatus);
+            }
+            if (!"COMPLETED".equals(newStatus) && Boolean.TRUE.equals(user.getAcceptOnlinePayments())) {
+                user.setAcceptOnlinePayments(false);
+                statusChanged = true;
+            }
+            if (statusChanged) {
                 userRepository.save(user);
                 log.info("Statut Connect du compte {} mis à jour en {} pour l'utilisateur {}",
                         accountId, newStatus, user.getId());

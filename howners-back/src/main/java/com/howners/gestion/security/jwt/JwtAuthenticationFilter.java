@@ -1,5 +1,6 @@
 package com.howners.gestion.security.jwt;
 
+import com.howners.gestion.security.UserPrincipal;
 import com.howners.gestion.service.user.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -37,6 +38,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID userId = tokenProvider.getUserIdFromToken(jwt);
 
                 UserDetails userDetails = customUserDetailsService.loadUserById(userId);
+
+                // Révocation : un jeton dont la version est inférieure à la version courante de
+                // l'utilisateur a été invalidé (« déconnexion de toutes les sessions ») → on n'authentifie pas.
+                int tokenVersion = tokenProvider.getTokenVersionFromToken(jwt);
+                if (userDetails instanceof UserPrincipal principal && tokenVersion != principal.getTokenVersion()) {
+                    log.warn("Jeton révoqué pour l'utilisateur {} (version {} != {})",
+                            userId, tokenVersion, principal.getTokenVersion());
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
 
@@ -15,6 +15,11 @@ export class RegisterComponent implements OnInit {
   error: string | null = null;
   showPassword = false;
   referralCode: string | null = null;
+  // Après inscription : on n'auto-connecte plus, on affiche l'écran « vérifiez vos e-mails ».
+  submitted = false;
+  successMessage = '';
+  resendLoading = false;
+  resendDone = false;
   roles = [
     { value: Role.OWNER, label: 'Propriétaire' },
     { value: Role.TENANT, label: 'Locataire' }
@@ -23,7 +28,6 @@ export class RegisterComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router,
     private route: ActivatedRoute
   ) {
     this.registerForm = this.fb.group({
@@ -55,14 +59,28 @@ export class RegisterComponent implements OnInit {
 
     this.authService.register(this.registerForm.value).subscribe({
       next: (response) => {
-        // Accueil selon le rôle : un locataire fraîchement inscrit n'a pas encore de
-        // location — on l'envoie chercher un logement, pas sur l'espace propriétaire.
-        this.router.navigate([response.user?.role === 'TENANT' ? '/listings' : '/dashboard']);
+        // Plus d'auto-connexion : le compte est en attente de vérification par e-mail.
+        this.loading = false;
+        this.submitted = true;
+        this.successMessage = response.message;
       },
       error: (err) => {
-        this.error = err.error?.message || 'Registration failed';
+        this.error = err.error?.message || "L'inscription a échoué";
         this.loading = false;
       }
+    });
+  }
+
+  resend(): void {
+    const email = this.registerForm.get('email')?.value;
+    if (!email || this.resendLoading || this.resendDone) {
+      return;
+    }
+    this.resendLoading = true;
+    this.authService.resendVerification(email).subscribe({
+      // Réponse toujours générique côté serveur → on affiche le même état quoi qu'il arrive.
+      next: () => { this.resendLoading = false; this.resendDone = true; },
+      error: () => { this.resendLoading = false; this.resendDone = true; }
     });
   }
 }

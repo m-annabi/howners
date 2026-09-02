@@ -152,24 +152,24 @@
       </thead>
       <tbody>
         <tr *ngFor="let app of applications">
-          <td>
+          <td data-label="Annonce">
             <a [routerLink]="['/listings', app.listingId]" class="apps-table__title">{{ app.listingTitle }}</a>
           </td>
-          <td class="hw-text-muted">{{ app.propertyName }}</td>
-          <td class="hw-text-muted">{{ app.createdAt | date:'dd/MM/yyyy' }}</td>
-          <td class="hw-text-muted">{{ app.desiredMoveIn ? (app.desiredMoveIn | date:'dd/MM/yyyy') : '—' }}</td>
-          <td>
+          <td class="hw-text-muted" data-label="Propriété">{{ app.propertyName }}</td>
+          <td class="hw-text-muted" data-label="Candidature">{{ app.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td class="hw-text-muted" data-label="Emménagement">{{ app.desiredMoveIn ? (app.desiredMoveIn | date:'dd/MM/yyyy') : '—' }}</td>
+          <td data-label="Dossier">
             <span class="hw-badge"
                   [class.hw-badge--success]="isDossierComplete(app)"
                   [class.hw-badge--warning]="!isDossierComplete(app)">
               <i class="bi bi-folder"></i> {{ getDocumentCount(app) }}/{{ REQUIRED_DOCUMENT_TYPES.length }}
             </span>
           </td>
-          <td><app-status-badge [status]="app.status" type="application"></app-status-badge></td>
-          <td>
+          <td data-label="Statut"><app-status-badge [status]="app.status" type="application"></app-status-badge></td>
+          <td data-label="Actions" class="apps-table__col-actions">
             <div class="apps-table__actions">
               <button *ngIf="canWithdraw(app)" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="withdraw(app.id)" title="Retirer">
-                <i class="bi bi-x-circle"></i>
+                <i class="bi bi-x-circle"></i> <span class="apps-table__action-label">Retirer</span>
               </button>
               <span *ngIf="app.notes" class="hw-text-muted" title="{{ app.notes }}">
                 <i class="bi bi-chat-square-text"></i>

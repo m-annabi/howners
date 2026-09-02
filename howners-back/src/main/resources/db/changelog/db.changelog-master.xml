@@ -103,6 +103,10 @@
     <include file="db/changelog/097-mise-en-demeure-numero.xml"/>
     <include file="db/changelog/098-contract-templates-html-format.xml"/>
     <include file="db/changelog/099-contract-template-end-date-clause.xml"/>
+    <include file="db/changelog/100-add-payment-settings-fields.xml"/>
     <include file="db/changelog/100-property-amenities.xml"/>
+    <include file="db/changelog/101-audit-logs-append-only.xml"/>
+    <include file="db/changelog/102-user-token-version.xml"/>
+    <include file="db/changelog/103-email-verification.xml"/>
 
 </databaseChangeLog>

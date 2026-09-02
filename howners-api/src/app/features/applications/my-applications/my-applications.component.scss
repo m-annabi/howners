@@ -92,4 +92,65 @@
     align-items: center;
     justify-content: flex-end;
   }
+
+  &__action-label {
+    display: none;
+  }
+}
+
+// ── Mobile : le tableau devient une liste de fiches empilées ────────────────
+// (mêmes badges/couleurs qu'en desktop, juste réagencés en « étiquette : valeur »
+// pour éviter le défilement horizontal sur un petit nombre de candidatures).
+@media (max-width: 640px) {
+  .apps-table {
+    thead { display: none; }
+
+    tbody, tr, td { display: block; width: 100%; }
+
+    tr {
+      padding: var(--hw-space-3) var(--hw-space-4);
+
+      & + tr { border-top: 1px solid var(--hw-border-light, #f1f3f5); }
+    }
+
+    tbody td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--hw-space-3);
+      padding: 4px 0;
+      border-bottom: none;
+    }
+
+    tbody td::before {
+      content: attr(data-label);
+      font-size: var(--hw-fs-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--hw-text-muted, #6b7280);
+      flex-shrink: 0;
+    }
+
+    // Titre de l'annonce : sert d'en-tête de fiche, pas une ligne étiquette/valeur.
+    td:first-child {
+      padding: 0 0 var(--hw-space-2);
+      margin-bottom: var(--hw-space-2);
+      border-bottom: 1px dashed var(--hw-border-light, #f1f3f5);
+
+      &::before { content: none; }
+    }
+
+    &__title { font-size: var(--hw-fs-base); }
+
+    // Actions : pas d'étiquette, alignées comme le pied de la fiche.
+    td:last-child {
+      padding-top: var(--hw-space-2);
+      &::before { content: none; }
+    }
+  }
+
+  .apps-table__action-label {
+    display: inline;
+  }
 }

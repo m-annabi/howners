@@ -37,6 +37,7 @@ public class JwtTokenProvider {
                 .subject(userPrincipal.getId().toString())
                 .claim("email", userPrincipal.getEmail())
                 .claim("role", userPrincipal.getRole())
+                .claim("tv", userPrincipal.getTokenVersion())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -51,6 +52,22 @@ public class JwtTokenProvider {
                 .getPayload();
 
         return UUID.fromString(claims.getSubject());
+    }
+
+    /**
+     * Version de jeton embarquée dans le JWT. Les jetons hérités (émis avant l'introduction de la
+     * révocation) n'ont pas la claim « tv » → 0, ce qui correspond à la version par défaut en base,
+     * donc aucun rejet massif au déploiement.
+     */
+    public int getTokenVersionFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        Integer tv = claims.get("tv", Integer.class);
+        return tv != null ? tv : 0;
     }
 
     public boolean validateToken(String authToken) {

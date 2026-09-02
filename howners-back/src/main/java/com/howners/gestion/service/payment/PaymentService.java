@@ -7,6 +7,7 @@ import com.howners.gestion.domain.property.Property;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
+import com.howners.gestion.dto.email.GenericNotificationEmailData;
 import com.howners.gestion.dto.email.PaymentReminderEmailData;
 import com.howners.gestion.dto.payment.CreatePaymentRequest;
 import com.howners.gestion.dto.payment.PaymentResponse;
@@ -30,6 +31,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
+import com.stripe.net.RequestOptions;
 import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -168,7 +170,52 @@ public class PaymentService {
         log.info("Payment created with id {} for rental {}", payment.getId(), rental.getId());
         auditService.logAction(AuditAction.PAYMENT_CREATED, "Payment", payment.getId());
 
+        notifyTenantOfNewPayment(payment);
+
         return PaymentResponse.from(payment);
+    }
+
+    /** Notifie immédiatement le locataire (in-app + email) qu'une échéance vient d'être créée. */
+    private void notifyTenantOfNewPayment(Payment payment) {
+        try {
+            Rental rental = payment.getRental();
+            Property property = rental.getProperty();
+            User tenant = payment.getPayer();
+            User owner = property.getOwner();
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String amountLabel = payment.getAmount() + " " + payment.getCurrency();
+            String dueDateLabel = payment.getDueDate() != null ? payment.getDueDate().format(dateFormatter) : null;
+
+            notificationService.create(
+                    tenant.getId(),
+                    NotificationType.PAYMENT_DUE,
+                    "Nouvelle échéance de paiement",
+                    "Un paiement de " + amountLabel
+                            + (dueDateLabel != null ? " à régler avant le " + dueDateLabel : " à régler")
+                            + " a été enregistré par " + owner.getFullName() + ".",
+                    "/payments/" + payment.getId());
+
+            if (tenant.getEmail() != null) {
+                String paymentUrl = frontendUrl + "/payments/" + payment.getId();
+                String detailsHtml = "<strong>Bien :</strong> " + property.getName() + "<br>"
+                        + "<strong>Montant :</strong> " + amountLabel
+                        + (dueDateLabel != null ? "<br><strong>Échéance :</strong> " + dueDateLabel : "");
+
+                emailService.sendNotificationEmail(new GenericNotificationEmailData(
+                        tenant.getEmail(),
+                        tenant.getFullName(),
+                        "Nouvelle échéance de paiement — " + property.getName(),
+                        "Nouvelle échéance de paiement",
+                        "Votre propriétaire " + owner.getFullName() + " a enregistré une nouvelle échéance de paiement pour votre location.",
+                        detailsHtml,
+                        "Voir le paiement",
+                        paymentUrl,
+                        false
+                ));
+            }
+        } catch (Exception e) {
+            log.error("Échec de la notification de création de paiement {}: {}", payment.getId(), e.getMessage(), e);
+        }
     }
 
     @Transactional
@@ -179,40 +226,35 @@ public class PaymentService {
             throw new BadRequestException("Payment is not in PENDING status");
         }
 
+        User owner = payment.getRental().getProperty().getOwner();
+        String connectedAccountId = requireOnlinePaymentEnabled(owner);
+
         try {
             long amountInCents = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
 
-            User owner = payment.getRental().getProperty().getOwner();
             BigDecimal platformFeePercent = platformFeeService.getFeePercentPourProprietaire(owner.getId());
             long platformFee = Math.round(amountInCents * platformFeePercent.doubleValue() / 100.0);
 
-            String connectedAccountId = owner.getStripeConnectAccountId();
-
-            PaymentIntentCreateParams.Builder paramsBuilder = PaymentIntentCreateParams.builder()
+            // Direct charge : le PaymentIntent est créé DIRECTEMENT sur le compte Connect du
+            // propriétaire (RequestOptions.setStripeAccount) — l'argent ne transite jamais par
+            // le compte de la plateforme, qui ne fait que prélever sa commission au passage
+            // (applicationFeeAmount). Pas de transfert/reversement à effectuer ensuite.
+            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount(amountInCents)
                     .setCurrency(payment.getCurrency().toLowerCase())
+                    .setApplicationFeeAmount(platformFee)
                     .putMetadata("payment_id", payment.getId().toString())
-                    .putMetadata("rental_id", payment.getRental().getId().toString());
+                    .putMetadata("rental_id", payment.getRental().getId().toString())
+                    .build();
+            RequestOptions options = RequestOptions.builder().setStripeAccount(connectedAccountId).build();
 
-            if (connectedAccountId != null && !connectedAccountId.isBlank()) {
-                paramsBuilder
-                        .setApplicationFeeAmount(platformFee)
-                        .setTransferData(PaymentIntentCreateParams.TransferData.builder()
-                                .setDestination(connectedAccountId)
-                                .build());
-                log.info("Stripe Connect: routing payment to {} with {}% platform fee ({} cents)",
-                        connectedAccountId, platformFeePercent, platformFee);
-            } else {
-                log.info("Owner {} has no Stripe Connect account — payment without transfer", owner.getId());
-            }
-
-            PaymentIntent intent = PaymentIntent.create(paramsBuilder.build());
+            PaymentIntent intent = PaymentIntent.create(params, options);
+            log.info("Stripe Connect (direct charge): PaymentIntent {} créé sur le compte {} (commission {} % = {} c)",
+                    intent.getId(), connectedAccountId, platformFeePercent, platformFee);
 
             payment.setStripePaymentIntentId(intent.getId());
             payment.setPaymentMethod("stripe");
             paymentRepository.save(payment);
-
-            log.info("Stripe PaymentIntent created: {} for payment {}", intent.getId(), paymentId);
 
             return new StripePaymentIntentResponse(
                     intent.getClientSecret(),
@@ -227,9 +269,9 @@ public class PaymentService {
 
     /**
      * Crée une session Stripe Checkout (hébergée) pour régler un loyer.
-     * Le locataire (payeur) paie par carte sur la page Stripe ; si le
-     * propriétaire a un compte Connect, le montant lui est reversé avec
-     * prélèvement de la commission plateforme.
+     * Le locataire (payeur) paie par carte sur la page Stripe ; en direct charge, l'argent est
+     * encaissé directement sur le compte Connect du propriétaire, moins la commission
+     * plateforme — jamais de reversement à faire depuis le compte de la plateforme.
      */
     @Transactional
     public CheckoutSessionResponse createRentCheckoutSession(UUID paymentId) {
@@ -239,25 +281,20 @@ public class PaymentService {
             throw new BadRequestException("Ce paiement est déjà réglé.");
         }
 
+        User owner = payment.getRental().getProperty().getOwner();
+        String connectedAccountId = requireOnlinePaymentEnabled(owner);
+
         try {
             long amountInCents = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
-            User owner = payment.getRental().getProperty().getOwner();
-            String connectedAccountId = owner.getStripeConnectAccountId();
+            BigDecimal feePercent = platformFeeService.getFeePercentPourProprietaire(owner.getId());
+            long platformFee = Math.round(amountInCents * feePercent.doubleValue() / 100.0);
 
-            SessionCreateParams.PaymentIntentData.Builder piData =
-                    SessionCreateParams.PaymentIntentData.builder()
-                            .putMetadata("payment_id", payment.getId().toString())
-                            .putMetadata("rental_id", payment.getRental().getId().toString());
-
-            if (connectedAccountId != null && !connectedAccountId.isBlank()) {
-                BigDecimal feePercent = platformFeeService.getFeePercentPourProprietaire(owner.getId());
-                long platformFee = Math.round(amountInCents * feePercent.doubleValue() / 100.0);
-                piData.setApplicationFeeAmount(platformFee)
-                        .setTransferData(SessionCreateParams.PaymentIntentData.TransferData.builder()
-                                .setDestination(connectedAccountId)
-                                .build());
-                log.info("Rent checkout: Connect vers {} (commission {} c)", connectedAccountId, platformFee);
-            }
+            SessionCreateParams.PaymentIntentData piData = SessionCreateParams.PaymentIntentData.builder()
+                    .putMetadata("payment_id", payment.getId().toString())
+                    .putMetadata("rental_id", payment.getRental().getId().toString())
+                    .setApplicationFeeAmount(platformFee)
+                    .build();
+            log.info("Rent checkout (direct charge): compte {} (commission {} c)", connectedAccountId, platformFee);
 
             SessionCreateParams params = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
@@ -273,11 +310,12 @@ public class PaymentService {
                                             .build())
                                     .build())
                             .build())
-                    .setPaymentIntentData(piData.build())
+                    .setPaymentIntentData(piData)
                     .putMetadata("payment_id", payment.getId().toString())
                     .build();
+            RequestOptions options = RequestOptions.builder().setStripeAccount(connectedAccountId).build();
 
-            Session session = Session.create(params);
+            Session session = Session.create(params, options);
             payment.setPaymentMethod("stripe");
             paymentRepository.save(payment);
 
@@ -287,6 +325,22 @@ public class PaymentService {
             log.error("Échec création session checkout loyer: {}", e.getMessage(), e);
             throw new BadRequestException("Échec de la création du paiement Stripe : " + e.getMessage());
         }
+    }
+
+    /**
+     * Vérifie que le propriétaire a explicitement activé le paiement carte en ligne et que son
+     * compte Connect est opérationnel ; renvoie l'id du compte Connect à utiliser sinon lève.
+     */
+    private String requireOnlinePaymentEnabled(User owner) {
+        String connectedAccountId = owner.getStripeConnectAccountId();
+        boolean enabled = Boolean.TRUE.equals(owner.getAcceptOnlinePayments())
+                && "COMPLETED".equals(owner.getStripeConnectStatus())
+                && connectedAccountId != null && !connectedAccountId.isBlank();
+        if (!enabled) {
+            throw new BadRequestException(
+                    "Le paiement en ligne n'est pas activé pour ce propriétaire. Réglez ce loyer directement avec lui.");
+        }
+        return connectedAccountId;
     }
 
     /**
@@ -303,9 +357,23 @@ public class PaymentService {
         }
 
         try {
-            Session session = Session.retrieve(sessionId);
+            // Session créée en direct charge sur le compte Connect du propriétaire : elle doit
+            // être récupérée avec le même compte, sinon Stripe renvoie une 404.
+            String connectedAccountId = payment.getRental().getProperty().getOwner().getStripeConnectAccountId();
+            Session session = connectedAccountId != null && !connectedAccountId.isBlank()
+                    ? Session.retrieve(sessionId, RequestOptions.builder().setStripeAccount(connectedAccountId).build())
+                    : Session.retrieve(sessionId);
             if (!"paid".equals(session.getPaymentStatus())) {
                 throw new BadRequestException("Le paiement n'a pas encore été confirmé par Stripe.");
+            }
+            // La session doit correspondre AU paiement ciblé : sans ce lien, n'importe quelle
+            // session « paid » à laquelle l'appelant a accès validerait ce paiement (rejeu / paiement
+            // d'un loyer réglé par la session d'un autre). Le metadata payment_id est posé à la création.
+            String sessionPaymentId = session.getMetadata() != null ? session.getMetadata().get("payment_id") : null;
+            if (!paymentId.toString().equals(sessionPaymentId)) {
+                log.warn("Session Stripe {} non liée au paiement {} (metadata payment_id={})",
+                        sessionId, paymentId, sessionPaymentId);
+                throw new BadRequestException("Cette session de paiement ne correspond pas à ce règlement.");
             }
 
             payment.setStatus(PaymentStatus.PAID);

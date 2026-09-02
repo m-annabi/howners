@@ -29,6 +29,20 @@
   padding: var(--hw-space-5, 1.5rem);
 }
 
+.listing-detail__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  h2 {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+}
+
 .listing-detail__desc {
   font-size: 1.05rem;
   line-height: 1.6;
