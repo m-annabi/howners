@@ -102,7 +102,7 @@ export class TemplateListComponent implements OnInit {
   editTemplate(template: ContractTemplate, event: Event): void {
     event.stopPropagation();
 
-    if (template.isDefault) {
+    if (template.isDefault || !template.createdById) {
       this.notificationService.success('Les templates par défaut ne peuvent pas être modifiés');
       return;
     }
@@ -131,7 +131,7 @@ export class TemplateListComponent implements OnInit {
   deleteTemplate(template: ContractTemplate, event: Event): void {
     event.stopPropagation();
 
-    if (template.isDefault) {
+    if (template.isDefault || !template.createdById) {
       this.notificationService.success('Les templates par défaut ne peuvent pas être supprimés');
       return;
     }

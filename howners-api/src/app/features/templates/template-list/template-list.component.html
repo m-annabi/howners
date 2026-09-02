@@ -41,20 +41,20 @@
         <tr *ngFor="let template of filteredTemplates">
           <td>
             <strong>{{ template.name }}</strong>
-            <span *ngIf="template.isDefault" class="hw-badge hw-badge--info ms-2">Par défaut</span>
+            <span *ngIf="template.isDefault" class="hw-badge hw-badge--info ms-2">Par défaut</span><span *ngIf="!template.isDefault && !template.createdById" class="hw-badge hw-badge--neutral ms-2" title="Modèle fourni par Howners : dupliquez-le pour l'adapter">Modèle Howners</span>
           </td>
           <td><span class="hw-badge hw-badge--neutral">{{ getRentalTypeLabel(template.rentalType) }}</span></td>
           <td class="hw-text-sm hw-text-muted">{{ template.description || '—' }}</td>
           <td>{{ template.createdAt | date: 'dd/MM/yyyy' }}</td>
           <td>
             <div class="d-flex gap-1">
-              <button *ngIf="!template.isDefault" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="editTemplate(template, $event)" title="Modifier">
+              <button *ngIf="!template.isDefault && template.createdById" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="editTemplate(template, $event)" title="Modifier">
                 <i class="bi bi-pencil"></i>
               </button>
               <button class="hw-btn hw-btn--sm hw-btn--ghost" (click)="duplicateTemplate(template, $event)" title="Dupliquer">
                 <i class="bi bi-files"></i>
               </button>
-              <button *ngIf="!template.isDefault" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteTemplate(template, $event)" title="Supprimer">
+              <button *ngIf="!template.isDefault && template.createdById" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="deleteTemplate(template, $event)" title="Supprimer">
                 <i class="bi bi-trash"></i>
               </button>
             </div>

@@ -109,5 +109,7 @@
     <include file="db/changelog/102-user-token-version.xml"/>
     <include file="db/changelog/103-email-verification.xml"/>
     <include file="db/changelog/104-payment-flow.xml"/>
+    <include file="db/changelog/105-regularisation-ajustement.xml"/>
+    <include file="db/changelog/106-lease-templates-decree-2015.xml"/>
 
 </databaseChangeLog>

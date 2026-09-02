@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Régularisation des charges : le montant calculé (provisions vs dépenses récupérables) peut
+         être corrigé manuellement par le bailleur avant envoi, avec un motif et un justificatif
+         obligatoires ; le montant calculé d'origine est conservé pour la traçabilité. -->
+    <changeSet id="105-regularisation-ajustement" author="claude">
+        <addColumn tableName="charge_regularisations">
+            <column name="charges_calculees" type="decimal(10,2)"/>
+            <column name="ajustement_motif" type="text"/>
+            <column name="justificatif_document_id" type="uuid"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="charge_regularisations" baseColumnNames="justificatif_document_id"
+                                 referencedTableName="documents" referencedColumnNames="id"
+                                 constraintName="fk_charge_regularisations_justificatif"/>
+    </changeSet>
+
+</databaseChangeLog>

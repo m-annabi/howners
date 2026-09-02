@@ -91,6 +91,8 @@ Volontairement non traités — à arbitrer :
 | **Fusion des uploads de photos (bien / annonce)** | Deux API distinctes (`/properties/:id/photos`, `/listings/:id/photos`) avec des règles de couverture différentes ; fusionner impose d'abord d'unifier le backend. |
 | **Jumeaux `TenantRating` / `OwnerRating`** | Entités et tables distinctes (changelog 089) : une abstraction commune exigerait une migration de schéma. |
 | **Vocabulaire bail / contrat** | Choix éditorial (le « contrat » couvre aussi les baux commerciaux et les avenants) — à trancher avec la relecture juridique (#4). |
+| **Notice d'information + inventaire du mobilier** | Les templates de bail (Liquibase 106, voir `GUIDE-BAUX.md`) les listent en annexe mais ne les génèrent pas : joindre le PDF officiel de la notice à l'envoi du contrat et proposer un inventaire pré-rempli (décret 2015-981) pour les meublés. |
+| **Paiement en ligne : SEPA et frais réels** | Clés Stripe de test à fournir ; ensuite activer le prélèvement SEPA et remonter les frais réels (`BalanceTransaction.fee`) à la place de l'estimation affichée (voir `STRIPE-FEES.md`). |
 
 ## Documents produits cette session
 

@@ -1,6 +1,8 @@
 package com.howners.gestion.controller;
 
+import com.howners.gestion.dto.rental.AjusterRegularisationRequest;
 import com.howners.gestion.dto.rental.RegularisationResponse;
+import jakarta.validation.Valid;
 import com.howners.gestion.service.rental.RegularisationChargesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,14 @@ public class ChargeRegularisationController {
             @PathVariable UUID rentalId,
             @RequestParam int annee) {
         return ResponseEntity.ok(regularisationService.calculer(rentalId, annee));
+    }
+
+    /** Correction manuelle du montant (motif + justificatif obligatoires), avant envoi. */
+    @PutMapping("/regularisations/{id}/ajustement")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<RegularisationResponse> ajuster(@PathVariable UUID id,
+                                                          @Valid @RequestBody AjusterRegularisationRequest request) {
+        return ResponseEntity.ok(regularisationService.ajuster(id, request));
     }
 
     @PostMapping("/regularisations/{id}/envoyer")

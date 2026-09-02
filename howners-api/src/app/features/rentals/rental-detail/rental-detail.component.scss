@@ -577,3 +577,10 @@
   &__label { color: var(--hw-gray-500); }
   &__value { color: var(--hw-gray-800); font-weight: var(--hw-fw-medium); }
 }
+
+// Les panneaux annuels (révision, régularisation) contiennent des tableaux larges :
+// ils défilent horizontalement dans le volet plutôt que de faire déborder la page sur mobile.
+.rd-fold__body {
+  overflow-x: auto;
+  max-width: 100%;
+}

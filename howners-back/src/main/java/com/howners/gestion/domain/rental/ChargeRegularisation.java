@@ -65,6 +65,19 @@ public class ChargeRegularisation {
     @JoinColumn(name = "document_id")
     private Document document;
 
+    /** Charges réelles issues du calcul automatique, conservées si le bailleur ajuste le montant. */
+    @Column(name = "charges_calculees", precision = 10, scale = 2)
+    private BigDecimal chargesCalculees;
+
+    /** Motif de l'ajustement manuel (obligatoire dès qu'un ajustement est saisi). */
+    @Column(name = "ajustement_motif", columnDefinition = "TEXT")
+    private String ajustementMotif;
+
+    /** Justificatif déposé par le bailleur à l'appui de l'ajustement. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "justificatif_document_id")
+    private Document justificatif;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

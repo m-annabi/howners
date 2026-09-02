@@ -57,3 +57,13 @@
     gap: var(--hw-space-1);
   }
 }
+
+.regul-adjust {
+  padding: var(--hw-space-4);
+
+  &__grid {
+    display: grid;
+    gap: var(--hw-space-2);
+    max-width: 560px;
+  }
+}

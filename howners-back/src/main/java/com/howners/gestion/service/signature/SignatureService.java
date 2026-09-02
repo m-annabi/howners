@@ -49,6 +49,7 @@ public class SignatureService {
     private final StorageService storageService;
     private final NotificationService notificationService;
     private final ContractSignatureRequestRepository signatureRequestRepository;
+    private final com.howners.gestion.service.contract.ContractActivationService contractActivationService;
 
     /**
      * Créer une signature pour un contrat
@@ -140,6 +141,8 @@ public class SignatureService {
         contractRepository.save(contract);
 
         reconcilePendingSignatureRequest(contract, request);
+        // Activation automatique (immédiate si la date de début du bail est atteinte, sinon par le job nocturne)
+        contractActivationService.activateIfDue(contract);
 
         log.info("Contract {} signed by user {}", contract.getContractNumber(), currentUser.getEmail());
 
