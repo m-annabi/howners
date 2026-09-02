@@ -82,8 +82,12 @@ export class ApplicationFormComponent implements OnInit {
       }
       this.listing = listing;
 
+      // Une candidature retirée ou refusée ne bloque pas la page : après un refus, le serveur
+      // n'accepte la nouvelle candidature que si le dossier a été mis à jour depuis.
       const activeApplication = myApplications.find(
-        a => a.listingId === listingId && a.status !== ApplicationStatus.WITHDRAWN
+        a => a.listingId === listingId
+          && a.status !== ApplicationStatus.WITHDRAWN
+          && a.status !== ApplicationStatus.REJECTED
       );
       if (activeApplication) {
         this.state = 'already-applied';

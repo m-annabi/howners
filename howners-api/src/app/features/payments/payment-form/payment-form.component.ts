@@ -1,6 +1,7 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -29,9 +30,11 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private paymentService: PaymentService,
     private rentalService: RentalService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -43,6 +46,10 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
       dueDate: [''],
       paymentMethod: ['BANK_TRANSFER']
     });
+
+    // Arrivée depuis la fiche d'un bail : le bail est présélectionné.
+    const rentalId = this.route.snapshot.queryParamMap.get('rentalId');
+    if (rentalId) this.paymentForm.patchValue({ rentalId });
 
     this.loadRentals();
   }
@@ -103,7 +110,7 @@ export class PaymentFormComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/payments']);
+    this.nav.back(['/payments']);
   }
 
   ngOnDestroy(): void {

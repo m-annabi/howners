@@ -124,7 +124,12 @@
           <section class="rd-panel">
             <div class="rd-panel__head">
               <h2 class="rd-panel__title">Paiements</h2>
-              <button type="button" class="rd-panel__link" (click)="viewPayments()">Tout voir</button>
+              <div class="d-flex gap-2 align-items-center">
+                <a *ngIf="isOwner" class="rd-panel__link" [routerLink]="['/payments/new']" [queryParams]="{ rentalId: rental.id }">
+                  <i class="bi bi-plus-lg"></i> Nouvelle échéance
+                </a>
+                <button type="button" class="rd-panel__link" (click)="viewPayments()">Tout voir</button>
+              </div>
             </div>
 
             <div class="rd-pay" [class.rd-pay--late]="isPaymentLate" *ngIf="nextPayment; else uptodate">

@@ -35,6 +35,9 @@
       <a class="topbar__dropdown-item" routerLink="/profile/rgpd">
         <i class="bi bi-shield-check"></i> Confidentialité
       </a>
+      <a class="topbar__dropdown-item" routerLink="/" [queryParams]="{ site: 1 }">
+        <i class="bi bi-globe2"></i> Voir le site
+      </a>
       <div class="topbar__dropdown-divider"></div>
       <button class="topbar__dropdown-item topbar__dropdown-item--danger" (click)="logout()">
         <i class="bi bi-box-arrow-right"></i> Déconnexion

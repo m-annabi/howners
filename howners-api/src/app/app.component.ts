@@ -3,6 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/auth/auth.service';
+import { NavigationService } from './core/services/navigation.service';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,9 @@ export class AppComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private swUpdate: SwUpdate
+    private swUpdate: SwUpdate,
+    // Instancié dès le démarrage pour que l'historique de navigation (bouton Retour) soit complet.
+    private navigation: NavigationService
   ) {}
 
   ngOnInit(): void {

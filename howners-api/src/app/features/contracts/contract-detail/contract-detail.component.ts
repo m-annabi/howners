@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -73,7 +74,8 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     private esignatureService: EsignatureService,
     private authService: AuthService,
     private notificationService: NotificationService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -171,7 +173,7 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/contracts']);
+    this.nav.back(['/contracts']);
   }
 
   deleteContract(): void {

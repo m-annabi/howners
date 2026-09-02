@@ -1,8 +1,10 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EtatDesLieuxService } from '../../../core/services/etat-des-lieux.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import { EtatDesLieux, EDL_TYPE_LABELS, EDL_TYPE_COLORS } from '../../../core/models/etat-des-lieux.model';
 
 @Component({
@@ -23,7 +25,9 @@ export class EdlDetailComponent implements OnInit {
     private edlService: EtatDesLieuxService,
     private route: ActivatedRoute,
     private router: Router,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private nav: NavigationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +67,11 @@ export class EdlDetailComponent implements OnInit {
     }
   }
 
+  /** Le bailleur signe comme bailleur, le locataire comme locataire ; l'admin peut signer les deux. */
+  canSign(role: 'OWNER' | 'TENANT'): boolean {
+    return this.authService.hasRole('ADMIN') || this.authService.hasRole(role);
+  }
+
   signAs(role: string): void {
     if (!this.edl) return;
     const roleLabel = role === 'OWNER' ? 'bailleur' : 'locataire';
@@ -95,6 +104,6 @@ export class EdlDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/inventory']);
+    this.nav.back(['/rentals', this.rentalId]);
   }
 }

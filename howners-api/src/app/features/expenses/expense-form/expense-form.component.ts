@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -32,7 +33,8 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private expenseService: ExpenseService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -111,7 +113,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/expenses']);
+    this.nav.back(['/expenses']);
   }
 
   ngOnDestroy(): void {

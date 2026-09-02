@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -28,7 +29,8 @@ export class PropertyDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private notificationService: NotificationService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -103,7 +105,7 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/properties']);
+    this.nav.back(['/properties']);
   }
 
   /** Enchaînement naturel bien → annonce : le formulaire arrive avec le bien présélectionné. */

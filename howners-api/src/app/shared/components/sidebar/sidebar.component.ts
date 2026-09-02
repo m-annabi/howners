@@ -145,7 +145,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
           items: [
             { label: 'Ma location', icon: 'bi-key', route: '/rentals' },
             { label: 'Mon contrat', icon: 'bi-file-earmark-text', route: '/contracts' },
-            { label: 'États des lieux', icon: 'bi-clipboard-check', route: '/inventory' },
           ]
         },
         {
@@ -188,7 +187,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
           { label: 'Locations', icon: 'bi-key', route: '/rentals', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
           { label: 'Locataires', icon: 'bi-people', route: '/tenants', roles: ['OWNER', 'ADMIN'] },
           { label: 'Contrats', icon: 'bi-file-earmark-text', route: '/contracts', roles: ['OWNER', 'ADMIN', 'CONCIERGE'] },
-          { label: 'États des lieux', icon: 'bi-clipboard-check', route: '/inventory', roles: ['OWNER', 'ADMIN'] },
         ],
         roles: ['OWNER', 'ADMIN', 'CONCIERGE']
       },

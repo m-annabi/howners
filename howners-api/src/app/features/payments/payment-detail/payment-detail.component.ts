@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,7 +41,8 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
     private paymentService: PaymentService,
     private notificationService: NotificationService,
     private authService: AuthService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private nav: NavigationService
   ) {}
 
   get isOwner(): boolean {
@@ -189,7 +191,7 @@ export class PaymentDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/payments']);
+    this.nav.back(['/payments']);
   }
 
   ngOnDestroy(): void {

@@ -12,9 +12,12 @@
         <a href="#faq">FAQ</a>
         <a (click)="browseListings()" class="landing-nav__listings">Voir les annonces</a>
       </nav>
-      <div class="landing-nav__cta">
+      <div class="landing-nav__cta" *ngIf="!isAuthenticated">
         <button class="btn btn-link" (click)="login()">Connexion</button>
         <button class="btn btn-accent" (click)="signup()">Créer un compte</button>
+      </div>
+      <div class="landing-nav__cta" *ngIf="isAuthenticated">
+        <button class="btn btn-accent" (click)="goToSpace()"><i class="bi bi-arrow-right-circle"></i> Mon espace</button>
       </div>
     </div>
   </header>

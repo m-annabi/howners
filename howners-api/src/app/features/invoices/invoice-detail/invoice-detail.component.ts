@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -31,7 +32,8 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -66,7 +68,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/invoices']);
+    this.nav.back(['/invoices']);
   }
 
   ngOnDestroy(): void {
