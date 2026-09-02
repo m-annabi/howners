@@ -1,5 +1,7 @@
 package com.howners.gestion.service.receipt;
 
+import com.howners.gestion.service.rental.RentalAccessService;
+import com.howners.gestion.service.document.GeneratedDocumentService;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.payment.Payment;
@@ -51,6 +53,8 @@ public class ReceiptService {
     private final PdfService pdfService;
     private final StorageService storageService;
     private final EmailService emailService;
+    private final RentalAccessService rentalAccessService;
+    private final GeneratedDocumentService generatedDocumentService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -147,26 +151,11 @@ public class ReceiptService {
             throw new RuntimeException("Failed to generate receipt PDF", e);
         }
 
-        // Upload to MinIO
+        // Archivage S3 + Document rattaché au bail
         String fileName = String.format("quittance_%s_%d.pdf", receiptNumber, System.currentTimeMillis());
-        String fileKey = storageService.uploadFile(pdfBytes, fileName, "application/pdf");
-
-        // Create Document record
-        User owner = rental.getProperty().getOwner();
-        Document document = Document.builder()
-                .rental(rental)
-                .property(rental.getProperty())
-                .uploader(owner)
-                .documentType(DocumentType.RECEIPT)
-                .fileName(fileName)
-                .filePath(fileKey)
-                .fileKey(fileKey)
-                .fileSize((long) pdfBytes.length)
-                .mimeType("application/pdf")
-                .documentHash(pdfService.calculateHash(pdfBytes))
-                .description("Quittance de loyer - " + receiptNumber)
-                .build();
-        return new GeneratedPdf(documentRepository.save(document), pdfBytes);
+        Document document = generatedDocumentService.storePdf(rental, rental.getProperty().getOwner(),
+                DocumentType.RECEIPT, fileName, pdfBytes, "Quittance de loyer - " + receiptNumber);
+        return new GeneratedPdf(document, pdfBytes);
     }
 
     @Transactional(readOnly = true)
@@ -248,16 +237,7 @@ public class ReceiptService {
     }
 
     private void checkAccess(Receipt receipt) {
-        UUID currentUserId = AuthService.getCurrentUserId();
-        UUID ownerId = receipt.getRental().getProperty().getOwner().getId();
-        UUID tenantId = receipt.getRental().getTenant() != null ? receipt.getRental().getTenant().getId() : null;
-
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", currentUserId.toString()));
-
-        if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to access this receipt");
-        }
+        rentalAccessService.assertParticipant(receipt.getRental(), "You are not authorized to access this receipt");
     }
 
     /**

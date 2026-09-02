@@ -1,5 +1,7 @@
 package com.howners.gestion.service.rental;
 
+import com.howners.gestion.service.document.GeneratedDocumentService;
+import com.howners.gestion.service.notification.NotificationDispatcher;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
 import com.howners.gestion.domain.expense.Expense;
@@ -83,6 +85,8 @@ public class RegularisationChargesService {
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
+    private final NotificationDispatcher notificationDispatcher;
+    private final GeneratedDocumentService generatedDocumentService;
 
     @Transactional(readOnly = true)
     public List<RegularisationResponse> findByRentalId(UUID rentalId) {
@@ -193,22 +197,8 @@ public class RegularisationChargesService {
         }
 
         String fileName = String.format("decompte_charges_%d_%s.pdf", regul.getAnnee(), regul.getId());
-        String fileKey = storageService.uploadFile(pdfBytes, fileName, "application/pdf");
-
-        Document document = Document.builder()
-                .rental(rental)
-                .property(rental.getProperty())
-                .uploader(rental.getProperty().getOwner())
-                .documentType(DocumentType.OTHER)
-                .fileName(fileName)
-                .filePath(fileKey)
-                .fileKey(fileKey)
-                .fileSize((long) pdfBytes.length)
-                .mimeType("application/pdf")
-                .documentHash(pdfService.calculateHash(pdfBytes))
-                .description("Décompte de régularisation des charges " + regul.getAnnee())
-                .build();
-        document = documentRepository.save(document);
+        Document document = generatedDocumentService.storePdf(rental, rental.getProperty().getOwner(),
+                DocumentType.OTHER, fileName, pdfBytes, "Décompte de régularisation des charges " + regul.getAnnee());
         regul.setDocument(document);
         regul.setStatut(StatutRegularisation.ENVOYEE);
         regul = regularisationRepository.save(regul);
@@ -217,33 +207,25 @@ public class RegularisationChargesService {
             String sens = regul.getSolde().compareTo(BigDecimal.ZERO) >= 0
                     ? "complément à régler : " + regul.getSolde().abs() + " €"
                     : "trop-perçu à vous restituer : " + regul.getSolde().abs() + " €";
-            notificationService.create(
-                    tenant.getId(),
-                    NotificationType.CHARGE_REGULARIZATION,
+            notificationDispatcher.notifyAndEmail(tenant, NotificationType.CHARGE_REGULARIZATION,
                     "Régularisation des charges " + regul.getAnnee(),
                     "Le décompte annuel des charges est disponible — " + sens + ".",
-                    "/rentals/" + rental.getId());
-
-            if (tenant.getEmail() != null) {
-                emailService.sendNotificationEmail(new GenericNotificationEmailData(
-                        tenant.getEmail(),
-                        tenant.getFullName(),
-                        "Régularisation des charges " + regul.getAnnee() + " — " + rental.getProperty().getName(),
-                        "Régularisation des charges",
-                        "Le décompte annuel de régularisation des charges locatives de votre logement est disponible.",
-                        String.format(
-                                "Provisions versées : <strong>%.2f €</strong><br/>"
-                                        + "Charges réelles : <strong>%.2f €</strong><br/>"
-                                        + "Solde : <strong>%.2f €</strong> (%s)",
-                                regul.getProvisionsEncaissees(), regul.getChargesReelles(),
-                                regul.getSolde(),
-                                regul.getSolde().compareTo(BigDecimal.ZERO) >= 0
-                                        ? "complément dû" : "à vous restituer"),
-                        "Voir le détail",
-                        null,
-                        false
-                ));
-            }
+                    "/rentals/" + rental.getId(),
+                    new NotificationDispatcher.Email(
+                            "Régularisation des charges " + regul.getAnnee() + " — " + rental.getProperty().getName(),
+                            "Régularisation des charges",
+                            "Le décompte annuel de régularisation des charges locatives de votre logement est disponible.",
+                            String.format(
+                                    "Provisions versées : <strong>%.2f €</strong><br/>"
+                                            + "Charges réelles : <strong>%.2f €</strong><br/>"
+                                            + "Solde : <strong>%.2f €</strong> (%s)",
+                                    regul.getProvisionsEncaissees(), regul.getChargesReelles(),
+                                    regul.getSolde(),
+                                    regul.getSolde().compareTo(BigDecimal.ZERO) >= 0
+                                            ? "complément dû" : "à vous restituer"),
+                            "Voir le détail",
+                            null,
+                            false));
         }
 
         log.info("Décompte de régularisation {} envoyé", regularisationId);

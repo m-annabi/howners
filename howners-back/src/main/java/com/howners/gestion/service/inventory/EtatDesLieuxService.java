@@ -1,5 +1,7 @@
 package com.howners.gestion.service.inventory;
 
+import com.howners.gestion.service.rental.RentalAccessService;
+import com.howners.gestion.service.document.GeneratedDocumentService;
 import com.howners.gestion.domain.audit.AuditAction;
 import com.howners.gestion.domain.document.Document;
 import com.howners.gestion.domain.document.DocumentType;
@@ -51,6 +53,8 @@ public class EtatDesLieuxService {
     private final PdfService pdfService;
     private final StorageService storageService;
     private final AuditService auditService;
+    private final RentalAccessService rentalAccessService;
+    private final GeneratedDocumentService generatedDocumentService;
 
     @Transactional(readOnly = true)
     public List<EtatDesLieuxResponse> findByRentalId(UUID rentalId) {
@@ -124,21 +128,11 @@ public class EtatDesLieuxService {
         // un titre PdfService en plus (« État des lieux - entree ») faisait doublon.
         byte[] pdfBytes = pdfService.generatePdf(html, null);
 
-        String fileKey = storageService.uploadFile(pdfBytes,
+        Document doc = generatedDocumentService.storePdf(rental, currentUser, DocumentType.OTHER,
                 "edl/edl-" + typeLabel + "-" + rental.getId() + ".pdf",
-                "application/pdf");
-
-        Document doc = Document.builder()
-                .rental(rental)
-                .fileName("edl-" + typeLabel + "-" + rental.getProperty().getName() + ".pdf")
-                .filePath(fileKey)   // colonne NOT NULL héritée du schéma initial
-                .fileKey(fileKey)
-                .mimeType("application/pdf")
-                .fileSize((long) pdfBytes.length)
-                .documentType(DocumentType.OTHER)
-                .uploader(currentUser)
-                .build();
-        doc = documentRepository.save(doc);
+                "edl-" + typeLabel + "-" + rental.getProperty().getName() + ".pdf",
+                pdfBytes,
+                "État des lieux " + (request.type() == EtatDesLieuxType.ENTREE ? "d'entrée" : "de sortie"));
         edl.setDocument(doc);
 
         edl = edlRepository.save(edl);
@@ -213,16 +207,7 @@ public class EtatDesLieuxService {
     }
 
     private void checkRentalAccess(Rental rental) {
-        UUID currentUserId = AuthService.getCurrentUserId();
-        UUID ownerId = rental.getProperty().getOwner().getId();
-        UUID tenantId = rental.getTenant() != null ? rental.getTenant().getId() : null;
-
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (currentUser.getRole() != Role.ADMIN && !ownerId.equals(currentUserId) && !currentUserId.equals(tenantId)) {
-            throw new ForbiddenException("You are not authorized to access this état des lieux");
-        }
+        rentalAccessService.assertParticipant(rental, "You are not authorized to access this état des lieux");
     }
 
     private String buildEdlHtml(EtatDesLieux edl, Rental rental) {

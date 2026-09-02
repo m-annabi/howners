@@ -45,6 +45,9 @@ class ReferralRewardServiceTest {
     @BeforeEach
     void setup() {
         ReflectionTestUtils.setField(rewardService, "frontendUrl", "http://localhost:4200");
+        // Collaborateur factorisé, câblé sur les mêmes mocks pour conserver les vérifications existantes.
+        ReflectionTestUtils.setField(rewardService, "notificationDispatcher",
+                new com.howners.gestion.service.notification.NotificationDispatcher(notificationService, emailService));
         referrerId = UUID.randomUUID();
         refereeId = UUID.randomUUID();
         User referrer = User.builder().id(referrerId).email("parrain@test.fr").firstName("Pa").lastName("Rrain").build();

@@ -77,6 +77,11 @@ class ReceiptServiceTest {
         lenient().when(documentSequenceService.next(any(), anyString(), anyInt()))
                 .thenReturn(1L);
         ReflectionTestUtils.setField(receiptService, "frontendUrl", "http://localhost:4200");
+        // Collaborateurs factorisés, câblés sur les mêmes mocks pour conserver les vérifications existantes.
+        ReflectionTestUtils.setField(receiptService, "rentalAccessService",
+                new com.howners.gestion.service.rental.RentalAccessService(userRepository));
+        ReflectionTestUtils.setField(receiptService, "generatedDocumentService",
+                new com.howners.gestion.service.document.GeneratedDocumentService(storageService, documentRepository, pdfService));
 
         ownerId = UUID.randomUUID();
         tenantId = UUID.randomUUID();
@@ -341,7 +346,6 @@ class ReceiptServiceTest {
                 .build();
 
         when(receiptRepository.findById(receiptId)).thenReturn(Optional.of(receipt));
-        when(userRepository.findById(ownerId)).thenReturn(Optional.of(ownerUser));
         when(storageService.generatePresignedUrl("key1")).thenReturn("https://url");
 
         ReceiptResponse result = receiptService.findById(receiptId);
@@ -370,7 +374,6 @@ class ReceiptServiceTest {
                 .build();
 
         when(receiptRepository.findById(receiptId)).thenReturn(Optional.of(receipt));
-        when(userRepository.findById(tenantId)).thenReturn(Optional.of(tenantUser));
         when(storageService.generatePresignedUrl("key1")).thenReturn("https://url");
 
         ReceiptResponse result = receiptService.findById(receiptId);
