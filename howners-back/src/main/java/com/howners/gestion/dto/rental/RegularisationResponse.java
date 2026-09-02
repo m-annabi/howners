@@ -20,7 +20,11 @@ public record RegularisationResponse(
         Map<String, Object> detail,
         StatutRegularisation statut,
         UUID documentId,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        /** Charges réelles calculées automatiquement (null si jamais ajustées). */
+        BigDecimal chargesCalculees,
+        String ajustementMotif,
+        UUID justificatifDocumentId
 ) {
     public static RegularisationResponse from(ChargeRegularisation regul) {
         return new RegularisationResponse(
@@ -35,7 +39,10 @@ public record RegularisationResponse(
                 regul.getDetail(),
                 regul.getStatut(),
                 regul.getDocument() != null ? regul.getDocument().getId() : null,
-                regul.getCreatedAt()
+                regul.getCreatedAt(),
+                regul.getChargesCalculees(),
+                regul.getAjustementMotif(),
+                regul.getJustificatif() != null ? regul.getJustificatif().getId() : null
         );
     }
 }

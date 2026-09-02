@@ -172,6 +172,22 @@
 
             <div class="pf-panel__divider"></div>
 
+            <div class="pf-form__row">
+              <div class="pf-form__field">
+                <label for="receiptSendDay">Envoi des quittances</label>
+                <select id="receiptSendDay" formControlName="receiptSendDay" class="form-select">
+                  <option [ngValue]="null">Dès la confirmation du paiement (recommandé)</option>
+                  <option *ngFor="let d of receiptDays" [ngValue]="d">Le {{ d }} de chaque mois</option>
+                </select>
+                <div class="form-text">
+                  La quittance est générée à la confirmation du paiement ; elle est envoyée au locataire
+                  immédiatement, ou groupée au jour choisi.
+                </div>
+              </div>
+            </div>
+
+            <div class="pf-panel__divider"></div>
+
             <div class="pf-info-row">
               <span class="pf-info-row__label">Paiement carte en ligne</span>
               <span class="hw-badge" [ngClass]="connectBadgeClass">{{ connectStatusLabel }}</span>
@@ -188,6 +204,19 @@
                 <i class="bi bi-bank"></i>
                 {{ startingOnboarding ? 'Redirection…' : (connectStatus?.connected ? 'Poursuivre la connexion Stripe' : 'Connecter mon compte Stripe') }}
               </button>
+            </div>
+
+            <div *ngIf="feeExample" class="hw-alert hw-alert--info pf-fees" data-test="fees">
+              <i class="bi bi-percent"></i>
+              <div>
+                <div><strong>Frais du paiement par carte</strong> (à votre charge, déduits du versement — aucun frais pour le locataire)</div>
+                <div class="hw-text-sm mt-1">
+                  Commission Howners : <strong>{{ connectStatus?.platformFeePercent | number:'1.1-2' }} %</strong>
+                  · Frais Stripe indicatifs (cartes européennes) : <strong>{{ stripeFeePercent }} % + {{ stripeFeeFixed | number:'1.2-2' }} €</strong> par transaction.
+                  Exemple sur un loyer de 800 € : {{ feeExample.platform | number:'1.2-2' }} € + {{ feeExample.stripe | number:'1.2-2' }} €
+                  = <strong>{{ feeExample.total | number:'1.2-2' }} €</strong>, soit un versement net de {{ 800 - feeExample.total | number:'1.2-2' }} €.
+                </div>
+              </div>
             </div>
 
             <div class="pf-form__row" *ngIf="connectStatus?.status === 'COMPLETED'">

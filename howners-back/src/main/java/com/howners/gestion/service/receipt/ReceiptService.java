@@ -102,36 +102,20 @@ public class ReceiptService {
                 .currency(payment.getCurrency())
                 .document(document)
                 .build();
+        // Envoi au locataire : immédiat (tracé dès maintenant, l'e-mail est best-effort), ou différé
+        // au jour du mois choisi par le bailleur (receiptSendDay) — voir sendScheduledReceiptEmails().
+        Integer sendDay = rental.getProperty().getOwner().getReceiptSendDay();
+        if (sendDay == null) {
+            receipt.setEmailedAt(java.time.LocalDateTime.now());
+        }
         receipt = receiptRepository.save(receipt);
 
         log.info("Receipt {} generated for payment {}", receiptNumber, paymentId);
 
-        // Send email notification to tenant
-        try {
-            User tenant = rental.getTenant();
-            if (tenant != null && tenant.getEmail() != null) {
-                var property = rental.getProperty();
-                String address = String.format("%s, %s %s",
-                        property.getAddressLine1() != null ? property.getAddressLine1() : "",
-                        property.getPostalCode() != null ? property.getPostalCode() : "",
-                        property.getCity() != null ? property.getCity() : "");
-                String periodLabel = periodStart.format(FR_DATE) + " - " + periodEnd.format(FR_DATE);
-
-                emailService.sendReceiptEmail(ReceiptEmailData.builder()
-                        .recipientEmail(tenant.getEmail())
-                        .recipientName(tenant.getFullName())
-                        .ownerName(rental.getProperty().getOwner().getFullName())
-                        .propertyName(property.getName())
-                        .propertyAddress(address)
-                        .receiptNumber(receiptNumber)
-                        .periodLabel(periodLabel)
-                        .totalAmount(String.format("%.2f", payment.getAmount()))
-                        .currency(payment.getCurrency() != null ? payment.getCurrency() : "EUR")
-                        .receiptViewUrl(frontendUrl + "/receipts/" + receipt.getId())
-                        .build());
-            }
-        } catch (Exception e) {
-            log.error("Failed to send receipt email: {}", e.getMessage());
+        if (sendDay == null) {
+            sendReceiptEmail(receipt);
+        } else {
+            log.info("Receipt {} will be emailed on day {} of the month", receiptNumber, sendDay);
         }
 
         String documentUrl = storageService.generatePresignedUrl(document.getFileKey());
@@ -156,6 +140,59 @@ public class ReceiptService {
         Document document = generatedDocumentService.storePdf(rental, rental.getProperty().getOwner(),
                 DocumentType.RECEIPT, fileName, pdfBytes, "Quittance de loyer - " + receiptNumber);
         return new GeneratedPdf(document, pdfBytes);
+    }
+
+    /** Envoie la quittance par e-mail au locataire et trace l'envoi (best-effort). */
+    private void sendReceiptEmail(Receipt receipt) {
+        Rental rental = receipt.getRental();
+        Payment payment = receipt.getPayment();
+        try {
+            User tenant = rental.getTenant();
+            if (tenant != null && tenant.getEmail() != null) {
+                var property = rental.getProperty();
+                String address = String.format("%s, %s %s",
+                        property.getAddressLine1() != null ? property.getAddressLine1() : "",
+                        property.getPostalCode() != null ? property.getPostalCode() : "",
+                        property.getCity() != null ? property.getCity() : "");
+                String periodLabel = receipt.getPeriodStart().format(FR_DATE) + " - " + receipt.getPeriodEnd().format(FR_DATE);
+
+                emailService.sendReceiptEmail(ReceiptEmailData.builder()
+                        .recipientEmail(tenant.getEmail())
+                        .recipientName(tenant.getFullName())
+                        .ownerName(rental.getProperty().getOwner().getFullName())
+                        .propertyName(property.getName())
+                        .propertyAddress(address)
+                        .receiptNumber(receipt.getReceiptNumber())
+                        .periodLabel(periodLabel)
+                        .totalAmount(String.format("%.2f", receipt.getAmount()))
+                        .currency(receipt.getCurrency() != null ? receipt.getCurrency() : "EUR")
+                        .receiptViewUrl(frontendUrl + "/receipts/" + receipt.getId())
+                        .build());
+            }
+        } catch (Exception e) {
+            log.error("Failed to send receipt email: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Envoi différé : chaque matin, les quittances non encore envoyées dont le bailleur a choisi
+     * le jour d'envoi courant (ou un jour déjà passé ce mois-ci) partent au locataire.
+     */
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 30 8 * * ?")
+    @Transactional
+    public void sendScheduledReceiptEmails() {
+        LocalDate today = LocalDate.now();
+        int lastDay = today.lengthOfMonth();
+        for (Receipt receipt : receiptRepository.findByEmailedAtIsNull()) {
+            Integer sendDay = receipt.getRental().getProperty().getOwner().getReceiptSendDay();
+            int effectiveDay = sendDay == null ? 1 : Math.min(sendDay, lastDay);
+            // Quittance créée avant le jour d'envoi du mois courant → on envoie ; sinon on attend le mois prochain.
+            if (today.getDayOfMonth() >= effectiveDay && !receipt.getCreatedAt().toLocalDate().isAfter(today.withDayOfMonth(effectiveDay))) {
+                sendReceiptEmail(receipt);
+                receipt.setEmailedAt(java.time.LocalDateTime.now());
+                receiptRepository.save(receipt);
+            }
+        }
     }
 
     @Transactional(readOnly = true)

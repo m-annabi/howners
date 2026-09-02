@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,7 +27,8 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private expenseService: ExpenseService,
     private notificationService: NotificationService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -73,7 +75,7 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/expenses']);
+    this.nav.back(['/expenses']);
   }
 
   ngOnDestroy(): void {

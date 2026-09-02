@@ -40,6 +40,21 @@
     </div>
   </div>
 
+  <!-- Règlement déclaré par le locataire, en attente de confirmation -->
+  <div *ngIf="payment.declaredAt && payment.status !== PaymentStatus.PAID" class="hw-alert hw-alert--warning mb-4" data-test="declared">
+    <i class="bi bi-hourglass-split"></i>
+    <div>
+      <div *ngIf="isOwner">
+        <strong>{{ payment.payerName }} déclare avoir réglé ce paiement</strong> par {{ declaredMethodLabels[payment.declaredMethod || ''] || payment.declaredMethod }}
+        le {{ payment.declaredAt | date:'dd/MM/yyyy' }}. Vérifiez la réception, puis confirmez : la quittance sera générée automatiquement.
+      </div>
+      <div *ngIf="!isOwner">
+        <strong>Règlement déclaré</strong> le {{ payment.declaredAt | date:'dd/MM/yyyy' }} par {{ declaredMethodLabels[payment.declaredMethod || ''] || payment.declaredMethod }}.
+        Votre propriétaire doit confirmer la réception ; vous recevrez alors votre quittance.
+      </div>
+    </div>
+  </div>
+
   <div *ngIf="showPaymentInstructions" class="hw-alert hw-alert--info mb-4">
     <i class="bi bi-info-circle-fill"></i>
     <div>
@@ -81,7 +96,11 @@
     </button>
     <button *ngIf="canPay()" class="hw-btn hw-btn--primary" (click)="payNow()" [disabled]="paying">
       <i class="bi bi-credit-card"></i>
-      {{ paying ? 'Redirection…' : 'Payer le loyer' }}
+      {{ paying ? 'Redirection…' : 'Payer en ligne par carte' }}
+    </button>
+    <button *ngIf="canDeclare()" class="hw-btn hw-btn--outline" (click)="declare('BANK_TRANSFER')" [disabled]="declaring" data-test="declare">
+      <i class="bi bi-bank"></i>
+      {{ declaring ? 'Envoi…' : 'J\'ai effectué le virement' }}
     </button>
     <button *ngIf="canConfirm()" class="hw-btn hw-btn--primary" (click)="confirmPayment()" [disabled]="confirming">
       {{ confirming ? 'Confirmation…' : 'Confirmer le paiement' }}
@@ -90,4 +109,12 @@
       Voir le reçu Stripe
     </a>
   </div>
+
+  <!-- Frais du paiement carte, à la charge du bailleur (déduits du versement) -->
+  <p *ngIf="isOwner && payment.onlinePaymentAvailable && onlineFees && payment.status !== PaymentStatus.PAID" class="hw-text-sm hw-text-muted mt-3 mb-0" data-test="fees">
+    <i class="bi bi-percent"></i>
+    Si ce loyer est réglé par carte : commission Howners {{ payment.platformFeePercent | number:'1.1-2' }} % ({{ onlineFees.platform | number:'1.2-2' }} €)
+    + frais Stripe indicatifs {{ stripeFeePercent }} % + {{ stripeFeeFixed | number:'1.2-2' }} € ({{ onlineFees.stripe | number:'1.2-2' }} €)
+    = {{ onlineFees.total | number:'1.2-2' }} € à votre charge, versement net {{ onlineFees.net | number:'1.2-2' }} €.
+  </p>
 </div>

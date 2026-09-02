@@ -24,6 +24,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     boolean existsByListingIdAndApplicantIdAndStatusNot(UUID listingId, UUID applicantId, ApplicationStatus status);
 
+    List<Application> findByListingIdAndApplicantIdOrderByCreatedAtDesc(UUID listingId, UUID applicantId);
+
     long countByListingIdAndStatus(UUID listingId, ApplicationStatus status);
 
     /** Le bailleur a-t-il une candidature (non retirée) de ce candidat sur l'une de ses annonces ? */

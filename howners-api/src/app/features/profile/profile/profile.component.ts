@@ -61,7 +61,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     this.paymentSettingsForm = this.fb.group({
       paymentInstructions: ['', Validators.maxLength(2000)],
-      acceptOnlinePayments: [false]
+      acceptOnlinePayments: [false],
+      // null = quittance envoyée dès la confirmation du paiement ; sinon le jour du mois choisi
+      receiptSendDay: [null as number | null]
     });
   }
 
@@ -112,13 +114,31 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.connectStatus = status;
         this.paymentSettingsForm.patchValue({
           paymentInstructions: status.paymentInstructions || '',
-          acceptOnlinePayments: status.acceptOnlinePayments
+          acceptOnlinePayments: status.acceptOnlinePayments,
+          receiptSendDay: status.receiptSendDay ?? null
         });
       },
       error: () => {
         this.notificationService.error('Erreur lors du chargement du statut de paiement en ligne');
       }
     });
+  }
+
+  /** Jours du mois proposés pour l'envoi différé des quittances (1 à 28, valable tous les mois). */
+  readonly receiptDays = Array.from({ length: 28 }, (_, i) => i + 1);
+
+  /** Frais Stripe indicatifs (cartes européennes) : 1,5 % + 0,25 € par transaction, à la charge du bailleur. */
+  readonly stripeFeePercent = 1.5;
+  readonly stripeFeeFixed = 0.25;
+
+  /** Exemple chiffré des frais sur un loyer de 800 € (commission plateforme + frais Stripe). */
+  get feeExample(): { platform: number; stripe: number; total: number } | null {
+    const pct = this.connectStatus?.platformFeePercent;
+    if (pct == null) return null;
+    const rent = 800;
+    const platform = Math.round(rent * pct) / 100;
+    const stripe = Math.round((rent * this.stripeFeePercent / 100 + this.stripeFeeFixed) * 100) / 100;
+    return { platform, stripe, total: Math.round((platform + stripe) * 100) / 100 };
   }
 
   get connectBadgeClass(): string {
@@ -160,7 +180,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.paymentSettingsForm.invalid) return;
 
     this.savingPaymentSettings = true;
-    this.stripeConnectService.updatePaymentSettings(this.paymentSettingsForm.value).pipe(
+    const v = this.paymentSettingsForm.value;
+    const payload = { ...v, receiptSendDay: v.receiptSendDay ? Number(v.receiptSendDay) : null };
+    this.stripeConnectService.updatePaymentSettings(payload).pipe(
       takeUntil(this.destroy$),
       finalize(() => this.savingPaymentSettings = false)
     ).subscribe({

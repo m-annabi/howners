@@ -28,13 +28,19 @@ public record ApplicationResponse(
         String reviewedByName,
         LocalDateTime reviewedAt,
         LocalDateTime createdAt,
-        List<DocumentResponse> documents
+        List<DocumentResponse> documents,
+        /** Après un refus : le candidat peut-il candidater à nouveau (annonce publiée + dossier mis à jour) ? */
+        boolean canReapply
 ) {
     public static ApplicationResponse from(Application a) {
         return from(a, List.of());
     }
 
     public static ApplicationResponse from(Application a, List<DocumentResponse> documents) {
+        return from(a, documents, false);
+    }
+
+    public static ApplicationResponse from(Application a, List<DocumentResponse> documents, boolean canReapply) {
         return new ApplicationResponse(
                 a.getId(),
                 a.getListing().getId(),
@@ -53,7 +59,8 @@ public record ApplicationResponse(
                 a.getReviewedBy() != null ? a.getReviewedBy().getFullName() : null,
                 a.getReviewedAt(),
                 a.getCreatedAt(),
-                documents
+                documents,
+                canReapply
         );
     }
 }

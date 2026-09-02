@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { SeoService } from '../../core/services/seo.service';
 
@@ -10,8 +10,10 @@ import { SeoService } from '../../core/services/seo.service';
   styleUrls: ['./landing.component.scss']
 })
 export class LandingComponent implements OnInit {
+  isAuthenticated = false;
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private auth: AuthService,
     private seoService: SeoService,
     @Inject(DOCUMENT) private document: Document
@@ -20,7 +22,9 @@ export class LandingComponent implements OnInit {
   ngOnInit(): void {
     // Si déjà authentifié, rediriger vers l'accueil DU RÔLE : un locataire va dans
     // son espace, pas sur le tableau de bord propriétaire (gestion des biens).
-    if (this.auth.isAuthenticated()) {
+    // « Voir le site » depuis le menu (?site=1) : on affiche la page sans rediriger.
+    this.isAuthenticated = this.auth.isAuthenticated();
+    if (this.isAuthenticated && !this.route.snapshot.queryParamMap.has('site')) {
       this.auth.resolveHomePath().subscribe(path => this.router.navigate([path]));
       return;
     }
@@ -48,6 +52,11 @@ export class LandingComponent implements OnInit {
 
   browseListings(): void {
     this.router.navigate(['/listings']);
+  }
+
+  /** Utilisateur connecté : retour à son espace (tableau de bord ou espace locataire). */
+  goToSpace(): void {
+    this.auth.resolveHomePath().subscribe(path => this.router.navigate([path]));
   }
 
   private injectJsonLd(): void {

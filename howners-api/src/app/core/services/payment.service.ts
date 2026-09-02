@@ -50,6 +50,11 @@ export class PaymentService {
     );
   }
 
+  /** Le locataire déclare avoir réglé hors plateforme (virement, chèque, espèces). */
+  declare(paymentId: string, method: string): Observable<Payment> {
+    return this.http.post<Payment>(`${this.apiUrl}/${paymentId}/declare`, { method });
+  }
+
   relancer(paymentId: string): Observable<Payment> {
     return this.http.post<Payment>(`${this.apiUrl}/${paymentId}/relancer`, {});
   }

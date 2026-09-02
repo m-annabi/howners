@@ -101,6 +101,53 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public PaymentResponse findById(UUID paymentId) {
         Payment payment = findPaymentAndCheckAccess(paymentId);
+        BigDecimal feePercent = platformFeeService.getFeePercentPourProprietaire(
+                payment.getRental().getProperty().getOwner().getId());
+        return PaymentResponse.from(payment, feePercent);
+    }
+
+    /**
+     * Le locataire déclare avoir réglé hors plateforme (virement, chèque, espèces). Le paiement
+     * reste en attente jusqu'à la confirmation de réception par le bailleur, qui est prévenu.
+     */
+    @Transactional
+    public PaymentResponse declarePayment(UUID paymentId, String method) {
+        Payment payment = findPaymentAndCheckAccess(paymentId);
+        if (!payment.getPayer().getId().equals(AuthService.getCurrentUserId())) {
+            throw new ForbiddenException("Seul le locataire concerné peut déclarer ce règlement.");
+        }
+        if (payment.getStatus() != PaymentStatus.PENDING && payment.getStatus() != PaymentStatus.LATE) {
+            throw new BadRequestException("Ce paiement n'est pas en attente de règlement.");
+        }
+        String declaredMethod = method == null || method.isBlank() ? "BANK_TRANSFER" : method.trim().toUpperCase();
+        payment.setDeclaredAt(LocalDateTime.now());
+        payment.setDeclaredMethod(declaredMethod);
+        payment = paymentRepository.save(payment);
+        auditService.logAction(AuditAction.UPDATE, "Payment", payment.getId());
+
+        User owner = payment.getRental().getProperty().getOwner();
+        String label = switch (declaredMethod) {
+            case "CHECK" -> "par chèque";
+            case "CASH" -> "en espèces";
+            default -> "par virement";
+        };
+        String amountLabel = payment.getAmount() + " " + payment.getCurrency();
+        notificationDispatcher.notifyAndEmail(owner, NotificationType.PAYMENT_DUE,
+                "Règlement déclaré par votre locataire",
+                payment.getPayer().getFullName() + " déclare avoir réglé " + amountLabel + " " + label
+                        + " pour " + payment.getRental().getProperty().getName() + ". Confirmez la réception.",
+                "/payments/" + payment.getId(),
+                new NotificationDispatcher.Email(
+                        "Règlement déclaré — " + payment.getRental().getProperty().getName(),
+                        "Règlement déclaré par votre locataire",
+                        payment.getPayer().getFullName() + " indique avoir réglé <strong>" + amountLabel + "</strong> " + label
+                                + ". Vérifiez votre compte puis confirmez la réception : la quittance sera générée automatiquement.",
+                        "<strong>Bien :</strong> " + payment.getRental().getProperty().getName()
+                                + (payment.getDueDate() != null ? "<br><strong>Échéance :</strong> " + payment.getDueDate() : ""),
+                        "Confirmer la réception",
+                        frontendUrl + "/payments/" + payment.getId(),
+                        false));
+        log.info("Payment {} declared as paid ({}) by tenant {}", payment.getId(), declaredMethod, payment.getPayer().getId());
         return PaymentResponse.from(payment);
     }
 

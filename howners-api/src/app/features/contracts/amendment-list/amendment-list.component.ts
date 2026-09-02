@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
@@ -24,7 +25,8 @@ export class AmendmentListComponent implements OnInit {
     private amendmentService: ContractAmendmentService,
     private route: ActivatedRoute,
     private router: Router,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -65,6 +67,6 @@ export class AmendmentListComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/contracts', this.contractId]);
+    this.nav.back(['/contracts', this.contractId]);
   }
 }

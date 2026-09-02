@@ -29,9 +29,18 @@ public record PaymentResponse(
         String miseEnDemeureNumero,
         LocalDateTime createdAt,
         String paymentInstructions,
-        boolean onlinePaymentAvailable
+        boolean onlinePaymentAvailable,
+        /** Règlement hors plateforme déclaré par le locataire, en attente de confirmation. */
+        LocalDateTime declaredAt,
+        String declaredMethod,
+        /** Commission plateforme (%) prélevée sur un paiement carte — renseignée sur le détail seulement. */
+        BigDecimal platformFeePercent
 ) {
     public static PaymentResponse from(Payment p) {
+        return from(p, null);
+    }
+
+    public static PaymentResponse from(Payment p, BigDecimal platformFeePercent) {
         var owner = p.getRental().getProperty().getOwner();
         boolean onlinePaymentAvailable = Boolean.TRUE.equals(owner.getAcceptOnlinePayments())
                 && "COMPLETED".equals(owner.getStripeConnectStatus());
@@ -55,7 +64,10 @@ public record PaymentResponse(
                 p.getMiseEnDemeureNumero(),
                 p.getCreatedAt(),
                 owner.getPaymentInstructions(),
-                onlinePaymentAvailable
+                onlinePaymentAvailable,
+                p.getDeclaredAt(),
+                p.getDeclaredMethod(),
+                platformFeePercent
         );
     }
 }

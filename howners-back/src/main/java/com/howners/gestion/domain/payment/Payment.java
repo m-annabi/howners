@@ -78,6 +78,13 @@ public class Payment {
     @Column(name = "mise_en_demeure_numero", length = 30)
     private String miseEnDemeureNumero;
 
+    /** Règlement hors plateforme déclaré par le locataire (en attente de confirmation du bailleur). */
+    @Column(name = "declared_at")
+    private LocalDateTime declaredAt;
+
+    @Column(name = "declared_method", length = 30)
+    private String declaredMethod;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

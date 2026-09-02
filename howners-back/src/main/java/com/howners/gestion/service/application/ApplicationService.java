@@ -85,9 +85,21 @@ public class ApplicationService {
             throw new BadRequestException("Listing is not published");
         }
 
-        if (applicationRepository.existsByListingIdAndApplicantIdAndStatusNot(
-                request.listingId(), currentUserId, ApplicationStatus.WITHDRAWN)) {
+        // Une candidature en cours ou acceptée bloque ; une candidature retirée libère l'annonce ;
+        // après un refus, on ne peut recandidater que si le dossier a été mis à jour depuis.
+        Application latest = applicationRepository
+                .findByListingIdAndApplicantIdOrderByCreatedAtDesc(request.listingId(), currentUserId)
+                .stream().findFirst().orElse(null);
+        if (latest != null && latest.getStatus() != ApplicationStatus.WITHDRAWN
+                && latest.getStatus() != ApplicationStatus.REJECTED) {
             throw new BadRequestException("You have already applied to this listing");
+        }
+        if (latest != null && latest.getStatus() == ApplicationStatus.REJECTED
+                && !dossierUpdatedSince(currentUserId, latest.getReviewedAt())) {
+            String motif = latest.getNotes() != null && !latest.getNotes().isBlank()
+                    ? " (motif : " + latest.getNotes() + ")" : "";
+            throw new BadRequestException("Votre candidature a été refusée" + motif
+                    + ". Mettez à jour votre dossier avant de candidater à nouveau.");
         }
 
         // Vérifie que le dossier du locataire est complet avant de soumettre
@@ -357,6 +369,20 @@ public class ApplicationService {
         }
     }
 
+    /** Le candidat a-t-il déposé ou remplacé une pièce de dossier depuis `since` ? */
+    private boolean dossierUpdatedSince(UUID applicantId, LocalDateTime since) {
+        if (since == null) return true;
+        return documentRepository.findByUploaderIdAndDocumentTypeIn(applicantId, DOSSIER_REQUIRED_TYPES)
+                .stream().anyMatch(d -> d.getUploadedAt() != null && d.getUploadedAt().isAfter(since));
+    }
+
+    /** Après un refus : nouvelle candidature possible si l'annonce est toujours publiée et le dossier mis à jour. */
+    private boolean canReapply(Application application) {
+        return application.getStatus() == ApplicationStatus.REJECTED
+                && application.getListing().getStatus() == ListingStatus.PUBLISHED
+                && dossierUpdatedSince(application.getApplicant().getId(), application.getReviewedAt());
+    }
+
     private ApplicationResponse toResponseWithDocuments(Application application) {
         // Documents explicitement liés à cette candidature
         Map<UUID, Document> merged = new LinkedHashMap<>();
@@ -370,6 +396,6 @@ public class ApplicationService {
 
         List<DocumentResponse> documents = new ArrayList<>(merged.values())
                 .stream().map(documentService::toResponse).toList();
-        return ApplicationResponse.from(application, documents);
+        return ApplicationResponse.from(application, documents, canReapply(application));
     }
 }

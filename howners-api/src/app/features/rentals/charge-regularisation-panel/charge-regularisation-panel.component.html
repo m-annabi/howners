@@ -44,6 +44,9 @@
           </strong>
           <small *ngIf="r.solde > 0"> (dû par le locataire)</small>
           <small *ngIf="r.solde < 0"> (à restituer)</small>
+          <div *ngIf="r.ajustementMotif" class="hw-text-sm hw-text-muted" data-test="adjusted">
+            <i class="bi bi-pencil-square"></i> Ajusté (calculé : {{ r.chargesCalculees | number:'1.2-2' }} €) — {{ r.ajustementMotif }}
+          </div>
         </td>
         <td>
           <span class="hw-badge"
@@ -54,6 +57,8 @@
           </span>
         </td>
         <td class="regul-table__actions">
+          <button *ngIf="isOwner && r.statut === 'BROUILLON'" class="hw-btn hw-btn--outline hw-btn--sm"
+                  (click)="startAdjust(r)" [disabled]="working" data-test="adjust">Ajuster</button>
           <button *ngIf="isOwner && r.statut === 'BROUILLON'" class="hw-btn hw-btn--primary hw-btn--sm"
                   (click)="envoyer(r)" [disabled]="working">Envoyer le décompte</button>
           <button *ngIf="isOwner && r.statut === 'ENVOYEE' && r.solde > 0" class="hw-btn hw-btn--primary hw-btn--sm"
@@ -66,4 +71,28 @@
       </tr>
     </tbody>
   </table>
+
+  <!-- Correction manuelle avant envoi : montant, motif et justificatif obligatoires -->
+  <form *ngIf="adjusting" class="regul-adjust hw-card mt-3" (ngSubmit)="submitAdjust()" data-test="adjust-form">
+    <h3 class="hw-section-title">Ajuster les charges réelles {{ adjusting.annee }}</h3>
+    <p class="hw-text-sm hw-text-muted">
+      Montant calculé automatiquement : <strong>{{ (adjusting.chargesCalculees ?? adjusting.chargesReelles) | number:'1.2-2' }} €</strong>
+      (dépenses récupérables saisies sur le bien). Corrigez-le si une charge n'a pas été saisie ou si la clé de
+      répartition de copropriété s'applique ; le motif et le justificatif figureront au dossier.
+    </p>
+    <div class="regul-adjust__grid">
+      <label class="form-label" for="adjustAmount">Charges réelles retenues (€)</label>
+      <input id="adjustAmount" type="number" step="0.01" min="0" class="form-control" [(ngModel)]="adjustAmount" name="adjustAmount" required>
+      <label class="form-label" for="adjustMotif">Motif (10 caractères minimum)</label>
+      <textarea id="adjustMotif" class="form-control" rows="2" [(ngModel)]="adjustMotif" name="adjustMotif" required
+                placeholder="Ex. : relevé de charges du syndic 2025, quote-part récupérable 1 240,50 €"></textarea>
+      <label class="form-label" for="adjustFile">Justificatif (PDF, image…)</label>
+      <input id="adjustFile" type="file" class="form-control" (change)="onAdjustFile($event)" accept=".pdf,image/*">
+      <div *ngIf="adjusting.justificatifDocumentId && !adjustFile" class="form-text">Un justificatif est déjà enregistré ; déposez-en un nouveau pour le remplacer.</div>
+    </div>
+    <div class="d-flex gap-2 mt-3">
+      <button type="submit" class="hw-btn hw-btn--primary hw-btn--sm" [disabled]="!canSubmitAdjust || working">Enregistrer l'ajustement</button>
+      <button type="button" class="hw-btn hw-btn--ghost hw-btn--sm" (click)="cancelAdjust()">Annuler</button>
+    </div>
+  </form>
 </div>

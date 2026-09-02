@@ -1,3 +1,4 @@
+import { NavigationService } from '../../../core/services/navigation.service';
 import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,7 +22,8 @@ export class ReceiptDetailComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private receiptService: ReceiptService
+    private receiptService: ReceiptService,
+    private nav: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -61,7 +63,7 @@ export class ReceiptDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/receipts']);
+    this.nav.back(['/receipts']);
   }
 
   ngOnDestroy(): void {

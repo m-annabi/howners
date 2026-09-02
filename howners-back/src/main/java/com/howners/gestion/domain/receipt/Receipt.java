@@ -54,6 +54,10 @@ public class Receipt {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /** Date d'envoi de la quittance au locataire ; null = envoi différé en attente. */
+    @Column(name = "emailed_at")
+    private LocalDateTime emailedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

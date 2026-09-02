@@ -20,6 +20,8 @@ export interface Application {
   createdAt: string;
   updatedAt: string | null;
   documents: Document[];
+  /** Après un refus : nouvelle candidature possible (annonce publiée + dossier mis à jour). */
+  canReapply: boolean;
 }
 
 export enum ApplicationStatus {

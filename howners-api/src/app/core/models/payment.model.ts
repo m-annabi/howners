@@ -35,7 +35,18 @@ export interface Payment {
   createdAt: string;
   paymentInstructions?: string;
   onlinePaymentAvailable: boolean;
+  /** Règlement hors plateforme déclaré par le locataire, en attente de confirmation du bailleur. */
+  declaredAt?: string | null;
+  declaredMethod?: string | null;
+  /** Commission plateforme (%) sur un paiement carte — renseignée sur le détail. */
+  platformFeePercent?: number | null;
 }
+
+export const DECLARED_METHOD_LABELS: { [key: string]: string } = {
+  BANK_TRANSFER: 'virement',
+  CHECK: 'chèque',
+  CASH: 'espèces'
+};
 
 export interface CreatePaymentRequest {
   rentalId: string;

@@ -48,6 +48,14 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.createStripePaymentIntent(id));
     }
 
+    /** Le locataire déclare un règlement hors plateforme (virement, chèque, espèces). */
+    @PostMapping("/{id}/declare")
+    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
+    public ResponseEntity<PaymentResponse> declarePayment(@PathVariable UUID id,
+                                                          @RequestBody(required = false) java.util.Map<String, String> body) {
+        return ResponseEntity.ok(paymentService.declarePayment(id, body != null ? body.get("method") : null));
+    }
+
     @PostMapping("/{id}/confirm")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public ResponseEntity<PaymentResponse> confirmPayment(@PathVariable UUID id) {

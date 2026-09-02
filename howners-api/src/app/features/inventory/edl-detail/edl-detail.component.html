@@ -40,7 +40,8 @@
         <div>
           <strong>Bailleur</strong>
           <div class="hw-text-sm hw-text-muted" *ngIf="edl.ownerSigned">Signé le {{ edl.ownerSignedAt | date:'dd/MM/yyyy à HH:mm' }}</div>
-          <button *ngIf="!edl.ownerSigned" class="hw-btn hw-btn--sm hw-btn--outline mt-1" (click)="signAs('OWNER')">
+          <div class="hw-text-sm hw-text-muted" *ngIf="!edl.ownerSigned && !canSign('OWNER')">En attente de la signature du bailleur</div>
+          <button *ngIf="!edl.ownerSigned && canSign('OWNER')" class="hw-btn hw-btn--sm hw-btn--outline mt-1" (click)="signAs('OWNER')">
             <i class="bi bi-pen"></i> Signer
           </button>
         </div>
@@ -50,7 +51,8 @@
         <div>
           <strong>Locataire</strong>
           <div class="hw-text-sm hw-text-muted" *ngIf="edl.tenantSigned">Signé le {{ edl.tenantSignedAt | date:'dd/MM/yyyy à HH:mm' }}</div>
-          <button *ngIf="!edl.tenantSigned" class="hw-btn hw-btn--sm hw-btn--outline mt-1" (click)="signAs('TENANT')">
+          <div class="hw-text-sm hw-text-muted" *ngIf="!edl.tenantSigned && !canSign('TENANT')">En attente de la signature du locataire</div>
+          <button *ngIf="!edl.tenantSigned && canSign('TENANT')" class="hw-btn hw-btn--sm hw-btn--outline mt-1" (click)="signAs('TENANT')">
             <i class="bi bi-pen"></i> Signer
           </button>
         </div>

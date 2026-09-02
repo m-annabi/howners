@@ -30,7 +30,7 @@ public interface ContractTemplateRepository extends JpaRepository<ContractTempla
      */
     @Query("SELECT DISTINCT t FROM ContractTemplate t " +
            "LEFT JOIN FETCH t.createdBy " +
-           "WHERE (t.createdBy.id = :userId OR t.isDefault = true) " +
+           "WHERE (t.createdBy.id = :userId OR t.isDefault = true OR t.createdBy IS NULL) " +
            "AND t.isActive = true " +
            "AND (:rentalType IS NULL OR t.rentalType = :rentalType) " +
            "ORDER BY t.isDefault DESC, t.createdAt DESC")

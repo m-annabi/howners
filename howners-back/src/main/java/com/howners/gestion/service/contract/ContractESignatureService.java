@@ -66,6 +66,7 @@ public class ContractESignatureService {
     private final PdfService pdfService;
     private final NotificationService notificationService;
     private final com.howners.gestion.service.subscription.FeatureGateService featureGateService;
+    private final ContractActivationService contractActivationService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -408,6 +409,7 @@ public class ContractESignatureService {
         contract.setStatus(ContractStatus.SIGNED);
         contract.setSignedAt(now);
         contractRepository.save(contract);
+        contractActivationService.activateIfDue(contract);
 
         // Générer et stocker la version signée du PDF (versioning + hash SHA-256,
         // mêmes invariants que le flux webhook). Non bloquant : la signature reste
@@ -922,6 +924,7 @@ public class ContractESignatureService {
         contract.setStatus(ContractStatus.SIGNED);
         contract.setSignedAt(LocalDateTime.now());
         contractRepository.save(contract);
+        contractActivationService.activateIfDue(contract);
 
         // Télécharger le document signé et le stocker
         try {

@@ -85,8 +85,27 @@
         </div>
       </div>
 
-      <div *ngIf="app.notes" class="mt-2">
+      <div *ngIf="app.notes && app.status !== 'REJECTED'" class="mt-2">
         <small class="hw-text-muted">Notes : {{ app.notes }}</small>
+      </div>
+
+      <!-- Refus : motif + possibilité de recandidater une fois le dossier mis à jour -->
+      <div *ngIf="app.status === 'REJECTED'" class="hw-alert hw-alert--warning mt-3">
+        <i class="bi bi-info-circle-fill"></i>
+        <div>
+          <div><strong>Candidature refusée</strong><span *ngIf="app.notes"> — motif : {{ app.notes }}</span></div>
+          <div class="hw-text-sm mt-1" *ngIf="app.canReapply">
+            Votre dossier a été mis à jour depuis : vous pouvez candidater à nouveau.
+          </div>
+          <div class="hw-text-sm mt-1" *ngIf="!app.canReapply">
+            Pour candidater à nouveau, complétez ou mettez à jour votre
+            <a routerLink="/tenant/dossier">dossier locataire</a>.
+          </div>
+          <a *ngIf="app.canReapply" class="hw-btn hw-btn--sm hw-btn--primary mt-2"
+             [routerLink]="['/applications/new']" [queryParams]="{ listingId: app.listingId }">
+            <i class="bi bi-send"></i> Candidater à nouveau
+          </a>
+        </div>
       </div>
 
       <!-- Examen -->
@@ -165,7 +184,20 @@
               <i class="bi bi-folder"></i> {{ getDocumentCount(app) }}/{{ REQUIRED_DOCUMENT_TYPES.length }}
             </span>
           </td>
-          <td data-label="Statut"><app-status-badge [status]="app.status" type="application"></app-status-badge></td>
+          <td data-label="Statut">
+            <app-status-badge [status]="app.status" type="application"></app-status-badge>
+            <!-- Refus : motif + re-candidature possible une fois le dossier mis à jour -->
+            <div *ngIf="app.status === 'REJECTED'" class="hw-text-sm mt-1">
+              <div *ngIf="app.notes" class="hw-text-muted">motif : {{ app.notes }}</div>
+              <div *ngIf="!app.canReapply" class="hw-text-muted">
+                Pour candidater à nouveau, complétez ou mettez à jour votre <a routerLink="/tenant/dossier">dossier locataire</a>.
+              </div>
+              <a *ngIf="app.canReapply" class="hw-btn hw-btn--sm hw-btn--primary mt-1"
+                 [routerLink]="['/applications/new']" [queryParams]="{ listingId: app.listingId }">
+                <i class="bi bi-send"></i> Candidater à nouveau
+              </a>
+            </div>
+          </td>
           <td data-label="Actions" class="apps-table__col-actions">
             <div class="apps-table__actions">
               <button *ngIf="canWithdraw(app)" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="withdraw(app.id)" title="Retirer">

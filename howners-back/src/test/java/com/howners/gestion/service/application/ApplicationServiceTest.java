@@ -141,8 +141,8 @@ class ApplicationServiceTest {
 
         when(userRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
-        when(applicationRepository.existsByListingIdAndApplicantIdAndStatusNot(
-                listing.getId(), tenantId, ApplicationStatus.WITHDRAWN)).thenReturn(false);
+        when(applicationRepository.findByListingIdAndApplicantIdOrderByCreatedAtDesc(listing.getId(), tenantId))
+                .thenReturn(List.of());
         when(documentRepository.findByUploaderIdAndDocumentTypeIn(eq(tenantId), anyList()))
                 .thenReturn(completeDossierDocs());
         when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
@@ -168,12 +168,62 @@ class ApplicationServiceTest {
 
         when(userRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
         when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
-        when(applicationRepository.existsByListingIdAndApplicantIdAndStatusNot(
-                listing.getId(), tenantId, ApplicationStatus.WITHDRAWN)).thenReturn(true);
+        Application pending = Application.builder().id(UUID.randomUUID()).listing(listing).applicant(tenant)
+                .status(ApplicationStatus.SUBMITTED).build();
+        when(applicationRepository.findByListingIdAndApplicantIdOrderByCreatedAtDesc(listing.getId(), tenantId))
+                .thenReturn(List.of(pending));
 
         assertThatThrownBy(() -> applicationService.submit(request))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("already applied");
+    }
+
+    @Test
+    void submit_afterRejection_withoutDossierUpdate_shouldThrowWithReason() {
+        CreateApplicationRequest request = new CreateApplicationRequest(listing.getId(), "Retente", null);
+        LocalDateTime reviewedAt = LocalDateTime.now().minusDays(2);
+        Application rejected = Application.builder().id(UUID.randomUUID()).listing(listing).applicant(tenant)
+                .status(ApplicationStatus.REJECTED).reviewedAt(reviewedAt).notes("Dossier incomplet").build();
+        List<Document> oldDocs = completeDossierDocs();
+        oldDocs.forEach(d -> d.setUploadedAt(reviewedAt.minusDays(10)));
+
+        when(userRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
+        when(applicationRepository.findByListingIdAndApplicantIdOrderByCreatedAtDesc(listing.getId(), tenantId))
+                .thenReturn(List.of(rejected));
+        when(documentRepository.findByUploaderIdAndDocumentTypeIn(eq(tenantId), anyList())).thenReturn(oldDocs);
+
+        assertThatThrownBy(() -> applicationService.submit(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("refusée")
+                .hasMessageContaining("Dossier incomplet");
+    }
+
+    @Test
+    void submit_afterRejection_withUpdatedDossier_shouldCreateApplication() {
+        CreateApplicationRequest request = new CreateApplicationRequest(listing.getId(), "Retente", null);
+        LocalDateTime reviewedAt = LocalDateTime.now().minusDays(2);
+        Application rejected = Application.builder().id(UUID.randomUUID()).listing(listing).applicant(tenant)
+                .status(ApplicationStatus.REJECTED).reviewedAt(reviewedAt).build();
+        List<Document> docs = completeDossierDocs();
+        docs.forEach(d -> d.setUploadedAt(reviewedAt.minusDays(10)));
+        docs.get(0).setUploadedAt(LocalDateTime.now()); // une pièce remplacée après le refus
+
+        when(userRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
+        when(listingRepository.findById(listing.getId())).thenReturn(Optional.of(listing));
+        when(applicationRepository.findByListingIdAndApplicantIdOrderByCreatedAtDesc(listing.getId(), tenantId))
+                .thenReturn(List.of(rejected));
+        when(documentRepository.findByUploaderIdAndDocumentTypeIn(eq(tenantId), anyList())).thenReturn(docs);
+        when(applicationRepository.save(any(Application.class))).thenAnswer(inv -> {
+            Application app = inv.getArgument(0);
+            app.setId(UUID.randomUUID());
+            app.setCreatedAt(LocalDateTime.now());
+            return app;
+        });
+
+        ApplicationResponse response = applicationService.submit(request);
+
+        assertThat(response.status()).isEqualTo(ApplicationStatus.SUBMITTED);
     }
 
     @Test

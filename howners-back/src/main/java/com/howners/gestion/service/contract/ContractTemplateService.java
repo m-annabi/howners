@@ -117,6 +117,11 @@ public class ContractTemplateService {
                 ? "le " + formatDate(rental.getEndDate())
                 : "à l'échéance convenue, par renouvellement tacite annuel");
         variables.put("rental.monthlyRent", formatAmount(rental.getMonthlyRent()));
+        variables.put("rental.charges", rental.getCharges() != null ? formatAmount(rental.getCharges()) : "0,00 €");
+        variables.put("rental.totalMonthly", formatAmount(rental.getMonthlyRent() != null
+                ? rental.getMonthlyRent().add(rental.getCharges() != null ? rental.getCharges() : java.math.BigDecimal.ZERO)
+                : java.math.BigDecimal.ZERO));
+        variables.put("rental.paymentDay", rental.getPaymentDay() != null ? String.valueOf(rental.getPaymentDay()) : "1");
         variables.put("rental.depositAmount", rental.getDepositAmount() != null ? formatAmount(rental.getDepositAmount()) : "0");
         variables.put("rental.type", rental.getRentalType() != null ? rental.getRentalType().name() : "");
         variables.put("rental.status", rental.getStatus().name());
@@ -273,6 +278,9 @@ public class ContractTemplateService {
         variables.add(new TemplateVariablesResponse.VariableInfo("rental.startDate", "Date de début", "rental", "01/01/2025"));
         variables.add(new TemplateVariablesResponse.VariableInfo("rental.endDate", "Date de fin", "rental", "31/12/2025"));
         variables.add(new TemplateVariablesResponse.VariableInfo("rental.monthlyRent", "Loyer mensuel", "rental", "850.00 €"));
+        variables.add(new TemplateVariablesResponse.VariableInfo("rental.charges", "Provisions sur charges mensuelles", "rental", "80,00 €"));
+        variables.add(new TemplateVariablesResponse.VariableInfo("rental.totalMonthly", "Loyer charges comprises", "rental", "880,00 €"));
+        variables.add(new TemplateVariablesResponse.VariableInfo("rental.paymentDay", "Jour de paiement du loyer", "rental", "5"));
         variables.add(new TemplateVariablesResponse.VariableInfo("rental.depositAmount", "Montant du dépôt de garantie", "rental", "1700.00 €"));
         variables.add(new TemplateVariablesResponse.VariableInfo("rental.type", "Type de location", "rental", "LONG_TERM"));
         variables.add(new TemplateVariablesResponse.VariableInfo("rental.status", "Statut de la location", "rental", "ACTIVE"));
@@ -371,8 +379,10 @@ public class ContractTemplateService {
         }
 
         // Vérifier ownership
-        if (!template.getCreatedBy().getId().equals(currentUser.getId()) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to update this template");
+        // Les modèles fournis par la plateforme (sans auteur) ne sont modifiables que par un admin : à dupliquer.
+        boolean owns = template.getCreatedBy() != null && template.getCreatedBy().getId().equals(currentUser.getId());
+        if (!owns && currentUser.getRole() != Role.ADMIN) {
+            throw new ForbiddenException("Ce modèle est fourni par Howners : dupliquez-le pour l'adapter.");
         }
 
         log.info("Updating template: {} by user: {}", templateId, currentUser.getId());
@@ -411,8 +421,9 @@ public class ContractTemplateService {
         }
 
         // Vérifier ownership
-        if (!template.getCreatedBy().getId().equals(currentUser.getId()) && currentUser.getRole() != Role.ADMIN) {
-            throw new ForbiddenException("You are not authorized to delete this template");
+        boolean owns = template.getCreatedBy() != null && template.getCreatedBy().getId().equals(currentUser.getId());
+        if (!owns && currentUser.getRole() != Role.ADMIN) {
+            throw new ForbiddenException("Ce modèle est fourni par Howners et ne peut pas être supprimé.");
         }
 
         log.info("Deleting template: {} by user: {}", templateId, currentUser.getId());

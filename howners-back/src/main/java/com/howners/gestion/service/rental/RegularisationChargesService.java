@@ -16,6 +16,7 @@ import com.howners.gestion.domain.rental.StatutRegularisation;
 import com.howners.gestion.domain.user.Role;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.dto.email.GenericNotificationEmailData;
+import com.howners.gestion.dto.rental.AjusterRegularisationRequest;
 import com.howners.gestion.dto.rental.RegularisationResponse;
 import com.howners.gestion.exception.BadRequestException;
 import com.howners.gestion.exception.BusinessException;
@@ -165,6 +166,45 @@ public class RegularisationChargesService {
         regul = regularisationRepository.save(regul);
         log.info("Régularisation {} calculée pour la location {} : provisions={}, réelles={}, solde={}",
                 annee, rentalId, provisions, chargesReelles, solde);
+        return RegularisationResponse.from(regul);
+    }
+
+    /**
+     * Correction manuelle du montant des charges réelles avant envoi (dépense non saisie, clé de
+     * répartition en copropriété…) : motif et justificatif obligatoires, montant calculé conservé.
+     */
+    @Transactional
+    public RegularisationResponse ajuster(UUID regularisationId, AjusterRegularisationRequest request) {
+        ChargeRegularisation regul = getRegulAndCheckOwnerAccess(regularisationId);
+        if (regul.getStatut() != StatutRegularisation.BROUILLON) {
+            throw new BadRequestException("Le décompte a déjà été envoyé : il ne peut plus être ajusté.");
+        }
+        Document justificatif = documentRepository.findById(request.justificatifDocumentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Document", "id", request.justificatifDocumentId().toString()));
+        UUID ownerId = regul.getRental().getProperty().getOwner().getId();
+        if (justificatif.getUploader() == null || !ownerId.equals(justificatif.getUploader().getId())) {
+            throw new ForbiddenException("Le justificatif doit être un document que vous avez déposé.");
+        }
+
+        if (regul.getChargesCalculees() == null) {
+            regul.setChargesCalculees(regul.getChargesReelles());
+        }
+        BigDecimal ajustees = request.chargesReelles().setScale(2, RoundingMode.HALF_UP);
+        BigDecimal delta = ajustees.subtract(regul.getChargesCalculees());
+
+        Map<String, Object> detail = regul.getDetail() != null ? new LinkedHashMap<>(regul.getDetail()) : new LinkedHashMap<>();
+        detail.remove("AJUSTEMENT");
+        if (delta.compareTo(BigDecimal.ZERO) != 0) {
+            detail.put("AJUSTEMENT", delta);
+        }
+        regul.setDetail(detail);
+        regul.setChargesReelles(ajustees);
+        regul.setSolde(ajustees.subtract(regul.getProvisionsEncaissees()).setScale(2, RoundingMode.HALF_UP));
+        regul.setAjustementMotif(request.motif().trim());
+        regul.setJustificatif(justificatif);
+        regul = regularisationRepository.save(regul);
+        log.info("Régularisation {} ajustée : calculé={}, retenu={} ({})", regularisationId,
+                regul.getChargesCalculees(), ajustees, request.motif());
         return RegularisationResponse.from(regul);
     }
 
@@ -353,6 +393,12 @@ public class RegularisationChargesService {
                     "<tr><td style=\"padding: 6px;\">%s</td><td style=\"padding: 6px; text-align: right;\">%s</td></tr>",
                     libelleCategorie(cat), com.howners.gestion.util.PdfFormat.montant(new java.math.BigDecimal(String.valueOf(montant))))));
         }
+        if (regul.getAjustementMotif() != null && !regul.getAjustementMotif().isBlank()) {
+            lignes.append(String.format(
+                    "<tr><td colspan=\"2\" style=\"padding: 6px; font-size: 9pt; color: #555;\">Motif de l'ajustement : %s (montant calculé avant ajustement : %s)</td></tr>",
+                    regul.getAjustementMotif().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"),
+                    com.howners.gestion.util.PdfFormat.montant(regul.getChargesCalculees() != null ? regul.getChargesCalculees() : regul.getChargesReelles())));
+        }
 
         boolean complementDu = regul.getSolde().compareTo(BigDecimal.ZERO) >= 0;
 
@@ -409,6 +455,7 @@ public class RegularisationChargesService {
 
     private String libelleCategorie(String categorie) {
         return switch (categorie) {
+            case "AJUSTEMENT" -> "Ajustement manuel du bailleur";
             case "UTILITIES" -> "Eau, énergie, services";
             case "CONDO_FEES" -> "Charges de copropriété";
             case "CLEANING" -> "Entretien et nettoyage";
