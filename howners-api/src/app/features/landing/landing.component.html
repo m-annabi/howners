@@ -64,6 +64,31 @@
     </div>
   </section>
 
+  <!-- Deux entrées : propriétaire ou locataire -->
+  <section class="audience" aria-label="Choisissez votre profil">
+    <div class="audience__inner">
+      <article class="audience__card audience__card--owner">
+        <i class="bi bi-building audience__icon"></i>
+        <h2>Je suis propriétaire</h2>
+        <p>Biens, baux conformes, signature électronique, loyers, quittances et relances, comptabilité LMNP : tout au même endroit.</p>
+        <button class="btn btn-primary" (click)="signup()" data-test="owner-cta">
+          <i class="bi bi-rocket-takeoff"></i> Créer mon espace bailleur
+        </button>
+      </article>
+      <article class="audience__card audience__card--tenant">
+        <i class="bi bi-search-heart audience__icon"></i>
+        <h2>Je cherche un logement</h2>
+        <p>Parcourez les annonces, constituez votre dossier locataire une seule fois, candidatez et signez votre bail en ligne.</p>
+        <div class="audience__actions">
+          <button class="btn btn-accent" (click)="browseListings()" data-test="tenant-cta">
+            <i class="bi bi-search"></i> Voir les annonces
+          </button>
+          <button class="btn btn-link" (click)="signup()">Créer mon dossier locataire</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
   <!-- Value props -->
   <section id="features" class="features">
     <h2>Tout ce qu'il faut, rien de plus.</h2>
