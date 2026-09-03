@@ -227,6 +227,12 @@
                     <span class="action-item__label">candidature{{ actionItems!.pendingApplications > 1 ? 's' : '' }} à examiner</span>
                     <i class="bi bi-chevron-right action-item__chev"></i>
                   </button>
+                  <button *ngIf="actionItems!.missingEntryEdls > 0" type="button"
+                          class="action-item action-item--warning" (click)="goToMissingEdls()">
+                    <span class="action-item__count">{{ actionItems!.missingEntryEdls }}</span>
+                    <span class="action-item__label">état{{ actionItems!.missingEntryEdls > 1 ? 's' : '' }} des lieux d'entrée à réaliser</span>
+                    <i class="bi bi-chevron-right action-item__chev"></i>
+                  </button>
                 </div>
                 <ng-template #noActions>
                   <div class="widget-empty">

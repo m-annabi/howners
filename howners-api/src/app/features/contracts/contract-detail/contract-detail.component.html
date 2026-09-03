@@ -97,11 +97,6 @@
       </div>
     </div>
 
-    <div *ngIf="hasUserSigned()" class="hw-alert hw-alert--info">
-      <i class="bi bi-info-circle-fill"></i>
-      <span>Vous avez déjà signé ce contrat.</span>
-    </div>
-
     <!-- Suivi de la demande de signature électronique (vue propriétaire) -->
     <ng-container *ngIf="isOwner && signatureRequest">
       <div *ngIf="signatureRequest.status === SignatureRequestStatus.SENT || signatureRequest.status === SignatureRequestStatus.VIEWED"
@@ -120,7 +115,9 @@
           <i class="bi bi-envelope-arrow-up"></i> Renvoyer l'email de signature
         </button>
       </div>
-      <div *ngIf="signatureRequest.status === SignatureRequestStatus.SIGNED" class="hw-alert hw-alert--success mb-2">
+      <!-- Fallback signature via lien public (aucune entité Signature créée) : ne s'affiche que si
+           le bloc détaillé « Signé par … (IP) » ci-dessus est vide, pour éviter le doublon. -->
+      <div *ngIf="signatureRequest.status === SignatureRequestStatus.SIGNED && signatures.length === 0" class="hw-alert hw-alert--success mb-2">
         <i class="bi bi-check-circle-fill"></i>
         <span>
           <strong>Signé par :</strong> {{ signatureRequest.signerName }}
@@ -150,8 +147,9 @@
       </button>
     </div>
 
-    <!-- Locataire : contrat déjà signé / actif -->
-    <div *ngIf="!isOwner && (contract.status === ContractStatus.SIGNED || contract.status === ContractStatus.ACTIVE)"
+    <!-- Locataire : contrat signé / actif — fallback uniquement quand aucune ligne de signature
+         détaillée n'existe (signature via lien public), sinon doublon avec « Signé par … ». -->
+    <div *ngIf="!isOwner && signatures.length === 0 && (contract.status === ContractStatus.SIGNED || contract.status === ContractStatus.ACTIVE)"
          class="hw-alert hw-alert--success">
       <i class="bi bi-check-circle-fill"></i>
       <span>
@@ -165,6 +163,46 @@
          class="hw-alert hw-alert--warning">
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>Le contrat n'a pas encore été envoyé pour signature par le propriétaire.</span>
+    </div>
+
+    <!-- ══ Prochaine étape après signature : état des lieux d'entrée ══ -->
+    <!-- Propriétaire : créer l'EDL d'entrée (la création est réservée OWNER/ADMIN côté back) -->
+    <div *ngIf="isOwner && showEdlCta" class="hw-alert hw-alert--info mt-3">
+      <i class="bi bi-clipboard-check"></i>
+      <span style="flex: 1">
+        <strong>Prochaine étape :</strong> réalisez l'état des lieux d'entrée avec votre locataire
+        avant la remise des clés.
+      </span>
+      <a class="hw-btn hw-btn--primary hw-btn--sm"
+         [routerLink]="['/inventory', 'new', contract.rentalId]">
+        <i class="bi bi-clipboard-plus"></i> Faire l'état des lieux
+      </a>
+    </div>
+    <!-- Propriétaire : EDL d'entrée créé mais signatures incomplètes -->
+    <div *ngIf="isOwner && entryEdl && (!entryEdl.ownerSigned || !entryEdl.tenantSigned)"
+         class="hw-alert hw-alert--info mt-3">
+      <i class="bi bi-clipboard-check"></i>
+      <span style="flex: 1">L'état des lieux d'entrée est en attente de signature.</span>
+      <a class="hw-btn hw-btn--outline hw-btn--sm"
+         [routerLink]="['/inventory', contract.rentalId, entryEdl.id]">
+        Voir l'état des lieux
+      </a>
+    </div>
+    <!-- Locataire : information / signature de l'EDL d'entrée -->
+    <div *ngIf="!isOwner && showEdlCta" class="hw-alert hw-alert--info mt-3">
+      <i class="bi bi-clipboard-check"></i>
+      <span>
+        <strong>Prochaine étape :</strong> l'état des lieux d'entrée sera réalisé avec votre
+        propriétaire avant la remise des clés.
+      </span>
+    </div>
+    <div *ngIf="!isOwner && entryEdl && !entryEdl.tenantSigned" class="hw-alert hw-alert--info mt-3">
+      <i class="bi bi-clipboard-check"></i>
+      <span style="flex: 1">L'état des lieux d'entrée vous attend pour signature.</span>
+      <a class="hw-btn hw-btn--primary hw-btn--sm"
+         [routerLink]="['/inventory', contract.rentalId, entryEdl.id]">
+        <i class="bi bi-pen"></i> Signer l'état des lieux
+      </a>
     </div>
   </div>
 </div>

@@ -125,7 +125,8 @@ export class ApplicationFormComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.notificationService.success('Candidature envoyée avec succès !');
-        this.router.navigate(['/applications']);
+        // Retour sur l'annonce d'origine : l'utilisateur reprend sa navigation là où il était.
+        this.router.navigate(['/listings', this.listing!.id]);
       },
       error: (err) => {
         this.errorMessage = err.error?.message || "Erreur lors de l'envoi de la candidature.";
@@ -135,7 +136,10 @@ export class ApplicationFormComponent implements OnInit {
   }
 
   goToDossier(): void {
-    this.router.navigate(['/tenant/dossier']);
+    // Transmet l'annonce d'origine pour que la page dossier propose « Reprendre ma candidature ».
+    this.router.navigate(['/tenant/dossier'], {
+      queryParams: this.listing ? { listingId: this.listing.id } : {}
+    });
   }
 
   cancel(): void {

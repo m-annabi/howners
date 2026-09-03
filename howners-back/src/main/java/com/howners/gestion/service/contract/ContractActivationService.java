@@ -2,11 +2,13 @@ package com.howners.gestion.service.contract;
 
 import com.howners.gestion.domain.contract.Contract;
 import com.howners.gestion.domain.contract.ContractStatus;
+import com.howners.gestion.domain.inventory.EtatDesLieuxType;
 import com.howners.gestion.domain.notification.NotificationType;
 import com.howners.gestion.domain.rental.Rental;
 import com.howners.gestion.domain.rental.RentalStatus;
 import com.howners.gestion.domain.user.User;
 import com.howners.gestion.repository.ContractRepository;
+import com.howners.gestion.repository.EtatDesLieuxRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.service.notification.NotificationDispatcher;
 import lombok.RequiredArgsConstructor;
@@ -34,16 +36,46 @@ public class ContractActivationService {
     private final ContractRepository contractRepository;
     private final RentalRepository rentalRepository;
     private final NotificationDispatcher notificationDispatcher;
+    private final EtatDesLieuxRepository etatDesLieuxRepository;
 
     /** À appeler dès qu'un contrat passe SIGNED : active tout de suite si la date de début est atteinte. */
     @Transactional
     public void activateIfDue(Contract contract) {
         if (contract.getStatus() != ContractStatus.SIGNED) return;
+        // Prochaine étape après signature complète : l'état des lieux d'entrée. Émis ici (et pas
+        // dans activate()) pour partir une seule fois, à la signature, quel que soit le flux
+        // (in-app, lien public, DocuSign) — jamais rejoué par le job nocturne.
+        suggestEntryInventory(contract);
         LocalDate start = contract.getRental() != null ? contract.getRental().getStartDate() : null;
         if (start == null || !start.isAfter(LocalDate.now())) {
             activate(contract);
         } else {
             log.info("Contract {} signed, activation scheduled on {}", contract.getContractNumber(), start);
+        }
+    }
+
+    /** Notifie les deux parties que l'état des lieux d'entrée reste à faire (best-effort). */
+    private void suggestEntryInventory(Contract contract) {
+        try {
+            Rental rental = contract.getRental();
+            if (rental == null) return;
+            if (etatDesLieuxRepository.findByRentalIdAndType(rental.getId(), EtatDesLieuxType.ENTREE).isPresent()) {
+                return;
+            }
+            String property = rental.getProperty() != null ? rental.getProperty().getName() : "votre logement";
+            User owner = rental.getProperty() != null ? rental.getProperty().getOwner() : null;
+            notificationDispatcher.notify(owner, NotificationType.EDL_ENTREE_TODO,
+                    "Prochaine étape : état des lieux d'entrée",
+                    "Le contrat " + contract.getContractNumber() + " est signé. Réalisez l'état des lieux "
+                            + "d'entrée pour " + property + " avec votre locataire.",
+                    "/inventory/new/" + rental.getId());
+            notificationDispatcher.notify(rental.getTenant(), NotificationType.EDL_ENTREE_TODO,
+                    "Prochaine étape : état des lieux d'entrée",
+                    "Votre contrat est signé. L'état des lieux d'entrée pour " + property
+                            + " sera réalisé avec votre propriétaire avant la remise des clés.",
+                    "/rentals/" + rental.getId());
+        } catch (Exception e) {
+            log.warn("Impossible d'émettre la notification EDL d'entrée pour le contrat {}", contract.getId(), e);
         }
     }
 

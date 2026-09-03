@@ -3,6 +3,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MessageService } from '../../../core/services/message.service';
 import { SubscriptionService } from '../../../core/services/subscription.service';
+import { TenantActionsService } from '../../../core/services/tenant-actions.service';
 import { User } from '../../../core/models/user.model';
 import { Subscription, filter } from 'rxjs';
 
@@ -33,11 +34,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   sections: NavSection[] = [];
   planName = 'FREE';
   private subs: Subscription[] = [];
+  private lastTenantBadges: { applications: number; contracts: number } | null = null;
 
   constructor(
     private authService: AuthService,
     private subscriptionService: SubscriptionService,
     private messageService: MessageService,
+    private tenantActionsService: TenantActionsService,
     private router: Router
   ) {}
 
@@ -49,6 +52,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
         if (user) {
           this.loadPlan();
         }
+        if (user?.role === 'TENANT') {
+          this.tenantActionsService.refresh();
+        } else {
+          this.tenantActionsService.clear();
+        }
+        this.applyTenantBadges();
       })
     );
 
@@ -59,6 +68,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
           const item = messagesSection.items.find(i => i.route === '/messages');
           if (item) item.badge = count > 0 ? count : undefined;
         }
+      })
+    );
+
+    // Badges « action requise » du locataire (candidature acceptée, contrat à signer).
+    this.subs.push(
+      this.tenantActionsService.badges$.subscribe(badges => {
+        this.lastTenantBadges = badges;
+        this.applyTenantBadges();
       })
     );
 
@@ -109,6 +126,23 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   get userPlan(): string {
     return this.planName;
+  }
+
+  /**
+   * Pose les badges locataire par ROUTE, dans toutes les sections : buildSections()
+   * remplace le tableau à chaque émission de currentUser$, il faut donc ré-appliquer.
+   */
+  private applyTenantBadges(): void {
+    if (!this.lastTenantBadges || this.currentUser?.role !== 'TENANT') return;
+    this.setBadge('/applications', this.lastTenantBadges.applications);
+    this.setBadge('/contracts', this.lastTenantBadges.contracts);
+  }
+
+  private setBadge(route: string, count: number): void {
+    for (const section of this.sections) {
+      const item = section.items.find(i => i.route === route);
+      if (item) item.badge = count > 0 ? count : undefined;
+    }
   }
 
   private loadPlan(): void {

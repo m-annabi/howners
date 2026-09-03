@@ -38,10 +38,20 @@
              [class.dossier-progress__fill--complete]="isComplete">
         </div>
       </div>
-      <p *ngIf="!isComplete" class="dossier-progress__hint">
+      <p *ngIf="!isComplete && !listingId" class="dossier-progress__hint">
         <i class="bi bi-info-circle"></i>
         Un dossier complet augmente vos chances d'acceptation et accélère le traitement de vos candidatures.
       </p>
+      <p *ngIf="!isComplete && listingId" class="dossier-progress__hint">
+        <i class="bi bi-info-circle"></i>
+        Une fois votre dossier complet, vous pourrez reprendre votre candidature là où vous l'aviez laissée.
+      </p>
+      <!-- Retour à la candidature de l'annonce d'origine une fois le dossier complet -->
+      <div *ngIf="isComplete && listingId" class="dossier-progress__resume">
+        <button type="button" class="hw-btn hw-btn--primary" (click)="resumeApplication()">
+          <i class="bi bi-send"></i> Reprendre ma candidature
+        </button>
+      </div>
     </div>
 
     <!-- Erreur upload -->

@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Régression introduite par le 106 : les quatre templates alignés sur le contrat type
+         du décret n° 2015-587 (bail nu par défaut réécrit + meublé, mobilité, parking insérés)
+         ont été rédigés en TEXTE BRUT. Passés dans PdfService, chaque ligne devient un
+         paragraphe gris uniforme : les PDF sortent sans aucune hiérarchie (pas de titres,
+         pas de tableaux, pas de bloc de signature). Ce changelog reconvertit les quatre
+         contenus au format HTML sémantique du design system PDF (cf. 098) : p.contract-lead
+         pour la base légale, h2 par section, h3 pour les sous-titres, tableaux pour la
+         consistance du logement et les conditions financières, ul/li pour les obligations,
+         em pour les mentions à compléter, table.signatures pour le bloc final.
+         Le contenu juridique et les variables de substitution sont strictement inchangés.
+         UPDATE plutôt qu'édition du 106 (checksum verrouillé, déjà exécuté). Les templates
+         insérés par le 106 ayant un UUID généré, ils sont ciblés par leur nom exact. -->
+
+    <changeSet id="107-01-bail-nu-html" author="claude">
+        <update tableName="contract_templates">
+            <column name="content"><![CDATA[<p class="contract-lead">Contrat de location — logement nu à usage de résidence principale.<br/>Soumis au titre Ier bis de la loi n° 89-462 du 6 juillet 1989 — contrat type défini par le décret n° 2015-587 du 29 mai 2015.</p>
+
+<h2>I. Désignation des parties</h2>
+<p><strong>Bailleur :</strong> {{owner.fullName}} — {{owner.email}} — {{owner.phone}}<br/>
+<em>[Qualité du bailleur : personne physique / personne morale — adresse postale à compléter]</em></p>
+<p><strong>Locataire :</strong> {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}</p>
+
+<h2>II. Objet du contrat</h2>
+<h3>A. Consistance du logement</h3>
+<table>
+<tr><th style="width:38%">Adresse</th><td>{{property.address.full}}</td></tr>
+<tr><th>Type d'habitat</th><td>{{property.type}} — <em>[immeuble collectif / individuel]</em></td></tr>
+<tr><th>Régime juridique</th><td><em>[monopropriété / copropriété]</em></td></tr>
+<tr><th>Période de construction</th><td><em>[à compléter]</em></td></tr>
+<tr><th>Surface habitable</th><td>{{property.surface}} m² (loi Boutin)</td></tr>
+<tr><th>Nombre de pièces principales</th><td>{{property.rooms}} dont {{property.bedrooms}} chambre(s)</td></tr>
+<tr><th>Autres parties du logement</th><td><em>[cave, balcon, jardin, parking… à compléter]</em></td></tr>
+<tr><th>Éléments d'équipement</th><td><em>[cuisine équipée, chauffage, eau chaude — mode de production individuel/collectif — à compléter]</em></td></tr>
+<tr><th>Modalités d'accès aux technologies de l'information et de la communication</th><td><em>[fibre, câble, TNT… à compléter]</em></td></tr>
+</table>
+
+<h3>B. Destination des locaux</h3>
+<p>Usage d'habitation exclusivement, à titre de résidence principale du locataire.</p>
+
+<h2>III. Date de prise d'effet et durée</h2>
+<p>Le contrat prend effet le {{rental.startDate}} pour une durée de trois ans (six ans lorsque le bailleur est une personne morale). Il prend fin {{rental.endDateClause}}.</p>
+<p>À défaut de congé délivré dans les conditions de l'article 15 de la loi, ou de proposition de renouvellement, le contrat est reconduit tacitement pour la même durée.</p>
+<p><em>[Durée réduite pour raison familiale ou professionnelle (art. 11) : événement et raison à préciser, le cas échéant]</em></p>
+
+<h2>IV. Conditions financières</h2>
+<table>
+<tr><th style="width:38%">A. Loyer</th><td>Loyer mensuel hors charges : <strong>{{rental.monthlyRent}}</strong>.<br/>Le logement <em>[est / n'est pas]</em> situé dans une zone soumise à l'encadrement des loyers. <em>[Si oui : loyer de référence, loyer de référence majoré, éventuel complément de loyer et sa justification — à compléter]</em><br/>Loyer du dernier locataire (si le logement a été loué au cours des dix-huit derniers mois) : <em>[montant, date de versement, date de la dernière révision — à compléter]</em></td></tr>
+<tr><th>B. Révision du loyer</th><td>Le loyer est révisé chaque année à la date anniversaire du contrat, dans la limite de la variation de l'indice de référence des loyers (IRL) publié par l'INSEE. Trimestre de référence : <em>[dernier IRL publié à la date de signature]</em>.</td></tr>
+<tr><th>C. Charges récupérables</th><td>Modalité : provisions sur charges de <strong>{{rental.charges}}</strong> par mois, avec régularisation annuelle sur justificatifs (décompte adressé au locataire au moins un mois avant, pièces tenues à disposition six mois). <em>[Ou : forfait mensuel non régularisable, si le bailleur le choisit.]</em><br/>Loyer charges comprises : <strong>{{rental.totalMonthly}}</strong> par mois.</td></tr>
+<tr><th>D. Modalités de paiement</th><td>Paiement mensuel, à terme à échoir, le {{rental.paymentDay}} de chaque mois, par virement ou tout autre moyen convenu. Le bailleur remet gratuitement une quittance au locataire qui en fait la demande.</td></tr>
+<tr><th>E. Dépôt de garantie</th><td>Montant : <strong>{{rental.depositAmount}}</strong> (au plus un mois de loyer hors charges). Restitué dans un délai d'un mois à compter de la remise des clés lorsque l'état des lieux de sortie est conforme à l'état des lieux d'entrée, deux mois dans le cas contraire, déduction faite des sommes restant dues au bailleur dûment justifiées.</td></tr>
+</table>
+
+<h2>V. Travaux</h2>
+<p>Travaux d'amélioration ou de mise en conformité réalisés depuis la fin du dernier contrat : <em>[nature et montant — à compléter, ou « néant »]</em></p>
+<p>Travaux que le locataire est autorisé à réaliser et modalités de prise en charge : <em>[à compléter, ou « néant »]</em></p>
+
+<h2>VI. Garanties</h2>
+<p><em>[Cautionnement d'une personne physique (acte annexé) / garantie Visale / assurance loyers impayés — à compléter, ou « néant »]</em></p>
+
+<h2>VII. Clause de solidarité</h2>
+<p>En cas de pluralité de locataires, ceux-ci sont tenus solidairement et indivisiblement de l'ensemble des obligations du présent contrat. La solidarité d'un colocataire qui donne congé s'éteint dans les conditions de l'article 8-1 de la loi du 6 juillet 1989 (au plus tard six mois après la fin de son préavis, ou dès qu'un nouveau colocataire figure au bail).</p>
+
+<h2>VIII. Clause résolutoire</h2>
+<p>Le contrat est résilié de plein droit, deux mois après un commandement de payer demeuré infructueux, en cas de défaut de paiement du loyer ou des charges aux termes convenus, ou de non-versement du dépôt de garantie ; un mois après commandement demeuré infructueux en cas de défaut d'assurance du locataire ; et en cas de troubles de voisinage constatés par une décision de justice passée en force de chose jugée (article 24 de la loi du 6 juillet 1989).</p>
+
+<h2>IX. Obligations des parties</h2>
+<p>Le bailleur s'engage à :</p>
+<ul>
+<li>délivrer un logement décent et en bon état d'usage et de réparation ;</li>
+<li>assurer la jouissance paisible du logement ;</li>
+<li>entretenir les locaux et réaliser les réparations autres que locatives ;</li>
+<li>remettre gratuitement une quittance ;</li>
+<li>transmettre le dossier de diagnostic technique.</li>
+</ul>
+<p>Le locataire s'engage à :</p>
+<ul>
+<li>payer le loyer et les charges aux termes convenus ;</li>
+<li>user paisiblement des locaux ;</li>
+<li>répondre des dégradations survenues pendant la location ;</li>
+<li>prendre à sa charge l'entretien courant et les réparations locatives ;</li>
+<li>souscrire une assurance contre les risques locatifs et en justifier chaque année ;</li>
+<li>ne pas transformer les lieux sans accord écrit ;</li>
+<li>laisser exécuter les travaux nécessaires ;</li>
+<li>ne pas sous-louer sans accord écrit du bailleur.</li>
+</ul>
+
+<h2>X. Congé</h2>
+<p><strong>Locataire :</strong> préavis de trois mois, réduit à un mois dans les cas prévus par la loi (zone tendue, mutation, perte d'emploi ou nouvel emploi consécutif, état de santé, bénéficiaire du RSA ou de l'AAH, attribution d'un logement social).</p>
+<p><strong>Bailleur :</strong> préavis de six mois avant l'échéance, pour reprise en vue d'habiter, pour vente ou pour motif légitime et sérieux, dans les formes de l'article 15 de la loi.</p>
+
+<h2>XI. Honoraires de location</h2>
+<p><em>[Aucun intermédiaire. Ou : montant des honoraires plafonnés (visite, constitution du dossier, rédaction du bail, état des lieux), part imputable au locataire — à compléter]</em></p>
+
+<h2>XII. Autres conditions particulières</h2>
+<p><em>[Animaux, jouissance des parties communes, stationnement, règlement intérieur… à compléter, ou « néant »]</em></p>
+
+<h2>XIII. Annexes</h2>
+<ul>
+<li>Notice d'information relative aux droits et obligations des locataires et des bailleurs (arrêté du 29 mai 2015) ;</li>
+<li>dossier de diagnostic technique : diagnostic de performance énergétique (DPE), état des risques et pollutions (ERP), constat de risque d'exposition au plomb (immeuble antérieur à 1949), état de l'installation intérieure d'électricité et de gaz (installations de plus de quinze ans), diagnostic bruit (zones d'exposition aéroportuaire), dossier amiante tenu à disposition ;</li>
+<li>état des lieux d'entrée établi contradictoirement (et état des lieux de sortie à la restitution des clés) ;</li>
+<li>extraits du règlement de copropriété relatifs à la destination de l'immeuble, à la jouissance et à l'usage des parties privatives et communes, et quote-part de charges ;</li>
+<li>le cas échéant : acte de cautionnement, autorisation préalable de mise en location, références aux loyers du voisinage (zone tendue), attestation d'assurance du locataire.</li>
+</ul>
+
+<p class="contract-place">Fait à {{property.address.city}}, le {{today}}, en autant d'exemplaires originaux que de parties, chacune reconnaissant avoir reçu le sien.</p>
+
+<table class="signatures">
+<tr>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du bailleur</strong><br/><span style="color:#9CA3AF;font-size:8.5pt;">précédée de la mention « Lu et approuvé »</span></td>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du locataire</strong><br/><span style="color:#9CA3AF;font-size:8.5pt;">précédée de la mention « Lu et approuvé »</span></td>
+</tr>
+</table>]]></column>
+            <where>is_default = true AND rental_type = 'LONG_TERM'</where>
+        </update>
+        <rollback>
+            <update tableName="contract_templates">
+                <column name="content"><![CDATA[CONTRAT DE LOCATION — LOGEMENT NU À USAGE DE RÉSIDENCE PRINCIPALE
+
+Soumis au titre Ier bis de la loi n° 89-462 du 6 juillet 1989 — contrat type défini par le décret n° 2015-587 du 29 mai 2015.
+
+I. DÉSIGNATION DES PARTIES
+
+Bailleur : {{owner.fullName}} — {{owner.email}} — {{owner.phone}}
+[Qualité du bailleur : personne physique / personne morale — adresse postale à compléter]
+
+Locataire : {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}
+
+II. OBJET DU CONTRAT
+
+A. Consistance du logement
+Adresse : {{property.address.full}}
+Type d'habitat : {{property.type}} — [immeuble collectif / individuel]
+Régime juridique : [monopropriété / copropriété]
+Période de construction : [à compléter]
+Surface habitable : {{property.surface}} m² (loi Boutin)
+Nombre de pièces principales : {{property.rooms}} dont {{property.bedrooms}} chambre(s)
+Autres parties du logement : [cave, balcon, jardin, parking… à compléter]
+Éléments d'équipement : [cuisine équipée, chauffage, eau chaude — mode de production individuel/collectif — à compléter]
+Modalités d'accès aux technologies de l'information et de la communication : [fibre, câble, TNT… à compléter]
+
+B. Destination des locaux
+Usage d'habitation exclusivement, à titre de résidence principale du locataire.
+
+III. DATE DE PRISE D'EFFET ET DURÉE
+
+Le contrat prend effet le {{rental.startDate}} pour une durée de trois ans (six ans lorsque le bailleur est une personne morale). Il prend fin {{rental.endDateClause}}.
+À défaut de congé délivré dans les conditions de l'article 15 de la loi, ou de proposition de renouvellement, le contrat est reconduit tacitement pour la même durée.
+[Durée réduite pour raison familiale ou professionnelle (art. 11) : événement et raison à préciser, le cas échéant]
+
+IV. CONDITIONS FINANCIÈRES
+
+A. Loyer
+Loyer mensuel hors charges : {{rental.monthlyRent}}.
+Le logement [est / n'est pas] situé dans une zone soumise à l'encadrement des loyers. [Si oui : loyer de référence, loyer de référence majoré, éventuel complément de loyer et sa justification — à compléter]
+Loyer du dernier locataire (si le logement a été loué au cours des dix-huit derniers mois) : [montant, date de versement, date de la dernière révision — à compléter]
+
+B. Révision du loyer
+Le loyer est révisé chaque année à la date anniversaire du contrat, dans la limite de la variation de l'indice de référence des loyers (IRL) publié par l'INSEE. Trimestre de référence : [dernier IRL publié à la date de signature].
+
+C. Charges récupérables
+Modalité : provisions sur charges de {{rental.charges}} par mois, avec régularisation annuelle sur justificatifs (décompte adressé au locataire au moins un mois avant, pièces tenues à disposition six mois). [Ou : forfait mensuel non régularisable, si le bailleur le choisit.]
+Loyer charges comprises : {{rental.totalMonthly}} par mois.
+
+D. Modalités de paiement
+Paiement mensuel, à terme à échoir, le {{rental.paymentDay}} de chaque mois, par virement ou tout autre moyen convenu. Le bailleur remet gratuitement une quittance au locataire qui en fait la demande.
+
+E. Dépôt de garantie
+Montant : {{rental.depositAmount}} (au plus un mois de loyer hors charges). Restitué dans un délai d'un mois à compter de la remise des clés lorsque l'état des lieux de sortie est conforme à l'état des lieux d'entrée, deux mois dans le cas contraire, déduction faite des sommes restant dues au bailleur dûment justifiées.
+
+V. TRAVAUX
+
+Travaux d'amélioration ou de mise en conformité réalisés depuis la fin du dernier contrat : [nature et montant — à compléter, ou « néant »]
+Travaux que le locataire est autorisé à réaliser et modalités de prise en charge : [à compléter, ou « néant »]
+
+VI. GARANTIES
+
+[Cautionnement d'une personne physique (acte annexé) / garantie Visale / assurance loyers impayés — à compléter, ou « néant »]
+
+VII. CLAUSE DE SOLIDARITÉ
+
+En cas de pluralité de locataires, ceux-ci sont tenus solidairement et indivisiblement de l'ensemble des obligations du présent contrat. La solidarité d'un colocataire qui donne congé s'éteint dans les conditions de l'article 8-1 de la loi du 6 juillet 1989 (au plus tard six mois après la fin de son préavis, ou dès qu'un nouveau colocataire figure au bail).
+
+VIII. CLAUSE RÉSOLUTOIRE
+
+Le contrat est résilié de plein droit, deux mois après un commandement de payer demeuré infructueux, en cas de défaut de paiement du loyer ou des charges aux termes convenus, ou de non-versement du dépôt de garantie ; un mois après commandement demeuré infructueux en cas de défaut d'assurance du locataire ; et en cas de troubles de voisinage constatés par une décision de justice passée en force de chose jugée (article 24 de la loi du 6 juillet 1989).
+
+IX. OBLIGATIONS DES PARTIES
+
+Le bailleur s'engage à : délivrer un logement décent et en bon état d'usage et de réparation ; assurer la jouissance paisible du logement ; entretenir les locaux et réaliser les réparations autres que locatives ; remettre gratuitement une quittance ; transmettre le dossier de diagnostic technique.
+Le locataire s'engage à : payer le loyer et les charges aux termes convenus ; user paisiblement des locaux ; répondre des dégradations survenues pendant la location ; prendre à sa charge l'entretien courant et les réparations locatives ; souscrire une assurance contre les risques locatifs et en justifier chaque année ; ne pas transformer les lieux sans accord écrit ; laisser exécuter les travaux nécessaires ; ne pas sous-louer sans accord écrit du bailleur.
+
+X. CONGÉ
+
+Locataire : préavis de trois mois, réduit à un mois dans les cas prévus par la loi (zone tendue, mutation, perte d'emploi ou nouvel emploi consécutif, état de santé, bénéficiaire du RSA ou de l'AAH, attribution d'un logement social).
+Bailleur : préavis de six mois avant l'échéance, pour reprise en vue d'habiter, pour vente ou pour motif légitime et sérieux, dans les formes de l'article 15 de la loi.
+
+XI. HONORAIRES DE LOCATION
+
+[Aucun intermédiaire. Ou : montant des honoraires plafonnés (visite, constitution du dossier, rédaction du bail, état des lieux), part imputable au locataire — à compléter]
+
+XII. AUTRES CONDITIONS PARTICULIÈRES
+
+[Animaux, jouissance des parties communes, stationnement, règlement intérieur… à compléter, ou « néant »]
+
+XIII. ANNEXES
+
+- Notice d'information relative aux droits et obligations des locataires et des bailleurs (arrêté du 29 mai 2015)
+- Dossier de diagnostic technique : diagnostic de performance énergétique (DPE), état des risques et pollutions (ERP), constat de risque d'exposition au plomb (immeuble antérieur à 1949), état de l'installation intérieure d'électricité et de gaz (installations de plus de quinze ans), diagnostic bruit (zones d'exposition aéroportuaire), dossier amiante tenu à disposition
+- État des lieux d'entrée établi contradictoirement (et état des lieux de sortie à la restitution des clés)
+- Extraits du règlement de copropriété relatifs à la destination de l'immeuble, à la jouissance et à l'usage des parties privatives et communes, et quote-part de charges
+- Le cas échéant : acte de cautionnement, autorisation préalable de mise en location, références aux loyers du voisinage (zone tendue), attestation d'assurance du locataire
+
+Fait à {{property.address.city}}, le {{today}}, en autant d'exemplaires originaux que de parties, chacune reconnaissant avoir reçu le sien.
+
+Signature du bailleur                    Signature du locataire
+(précédée de la mention « Lu et approuvé »)]]></column>
+                <where>is_default = true AND rental_type = 'LONG_TERM'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="107-02-bail-meuble-html" author="claude">
+        <update tableName="contract_templates">
+            <column name="content"><![CDATA[<p class="contract-lead">Contrat de location — logement meublé à usage de résidence principale.<br/>Soumis au titre Ier bis de la loi n° 89-462 du 6 juillet 1989 — contrat type défini par le décret n° 2015-587 du 29 mai 2015.</p>
+
+<h2>I. Désignation des parties</h2>
+<p><strong>Bailleur :</strong> {{owner.fullName}} — {{owner.email}} — {{owner.phone}}</p>
+<p><strong>Locataire :</strong> {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}</p>
+
+<h2>II. Objet du contrat</h2>
+<table>
+<tr><th style="width:38%">Adresse</th><td>{{property.address.full}}</td></tr>
+<tr><th>Type d'habitat</th><td>{{property.type}}</td></tr>
+<tr><th>Régime juridique</th><td><em>[monopropriété / copropriété]</em></td></tr>
+<tr><th>Période de construction</th><td><em>[à compléter]</em></td></tr>
+<tr><th>Surface habitable</th><td>{{property.surface}} m²</td></tr>
+<tr><th>Pièces principales</th><td>{{property.rooms}} dont {{property.bedrooms}} chambre(s)</td></tr>
+<tr><th>Autres parties et équipements</th><td><em>[à compléter]</em></td></tr>
+</table>
+<p>Le logement est loué meublé : il comporte au minimum le mobilier fixé par le décret n° 2015-981 du 31 juillet 2015 (literie avec couette ou couverture, dispositif d'occultation des fenêtres des chambres, plaques de cuisson, four ou four à micro-ondes, réfrigérateur et congélateur ou compartiment à congélation, vaisselle et ustensiles de cuisine, table et sièges, étagères de rangement, luminaires, matériel d'entretien ménager adapté). L'inventaire détaillé et l'état du mobilier sont annexés.</p>
+<p>Destination : habitation, résidence principale du locataire.</p>
+
+<h2>III. Date de prise d'effet et durée</h2>
+<p>Prise d'effet le {{rental.startDate}}. Durée : un an, reconduite tacitement pour un an à défaut de congé. Il prend fin {{rental.endDateClause}}.</p>
+<p><em>[Locataire étudiant : durée de neuf mois, non reconductible, sans congé à donner — cocher le cas échéant]</em></p>
+
+<h2>IV. Conditions financières</h2>
+<table>
+<tr><th style="width:38%">Loyer</th><td>Loyer mensuel hors charges : <strong>{{rental.monthlyRent}}</strong>. <em>[Zone d'encadrement des loyers : loyer de référence majoré et éventuel complément à préciser]</em></td></tr>
+<tr><th>Révision</th><td>Annuelle à la date anniversaire selon l'indice de référence des loyers (IRL), trimestre de référence <em>[à compléter]</em>.</td></tr>
+<tr><th>Charges</th><td><em>[Provisions de {{rental.charges}} par mois avec régularisation annuelle / forfait mensuel de {{rental.charges}} non régularisable]</em>. Loyer charges comprises : <strong>{{rental.totalMonthly}}</strong>.</td></tr>
+<tr><th>Paiement</th><td>Mensuel, à échoir, le {{rental.paymentDay}} de chaque mois.</td></tr>
+<tr><th>Dépôt de garantie</th><td><strong>{{rental.depositAmount}}</strong> (au plus deux mois de loyer hors charges), restitué dans le délai d'un mois (état des lieux conforme) ou de deux mois, déduction faite des sommes justifiées.</td></tr>
+</table>
+
+<h2>V. Travaux — VI. Garanties</h2>
+<p><em>[Travaux réalisés / autorisés — à compléter]</em> <em>[Cautionnement, Visale, assurance loyers impayés — à compléter]</em></p>
+
+<h2>VII. Clause de solidarité</h2>
+<p>Les colocataires sont tenus solidairement des obligations du bail (article 8-1 de la loi du 6 juillet 1989).</p>
+
+<h2>VIII. Clause résolutoire</h2>
+<p>Résiliation de plein droit, après commandement demeuré infructueux, en cas de défaut de paiement du loyer, des charges ou du dépôt de garantie, de défaut d'assurance, ou de troubles de voisinage constatés judiciairement (article 24).</p>
+
+<h2>IX. Obligations des parties</h2>
+<p><strong>Bailleur :</strong></p>
+<ul>
+<li>logement décent ;</li>
+<li>jouissance paisible ;</li>
+<li>réparations autres que locatives ;</li>
+<li>remise d'une quittance.</li>
+</ul>
+<p><strong>Locataire :</strong></p>
+<ul>
+<li>paiement ;</li>
+<li>usage paisible ;</li>
+<li>entretien courant et réparations locatives ;</li>
+<li>assurance annuelle ;</li>
+<li>conservation du mobilier inventorié ;</li>
+<li>pas de sous-location ni de transformation sans accord écrit.</li>
+</ul>
+
+<h2>X. Congé</h2>
+<p><strong>Locataire :</strong> préavis d'un mois à tout moment.</p>
+<p><strong>Bailleur :</strong> préavis de trois mois avant l'échéance, pour reprise, vente ou motif légitime et sérieux.</p>
+
+<h2>XI. Honoraires — XII. Conditions particulières</h2>
+<p><em>[à compléter, ou « néant »]</em></p>
+
+<h2>XIII. Annexes</h2>
+<ul>
+<li>Notice d'information ;</li>
+<li>dossier de diagnostic technique (DPE, ERP, plomb, électricité, gaz, bruit) ;</li>
+<li>état des lieux d'entrée ;</li>
+<li>inventaire et état détaillé du mobilier ;</li>
+<li>extraits du règlement de copropriété ;</li>
+<li>le cas échéant acte de cautionnement.</li>
+</ul>
+
+<p class="contract-place">Fait à {{property.address.city}}, le {{today}}, en autant d'exemplaires que de parties.</p>
+
+<table class="signatures">
+<tr>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du bailleur</strong></td>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du locataire</strong></td>
+</tr>
+</table>]]></column>
+            <where>name = 'Bail meublé — résidence principale (1 an / 9 mois étudiant)'</where>
+        </update>
+        <rollback>
+            <update tableName="contract_templates">
+                <column name="content"><![CDATA[CONTRAT DE LOCATION — LOGEMENT MEUBLÉ À USAGE DE RÉSIDENCE PRINCIPALE
+
+Soumis au titre Ier bis de la loi n° 89-462 du 6 juillet 1989 — contrat type défini par le décret n° 2015-587 du 29 mai 2015.
+
+I. DÉSIGNATION DES PARTIES
+
+Bailleur : {{owner.fullName}} — {{owner.email}} — {{owner.phone}}
+Locataire : {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}
+
+II. OBJET DU CONTRAT
+
+Adresse : {{property.address.full}}
+Type d'habitat : {{property.type}} — Régime juridique : [monopropriété / copropriété] — Période de construction : [à compléter]
+Surface habitable : {{property.surface}} m² — Pièces principales : {{property.rooms}} dont {{property.bedrooms}} chambre(s)
+Autres parties et équipements : [à compléter]
+Le logement est loué meublé : il comporte au minimum le mobilier fixé par le décret n° 2015-981 du 31 juillet 2015 (literie avec couette ou couverture, dispositif d'occultation des fenêtres des chambres, plaques de cuisson, four ou four à micro-ondes, réfrigérateur et congélateur ou compartiment à congélation, vaisselle et ustensiles de cuisine, table et sièges, étagères de rangement, luminaires, matériel d'entretien ménager adapté). L'inventaire détaillé et l'état du mobilier sont annexés.
+Destination : habitation, résidence principale du locataire.
+
+III. DATE DE PRISE D'EFFET ET DURÉE
+
+Prise d'effet le {{rental.startDate}}. Durée : un an, reconduite tacitement pour un an à défaut de congé. Il prend fin {{rental.endDateClause}}.
+[Locataire étudiant : durée de neuf mois, non reconductible, sans congé à donner — cocher le cas échéant]
+
+IV. CONDITIONS FINANCIÈRES
+
+Loyer mensuel hors charges : {{rental.monthlyRent}}. [Zone d'encadrement des loyers : loyer de référence majoré et éventuel complément à préciser]
+Révision : annuelle à la date anniversaire selon l'indice de référence des loyers (IRL), trimestre de référence [à compléter].
+Charges : [provisions de {{rental.charges}} par mois avec régularisation annuelle / forfait mensuel de {{rental.charges}} non régularisable]. Loyer charges comprises : {{rental.totalMonthly}}.
+Paiement : mensuel, à échoir, le {{rental.paymentDay}} de chaque mois.
+Dépôt de garantie : {{rental.depositAmount}} (au plus deux mois de loyer hors charges), restitué dans le délai d'un mois (état des lieux conforme) ou de deux mois, déduction faite des sommes justifiées.
+
+V. TRAVAUX — VI. GARANTIES
+
+[Travaux réalisés / autorisés — à compléter] [Cautionnement, Visale, assurance loyers impayés — à compléter]
+
+VII. CLAUSE DE SOLIDARITÉ
+
+Les colocataires sont tenus solidairement des obligations du bail (article 8-1 de la loi du 6 juillet 1989).
+
+VIII. CLAUSE RÉSOLUTOIRE
+
+Résiliation de plein droit, après commandement demeuré infructueux, en cas de défaut de paiement du loyer, des charges ou du dépôt de garantie, de défaut d'assurance, ou de troubles de voisinage constatés judiciairement (article 24).
+
+IX. OBLIGATIONS DES PARTIES
+
+Bailleur : logement décent, jouissance paisible, réparations autres que locatives, remise d'une quittance. Locataire : paiement, usage paisible, entretien courant et réparations locatives, assurance annuelle, conservation du mobilier inventorié, pas de sous-location ni de transformation sans accord écrit.
+
+X. CONGÉ
+
+Locataire : préavis d'un mois à tout moment. Bailleur : préavis de trois mois avant l'échéance, pour reprise, vente ou motif légitime et sérieux.
+
+XI. HONORAIRES — XII. CONDITIONS PARTICULIÈRES
+
+[à compléter, ou « néant »]
+
+XIII. ANNEXES
+
+Notice d'information ; dossier de diagnostic technique (DPE, ERP, plomb, électricité, gaz, bruit) ; état des lieux d'entrée ; inventaire et état détaillé du mobilier ; extraits du règlement de copropriété ; le cas échéant acte de cautionnement.
+
+Fait à {{property.address.city}}, le {{today}}, en autant d'exemplaires que de parties.
+
+Signature du bailleur                    Signature du locataire]]></column>
+                <where>name = 'Bail meublé — résidence principale (1 an / 9 mois étudiant)'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="107-03-bail-mobilite-html" author="claude">
+        <update tableName="contract_templates">
+            <column name="content"><![CDATA[<p class="contract-lead">Bail mobilité — logement meublé.<br/>Soumis aux articles 25-12 à 25-18 de la loi n° 89-462 du 6 juillet 1989 (titre Ier ter).</p>
+
+<h2>I. Parties</h2>
+<p><strong>Bailleur :</strong> {{owner.fullName}} — {{owner.email}} — {{owner.phone}}</p>
+<p><strong>Locataire :</strong> {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}</p>
+<p>Motif du bail mobilité (à la date de prise d'effet, le locataire justifie être) : <em>[en formation professionnelle / en études supérieures / en contrat d'apprentissage / en stage / en engagement volontaire de service civique / en mutation professionnelle / en mission temporaire dans le cadre de son activité professionnelle — préciser et joindre le justificatif]</em></p>
+
+<h2>II. Objet</h2>
+<table>
+<tr><th style="width:38%">Adresse</th><td>{{property.address.full}}</td></tr>
+<tr><th>Type de bien</th><td>{{property.type}}</td></tr>
+<tr><th>Surface habitable</th><td>{{property.surface}} m²</td></tr>
+<tr><th>Pièces principales</th><td>{{property.rooms}} pièce(s) dont {{property.bedrooms}} chambre(s)</td></tr>
+</table>
+<p>Logement meublé. Mobilier conforme au décret n° 2015-981 ; inventaire annexé.</p>
+
+<h2>III. Durée</h2>
+<p>Prise d'effet le {{rental.startDate}} ; fin {{rental.endDateClause}}. Durée comprise entre un et dix mois, non renouvelable et non reconductible. Elle peut être modifiée une fois par avenant sans que la durée totale n'excède dix mois. Si le locataire reste dans les lieux au-delà, un bail meublé de résidence principale (un an) se substitue de plein droit.</p>
+
+<h2>IV. Conditions financières</h2>
+<table>
+<tr><th style="width:38%">Loyer mensuel</th><td><strong>{{rental.monthlyRent}}</strong> <em>[zone d'encadrement des loyers : loyer de référence majoré à préciser]</em>. Le loyer n'est pas révisable en cours de bail.</td></tr>
+<tr><th>Charges</th><td>Forfait mensuel de <strong>{{rental.charges}}</strong>, non régularisable.</td></tr>
+<tr><th>Total mensuel</th><td><strong>{{rental.totalMonthly}}</strong></td></tr>
+<tr><th>Paiement</th><td>Le {{rental.paymentDay}} de chaque mois.</td></tr>
+<tr><th>Dépôt de garantie</th><td>Aucun dépôt de garantie ne peut être exigé. Garantie Visale possible à la demande du bailleur.</td></tr>
+</table>
+
+<h2>V. Obligations — Clauses</h2>
+<p>Le bailleur remet un logement décent et le dossier de diagnostic technique ; le locataire paie le loyer, use paisiblement des lieux, entretient le logement et le mobilier, s'assure contre les risques locatifs. Aucune clause de solidarité entre colocataires ne peut être stipulée. Clause résolutoire de l'article 24 applicable (défaut de paiement, défaut d'assurance, troubles de voisinage).</p>
+
+<h2>VI. Congé</h2>
+<p>Le locataire peut résilier à tout moment avec un préavis d'un mois. Le bailleur ne peut pas donner congé avant le terme.</p>
+
+<h2>VII. Annexes</h2>
+<ul>
+<li>Notice d'information ;</li>
+<li>dossier de diagnostic technique (DPE, ERP, plomb, électricité, gaz, bruit) ;</li>
+<li>état des lieux d'entrée ;</li>
+<li>inventaire du mobilier ;</li>
+<li>justificatif du motif du bail mobilité.</li>
+</ul>
+
+<p class="contract-place">Fait à {{property.address.city}}, le {{today}}, en autant d'exemplaires que de parties.</p>
+
+<table class="signatures">
+<tr>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du bailleur</strong></td>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du locataire</strong></td>
+</tr>
+</table>]]></column>
+            <where>name = 'Bail mobilité — meublé, 1 à 10 mois'</where>
+        </update>
+        <rollback>
+            <update tableName="contract_templates">
+                <column name="content"><![CDATA[BAIL MOBILITÉ — LOGEMENT MEUBLÉ
+
+Soumis aux articles 25-12 à 25-18 de la loi n° 89-462 du 6 juillet 1989 (titre Ier ter).
+
+I. PARTIES
+
+Bailleur : {{owner.fullName}} — {{owner.email}} — {{owner.phone}}
+Locataire : {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}
+Motif du bail mobilité (à la date de prise d'effet, le locataire justifie être) : [en formation professionnelle / en études supérieures / en contrat d'apprentissage / en stage / en engagement volontaire de service civique / en mutation professionnelle / en mission temporaire dans le cadre de son activité professionnelle — préciser et joindre le justificatif]
+
+II. OBJET
+
+Logement meublé situé {{property.address.full}} — {{property.type}}, {{property.surface}} m², {{property.rooms}} pièce(s) dont {{property.bedrooms}} chambre(s). Mobilier conforme au décret n° 2015-981 ; inventaire annexé.
+
+III. DURÉE
+
+Prise d'effet le {{rental.startDate}} ; fin {{rental.endDateClause}}. Durée comprise entre un et dix mois, non renouvelable et non reconductible. Elle peut être modifiée une fois par avenant sans que la durée totale n'excède dix mois. Si le locataire reste dans les lieux au-delà, un bail meublé de résidence principale (un an) se substitue de plein droit.
+
+IV. CONDITIONS FINANCIÈRES
+
+Loyer mensuel : {{rental.monthlyRent}} [zone d'encadrement des loyers : loyer de référence majoré à préciser]. Le loyer n'est pas révisable en cours de bail.
+Charges : forfait mensuel de {{rental.charges}}, non régularisable. Total mensuel : {{rental.totalMonthly}}.
+Paiement le {{rental.paymentDay}} de chaque mois.
+Aucun dépôt de garantie ne peut être exigé. Garantie Visale possible à la demande du bailleur.
+
+V. OBLIGATIONS — CLAUSES
+
+Le bailleur remet un logement décent et le dossier de diagnostic technique ; le locataire paie le loyer, use paisiblement des lieux, entretient le logement et le mobilier, s'assure contre les risques locatifs. Aucune clause de solidarité entre colocataires ne peut être stipulée. Clause résolutoire de l'article 24 applicable (défaut de paiement, défaut d'assurance, troubles de voisinage).
+
+VI. CONGÉ
+
+Le locataire peut résilier à tout moment avec un préavis d'un mois. Le bailleur ne peut pas donner congé avant le terme.
+
+VII. ANNEXES
+
+Notice d'information, dossier de diagnostic technique (DPE, ERP, plomb, électricité, gaz, bruit), état des lieux d'entrée, inventaire du mobilier, justificatif du motif du bail mobilité.
+
+Fait à {{property.address.city}}, le {{today}}, en autant d'exemplaires que de parties.
+
+Signature du bailleur                    Signature du locataire]]></column>
+                <where>name = 'Bail mobilité — meublé, 1 à 10 mois'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="107-04-parking-garage-html" author="claude">
+        <update tableName="contract_templates">
+            <column name="content"><![CDATA[<p class="contract-lead">Contrat de location d'un emplacement de stationnement.<br/>Contrat de droit commun régi par les articles 1713 et suivants du Code civil (la loi du 6 juillet 1989 ne s'applique pas à un emplacement loué indépendamment d'un logement).</p>
+
+<h2>I. Parties</h2>
+<p><strong>Bailleur :</strong> {{owner.fullName}} — {{owner.email}} — {{owner.phone}}</p>
+<p><strong>Locataire :</strong> {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}</p>
+
+<h2>II. Objet</h2>
+<table>
+<tr><th style="width:38%">Emplacement</th><td><em>[place extérieure / place en sous-sol / box fermé / garage]</em> n° <em>[à compléter]</em>, situé {{property.address.full}}</td></tr>
+<tr><th>Accès</th><td><em>[badge, télécommande, clé — nombre remis à compléter]</em></td></tr>
+</table>
+<p>Usage exclusif de stationnement d'un véhicule ; tout autre usage (stockage de matières dangereuses, activité) est interdit.</p>
+
+<h2>III. Durée</h2>
+<p>Prise d'effet le {{rental.startDate}}. Durée : <em>[un an renouvelable par tacite reconduction / durée déterminée jusqu'au {{rental.endDate}}]</em>. Chaque partie peut y mettre fin par lettre recommandée avec un préavis de <em>[un mois]</em>.</p>
+
+<h2>IV. Loyer et charges</h2>
+<table>
+<tr><th style="width:38%">Loyer mensuel</th><td><strong>{{rental.monthlyRent}}</strong>, charges <em>[comprises / en sus : {{rental.charges}}]</em>, payable le {{rental.paymentDay}} de chaque mois.</td></tr>
+<tr><th>Total mensuel</th><td><strong>{{rental.totalMonthly}}</strong></td></tr>
+<tr><th>Révision annuelle</th><td><em>[selon l'indice de référence des loyers / selon l'ICC / non révisable — à compléter]</em></td></tr>
+<tr><th>Dépôt de garantie</th><td><strong>{{rental.depositAmount}}</strong>, restitué dans le mois suivant la restitution des accès, déduction faite des sommes dues.</td></tr>
+</table>
+
+<h2>V. Obligations</h2>
+<ul>
+<li>Le locataire utilise l'emplacement en bon père de famille, respecte le règlement de copropriété, n'effectue aucune réparation mécanique sur place, n'entrepose rien et assure sa responsabilité civile.</li>
+<li>Le bailleur garantit l'accès et la jouissance paisible ; il n'est pas responsable des vols ou dommages causés au véhicule.</li>
+<li>Toute cession ou sous-location est interdite sans accord écrit du bailleur.</li>
+</ul>
+
+<h2>VI. Résiliation</h2>
+<p>À défaut de paiement d'un terme un mois après mise en demeure demeurée infructueuse, le contrat est résilié de plein droit.</p>
+
+<p class="contract-place">Fait à {{property.address.city}}, le {{today}}, en deux exemplaires.</p>
+
+<table class="signatures">
+<tr>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du bailleur</strong></td>
+<td style="border:none;width:50%;text-align:center;padding-top:14px;"><strong>Signature du locataire</strong></td>
+</tr>
+</table>]]></column>
+            <where>name = 'Contrat de location de parking / garage / box'</where>
+        </update>
+        <rollback>
+            <update tableName="contract_templates">
+                <column name="content"><![CDATA[CONTRAT DE LOCATION D'UN EMPLACEMENT DE STATIONNEMENT
+
+Contrat de droit commun régi par les articles 1713 et suivants du Code civil (la loi du 6 juillet 1989 ne s'applique pas à un emplacement loué indépendamment d'un logement).
+
+I. PARTIES
+
+Bailleur : {{owner.fullName}} — {{owner.email}} — {{owner.phone}}
+Locataire : {{tenant.fullName}} — {{tenant.email}} — {{tenant.phone}}
+
+II. OBJET
+
+Emplacement : [place extérieure / place en sous-sol / box fermé / garage] n° [à compléter], situé {{property.address.full}}.
+Accès : [badge, télécommande, clé — nombre remis à compléter]. Usage exclusif de stationnement d'un véhicule ; tout autre usage (stockage de matières dangereuses, activité) est interdit.
+
+III. DURÉE
+
+Prise d'effet le {{rental.startDate}}. Durée : [un an renouvelable par tacite reconduction / durée déterminée jusqu'au {{rental.endDate}}]. Chaque partie peut y mettre fin par lettre recommandée avec un préavis de [un mois].
+
+IV. LOYER ET CHARGES
+
+Loyer mensuel : {{rental.monthlyRent}}, charges [comprises / en sus : {{rental.charges}}], payable le {{rental.paymentDay}} de chaque mois. Total mensuel : {{rental.totalMonthly}}.
+Révision annuelle : [selon l'indice de référence des loyers / selon l'ICC / non révisable — à compléter].
+Dépôt de garantie : {{rental.depositAmount}}, restitué dans le mois suivant la restitution des accès, déduction faite des sommes dues.
+
+V. OBLIGATIONS
+
+Le locataire utilise l'emplacement en bon père de famille, respecte le règlement de copropriété, n'effectue aucune réparation mécanique sur place, n'entrepose rien et assure sa responsabilité civile. Le bailleur garantit l'accès et la jouissance paisible ; il n'est pas responsable des vols ou dommages causés au véhicule.
+Toute cession ou sous-location est interdite sans accord écrit du bailleur.
+
+VI. RÉSILIATION
+
+À défaut de paiement d'un terme un mois après mise en demeure demeurée infructueuse, le contrat est résilié de plein droit.
+
+Fait à {{property.address.city}}, le {{today}}, en deux exemplaires.
+
+Signature du bailleur                    Signature du locataire]]></column>
+                <where>name = 'Contrat de location de parking / garage / box'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

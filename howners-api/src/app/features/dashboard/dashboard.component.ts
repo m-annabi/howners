@@ -10,6 +10,8 @@ import { ContractService } from '../../core/services/contract.service';
 import { ApplicationService } from '../../core/services/application.service';
 import { WidgetPreferenceService } from '../../core/services/widget-preference.service';
 import { OnboardingService, OnboardingStatus } from '../../core/services/onboarding.service';
+import { EtatDesLieuxService } from '../../core/services/etat-des-lieux.service';
+import { EtatDesLieuxType } from '../../core/models/etat-des-lieux.model';
 import { AnalyticsService, AnalyticsSummary } from '../../core/services/analytics.service';
 import { ExportService } from '../../core/services/export.service';
 import { User } from '../../core/models/user.model';
@@ -24,6 +26,7 @@ interface ActionItems {
   expiringContracts: number;
   pendingApplications: number;
   awaitingSignatures: number;
+  missingEntryEdls: number;
 }
 
 @Component({
@@ -76,7 +79,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get totalActionCount(): number {
     if (!this.actionItems) return 0;
     return this.actionItems.latePayments + this.actionItems.expiringContracts
-      + this.actionItems.pendingApplications + this.actionItems.awaitingSignatures;
+      + this.actionItems.pendingApplications + this.actionItems.awaitingSignatures
+      + this.actionItems.missingEntryEdls;
   }
 
   get todayLabel(): string {
@@ -263,6 +267,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private paymentService: PaymentService,
     private contractService: ContractService,
     private applicationService: ApplicationService,
+    private etatDesLieuxService: EtatDesLieuxService,
     private widgetPreferenceService: WidgetPreferenceService,
     private analyticsServiceFe: AnalyticsService,
     private exportService: ExportService,
@@ -325,9 +330,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     forkJoin({
       payments: this.paymentService.getAll().pipe(catchError(() => of([]))),
       contracts: this.contractService.getMyContracts().pipe(catchError(() => of([]))),
-      applications: this.applicationService.getReceivedApplications().pipe(catchError(() => of([])))
+      applications: this.applicationService.getReceivedApplications().pipe(catchError(() => of([]))),
+      edls: this.etatDesLieuxService.getMyEdls().pipe(catchError(() => of([])))
     }).pipe(
-      map(({ payments, contracts, applications }) => ({
+      map(({ payments, contracts, applications, edls }) => ({
         latePayments: payments.filter(p =>
           p.status === PaymentStatus.LATE ||
           (p.status === PaymentStatus.PENDING && p.dueDate && new Date(p.dueDate) < today)
@@ -343,6 +349,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
         pendingApplications: applications.filter(a =>
           a.status === ApplicationStatus.SUBMITTED || a.status === ApplicationStatus.UNDER_REVIEW
         ).length,
+        // Baux signés/actifs sans état des lieux d'entrée (dédupliqué par bail : un bail
+        // peut porter plusieurs contrats successifs).
+        missingEntryEdls: (() => {
+          const entryEdlRentals = new Set(
+            edls.filter(e => e.type === EtatDesLieuxType.ENTREE).map(e => e.rentalId));
+          const signedRentals = new Set(
+            contracts
+              .filter(c => c.status === ContractStatus.SIGNED || c.status === ContractStatus.ACTIVE)
+              .map(c => c.rentalId));
+          return [...signedRentals].filter(id => id && !entryEdlRentals.has(id)).length;
+        })(),
       }))
     ).subscribe(items => { this.actionItems = items; });
   }
@@ -385,4 +402,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
   goToExpiringContracts(): void { this.router.navigate(['/contracts'], { queryParams: { filter: 'expiring' } }); }
   goToAwaitingSignatures(): void { this.router.navigate(['/contracts'], { queryParams: { filter: 'sent' } }); }
   goToPendingApplications(): void { this.router.navigate(['/applications'], { queryParams: { filter: 'pending' } }); }
+  goToMissingEdls(): void { this.router.navigate(['/inventory']); }
 }

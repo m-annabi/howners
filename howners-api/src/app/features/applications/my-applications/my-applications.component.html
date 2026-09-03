@@ -99,7 +99,7 @@
           </div>
           <div class="hw-text-sm mt-1" *ngIf="!app.canReapply">
             Pour candidater à nouveau, complétez ou mettez à jour votre
-            <a routerLink="/tenant/dossier">dossier locataire</a>.
+            <a [routerLink]="['/tenant/dossier']" [queryParams]="{ listingId: app.listingId }">dossier locataire</a>.
           </div>
           <a *ngIf="app.canReapply" class="hw-btn hw-btn--sm hw-btn--primary mt-2"
              [routerLink]="['/applications/new']" [queryParams]="{ listingId: app.listingId }">
@@ -170,7 +170,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let app of applications">
+        <ng-container *ngFor="let app of applications">
+        <tr>
           <td data-label="Annonce">
             <a [routerLink]="['/listings', app.listingId]" class="apps-table__title">{{ app.listingTitle }}</a>
           </td>
@@ -190,7 +191,7 @@
             <div *ngIf="app.status === 'REJECTED'" class="hw-text-sm mt-1">
               <div *ngIf="app.notes" class="hw-text-muted">motif : {{ app.notes }}</div>
               <div *ngIf="!app.canReapply" class="hw-text-muted">
-                Pour candidater à nouveau, complétez ou mettez à jour votre <a routerLink="/tenant/dossier">dossier locataire</a>.
+                Pour candidater à nouveau, complétez ou mettez à jour votre <a [routerLink]="['/tenant/dossier']" [queryParams]="{ listingId: app.listingId }">dossier locataire</a>.
               </div>
               <a *ngIf="app.canReapply" class="hw-btn hw-btn--sm hw-btn--primary mt-1"
                  [routerLink]="['/applications/new']" [queryParams]="{ listingId: app.listingId }">
@@ -209,6 +210,35 @@
             </div>
           </td>
         </tr>
+        <!-- Suivi du dossier : timeline d'avancement + action à faire -->
+        <tr class="apps-timeline-row">
+          <td colspan="7">
+            <div class="apps-timeline">
+              <div class="apps-timeline__steps">
+                <ng-container *ngFor="let step of timelineFor(app); let last = last">
+                  <div class="apps-timeline__step" [ngClass]="'apps-timeline__step--' + step.state">
+                    <span class="apps-timeline__dot">
+                      <i class="bi"
+                         [ngClass]="step.state === 'done' ? 'bi-check' : (step.state === 'ko' ? 'bi-x' : 'bi-circle-fill')"></i>
+                    </span>
+                    <span class="apps-timeline__label">{{ step.label }}</span>
+                  </div>
+                  <span *ngIf="!last" class="apps-timeline__bar"></span>
+                </ng-container>
+              </div>
+              <a *ngIf="mustSignContract(app)" class="hw-btn hw-btn--sm hw-btn--primary"
+                 [routerLink]="['/contracts', app.contractId]">
+                <i class="bi bi-pen"></i> Signer mon contrat
+              </a>
+              <a *ngIf="app.contractId && (app.contractStatus === 'SIGNED' || app.contractStatus === 'ACTIVE')"
+                 class="hw-btn hw-btn--sm hw-btn--outline"
+                 [routerLink]="['/contracts', app.contractId]">
+                Voir mon contrat
+              </a>
+            </div>
+          </td>
+        </tr>
+        </ng-container>
       </tbody>
     </table>
   </div>

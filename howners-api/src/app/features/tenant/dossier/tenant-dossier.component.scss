@@ -82,6 +82,10 @@
 
     i { flex-shrink: 0; margin-top: 2px; }
   }
+
+  &__resume {
+    margin-top: var(--hw-space-3);
+  }
 }
 
 // ── Liste des pièces ────────────────────────────────────────────────────────

@@ -57,6 +57,7 @@ public class ApplicationService {
     private final DocumentRepository documentRepository;
     private final DocumentService documentService;
     private final RentalRepository rentalRepository;
+    private final com.howners.gestion.repository.ContractRepository contractRepository;
     private final EmailService emailService;
     private final AuditService auditService;
     private final NotificationService notificationService;
@@ -269,6 +270,23 @@ public class ApplicationService {
         // Send notification email
         sendReviewNotificationEmail(application, reviewer);
 
+        // Notification in-app au candidat (best-effort) : il suit l'état de son dossier depuis son espace.
+        try {
+            boolean accepted = request.status() == ApplicationStatus.ACCEPTED;
+            notificationService.create(
+                    application.getApplicant().getId(),
+                    accepted ? NotificationType.APPLICATION_ACCEPTED : NotificationType.APPLICATION_REJECTED,
+                    accepted ? "Candidature acceptée" : "Candidature refusée",
+                    accepted
+                            ? "Votre candidature pour \"" + application.getListing().getTitle()
+                                    + "\" a été acceptée. Le contrat de location vous sera envoyé pour signature."
+                            : "Votre candidature pour \"" + application.getListing().getTitle() + "\" a été refusée.",
+                    "/applications"
+            );
+        } catch (Exception e) {
+            log.error("Échec de la notification de revue pour la candidature {}", id, e);
+        }
+
         // Audit log
         auditService.logAction(AuditAction.UPDATE, "Application", id);
 
@@ -396,6 +414,31 @@ public class ApplicationService {
 
         List<DocumentResponse> documents = new ArrayList<>(merged.values())
                 .stream().map(documentService::toResponse).toList();
-        return ApplicationResponse.from(application, documents, canReapply(application));
+
+        // Candidature acceptée : exposer le bail créé et le contrat lié pour que le candidat
+        // suive l'étape suivante (contrat à signer / signé) depuis « Mes candidatures ».
+        UUID rentalId = null;
+        UUID contractId = null;
+        String contractStatus = null;
+        if (application.getStatus() == ApplicationStatus.ACCEPTED) {
+            Rental rental = rentalRepository.findByApplicationId(application.getId()).orElse(null);
+            if (rental != null) {
+                rentalId = rental.getId();
+                // Le contrat pertinent est le plus récent hors clôturés/annulés (une location
+                // EXITING peut encore porter le contrat de l'ancien bail).
+                var contract = contractRepository.findByRentalId(rental.getId()).stream()
+                        .filter(c -> c.getStatus() != com.howners.gestion.domain.contract.ContractStatus.TERMINATED
+                                && c.getStatus() != com.howners.gestion.domain.contract.ContractStatus.CANCELLED)
+                        .max(java.util.Comparator.comparing(com.howners.gestion.domain.contract.Contract::getCreatedAt,
+                                java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder())))
+                        .orElse(null);
+                if (contract != null) {
+                    contractId = contract.getId();
+                    contractStatus = contract.getStatus().name();
+                }
+            }
+        }
+        return ApplicationResponse.from(application, documents, canReapply(application),
+                rentalId, contractId, contractStatus);
     }
 }

@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ApplicationService } from '../../../core/services/application.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { TenantActionsService } from '../../../core/services/tenant-actions.service';
 import {
   Application,
   ApplicationStatus,
@@ -20,6 +21,12 @@ import { DocumentType } from '../../../core/models/document.model';
 interface RequiredDocumentType {
   type: DocumentType;
   label: string;
+}
+
+/** Étape de la timeline de suivi d'une candidature (onglet locataire). */
+interface TimelineStep {
+  label: string;
+  state: 'done' | 'current' | 'todo' | 'ko';
 }
 
 @Component({
@@ -63,7 +70,8 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
     private documentService: DocumentService,
     private router: Router,
     private notificationService: NotificationService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private tenantActionsService: TenantActionsService
   ) {}
 
   ngOnInit(): void {
@@ -112,6 +120,7 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
         next: () => {
           this.notificationService.success('Candidature retirée');
           this.loadApplications();
+          this.tenantActionsService.refresh();
         },
         error: (err) => {
           this.error = err.error?.message || 'Erreur lors du retrait de la candidature';
@@ -122,6 +131,41 @@ export class MyApplicationsComponent implements OnInit, OnDestroy {
 
   canWithdraw(app: Application): boolean {
     return app.status === 'SUBMITTED' || app.status === 'UNDER_REVIEW';
+  }
+
+  /**
+   * Timeline de suivi (onglet locataire) : les étapes contrat sont dérivées du statut du
+   * contrat lié (exposé par le back après acceptation), sans nouvel état de candidature.
+   */
+  timelineFor(app: Application): TimelineStep[] {
+    if (app.status === 'WITHDRAWN') {
+      return [
+        { label: 'Envoyée', state: 'done' },
+        { label: 'Retirée', state: 'ko' }
+      ];
+    }
+    if (app.status === 'REJECTED') {
+      return [
+        { label: 'Envoyée', state: 'done' },
+        { label: 'Examinée', state: 'done' },
+        { label: 'Refusée', state: 'ko' }
+      ];
+    }
+    const accepted = app.status === 'ACCEPTED';
+    const contractSigned = app.contractStatus === 'SIGNED' || app.contractStatus === 'ACTIVE';
+    const contractSent = app.contractStatus === 'SENT';
+    return [
+      { label: 'Envoyée', state: 'done' },
+      { label: 'En examen', state: accepted ? 'done' : 'current' },
+      { label: 'Acceptée', state: accepted ? 'done' : 'todo' },
+      { label: 'Contrat à signer', state: contractSigned ? 'done' : (contractSent ? 'current' : 'todo') },
+      { label: 'Contrat signé', state: contractSigned ? 'done' : 'todo' }
+    ];
+  }
+
+  /** CTA « Signer mon contrat » : contrat envoyé, en attente de la signature du locataire. */
+  mustSignContract(app: Application): boolean {
+    return !!app.contractId && app.contractStatus === 'SENT';
   }
 
   // --- Owner actions ---

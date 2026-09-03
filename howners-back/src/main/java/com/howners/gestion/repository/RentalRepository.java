@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -31,6 +32,8 @@ public interface RentalRepository extends JpaRepository<Rental, UUID> {
     Page<Rental> findByOwnerId(@Param("ownerId") UUID ownerId, Pageable pageable);
 
     boolean existsByApplicationId(UUID applicationId);
+
+    Optional<Rental> findByApplicationId(UUID applicationId);
 
     @Query("SELECT r FROM Rental r WHERE r.property.owner.id = :ownerId AND r.tenant.id = :tenantId")
     List<Rental> findByOwnerIdAndTenantId(@Param("ownerId") UUID ownerId, @Param("tenantId") UUID tenantId);

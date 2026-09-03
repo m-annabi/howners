@@ -165,9 +165,12 @@ public class PdfService {
         for (String block : normalized.split("\n[ \t]*\n")) {
             String trimmed = block.strip();
             if (trimmed.isEmpty()) continue;
-            // Filet de sécurité pour du texte brut resté hors des templates HTML :
-            // une ligne isolée « ARTICLE X - … » devient un vrai titre de section.
-            if (!trimmed.contains("\n") && trimmed.matches("(?i)^article\\b.*")) {
+            // Filet de sécurité pour du texte brut resté hors des templates HTML
+            // (templates personnalisés pré-098, duplications d'un modèle texte) : une ligne
+            // isolée qui ressemble à un titre de section devient un vrai <h2> —
+            // « ARTICLE X - … », « IV. CONDITIONS FINANCIÈRES » (numérotation romaine du
+            // décret 2015-587) ou une ligne courte entièrement en MAJUSCULES.
+            if (!trimmed.contains("\n") && isPlainTextHeading(trimmed)) {
                 out.append("<h2>").append(escapeHtml(trimmed)).append("</h2>");
                 continue;
             }
@@ -179,6 +182,19 @@ public class PdfService {
             out.append("<p>").append(escaped).append("</p>");
         }
         return out.toString();
+    }
+
+    /** Une ligne isolée de texte brut qui doit être promue en titre de section. */
+    private boolean isPlainTextHeading(String line) {
+        if (line.matches("(?i)^article\\b.*")) return true;
+        // Numérotation romaine du décret 2015-587 : « I. DÉSIGNATION DES PARTIES », « IV. … »
+        if (line.matches("^[IVXLC]+\\.\\s+.+") && line.length() <= 120) return true;
+        // Ligne courte entièrement en MAJUSCULES (≥ 4 lettres, aucune minuscule) : titre probable.
+        if (line.length() <= 120 && !line.matches(".*\\p{Ll}.*")
+                && line.chars().filter(Character::isLetter).count() >= 4) {
+            return true;
+        }
+        return false;
     }
 
     /**

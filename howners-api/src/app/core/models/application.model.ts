@@ -22,6 +22,10 @@ export interface Application {
   documents: Document[];
   /** Après un refus : nouvelle candidature possible (annonce publiée + dossier mis à jour). */
   canReapply: boolean;
+  /** Renseignés après acceptation : bail et contrat liés, pour la timeline « contrat à signer / signé ». */
+  rentalId?: string | null;
+  contractId?: string | null;
+  contractStatus?: string | null;
 }
 
 export enum ApplicationStatus {

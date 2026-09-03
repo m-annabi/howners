@@ -154,3 +154,81 @@
     display: inline;
   }
 }
+
+// ── Timeline de suivi (onglet locataire) ────────────────────────────────────
+.apps-timeline-row td {
+  padding-top: 0;
+  border-top: none;
+}
+
+.apps-timeline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--hw-space-3);
+  padding: var(--hw-space-2) 0 var(--hw-space-3);
+
+  &__steps {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--hw-space-1);
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    background: var(--hw-gray-100);
+    color: var(--hw-gray-400);
+
+    i.bi-circle-fill { font-size: 0.35rem; }
+  }
+
+  &__label {
+    font-size: var(--hw-fs-sm);
+    color: var(--hw-gray-500);
+    white-space: nowrap;
+  }
+
+  &__bar {
+    width: 22px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--hw-gray-200);
+    flex-shrink: 0;
+  }
+
+  &__step--done {
+    .apps-timeline__dot { background: var(--hw-success-50, #ecfdf5); color: var(--hw-success, #059669); }
+    .apps-timeline__label { color: var(--hw-gray-700); }
+  }
+
+  &__step--current {
+    .apps-timeline__dot { background: var(--hw-primary-50); color: var(--hw-primary-600); }
+    .apps-timeline__label { color: var(--hw-primary-600); font-weight: var(--hw-fw-semibold); }
+  }
+
+  &__step--ko {
+    .apps-timeline__dot { background: var(--hw-danger-50, #fef2f2); color: var(--hw-danger, #dc2626); }
+    .apps-timeline__label { color: var(--hw-danger, #dc2626); }
+  }
+}
+
+// La ligne timeline suit la fiche en vue mobile empilée
+@media (max-width: 768px) {
+  .apps-timeline-row td::before { content: none; }
+}

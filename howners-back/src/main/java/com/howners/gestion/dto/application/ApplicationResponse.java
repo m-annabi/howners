@@ -30,7 +30,12 @@ public record ApplicationResponse(
         LocalDateTime createdAt,
         List<DocumentResponse> documents,
         /** Après un refus : le candidat peut-il candidater à nouveau (annonce publiée + dossier mis à jour) ? */
-        boolean canReapply
+        boolean canReapply,
+        /** Renseignés après acceptation : bail créé + contrat lié, pour le suivi côté candidat
+            (timeline « contrat à signer / signé »). Nuls tant que la candidature n'est pas acceptée. */
+        UUID rentalId,
+        UUID contractId,
+        String contractStatus
 ) {
     public static ApplicationResponse from(Application a) {
         return from(a, List.of());
@@ -41,6 +46,11 @@ public record ApplicationResponse(
     }
 
     public static ApplicationResponse from(Application a, List<DocumentResponse> documents, boolean canReapply) {
+        return from(a, documents, canReapply, null, null, null);
+    }
+
+    public static ApplicationResponse from(Application a, List<DocumentResponse> documents, boolean canReapply,
+                                           UUID rentalId, UUID contractId, String contractStatus) {
         return new ApplicationResponse(
                 a.getId(),
                 a.getListing().getId(),
@@ -60,7 +70,10 @@ public record ApplicationResponse(
                 a.getReviewedAt(),
                 a.getCreatedAt(),
                 documents,
-                canReapply
+                canReapply,
+                rentalId,
+                contractId,
+                contractStatus
         );
     }
 }

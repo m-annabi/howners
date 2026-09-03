@@ -7,6 +7,9 @@ import { takeUntil, finalize } from 'rxjs/operators';
 import { ContractService } from '../../../core/services/contract.service';
 import { SignatureService } from '../../../core/services/signature.service';
 import { EsignatureService } from '../../../core/services/esignature.service';
+import { EtatDesLieuxService } from '../../../core/services/etat-des-lieux.service';
+import { TenantActionsService } from '../../../core/services/tenant-actions.service';
+import { EtatDesLieux, EtatDesLieuxType } from '../../../core/models/etat-des-lieux.model';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import {
@@ -58,6 +61,10 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   resendingEmail = false;
   cancellingSignature = false;
 
+  // Enchaînement post-signature : état des lieux d'entrée du bail
+  edls: EtatDesLieux[] = [];
+  edlChecked = false;
+
   // Enums et constantes pour le template
   ContractStatus = ContractStatus;
   SignatureRequestStatus = SignatureRequestStatus;
@@ -72,6 +79,8 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
     private contractService: ContractService,
     private signatureService: SignatureService,
     private esignatureService: EsignatureService,
+    private etatDesLieuxService: EtatDesLieuxService,
+    private tenantActionsService: TenantActionsService,
     private authService: AuthService,
     private notificationService: NotificationService,
     private confirmDialog: ConfirmDialogService,
@@ -100,12 +109,33 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
       next: (contract) => {
         this.contract = contract;
         this.loading = false;
+        this.loadEdls();
       },
       error: () => {
         this.error = 'Erreur lors du chargement du contrat';
         this.loading = false;
       }
     });
+  }
+
+  /** Charge les états des lieux du bail (pour le CTA « prochaine étape » après signature). */
+  private loadEdls(): void {
+    if (!this.contract?.rentalId) return;
+    const status = this.contract.status;
+    if (status !== ContractStatus.SIGNED && status !== ContractStatus.ACTIVE) return;
+    this.etatDesLieuxService.getByRental(this.contract.rentalId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (edls) => { this.edls = edls; this.edlChecked = true; },
+      error: () => { this.edls = []; this.edlChecked = true; }
+    });
+  }
+
+  get entryEdl(): EtatDesLieux | undefined {
+    return this.edls.find(e => e.type === EtatDesLieuxType.ENTREE);
+  }
+
+  /** Contrat signé/actif mais aucun état des lieux d'entrée : afficher la prochaine étape. */
+  get showEdlCta(): boolean {
+    return this.edlChecked && !this.entryEdl;
   }
 
   loadVersions(): void {
@@ -335,6 +365,8 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
         // Recharger le contrat et les signatures
         this.loadContract(this.contract!.id);
         this.loadSignatures(this.contract!.id);
+        // Le contrat n'est plus « à signer » : rafraîchir les badges du menu locataire.
+        this.tenantActionsService.refresh();
       },
       error: (err) => {
         this.notificationService.error(err.error?.message || 'Erreur lors de la signature du contrat');

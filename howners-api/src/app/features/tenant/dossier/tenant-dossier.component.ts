@@ -1,6 +1,7 @@
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { downloadBlob } from '../../../shared/utils/file.utils';
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DocumentService } from '../../../core/services/document.service';
 import { Document, DocumentType } from '../../../core/models/document.model';
 
@@ -65,11 +66,27 @@ export class TenantDossierComponent implements OnInit {
   loading = true;
   error: string | null = null;
   uploadError: string | null = null;
+  // Annonce d'origine quand l'utilisateur vient du formulaire de candidature :
+  // permet de proposer « Reprendre ma candidature » une fois le dossier complet.
+  listingId: string | null = null;
 
-  constructor(private documentService: DocumentService, private confirmDialog: ConfirmDialogService) {}
+  constructor(
+    private documentService: DocumentService,
+    private confirmDialog: ConfirmDialogService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
+    this.listingId = this.route.snapshot.queryParamMap.get('listingId');
     this.loadDocuments();
+  }
+
+  /** Retour au formulaire de candidature de l'annonce d'origine. */
+  resumeApplication(): void {
+    if (this.listingId) {
+      this.router.navigate(['/applications/new'], { queryParams: { listingId: this.listingId } });
+    }
   }
 
   private loadDocuments(): void {
