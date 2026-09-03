@@ -13,9 +13,12 @@
          mois doit rester possible puis autoriser une re-création manuelle (même logique que la
          garde existsActiveRentPaymentInMonth). -->
     <changeSet id="108-unique-rent-payment-per-month" author="claude">
+        <!-- Cast ::timestamp indispensable : sur une colonne DATE, date_trunc se résout vers la
+             variante timestamptz (type « préféré »), qui est STABLE et non IMMUTABLE — Postgres
+             refuse alors l'expression d'index. La variante timestamp est IMMUTABLE. -->
         <sql><![CDATA[
-            CREATE UNIQUE INDEX uniq_active_rent_payment_per_month
-                ON payments (rental_id, date_trunc('month', due_date))
+            CREATE UNIQUE INDEX IF NOT EXISTS uniq_active_rent_payment_per_month
+                ON payments (rental_id, date_trunc('month', due_date::timestamp))
                 WHERE payment_type = 'RENT'
                   AND due_date IS NOT NULL
                   AND status NOT IN ('CANCELLED', 'REFUNDED', 'FAILED');
