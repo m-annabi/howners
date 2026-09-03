@@ -11,6 +11,7 @@ import com.howners.gestion.repository.ContractRepository;
 import com.howners.gestion.repository.EtatDesLieuxRepository;
 import com.howners.gestion.repository.RentalRepository;
 import com.howners.gestion.service.notification.NotificationDispatcher;
+import com.howners.gestion.service.payment.RentScheduleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -37,6 +38,7 @@ public class ContractActivationService {
     private final RentalRepository rentalRepository;
     private final NotificationDispatcher notificationDispatcher;
     private final EtatDesLieuxRepository etatDesLieuxRepository;
+    private final RentScheduleService rentScheduleService;
 
     /** À appeler dès qu'un contrat passe SIGNED : active tout de suite si la date de début est atteinte. */
     @Transactional
@@ -108,6 +110,15 @@ public class ContractActivationService {
         log.info("Contract {} activated", contract.getContractNumber());
 
         if (rental == null) return;
+
+        // Première échéance de loyer générée dès l'activation (proratisée si entrée en cours
+        // de mois) — l'e-mail « bail actif » promet des échéances disponibles : c'est vrai désormais.
+        try {
+            rentScheduleService.ensureRentPayment(rental, java.time.YearMonth.now());
+        } catch (Exception e) {
+            log.error("Échec de génération du premier loyer pour le bail {}: {}", rental.getId(), e.getMessage(), e);
+        }
+
         String property = rental.getProperty() != null ? rental.getProperty().getName() : "";
         String startLabel = rental.getStartDate() != null ? " à compter du " + rental.getStartDate().format(FR_DATE) : "";
         User owner = rental.getProperty() != null ? rental.getProperty().getOwner() : null;

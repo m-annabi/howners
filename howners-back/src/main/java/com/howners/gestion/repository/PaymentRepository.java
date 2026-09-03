@@ -38,6 +38,14 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
                                            @Param("monthStart") LocalDate monthStart,
                                            @Param("nextMonthStart") LocalDate nextMonthStart);
 
+    // Génération automatique : TOUT statut compte (y compris CANCELLED) — si le bailleur a annulé
+    // l'échéance du mois, le planificateur ne doit pas la recréer le lendemain.
+    @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.rental.id = :rentalId AND p.paymentType = 'RENT' " +
+           "AND p.dueDate >= :monthStart AND p.dueDate < :nextMonthStart")
+    boolean existsAnyRentPaymentInMonth(@Param("rentalId") UUID rentalId,
+                                        @Param("monthStart") LocalDate monthStart,
+                                        @Param("nextMonthStart") LocalDate nextMonthStart);
+
     Optional<Payment> findByStripePaymentIntentId(String stripePaymentIntentId);
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.rental.property.owner.id = :ownerId AND p.status = 'PAID' AND p.paidAt >= :from AND p.paidAt < :to")

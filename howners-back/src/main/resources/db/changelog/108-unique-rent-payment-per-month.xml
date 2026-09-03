@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Anti-doublon des loyers : avec la génération automatique (RentScheduleService) ET la
+         création manuelle (PaymentService.createPayment), une course entre les deux pourrait en
+         théorie passer les deux gardes applicatives (check-then-insert). Cet index unique partiel
+         rend le doublon physiquement impossible : UN seul paiement RENT « actif » par bail et par
+         mois d'échéance. Les statuts CANCELLED/REFUNDED/FAILED sont exclus : annuler l'échéance du
+         mois doit rester possible puis autoriser une re-création manuelle (même logique que la
+         garde existsActiveRentPaymentInMonth). -->
+    <changeSet id="108-unique-rent-payment-per-month" author="claude">
+        <sql><![CDATA[
+            CREATE UNIQUE INDEX uniq_active_rent_payment_per_month
+                ON payments (rental_id, date_trunc('month', due_date))
+                WHERE payment_type = 'RENT'
+                  AND due_date IS NOT NULL
+                  AND status NOT IN ('CANCELLED', 'REFUNDED', 'FAILED');
+        ]]></sql>
+        <rollback>
+            <sql>DROP INDEX IF EXISTS uniq_active_rent_payment_per_month;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
