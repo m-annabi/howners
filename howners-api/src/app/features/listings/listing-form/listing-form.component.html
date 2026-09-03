@@ -107,16 +107,17 @@
         </p>
         <div class="row g-2">
           <div *ngFor="let amenity of predefinedAmenities" class="col-6">
-            <div class="form-check" (click)="toggleAmenity(amenity.key)" style="cursor: pointer;">
+            <!-- Label englobant + (change) : le clic sur le libellé coche la case sans double toggle. -->
+            <label class="form-check" style="cursor: pointer;">
               <input class="form-check-input" type="checkbox"
                      [checked]="selectedAmenities.has(amenity.key)"
-                     [id]="'amenity-' + amenity.key">
-              <label class="form-check-label" [for]="'amenity-' + amenity.key" style="cursor: pointer;">
+                     (change)="toggleAmenity(amenity.key)">
+              <span class="form-check-label" style="cursor: pointer;">
                 <i class="bi {{ amenity.icon }} me-1"></i>{{ amenity.label }}
                 <span *ngIf="isAutoAmenity(amenity.key)" class="hw-badge hw-badge--neutral ms-1"
                       title="Renseigné sur la fiche du bien">du bien</span>
-              </label>
-            </div>
+              </span>
+            </label>
           </div>
         </div>
       </div>
@@ -126,14 +127,14 @@
         <h5 class="form-section-title"><i class="bi bi-exclamation-triangle me-2"></i>Conditions</h5>
         <div class="row g-2">
           <div *ngFor="let req of predefinedRequirements" class="col-12">
-            <div class="form-check" (click)="toggleRequirement(req.key)" style="cursor: pointer;">
+            <label class="form-check" style="cursor: pointer;">
               <input class="form-check-input" type="checkbox"
                      [checked]="selectedRequirements.has(req.key)"
-                     [id]="'req-' + req.key">
-              <label class="form-check-label" [for]="'req-' + req.key" style="cursor: pointer;">
+                     (change)="toggleRequirement(req.key)">
+              <span class="form-check-label" style="cursor: pointer;">
                 <i class="bi {{ req.icon }} me-1"></i>{{ req.label }}
-              </label>
-            </div>
+              </span>
+            </label>
           </div>
         </div>
       </div>

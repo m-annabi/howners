@@ -305,18 +305,27 @@ export class ContractDetailComponent implements OnInit, OnDestroy {
   // === New Signature Dialog Methods ===
 
   /**
-   * Ouvre le dialogue de signature avec le contenu du contrat
+   * Ouvre le dialogue de signature avec le VRAI contenu du contrat (version courante),
+   * pour que ce que le locataire lit soit exactement le document qu'il signe.
    */
   openSignDialog(): void {
     if (!this.contract) return;
 
-    // Préparer le contenu du contrat pour affichage
-    this.contractContent = this.prepareContractContent();
-    this.showSignDialog = true;
+    this.contractService.getCurrentContent(this.contract.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (version) => {
+        this.contractContent = version.content || this.prepareContractContent();
+        this.showSignDialog = true;
+      },
+      error: () => {
+        // Repli : résumé synthétique plutôt que de bloquer la signature.
+        this.contractContent = this.prepareContractContent();
+        this.showSignDialog = true;
+      }
+    });
   }
 
   /**
-   * Prépare le contenu du contrat pour affichage dans le dialogue
+   * Résumé de repli si le contenu réel est indisponible (jamais utilisé en temps normal).
    */
   prepareContractContent(): string {
     if (!this.contract) return '';

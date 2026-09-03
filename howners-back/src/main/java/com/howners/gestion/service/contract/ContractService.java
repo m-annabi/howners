@@ -336,6 +336,32 @@ public class ContractService {
     }
 
     /**
+     * Contenu (HTML rempli) de la VERSION COURANTE du contrat — pour l'aperçu fidèle au moment
+     * de la signature. Accessible au locataire (contrairement à l'historique des versions,
+     * réservé au bailleur : les brouillons successifs ne le regardent pas).
+     */
+    public ContractVersionResponse getCurrentVersionContent(UUID contractId) {
+        UUID currentUserId = AuthService.getCurrentUserId();
+
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new ResourceNotFoundException("Contract", "id", contractId.toString()));
+
+        // Mêmes permissions que le téléchargement du PDF : propriétaire, locataire ou admin.
+        UUID ownerId = contract.getRental().getProperty().getOwner().getId();
+        UUID tenantId = contract.getRental().getTenant() != null ?
+                contract.getRental().getTenant().getId() : null;
+        if (!ownerId.equals(currentUserId) && !currentUserId.equals(tenantId) && !isAdmin(currentUserId)) {
+            throw new ForbiddenException("You are not authorized to view this contract");
+        }
+
+        ContractVersion currentVersion = contractVersionRepository
+                .findByContractIdAndVersion(contract.getId(), contract.getCurrentVersion())
+                .orElseThrow(() -> new ResourceNotFoundException("ContractVersion", "contractId", contractId.toString()));
+
+        return ContractVersionResponse.from(currentVersion, null);
+    }
+
+    /**
      * Télécharge le PDF de la version actuelle d'un contrat
      */
     public byte[] downloadPdf(UUID contractId) throws IOException {

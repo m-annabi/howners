@@ -226,8 +226,14 @@ export class PropertyFormComponent implements OnInit {
       : this.propertyService.createProperty(request);
 
     operation.subscribe({
-      next: () => {
-        this.router.navigate(['/properties']);
+      next: (saved) => {
+        // Après CRÉATION : atterrir sur la fiche du bien, où le bandeau « publiez votre
+        // annonce » guide l'étape suivante. Après édition : retour à la liste.
+        if (this.isEditMode) {
+          this.router.navigate(['/properties']);
+        } else {
+          this.router.navigate(['/properties', saved.id]);
+        }
       },
       error: (err) => {
         this.error = err.error?.message || 'Erreur lors de l\'enregistrement';

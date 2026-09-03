@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EtatDesLieuxService } from '../../../core/services/etat-des-lieux.service';
 import { CreateEtatDesLieuxRequest, EtatDesLieuxType } from '../../../core/models/etat-des-lieux.model';
+import { RentalService } from '../../rentals/rental.service';
+import { Rental } from '../../../core/models/rental.model';
 
 @Component({
   selector: 'app-edl-form',
@@ -9,6 +11,9 @@ import { CreateEtatDesLieuxRequest, EtatDesLieuxType } from '../../../core/model
 })
 export class EdlFormComponent implements OnInit {
   rentalId = '';
+  // Bail concerné, affiché en lecture seule : l'utilisateur voit d'emblée pour quel
+  // bien/locataire il rédige l'état des lieux (pré-sélection depuis la notification ou le contrat).
+  rental: Rental | null = null;
   submitting = false;
   error: string | null = null;
 
@@ -37,12 +42,27 @@ export class EdlFormComponent implements OnInit {
 
   constructor(
     private edlService: EtatDesLieuxService,
+    private rentalService: RentalService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.rentalId = this.route.snapshot.paramMap.get('rentalId') || '';
+    if (!this.rentalId) {
+      // Pas de bail dans l'URL : retour à la liste, qui propose le sélecteur de bail.
+      this.router.navigate(['/inventory']);
+      return;
+    }
+    // Le type peut être imposé par le lien d'origine (?type=SORTIE) ; défaut : ENTREE.
+    const type = this.route.snapshot.queryParamMap.get('type');
+    if (type === 'SORTIE') {
+      this.type = EtatDesLieuxType.SORTIE;
+    }
+    this.rentalService.getRental(this.rentalId).subscribe({
+      next: (rental) => { this.rental = rental; },
+      error: () => { this.rental = null; }
+    });
   }
 
   addRoom(): void {

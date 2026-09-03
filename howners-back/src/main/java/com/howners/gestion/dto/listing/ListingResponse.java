@@ -22,6 +22,9 @@ public record ListingResponse(
         BigDecimal propertySurface,
         Integer propertyBedrooms,
         Boolean propertyFurnished,
+        // Id du bailleur : requis par « Contacter le propriétaire » (ouvre la conversation) et
+        // par la détection isOwner côté fiche annonce.
+        UUID ownerId,
         String ownerName,
         String title,
         String description,
@@ -56,6 +59,7 @@ public record ListingResponse(
                 l.getProperty().getSurfaceArea(),
                 l.getProperty().getBedrooms(),
                 l.getProperty().getIsFurnished(),
+                l.getProperty().getOwner().getId(),
                 l.getProperty().getOwner().getFullName(),
                 l.getTitle(),
                 l.getDescription(),

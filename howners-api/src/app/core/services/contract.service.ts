@@ -67,6 +67,14 @@ export class ContractService {
   }
 
   /**
+   * Contenu (HTML rempli) de la version courante — pour l'aperçu fidèle avant signature.
+   * Accessible au locataire, contrairement à l'historique des versions.
+   */
+  getCurrentContent(id: string): Observable<ContractVersion> {
+    return this.http.get<ContractVersion>(`${this.apiUrl}/${id}/content`);
+  }
+
+  /**
    * Télécharger le PDF du contrat via le backend
    */
   downloadPdf(id: string): Observable<Blob> {

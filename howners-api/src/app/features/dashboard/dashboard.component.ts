@@ -43,6 +43,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = true;
   error: string | null = null;
   actionItems: ActionItems | null = null;
+  private missingEdlRentalIds: string[] = [];
 
   showChecklist = false;
 
@@ -358,7 +359,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
             contracts
               .filter(c => c.status === ContractStatus.SIGNED || c.status === ContractStatus.ACTIVE)
               .map(c => c.rentalId));
-          return [...signedRentals].filter(id => id && !entryEdlRentals.has(id)).length;
+          this.missingEdlRentalIds = [...signedRentals].filter(id => !!id && !entryEdlRentals.has(id));
+          return this.missingEdlRentalIds.length;
         })(),
       }))
     ).subscribe(items => { this.actionItems = items; });
@@ -402,5 +404,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   goToExpiringContracts(): void { this.router.navigate(['/contracts'], { queryParams: { filter: 'expiring' } }); }
   goToAwaitingSignatures(): void { this.router.navigate(['/contracts'], { queryParams: { filter: 'sent' } }); }
   goToPendingApplications(): void { this.router.navigate(['/applications'], { queryParams: { filter: 'pending' } }); }
-  goToMissingEdls(): void { this.router.navigate(['/inventory']); }
+  goToMissingEdls(): void {
+    // Un seul bail concerné → formulaire directement, bail présélectionné ; sinon la liste.
+    if (this.missingEdlRentalIds.length === 1) {
+      this.router.navigate(['/inventory', 'new', this.missingEdlRentalIds[0]]);
+    } else {
+      this.router.navigate(['/inventory']);
+    }
+  }
 }

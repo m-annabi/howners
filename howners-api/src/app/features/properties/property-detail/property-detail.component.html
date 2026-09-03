@@ -12,14 +12,38 @@
         <i class="bi bi-arrow-left"></i> Retour
       </button>
       <div class="detail-actions">
-        <button (click)="publishListing()" class="hw-btn hw-btn--secondary">
+        <!-- L'action « annonce » reflète l'état réel : publier (mise en avant), voir, ou rien si loué. -->
+        <button *ngIf="showPublishCta" (click)="publishListing()" class="hw-btn hw-btn--primary">
           <i class="bi bi-megaphone"></i> Publier une annonce
         </button>
-        <button (click)="editProperty()" class="hw-btn hw-btn--primary">
+        <a *ngIf="publishedListing" [routerLink]="['/listings', publishedListing.id]" class="hw-btn hw-btn--secondary">
+          <i class="bi bi-megaphone"></i> Voir l'annonce
+        </a>
+        <button (click)="editProperty()" class="hw-btn" [ngClass]="showPublishCta ? 'hw-btn--secondary' : 'hw-btn--primary'">
           <i class="bi bi-pencil"></i> Modifier
         </button>
         <button (click)="deleteProperty()" class="hw-btn hw-btn--ghost">Supprimer</button>
       </div>
+    </div>
+
+    <!-- Prochaine étape : bien sans annonce ni locataire → publier -->
+    <div *ngIf="showPublishCta" class="hw-alert hw-alert--info" style="margin-top: var(--hw-space-3)">
+      <i class="bi bi-megaphone"></i>
+      <span style="flex: 1">
+        <strong>Prochaine étape :</strong> publiez une annonce pour trouver un locataire —
+        le formulaire est pré-rempli avec les caractéristiques de ce bien.
+      </span>
+      <button class="hw-btn hw-btn--primary hw-btn--sm" (click)="publishListing()">
+        <i class="bi bi-megaphone"></i> Publier une annonce
+      </button>
+    </div>
+    <!-- Annonce restée en brouillon → la reprendre -->
+    <div *ngIf="draftListing" class="hw-alert hw-alert--warning" style="margin-top: var(--hw-space-3)">
+      <i class="bi bi-pencil-square"></i>
+      <span style="flex: 1">Votre annonce pour ce bien est encore en <strong>brouillon</strong> — elle n'est pas visible des locataires.</span>
+      <a class="hw-btn hw-btn--primary hw-btn--sm" [routerLink]="['/listings', draftListing.id]">
+        Reprendre et publier
+      </a>
     </div>
 
     <div class="detail-content">

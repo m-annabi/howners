@@ -135,4 +135,14 @@ public class ContractController {
         List<ContractVersionResponse> versions = contractService.getContractVersions(id);
         return ResponseEntity.ok(versions);
     }
+
+    /**
+     * GET /api/contracts/{id}/content - Contenu de la version courante (aperçu fidèle à la signature).
+     * Accessible au locataire du bail, contrairement à l'historique des versions.
+     */
+    @GetMapping("/{id}/content")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'TENANT')")
+    public ResponseEntity<ContractVersionResponse> getCurrentContent(@PathVariable UUID id) {
+        return ResponseEntity.ok(contractService.getCurrentVersionContent(id));
+    }
 }

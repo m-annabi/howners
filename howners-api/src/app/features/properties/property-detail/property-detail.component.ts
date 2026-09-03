@@ -7,7 +7,10 @@ import { Property, PROPERTY_TYPE_LABELS, HEATING_TYPE_LABELS, PROPERTY_CONDITION
 import { NotificationService } from '../../../core/services/notification.service';
 import { RentalService } from '../../rentals/rental.service';
 import { Rental, RentalStatus } from '../../../core/models/rental.model';
-import { forkJoin } from 'rxjs';
+import { ListingService } from '../../../core/services/listing.service';
+import { Listing, ListingStatus } from '../../../core/models/listing.model';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-property-detail',
@@ -20,12 +23,15 @@ export class PropertyDetailComponent implements OnInit {
   monthlyRent: number = 0;
   loading = true;
   error: string | null = null;
+  // Annonces de CE bien (hors clôturées) — pilote le bandeau « publiez votre annonce ».
+  listings: Listing[] = [];
 
   propertyTypeLabels = PROPERTY_TYPE_LABELS;
 
   constructor(
     private propertyService: PropertyService,
     private rentalService: RentalService,
+    private listingService: ListingService,
     private route: ActivatedRoute,
     private router: Router,
     private notificationService: NotificationService,
@@ -45,9 +51,10 @@ export class PropertyDetailComponent implements OnInit {
 
     forkJoin({
       property: this.propertyService.getProperty(id),
-      rentalsPage: this.rentalService.getRentals()
+      rentalsPage: this.rentalService.getRentals(),
+      myListings: this.listingService.getMyListings(0, 200).pipe(catchError(() => of({ content: [] as Listing[] })))
     }).subscribe({
-      next: ({ property, rentalsPage }) => {
+      next: ({ property, rentalsPage, myListings }) => {
         this.property = property;
 
         // Find active rental for this property
@@ -58,6 +65,11 @@ export class PropertyDetailComponent implements OnInit {
         // Set monthly rent for profitability component
         this.monthlyRent = this.activeRental?.monthlyRent || 0;
 
+        // Annonces vivantes de ce bien (les clôturées ne comptent pas)
+        this.listings = (myListings.content || []).filter(
+          l => l.propertyId === id && l.status !== ListingStatus.CLOSED
+        );
+
         this.loading = false;
       },
       error: (err) => {
@@ -65,6 +77,19 @@ export class PropertyDetailComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  get publishedListing(): Listing | null {
+    return this.listings.find(l => l.status === ListingStatus.PUBLISHED || l.status === ListingStatus.PAUSED) || null;
+  }
+
+  get draftListing(): Listing | null {
+    return this.listings.find(l => l.status === ListingStatus.DRAFT) || null;
+  }
+
+  /** Bien sans annonce ni location active : la prochaine étape est de publier. */
+  get showPublishCta(): boolean {
+    return !this.loading && !this.activeRental && this.listings.length === 0;
   }
 
   loadProperty(id: string): void {
