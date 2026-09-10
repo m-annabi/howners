@@ -500,6 +500,9 @@ public class PaymentService {
         switch (event.getType()) {
             case "payment_intent.succeeded" -> handlePaymentIntentSucceeded(event);
             case "payment_intent.payment_failed" -> handlePaymentIntentFailed(event);
+            // account.updated est traité en amont par WebhookController (statut Connect) : rien à
+            // faire ici, on l'ignore silencieusement pour ne pas polluer les logs.
+            case "account.updated" -> { }
             default -> log.info("Unhandled Stripe event type: {}", event.getType());
         }
     }
