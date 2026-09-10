@@ -45,7 +45,13 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    if (this.loginForm.invalid) return;
+    // Le bouton n'est plus désactivé sur formulaire invalide : l'autoremplissage du
+    // navigateur peut laisser le FormGroup « vide » jusqu'à la première interaction,
+    // bloquant un bouton [disabled]. On valide donc à la soumission.
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
     this.loading = true;
     this.error = null;

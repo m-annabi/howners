@@ -51,7 +51,10 @@ export class RegisterComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Validation à la soumission (pas de bouton désactivé) : l'autoremplissage du
+    // navigateur peut laisser le FormGroup « vide » jusqu'à la première interaction.
     if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
       return;
     }
 

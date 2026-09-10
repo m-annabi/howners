@@ -76,7 +76,7 @@
       <button
         type="submit"
         class="hw-btn hw-btn--primary hw-btn--lg hw-btn--block"
-        [disabled]="loading || loginForm.invalid"
+        [disabled]="loading"
       >
         <i *ngIf="loading" class="bi bi-arrow-repeat spin"></i>
         {{ loading ? 'Connexion...' : 'Se connecter' }}
