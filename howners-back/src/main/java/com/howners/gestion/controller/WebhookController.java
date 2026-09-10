@@ -35,6 +35,9 @@ public class WebhookController {
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
 
+    @Value("${stripe.connect-webhook-secret:}")
+    private String stripeConnectWebhookSecret;
+
     /**
      * Webhook DocuSign
      *
@@ -109,6 +112,44 @@ public class WebhookController {
     }
 
     /**
+     * Webhook Stripe des COMPTES CONNECTÉS (endpoint « Listen to events on Connected accounts »).
+     *
+     * POST /api/webhooks/stripe/connect
+     *
+     * Les paiements de loyer sont des direct charges sur le compte Connect du bailleur : leurs
+     * événements (payment_intent.*) et les account.updated des comptes Express n'arrivent que
+     * par cet endpoint, signé avec son propre secret (STRIPE_CONNECT_WEBHOOK_SECRET).
+     */
+    @PostMapping("/stripe/connect")
+    public ResponseEntity<String> handleStripeConnectWebhook(
+            @RequestBody String payload,
+            @RequestHeader(value = "Stripe-Signature", required = false) String signature) {
+        log.info("Received Stripe Connect webhook");
+
+        final Event event;
+        try {
+            event = constructStripeEvent(payload, signature, stripeConnectWebhookSecret);
+        } catch (SignatureVerificationException e) {
+            log.error("Stripe Connect webhook signature verification failed", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
+        }
+
+        try {
+            if ("account.updated".equals(event.getType())
+                    && resolveEventObject(event) instanceof Account account) {
+                stripeConnectService.processAccountUpdate(
+                        account.getId(), account.getChargesEnabled(), account.getPayoutsEnabled());
+            }
+
+            paymentService.handleStripeEvent(event);
+            return ResponseEntity.ok("OK");
+        } catch (Exception e) {
+            log.error("Error processing Stripe Connect webhook", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Webhook processing failed");
+        }
+    }
+
+    /**
      * Résout l'objet métier d'un événement Stripe. {@code getObject()} renvoie vide lorsque la
      * version d'API de l'événement diffère de celle épinglée dans le SDK (le webhook est
      * volontairement sur une version récente) ; on force alors {@code deserializeUnsafe()} pour
@@ -173,9 +214,15 @@ public class WebhookController {
      * comme {@code PaymentService.processStripeWebhook}.
      */
     private Event constructStripeEvent(String payload, String signature) throws SignatureVerificationException {
-        if (stripeWebhookSecret != null && !stripeWebhookSecret.isBlank()) {
-            return Webhook.constructEvent(payload, signature, stripeWebhookSecret);
+        return constructStripeEvent(payload, signature, stripeWebhookSecret);
+    }
+
+    private Event constructStripeEvent(String payload, String signature, String secret)
+            throws SignatureVerificationException {
+        if (secret != null && !secret.isBlank()) {
+            return Webhook.constructEvent(payload, signature, secret);
         }
+        // Secret absent = dev/local uniquement (le validateur prod exige le secret plateforme).
         return Event.GSON.fromJson(payload, Event.class);
     }
 

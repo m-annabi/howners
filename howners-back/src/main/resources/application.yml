@@ -83,6 +83,8 @@ stripe:
   api-key: ${STRIPE_SECRET_KEY:}
   public-key: ${STRIPE_PUBLIC_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  # Endpoint « Connected accounts » (paiements de loyer en direct charge) : secret distinct.
+  connect-webhook-secret: ${STRIPE_CONNECT_WEBHOOK_SECRET:}
   platform-fee-percent: ${STRIPE_PLATFORM_FEE_PERCENT:2.5}
   # Autorise une clé de TEST (sk_test_) en profil prod : réservé au staging.
   # Laisser à false en production réelle (une clé de test y sera refusée au démarrage).

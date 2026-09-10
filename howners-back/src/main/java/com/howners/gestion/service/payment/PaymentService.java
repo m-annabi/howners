@@ -68,6 +68,10 @@ public class PaymentService {
     private final PlatformFeeService platformFeeService;
     private final RentalAccessService rentalAccessService;
     private final NotificationDispatcher notificationDispatcher;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    @Value("${stripe.connect-webhook-secret:}")
+    private String stripeConnectWebhookSecret;
 
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
@@ -453,20 +457,34 @@ public class PaymentService {
 
     @Transactional
     public void processStripeWebhook(String payload, String sigHeader) {
-        Event event;
+        handleStripeEvent(verifyAndParse(payload, sigHeader, stripeWebhookSecret));
+    }
+
+    /**
+     * Webhook de l'endpoint « Connected accounts » : les paiements de loyer sont des direct
+     * charges sur le compte Connect du bailleur, leurs événements n'arrivent QUE par ici
+     * (l'endpoint plateforme ne les voit jamais). Secret de signature distinct.
+     */
+    public void processStripeConnectWebhook(String payload, String sigHeader) {
+        handleStripeEvent(verifyAndParse(payload, sigHeader, stripeConnectWebhookSecret));
+    }
+
+    private Event verifyAndParse(String payload, String sigHeader, String secret) {
         try {
-            if (stripeWebhookSecret != null && !stripeWebhookSecret.isBlank()) {
-                event = Webhook.constructEvent(payload, sigHeader, stripeWebhookSecret);
-            } else {
-                event = ApiResource.GSON.fromJson(payload, Event.class);
+            if (secret != null && !secret.isBlank()) {
+                return Webhook.constructEvent(payload, sigHeader, secret);
             }
+            // Secret absent = dev/local uniquement (le validateur prod exige les secrets Stripe).
+            return ApiResource.GSON.fromJson(payload, Event.class);
         } catch (SignatureVerificationException e) {
             log.error("Stripe webhook signature verification failed", e);
             throw new BadRequestException("Invalid Stripe signature");
         }
+    }
 
+    /** Dispatch d'un événement Stripe déjà vérifié (appelé par les deux endpoints). */
+    public void handleStripeEvent(Event event) {
         log.info("Processing Stripe event: {}", event.getType());
-
         switch (event.getType()) {
             case "payment_intent.succeeded" -> handlePaymentIntentSucceeded(event);
             case "payment_intent.payment_failed" -> handlePaymentIntentFailed(event);
@@ -474,15 +492,65 @@ public class PaymentService {
         }
     }
 
+    /**
+     * Lit l'objet de l'événement en JSON BRUT : getObject() renvoie vide dès que la version
+     * d'API de l'événement diffère de celle du SDK (même piège que les abonnements) — le JSON
+     * brut est la source fiable.
+     */
+    private com.fasterxml.jackson.databind.JsonNode readEventObject(Event event) {
+        String rawJson = event.getDataObjectDeserializer().getRawJson();
+        if (rawJson == null || rawJson.isBlank()) {
+            log.warn("Événement Stripe {} sans données JSON exploitables", event.getType());
+            return null;
+        }
+        try {
+            return objectMapper.readTree(rawJson);
+        } catch (Exception e) {
+            log.error("JSON d'événement Stripe illisible ({})", event.getType(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Retrouve le paiement visé par un PaymentIntent. Le flux Checkout ne stocke pas l'id de
+     * l'intent avant le paiement (il naît chez Stripe) : la metadata payment_id — posée à la
+     * création de la session — est la référence primaire ; l'id d'intent sert de repli (flux
+     * historique PaymentIntent direct).
+     */
+    private java.util.Optional<Payment> resolveWebhookPayment(com.fasterxml.jackson.databind.JsonNode intent) {
+        String metaPaymentId = intent.path("metadata").path("payment_id").asText(null);
+        if (metaPaymentId != null && !metaPaymentId.isBlank()) {
+            try {
+                java.util.Optional<Payment> byId = paymentRepository.findById(UUID.fromString(metaPaymentId));
+                if (byId.isPresent()) return byId;
+            } catch (IllegalArgumentException ignored) {
+                // metadata étrangère (pas un UUID) : on retombe sur l'id d'intent.
+            }
+        }
+        String intentId = intent.path("id").asText(null);
+        return intentId != null ? paymentRepository.findByStripePaymentIntentId(intentId) : java.util.Optional.empty();
+    }
+
     private void handlePaymentIntentSucceeded(Event event) {
-        PaymentIntent intent = (PaymentIntent) event.getDataObjectDeserializer()
-                .getObject().orElse(null);
+        com.fasterxml.jackson.databind.JsonNode intent = readEventObject(event);
         if (intent == null) return;
 
-        paymentRepository.findByStripePaymentIntentId(intent.getId()).ifPresent(payment -> {
+        resolveWebhookPayment(intent).ifPresent(payment -> {
+            // Idempotent : le retour navigateur (finalizeCheckout) a pu finaliser avant nous.
+            if (payment.getStatus() == PaymentStatus.PAID) {
+                // Compléter la traçabilité si le retour navigateur n'avait pas la charge.
+                if (payment.getStripeChargeId() == null) {
+                    payment.setStripeChargeId(intent.path("latest_charge").asText(null));
+                    paymentRepository.save(payment);
+                }
+                return;
+            }
+
             payment.setStatus(PaymentStatus.PAID);
             payment.setPaidAt(LocalDateTime.now());
-            payment.setStripeChargeId(intent.getLatestCharge());
+            payment.setStripePaymentIntentId(intent.path("id").asText(null));
+            payment.setStripeChargeId(intent.path("latest_charge").asText(null));
+            payment.setPaymentMethod("stripe");
             paymentRepository.save(payment);
 
             log.info("Payment {} marked as PAID via Stripe webhook", payment.getId());
@@ -492,15 +560,17 @@ public class PaymentService {
             } catch (Exception e) {
                 log.error("Failed to generate receipt for payment {}: {}", payment.getId(), e.getMessage());
             }
+            auditService.logAction(AuditAction.PAYMENT_CONFIRMED, "Payment", payment.getId());
         });
     }
 
     private void handlePaymentIntentFailed(Event event) {
-        PaymentIntent intent = (PaymentIntent) event.getDataObjectDeserializer()
-                .getObject().orElse(null);
+        com.fasterxml.jackson.databind.JsonNode intent = readEventObject(event);
         if (intent == null) return;
 
-        paymentRepository.findByStripePaymentIntentId(intent.getId()).ifPresent(payment -> {
+        resolveWebhookPayment(intent).ifPresent(payment -> {
+            // Un paiement déjà soldé ne repasse jamais FAILED (événement retardataire/rejoué).
+            if (payment.getStatus() == PaymentStatus.PAID) return;
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             log.info("Payment {} marked as FAILED via Stripe webhook", payment.getId());
