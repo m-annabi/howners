@@ -70,9 +70,9 @@ export class ContractTemplateService {
   /**
    * Prévisualiser un template rempli avec les données d'une location
    */
-  previewTemplate(templateId: string, rentalId: string): Observable<PreviewTemplateResponse> {
+  previewTemplate(templateId: string, rentalId: string, details?: any): Observable<PreviewTemplateResponse> {
     const params = new HttpParams().set('rentalId', rentalId);
-    return this.http.post<PreviewTemplateResponse>(`${this.apiUrl}/${templateId}/preview`, null, { params });
+    return this.http.post<PreviewTemplateResponse>(`${this.apiUrl}/${templateId}/preview`, details ?? null, { params });
   }
 
   /**

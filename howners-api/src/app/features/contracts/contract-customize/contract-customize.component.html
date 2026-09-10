@@ -14,6 +14,91 @@
 
 <div *ngIf="!loading && !error" class="row">
   <div class="col-lg-8">
+
+    <!-- Compléments du bail (T-06/T-04) : mentions structurantes saisies, appliquées à l'aperçu -->
+    <div *ngIf="!isEditMode && templateId" class="hw-card mb-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <label class="form-label mb-0">Compléments du bail</label>
+          <p class="hw-text-muted hw-text-sm mb-0">Renseignez les mentions structurantes plutôt que de compléter les crochets à la main.</p>
+        </div>
+        <button type="button" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="showDetails = !showDetails">
+          {{ showDetails ? 'Masquer' : 'Renseigner' }} <i class="bi" [ngClass]="showDetails ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </button>
+      </div>
+
+      <div *ngIf="showDetails" class="mt-3">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Régime juridique</label>
+            <select class="form-select" [(ngModel)]="details.regimeJuridique">
+              <option value="">—</option>
+              <option value="monopropriété">Monopropriété</option>
+              <option value="copropriété">Copropriété</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Type d'habitat</label>
+            <select class="form-select" [(ngModel)]="details.typeHabitat">
+              <option value="">—</option>
+              <option value="immeuble collectif">Immeuble collectif</option>
+              <option value="immeuble individuel">Immeuble individuel</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Période de construction</label>
+            <select class="form-select" [(ngModel)]="details.periodeConstruction">
+              <option value="">—</option>
+              <option *ngFor="let p of periodeOptions" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Régime des charges</label>
+            <select class="form-select" [(ngModel)]="details.regimeCharges">
+              <option value="">—</option>
+              <option value="provisions">Provisions avec régularisation</option>
+              <option value="forfait">Forfait non régularisable</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Encadrement des loyers (T-04) -->
+        <div class="form-check mt-3">
+          <input type="checkbox" class="form-check-input" id="zoneEncadree" [(ngModel)]="details.zoneEncadree">
+          <label class="form-check-label" for="zoneEncadree">Le logement est en zone d'encadrement des loyers</label>
+        </div>
+        <div *ngIf="details.zoneEncadree" class="row g-2 mt-1">
+          <div class="col-md-4">
+            <label class="form-label">Loyer de référence</label>
+            <input type="text" class="form-control" [(ngModel)]="details.loyerReference" placeholder="€/m²">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Loyer de référence majoré</label>
+            <input type="text" class="form-control" [(ngModel)]="details.loyerReferenceMajore" placeholder="€/m²">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Complément de loyer</label>
+            <input type="text" class="form-control" [(ngModel)]="details.complementLoyer" placeholder="montant (optionnel)">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Justification du complément</label>
+            <input type="text" class="form-control" [(ngModel)]="details.justificationComplement"
+                   placeholder="ex : vue exceptionnelle, terrasse…">
+          </div>
+        </div>
+
+        <div class="hw-alert hw-alert--warning mt-3 mb-0" style="font-size: 0.85rem;">
+          <i class="bi bi-info-circle"></i>
+          La formulation de la clause d'encadrement et les valeurs de référence restent à valider (données préfectorales, relecture juriste).
+        </div>
+
+        <button type="button" class="hw-btn hw-btn--sm hw-btn--primary mt-3" (click)="applyDetails()">
+          <i class="bi bi-arrow-repeat"></i> Appliquer au contrat
+        </button>
+        <p class="hw-text-muted hw-text-sm mt-1 mb-0">Régénère l'aperçu ci-dessous avec ces mentions (écrase les modifications manuelles).</p>
+      </div>
+    </div>
+
     <div class="hw-card mb-3">
       <label class="form-label">Contenu du contrat <span class="text-danger">*</span></label>
       <p class="hw-text-muted hw-text-sm">

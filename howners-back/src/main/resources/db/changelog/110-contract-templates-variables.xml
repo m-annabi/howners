@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Audit T-06/T-04 : remplace les mentions structurantes en texte libre ([à compléter]) par des
+         variables {{contract.*}} alimentées par le formulaire « Compléments du bail ». REPLACE ciblé
+         sur les chaînes exactes posées par le changelog 107 : sûr par construction (si la chaîne n'est
+         pas trouvée — template dupliqué/modifié — le crochet d'origine reste, aucune régression). -->
+    <changeSet id="110-contract-templates-variables" author="claude" runOnChange="true">
+        <!-- Régime juridique (nu par défaut + meublé, mêmes chaînes) -->
+        <sql>UPDATE contract_templates SET content = REPLACE(content,
+            '[monopropriété / copropriété]', '{{contract.regimeJuridique}}')
+            WHERE content LIKE '%[monopropriété / copropriété]%'</sql>
+
+        <!-- Type d'habitat -->
+        <sql>UPDATE contract_templates SET content = REPLACE(content,
+            '[immeuble collectif / individuel]', '{{contract.typeHabitat}}')
+            WHERE content LIKE '%[immeuble collectif / individuel]%'</sql>
+
+        <!-- Encadrement des loyers — bail nu (bloc long) -->
+        <sql><![CDATA[UPDATE contract_templates SET content = REPLACE(content,
+            'Le logement <em>[est / n''est pas]</em> situé dans une zone soumise à l''encadrement des loyers. <em>[Si oui : loyer de référence, loyer de référence majoré, éventuel complément de loyer et sa justification — à compléter]</em>',
+            '{{contract.encadrement}}')
+            WHERE is_default = true AND rental_type = 'LONG_TERM']]></sql>
+
+        <!-- Encadrement — bail meublé -->
+        <sql><![CDATA[UPDATE contract_templates SET content = REPLACE(content,
+            '<em>[Zone d''encadrement des loyers : loyer de référence majoré et éventuel complément à préciser]</em>',
+            '{{contract.encadrement}}')
+            WHERE name = 'Bail meublé — résidence principale (1 an / 9 mois étudiant)']]></sql>
+
+        <!-- Encadrement — bail mobilité -->
+        <sql><![CDATA[UPDATE contract_templates SET content = REPLACE(content,
+            '<em>[zone d''encadrement des loyers : loyer de référence majoré à préciser]</em>',
+            '{{contract.encadrement}}')
+            WHERE name = 'Bail mobilité — meublé, 1 à 10 mois']]></sql>
+
+        <rollback>
+            <sql>UPDATE contract_templates SET content = REPLACE(content, '{{contract.regimeJuridique}}', '[monopropriété / copropriété]')</sql>
+            <sql>UPDATE contract_templates SET content = REPLACE(content, '{{contract.typeHabitat}}', '[immeuble collectif / individuel]')</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

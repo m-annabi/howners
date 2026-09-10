@@ -27,6 +27,22 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
   isEditMode = false;
   contractId: string | null = null;
 
+  // Compléments du bail (T-06/T-04) : mentions structurantes saisies plutôt qu'en texte libre.
+  // Appliquées à l'aperçu → substituées dans le contenu (variables {{contract.*}}).
+  showDetails = false;
+  details = {
+    regimeJuridique: '',
+    typeHabitat: '',
+    periodeConstruction: '',
+    regimeCharges: '',
+    zoneEncadree: false,
+    loyerReference: '',
+    loyerReferenceMajore: '',
+    complementLoyer: '',
+    justificationComplement: ''
+  };
+  readonly periodeOptions = ['Avant 1949', '1949-1974', '1975-1989', '1990-2005', 'Après 2005'];
+
   // Dernière position du curseur dans l'éditeur Quill
   lastCursorPosition = 0;
 
@@ -133,11 +149,11 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
     this.error = null;
 
     if (this.templateId) {
-      this.templateService.previewTemplate(this.templateId, this.rentalId).subscribe({
+      this.templateService.previewTemplate(this.templateId, this.rentalId, this.detailsPayload()).subscribe({
         next: (preview) => {
           this.rentalPropertyName = preview.rentalPropertyName;
           this.tenantFullName = preview.tenantFullName;
-          this.initialContent = preview.filledContent;
+          this.setEditorContent(preview.filledContent);
           this.loading = false;
         },
         error: () => {
@@ -149,6 +165,19 @@ export class ContractCustomizeComponent implements OnInit, OnDestroy {
       this.error = 'Veuillez sélectionner un template';
       this.loading = false;
     }
+  }
+
+  /** Corps envoyé à l'aperçu, ou undefined si aucune mention n'a été renseignée. */
+  private detailsPayload(): any {
+    const d = this.details;
+    const hasAny = d.regimeJuridique || d.typeHabitat || d.periodeConstruction || d.regimeCharges
+      || d.zoneEncadree || d.loyerReference || d.loyerReferenceMajore || d.complementLoyer;
+    return hasAny ? d : undefined;
+  }
+
+  /** Ré-applique les compléments : régénère l'aperçu avec les mentions saisies (écrase l'édition en cours). */
+  applyDetails(): void {
+    this.loadPreview();
   }
 
   loadExistingContract(id: string): void {

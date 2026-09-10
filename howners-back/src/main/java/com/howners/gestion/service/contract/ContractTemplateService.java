@@ -48,8 +48,73 @@ public class ContractTemplateService {
      * Remplit un template avec les données d'une location
      */
     public String fillTemplate(ContractTemplate template, Rental rental) {
+        return fillTemplate(template, rental, null);
+    }
+
+    public String fillTemplate(ContractTemplate template, Rental rental,
+                               com.howners.gestion.dto.contract.ContractDetails details) {
         Map<String, String> variables = buildVariablesMap(rental);
+        applyContractDetails(variables, details);
         return replaceVariables(template.getContent(), variables);
+    }
+
+    /**
+     * Variables {{contract.*}} des mentions structurantes (T-06/T-04). Des valeurs par défaut
+     * (les crochets [à compléter] d'origine) sont posées ici, puis surchargées par le formulaire
+     * du bailleur via {@link #applyContractDetails}.
+     */
+    private void addContractDefaults(Map<String, String> variables) {
+        variables.put("contract.regimeJuridique", "[monopropriété / copropriété]");
+        variables.put("contract.typeHabitat", "[immeuble collectif / individuel]");
+        variables.put("contract.periodeConstruction", "[à compléter]");
+        variables.put("contract.regimeCharges", "[provisions avec régularisation / forfait]");
+        variables.put("contract.encadrement",
+                "Le logement [est / n'est pas] situé dans une zone soumise à l'encadrement des loyers "
+                        + "(à compléter si zone tendue : loyer de référence majoré et éventuel complément).");
+    }
+
+    /** Surcharge les variables {{contract.*}} avec les mentions saisies (champ vide = défaut conservé). */
+    private void applyContractDetails(Map<String, String> variables,
+                                      com.howners.gestion.dto.contract.ContractDetails d) {
+        if (d == null) return;
+        putIfPresent(variables, "contract.regimeJuridique", d.regimeJuridique());
+        putIfPresent(variables, "contract.typeHabitat", d.typeHabitat());
+        putIfPresent(variables, "contract.periodeConstruction", d.periodeConstruction());
+        if (d.regimeCharges() != null && !d.regimeCharges().isBlank()) {
+            variables.put("contract.regimeCharges", "forfait".equalsIgnoreCase(d.regimeCharges())
+                    ? "forfait mensuel de charges, non régularisable"
+                    : "provisions sur charges, avec régularisation annuelle sur justificatifs");
+        }
+        if (d.zoneEncadree() != null) {
+            variables.put("contract.encadrement", buildEncadrement(d));
+        }
+    }
+
+    private String buildEncadrement(com.howners.gestion.dto.contract.ContractDetails d) {
+        if (!Boolean.TRUE.equals(d.zoneEncadree())) {
+            return "Le logement n'est pas situé dans une zone soumise à l'encadrement des loyers.";
+        }
+        StringBuilder sb = new StringBuilder("Le logement est situé dans une zone soumise à l'encadrement des loyers.");
+        if (d.loyerReference() != null && !d.loyerReference().isBlank()) {
+            sb.append(" Loyer de référence : ").append(d.loyerReference().trim()).append(".");
+        }
+        if (d.loyerReferenceMajore() != null && !d.loyerReferenceMajore().isBlank()) {
+            sb.append(" Loyer de référence majoré : ").append(d.loyerReferenceMajore().trim()).append(".");
+        }
+        if (d.complementLoyer() != null && !d.complementLoyer().isBlank()) {
+            sb.append(" Complément de loyer : ").append(d.complementLoyer().trim());
+            if (d.justificationComplement() != null && !d.justificationComplement().isBlank()) {
+                sb.append(", justifié par : ").append(d.justificationComplement().trim());
+            }
+            sb.append(".");
+        }
+        return sb.toString();
+    }
+
+    private void putIfPresent(Map<String, String> variables, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            variables.put(key, value.trim());
+        }
     }
 
     /**
@@ -128,6 +193,10 @@ public class ContractTemplateService {
 
         // Variables date du jour
         variables.put("today", formatDate(LocalDate.now()));
+
+        // Mentions structurantes {{contract.*}} : défauts (crochets d'origine), surchargés si un
+        // formulaire de compléments est fourni (T-06/T-04).
+        addContractDefaults(variables);
 
         log.debug("Built {} variables for rental {}", variables.size(), rental.getId());
         return variables;
@@ -295,6 +364,11 @@ public class ContractTemplateService {
      * Prévisualise un template rempli avec les données d'une location
      */
     public PreviewTemplateResponse previewTemplate(UUID templateId, UUID rentalId) {
+        return previewTemplate(templateId, rentalId, null);
+    }
+
+    public PreviewTemplateResponse previewTemplate(UUID templateId, UUID rentalId,
+                                                   com.howners.gestion.dto.contract.ContractDetails details) {
         ContractTemplate template = contractTemplateRepository.findByIdWithCreatedBy(templateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Template", "id", "unknown"));
 
@@ -302,7 +376,7 @@ public class ContractTemplateService {
                 .orElseThrow(() -> new ResourceNotFoundException("Rental", "id", "unknown"));
         assertRentalAccess(rental);
 
-        String filledContent = fillTemplate(template, rental);
+        String filledContent = fillTemplate(template, rental, details);
 
         return new PreviewTemplateResponse(
                 filledContent,

@@ -141,11 +141,12 @@ public class ContractTemplateController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public ResponseEntity<PreviewTemplateResponse> previewTemplate(
             @PathVariable UUID id,
-            @RequestParam UUID rentalId) {
+            @RequestParam UUID rentalId,
+            @RequestBody(required = false) com.howners.gestion.dto.contract.ContractDetails details) {
         UUID currentUserId = AuthService.getCurrentUserId();
         log.info("Previewing template: {} with rental: {} by user: {}", id, rentalId, currentUserId);
 
-        PreviewTemplateResponse preview = contractTemplateService.previewTemplate(id, rentalId);
+        PreviewTemplateResponse preview = contractTemplateService.previewTemplate(id, rentalId, details);
         return ResponseEntity.ok(preview);
     }
 

@@ -114,5 +114,6 @@
     <include file="db/changelog/107-lease-templates-html.xml"/>
     <include file="db/changelog/108-unique-rent-payment-per-month.xml"/>
     <include file="db/changelog/109-edl-furniture-inventory.xml"/>
+    <include file="db/changelog/110-contract-templates-variables.xml"/>
 
 </databaseChangeLog>
