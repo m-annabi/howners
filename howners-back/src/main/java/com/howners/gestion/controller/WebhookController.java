@@ -81,10 +81,12 @@ public class WebhookController {
         log.info("Received Stripe webhook");
 
         // Signature vérifiée AVANT tout traitement (un payload non signé est rejeté en prod).
+        // Exception large : un en-tête Stripe-Signature ABSENT fait lever un NPE dans la lib
+        // Stripe (pas une SignatureVerificationException) — même verdict, requête invalide.
         final Event event;
         try {
             event = constructStripeEvent(payload, signature);
-        } catch (SignatureVerificationException e) {
+        } catch (Exception e) {
             log.error("Stripe webhook signature verification failed", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
         }
@@ -132,7 +134,7 @@ public class WebhookController {
         final Event event;
         try {
             event = constructStripeEvent(payload, signature, stripeConnectWebhookSecret);
-        } catch (SignatureVerificationException e) {
+        } catch (Exception e) {
             log.error("Stripe Connect webhook signature verification failed", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
         }

@@ -485,7 +485,10 @@ public class PaymentService {
             }
             // Ni clé ni secret = dev/local sans Stripe.
             return ApiResource.GSON.fromJson(payload, Event.class);
-        } catch (SignatureVerificationException e) {
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            // Inclut l'en-tête Stripe-Signature absent (NPE de la lib) : même verdict.
             log.error("Stripe webhook signature verification failed", e);
             throw new BadRequestException("Invalid Stripe signature");
         }
