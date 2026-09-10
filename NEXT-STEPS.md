@@ -31,15 +31,21 @@ La fonctionnalité de brouillon de bail assisté par IA (`/api/ai/draft-lease`, 
 a été **retirée** : jugée superflue, jamais exposée dans le frontend, et porteuse d'un risque
 juridique (génération de clauses potentiellement non conformes sans relecture d'avocat).
 
-## #4 — Validation juridique des templates de contrat
+## #4 — Validation juridique des templates de contrat — ⏳ AUDIT DE CONFORMITÉ FAIT, relecture juriste à commander
 
-**Quoi** : Les templates seedés (`Bail d'habitation vide` + `Bail meublé`) ont été relus en surface ce soir (j'ai fixé `{{property.rooms}}` et `{{rental.endDateClause}}`) mais **personne de qualifié** n'a fait une revue clause par clause.
+**Fait (10/09/2026)** : audit de conformité clause par clause des 4 modèles (nu, meublé, mobilité,
+parking), hiérarchisé par gravité, dans [`AUDIT-BAUX-CONFORMITE.md`](AUDIT-BAUX-CONFORMITE.md)
+(+ note de travail `GUIDE-BAUX.md`). Verdict : texte des clauses de fond conforme ; **2 bloquants**
+(notice d'information non jointe T-01, inventaire meublé non généré T-02), **4 élevés**, **4 moyens**.
+Une **checklist de 10 questions** est prête à remettre au cabinet pour cibler sa relecture.
 
-**Pourquoi je ne peux pas livrer** : Pas avocat. Toute clause manquante ou abusive est :
-- Réputée non écrite (locataire bien défendu)
-- Pénalité administrative jusqu'à 15 k€ (loi ALUR)
+**Pourquoi je ne peux pas livrer la validation finale** : pas avocat. Toute clause manquante ou
+abusive est réputée non écrite et expose à une pénalité administrative (loi ALUR). L'audit
+*prépare* la relecture, il ne la remplace pas.
 
-**Action** : faire reviewer les deux templates par un cabinet (Captain Contrat, Eurojuris, ou avocat indépendant immobilier). Coût ~500-1500 €.
+**Action** : commander la relecture (Captain Contrat, Eurojuris, ou avocat immobilier, ~500-1500 €)
+en fournissant la checklist d'`AUDIT-BAUX-CONFORMITE.md`. En parallèle, T-01/T-03/T-05 (joindre la
+notice, bloquer l'envoi sans DPE, alertes loi Climat) sont implémentables sans arbitrage juridique.
 
 ## #7 — Angular Universal (SSR) — ✅ FAIT (pre-rendering)
 
