@@ -10,6 +10,7 @@ public record CreateEtatDesLieuxRequest(
         @NotNull LocalDate inspectionDate,
         String roomConditions,
         String meterReadings,
+        String furnitureInventory,
         Integer keysCount,
         String keysDescription,
         String generalComments

@@ -48,6 +48,12 @@ public class EtatDesLieux {
     @JdbcTypeCode(SqlTypes.JSON)
     private String meterReadings;
 
+    // Inventaire du mobilier (logement meublé, décret 2015-981) — liste JSON d'éléments
+    // {category, item, quantity, condition, comments}.
+    @Column(name = "furniture_inventory", columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private String furnitureInventory;
+
     @Column(name = "keys_count")
     private Integer keysCount;
 

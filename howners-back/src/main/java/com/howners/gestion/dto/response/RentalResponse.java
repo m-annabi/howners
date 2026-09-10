@@ -28,6 +28,7 @@ public record RentalResponse(
         BigDecimal charges,
         Integer paymentDay,
         LocalDate assuranceExpiration,
+        Boolean furnished,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -51,6 +52,7 @@ public record RentalResponse(
                 rental.getCharges(),
                 rental.getPaymentDay(),
                 rental.getAssuranceExpiration(),
+                rental.getProperty().getIsFurnished(),
                 rental.getCreatedAt(),
                 rental.getUpdatedAt()
         );

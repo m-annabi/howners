@@ -90,6 +90,26 @@
     </div>
   </div>
 
+  <!-- Inventaire du mobilier (meublé) -->
+  <div class="hw-card mb-3" *ngIf="furniture.length > 0" style="padding: 0;">
+    <h5 class="hw-section-title" style="padding: var(--hw-space-5) var(--hw-space-5) 0;">
+      Inventaire du mobilier <span class="hw-text-muted hw-text-sm">(logement meublé — décret 2015-981)</span>
+    </h5>
+    <div style="overflow-x: auto;">
+      <table class="hw-table">
+        <thead><tr><th>Élément</th><th>Qté</th><th>État</th><th>Observations</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let f of furniture">
+            <td><strong>{{ f.item }}</strong></td>
+            <td>{{ f.quantity }}</td>
+            <td>{{ f.condition }}</td>
+            <td>{{ f.comments }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Clés -->
   <div class="hw-card mb-3" *ngIf="edl.keysCount">
     <h5 class="hw-section-title">Clés</h5>

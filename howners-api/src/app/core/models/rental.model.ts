@@ -26,6 +26,7 @@ export interface Rental {
   charges?: number;
   paymentDay?: number;
   assuranceExpiration?: string;
+  furnished?: boolean;
   createdAt: string;
   updatedAt: string;
 }

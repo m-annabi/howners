@@ -20,6 +20,7 @@ export class EdlDetailComponent implements OnInit {
 
   rooms: { name: string; condition: string; comments: string }[] = [];
   meters: { type: string; value: string }[] = [];
+  furniture: { item: string; quantity: string; condition: string; comments: string }[] = [];
 
   constructor(
     private edlService: EtatDesLieuxService,
@@ -63,6 +64,13 @@ export class EdlDetailComponent implements OnInit {
         this.meters = JSON.parse(this.edl.meterReadings);
       } catch {
         this.meters = [];
+      }
+    }
+    if (this.edl?.furnitureInventory) {
+      try {
+        this.furniture = JSON.parse(this.edl.furnitureInventory);
+      } catch {
+        this.furniture = [];
       }
     }
   }

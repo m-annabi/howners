@@ -40,6 +40,24 @@ export class EdlFormComponent implements OnInit {
 
   conditionOptions = ['NEUF', 'BON', 'CORRECT', 'USAGE', 'MAUVAIS'];
 
+  // Inventaire du mobilier (logement meublé). Section affichée pour les baux meublés
+  // ou activable manuellement. Pré-remplie avec les 11 catégories minimales du décret 2015-981.
+  showFurniture = false;
+  furniture: { item: string; quantity: string; condition: string; comments: string }[] = [];
+  private readonly DECRET_2015_981_ITEMS = [
+    'Literie avec couette ou couverture',
+    "Dispositif d'occultation des fenêtres des chambres",
+    'Plaques de cuisson',
+    'Four ou four à micro-ondes',
+    'Réfrigérateur et congélateur (ou compartiment ≤ -6 °C)',
+    'Vaisselle nécessaire aux repas',
+    'Ustensiles de cuisine',
+    'Table et sièges',
+    'Étagères de rangement',
+    'Luminaires',
+    "Matériel d'entretien ménager adapté"
+  ];
+
   constructor(
     private edlService: EtatDesLieuxService,
     private rentalService: RentalService,
@@ -60,9 +78,33 @@ export class EdlFormComponent implements OnInit {
       this.type = EtatDesLieuxType.SORTIE;
     }
     this.rentalService.getRental(this.rentalId).subscribe({
-      next: (rental) => { this.rental = rental; },
+      next: (rental) => {
+        this.rental = rental;
+        // Logement meublé : afficher et pré-remplir l'inventaire du mobilier (décret 2015-981).
+        if (rental.furnished) {
+          this.enableFurniture();
+        }
+      },
       error: () => { this.rental = null; }
     });
+  }
+
+  /** Initialise l'inventaire avec la liste minimale du décret (idempotent). */
+  enableFurniture(): void {
+    this.showFurniture = true;
+    if (this.furniture.length === 0) {
+      this.furniture = this.DECRET_2015_981_ITEMS.map(item => ({
+        item, quantity: '1', condition: 'BON', comments: ''
+      }));
+    }
+  }
+
+  addFurniture(): void {
+    this.furniture.push({ item: '', quantity: '1', condition: 'BON', comments: '' });
+  }
+
+  removeFurniture(index: number): void {
+    this.furniture.splice(index, 1);
   }
 
   addRoom(): void {
@@ -88,12 +130,16 @@ export class EdlFormComponent implements OnInit {
 
     const roomConditions = JSON.stringify(this.rooms.filter(r => r.name));
     const meterReadings = JSON.stringify(this.meters.filter(m => m.type && m.value));
+    const furnitureInventory = this.showFurniture
+      ? JSON.stringify(this.furniture.filter(f => f.item.trim()))
+      : undefined;
 
     const request: CreateEtatDesLieuxRequest = {
       type: this.type,
       inspectionDate: this.inspectionDate,
       roomConditions: roomConditions,
       meterReadings: meterReadings,
+      furnitureInventory: furnitureInventory,
       keysCount: this.keysCount || undefined,
       keysDescription: this.keysDescription || undefined,
       generalComments: this.generalComments || undefined

@@ -115,6 +115,7 @@ public class EtatDesLieuxService {
                 .inspectionDate(request.inspectionDate())
                 .roomConditions(request.roomConditions())
                 .meterReadings(request.meterReadings())
+                .furnitureInventory(request.furnitureInventory())
                 .keysCount(request.keysCount())
                 .keysDescription(request.keysDescription())
                 .generalComments(request.generalComments())
@@ -255,6 +256,19 @@ public class EtatDesLieuxService {
             html.append("</table>");
         }
 
+        List<Map<String, String>> furniture = parseFurniture(edl.getFurnitureInventory());
+        if (!furniture.isEmpty()) {
+            html.append("<h3>Inventaire du mobilier (logement meublé — décret n° 2015-981)</h3>");
+            html.append("<table><tr><th>Élément</th><th>Qté</th><th>État</th><th>Observations</th></tr>");
+            for (Map<String, String> f : furniture) {
+                html.append("<tr><td>").append(nl2br(f.get("item")))
+                    .append("</td><td>").append(nl2br(f.getOrDefault("quantity", "")))
+                    .append("</td><td>").append(nl2br(PdfFormat.libelleEtat(f.getOrDefault("condition", ""))))
+                    .append("</td><td>").append(nl2br(f.getOrDefault("comments", ""))).append("</td></tr>");
+            }
+            html.append("</table>");
+        }
+
         if (edl.getKeysCount() != null) {
             html.append("<h3>Clés</h3>");
             html.append("<p>Nombre de clés : <strong>").append(edl.getKeysCount()).append("</strong></p>");
@@ -308,6 +322,29 @@ public class EtatDesLieuxService {
             return result;
         } catch (Exception e) {
             log.warn("Pièces EDL illisibles pour le PDF : {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    /** Parse le JSON de l'inventaire mobilier [{item, quantity, condition, comments}] pour le PDF. */
+    private List<Map<String, String>> parseFurniture(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try {
+            List<Map<String, Object>> raw = EDL_MAPPER.readValue(json, new TypeReference<>() {});
+            List<Map<String, String>> result = new ArrayList<>();
+            for (Map<String, Object> item : raw) {
+                String name = str(item.get("item"));
+                if (name == null || name.isBlank()) continue;
+                Map<String, String> f = new LinkedHashMap<>();
+                f.put("item", name);
+                f.put("quantity", str(item.get("quantity")));
+                f.put("condition", str(item.get("condition")));
+                f.put("comments", str(item.get("comments")));
+                result.add(f);
+            }
+            return result;
+        } catch (Exception e) {
+            log.warn("Inventaire mobilier EDL illisible pour le PDF : {}", e.getMessage());
             return List.of();
         }
     }

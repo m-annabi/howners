@@ -89,6 +89,60 @@
     </div>
   </div>
 
+  <!-- Inventaire du mobilier (logement meublé — décret 2015-981) -->
+  <div class="hw-card mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="hw-section-title mb-0" style="border: none; padding: 0;">Inventaire du mobilier</h5>
+      <button *ngIf="showFurniture" type="button" class="hw-btn hw-btn--sm hw-btn--outline" (click)="addFurniture()">
+        <i class="bi bi-plus"></i> Ajouter un élément
+      </button>
+    </div>
+
+    <!-- Pas encore activé : proposer de l'ajouter (obligatoire pour un meublé) -->
+    <div *ngIf="!showFurniture">
+      <p class="hw-text-muted hw-text-sm mb-2">
+        Pour un <strong>logement meublé</strong>, un inventaire du mobilier est obligatoire et doit être
+        annexé (décret n° 2015-981). La liste minimale est pré-remplie automatiquement.
+      </p>
+      <button type="button" class="hw-btn hw-btn--sm hw-btn--secondary" (click)="enableFurniture()">
+        <i class="bi bi-list-check"></i> Ajouter l'inventaire du mobilier
+      </button>
+    </div>
+
+    <div *ngIf="showFurniture">
+      <p class="hw-text-muted hw-text-sm mb-2">
+        Liste minimale du décret 2015-981 pré-remplie. Ajustez les quantités, l'état et les observations ;
+        supprimez ce qui ne s'applique pas et ajoutez le mobilier supplémentaire fourni.
+      </p>
+      <div *ngFor="let f of furniture; let i = index" class="row mb-2 align-items-end border-bottom pb-2">
+        <div class="col-md-4">
+          <label class="form-label" *ngIf="i === 0">Élément</label>
+          <input type="text" class="form-control" [(ngModel)]="f.item" name="furnItem{{i}}"
+                 placeholder="Ex : canapé, lit 140…">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label" *ngIf="i === 0">Quantité</label>
+          <input type="text" class="form-control" [(ngModel)]="f.quantity" name="furnQty{{i}}" placeholder="1">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label" *ngIf="i === 0">État</label>
+          <select class="form-select" [(ngModel)]="f.condition" name="furnCond{{i}}">
+            <option *ngFor="let c of conditionOptions" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" *ngIf="i === 0">Observations</label>
+          <input type="text" class="form-control" [(ngModel)]="f.comments" name="furnCom{{i}}">
+        </div>
+        <div class="col-md-1 text-end">
+          <button type="button" class="hw-btn hw-btn--sm hw-btn--ghost" (click)="removeFurniture(i)" title="Retirer">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Clés -->
   <div class="hw-card mb-3">
     <h5 class="hw-section-title">Clés</h5>

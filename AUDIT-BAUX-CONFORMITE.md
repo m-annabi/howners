@@ -69,7 +69,7 @@ Bilan : **2 bloquants · 4 élevés · 4 moyens** — clauses de fond conformes.
 | T-01 Notice | Notice d'information annexée au PDF du contrat (`LegalNoticeService` + `legal/notice-information.html`) | Faible | ✅ **Fait** — version officielle à valider (checklist #1) |
 | T-03 Diagnostics | Blocage d'envoi si DPE absent/périmé (`DpeComplianceService`) | Faible | ✅ **Fait** |
 | T-05 Loi Climat | Blocage envoi si logement indécent (G) + gel de la révision F/G, selon étiquette DPE | Faible | ✅ **Fait** |
-| T-02 Inventaire | Générateur d'inventaire meublé (liste 2015-981) + signature | Moyen | À faire (trame juriste) |
+| T-02 Inventaire | Inventaire du mobilier intégré à l'EDL, pré-rempli avec la liste du décret 2015-981, signé par les 2 parties (changelog 109) | Moyen | ✅ **Fait** |
 | T-06 Mentions libres | Formulaire de contrat → variables au lieu des crochets | Moyen | À faire |
 | T-04 Encadrement | Case « zone encadrée » + champs + données loyers de référence | Élevé | À faire (validation juriste) |
 

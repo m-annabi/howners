@@ -7,6 +7,7 @@ export interface EtatDesLieux {
   inspectionDate: string;
   roomConditions: string | null;
   meterReadings: string | null;
+  furnitureInventory: string | null;
   keysCount: number | null;
   keysDescription: string | null;
   generalComments: string | null;
@@ -29,6 +30,7 @@ export interface CreateEtatDesLieuxRequest {
   inspectionDate: string;
   roomConditions?: string;
   meterReadings?: string;
+  furnitureInventory?: string;
   keysCount?: number;
   keysDescription?: string;
   generalComments?: string;
