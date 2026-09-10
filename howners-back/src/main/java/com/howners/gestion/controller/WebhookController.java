@@ -38,6 +38,9 @@ public class WebhookController {
     @Value("${stripe.connect-webhook-secret:}")
     private String stripeConnectWebhookSecret;
 
+    @Value("${stripe.api-key:}")
+    private String stripeApiKey;
+
     /**
      * Webhook DocuSign
      *
@@ -222,7 +225,12 @@ public class WebhookController {
         if (secret != null && !secret.isBlank()) {
             return Webhook.constructEvent(payload, signature, secret);
         }
-        // Secret absent = dev/local uniquement (le validateur prod exige le secret plateforme).
+        // Secret absent avec Stripe configuré : refus — un événement forgé non signé pourrait
+        // solder un paiement ou basculer un statut Connect.
+        if (stripeApiKey != null && !stripeApiKey.isBlank()) {
+            throw new SignatureVerificationException("Webhook secret non configuré : événement refusé", signature);
+        }
+        // Ni clé ni secret = dev/local sans Stripe.
         return Event.GSON.fromJson(payload, Event.class);
     }
 

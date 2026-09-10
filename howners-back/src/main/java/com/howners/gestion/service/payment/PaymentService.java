@@ -73,6 +73,9 @@ public class PaymentService {
     @Value("${stripe.connect-webhook-secret:}")
     private String stripeConnectWebhookSecret;
 
+    @Value("${stripe.api-key:}")
+    private String stripeApiKey;
+
     @Value("${stripe.webhook-secret:}")
     private String stripeWebhookSecret;
 
@@ -474,7 +477,13 @@ public class PaymentService {
             if (secret != null && !secret.isBlank()) {
                 return Webhook.constructEvent(payload, sigHeader, secret);
             }
-            // Secret absent = dev/local uniquement (le validateur prod exige les secrets Stripe).
+            // Secret absent avec Stripe configuré : on REFUSE — accepter un événement non signé
+            // permettrait de forger un payment_intent.succeeded et de solder un loyer.
+            if (stripeApiKey != null && !stripeApiKey.isBlank()) {
+                log.error("Webhook Stripe reçu sans secret configuré : événement rejeté");
+                throw new BadRequestException("Webhook secret not configured");
+            }
+            // Ni clé ni secret = dev/local sans Stripe.
             return ApiResource.GSON.fromJson(payload, Event.class);
         } catch (SignatureVerificationException e) {
             log.error("Stripe webhook signature verification failed", e);
