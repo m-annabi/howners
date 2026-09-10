@@ -58,6 +58,10 @@ class RevisionLoyerServiceTest {
     @Mock EmailService emailService;
     @Mock NotificationService notificationService;
     @Mock com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
+    // Instance réelle (logique pure sans dépendance) : sur un bien de test sans DPE, le garde
+    // laisse passer, et les tests existants restent inchangés.
+    @org.mockito.Spy com.howners.gestion.service.contract.DpeComplianceService dpeComplianceService =
+            new com.howners.gestion.service.contract.DpeComplianceService();
 
     @InjectMocks RevisionLoyerService revisionLoyerService;
 

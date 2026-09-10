@@ -67,6 +67,8 @@ public class ContractESignatureService {
     private final NotificationService notificationService;
     private final com.howners.gestion.service.subscription.FeatureGateService featureGateService;
     private final ContractActivationService contractActivationService;
+    private final DpeComplianceService dpeComplianceService;
+    private final LegalNoticeService legalNoticeService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
@@ -113,6 +115,10 @@ public class ContractESignatureService {
         Rental rental = contract.getRental();
         User tenant = rental.getTenant();
         User owner = rental.getProperty().getOwner();
+
+        // DPE obligatoire et décence énergétique (loi Climat) : bloque l'envoi si le DPE manque,
+        // est périmé, ou si le logement est énergétiquement indécent (T-03/T-05).
+        dpeComplianceService.assertCanRentOut(rental.getProperty());
 
         // Valider que le locataire est assigné
         if (tenant == null) {
@@ -419,7 +425,10 @@ public class ContractESignatureService {
                     .findByContractIdAndVersion(contract.getId(), contract.getCurrentVersion())
                     .map(ContractVersion::getContent)
                     .orElse("");
-            String signatureBlock = buildCanvasSignatureBlock(signatureRequest, base64Payload, now);
+            // La notice d'information (T-01) doit rester présente dans le PDF signé archivé,
+            // comme dans le PDF envoyé : on la ré-annexe avec l'encart de signature.
+            String signatureBlock = legalNoticeService.noticeAppendixHtml()
+                    + buildCanvasSignatureBlock(signatureRequest, base64Payload, now);
             byte[] signedPdfBytes = pdfService.generatePdf(
                     baseContent, "Contrat " + contract.getContractNumber(), signatureBlock);
             String documentHash = pdfService.calculateHash(signedPdfBytes);
@@ -777,6 +786,9 @@ public class ContractESignatureService {
             throw new ContractInvalidStateException(
                     "Contract already has an active signature request", "CONTRACT_HAS_ACTIVE_REQUEST");
         }
+
+        // DPE obligatoire + décence énergétique (T-03/T-05), comme pour l'envoi mono-signataire.
+        dpeComplianceService.assertCanRentOut(contract.getRental().getProperty());
 
         // Get the contract PDF
         ContractVersion currentVersion = contractVersionRepository

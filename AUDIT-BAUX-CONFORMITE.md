@@ -62,16 +62,22 @@ Bilan : **2 bloquants · 4 élevés · 4 moyens** — clauses de fond conformes.
 9. **Grille de vétusté** : valider une grille (décret 2016-382) pour les retenues sur dépôt.
 10. **Mentions locales** : permis de louer / autorisation préalable de mise en location.
 
-## Suites techniques (après validation juriste)
+## Suites techniques
 
-| Gap | Action produit | Effort | Dépend du juriste ? |
+| Gap | Action produit | Effort | État |
 |---|---|---|---|
-| T-01 Notice | Joindre le PDF officiel de la notice à l'envoi | Faible | Non (version à confirmer) |
-| T-03 Diagnostics | Checklist d'annexes + blocage d'envoi si DPE absent | Faible | Non |
-| T-05 Loi Climat | Alerte/blocage selon étiquette DPE (déjà saisie) | Faible | Formulation |
-| T-02 Inventaire | Générateur d'inventaire meublé (liste 2015-981) + signature | Moyen | Trame |
-| T-06 Mentions libres | Formulaire de contrat → variables au lieu des crochets | Moyen | Non |
-| T-04 Encadrement | Case « zone encadrée » + champs + données loyers de référence | Élevé | Oui |
+| T-01 Notice | Notice d'information annexée au PDF du contrat (`LegalNoticeService` + `legal/notice-information.html`) | Faible | ✅ **Fait** — version officielle à valider (checklist #1) |
+| T-03 Diagnostics | Blocage d'envoi si DPE absent/périmé (`DpeComplianceService`) | Faible | ✅ **Fait** |
+| T-05 Loi Climat | Blocage envoi si logement indécent (G) + gel de la révision F/G, selon étiquette DPE | Faible | ✅ **Fait** |
+| T-02 Inventaire | Générateur d'inventaire meublé (liste 2015-981) + signature | Moyen | À faire (trame juriste) |
+| T-06 Mentions libres | Formulaire de contrat → variables au lieu des crochets | Moyen | À faire |
+| T-04 Encadrement | Case « zone encadrée » + champs + données loyers de référence | Élevé | À faire (validation juriste) |
+
+**Implémenté (10/09/2026)** — T-01, T-03 et T-05, sans arbitrage juridique de fond : la notice
+voyage désormais avec le contrat (PDF envoyé et PDF signé archivé), et un bail ne peut plus partir
+en signature sans DPE valide ni pour un logement classé G ; la révision de loyer est bloquée pour
+les passoires F/G. Le calendrier d'interdiction (G→2025, F→2028, E→2034) est appliqué selon l'année.
+Reste à valider par le juriste : la **version officielle exacte** de la notice (checklist #1).
 
 **Note** : T-01, T-03 et T-05 ne nécessitent aucun arbitrage juridique de fond (hors version
 exacte de la notice) et peuvent être implémentés sans risque de contredire le juriste.

@@ -66,6 +66,7 @@ public class RevisionLoyerService {
     private final StorageService storageService;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final com.howners.gestion.service.contract.DpeComplianceService dpeComplianceService;
     private final com.howners.gestion.service.document.DocumentSequenceService documentSequenceService;
     private final NotificationDispatcher notificationDispatcher;
     private final GeneratedDocumentService generatedDocumentService;
@@ -115,6 +116,8 @@ public class RevisionLoyerService {
         if (rental.getStatus() != RentalStatus.ACTIVE) {
             throw new BadRequestException("La révision de loyer n'est possible que sur une location active.");
         }
+        // Gel des loyers des passoires thermiques F/G (loi Climat, T-05).
+        dpeComplianceService.assertCanReviseRent(rental.getProperty());
         if (revisionRepository.existsByRentalIdAndDateRevisionAfterAndStatutNot(
                 rentalId, LocalDate.now().minusMonths(11), StatutRevision.ANNULEE)) {
             throw new BusinessException("Une révision a déjà été effectuée il y a moins d'un an pour cette location.");

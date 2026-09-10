@@ -50,6 +50,7 @@ public class ContractService {
     private final StorageService storageService;
     private final AuditService auditService;
     private final com.howners.gestion.service.subscription.FeatureGateService featureGateService;
+    private final LegalNoticeService legalNoticeService;
 
     /**
      * Crée un nouveau contrat à partir d'une location
@@ -107,9 +108,10 @@ public class ContractService {
         contract = contractRepository.save(contract);
         log.info("Contract created with number: {}", contractNumber);
 
-        // Générer le PDF
+        // Générer le PDF avec la notice d'information annexée (annexe obligatoire du bail, T-01).
         String fileName = pdfService.generateFileName(contractNumber, 1);
-        byte[] pdfBytes = pdfService.generatePdf(contractContent, "Contrat de location - " + contractNumber);
+        byte[] pdfBytes = pdfService.generatePdf(contractContent, "Contrat de location - " + contractNumber,
+                legalNoticeService.noticeAppendixHtml());
         String pdfHash = pdfService.calculateHash(pdfBytes);
 
         // Uploader le PDF
@@ -187,10 +189,11 @@ public class ContractService {
                     contract.getRental()
             );
 
-            // Générer le nouveau PDF avec le contenu rempli
+            // Générer le nouveau PDF avec le contenu rempli + notice d'information annexée (T-01).
             String fileName = pdfService.generateFileName(contract.getContractNumber(), newVersion);
             byte[] pdfBytes = pdfService.generatePdf(filledContent,
-                    "Contrat de location - " + contract.getContractNumber() + " v" + newVersion);
+                    "Contrat de location - " + contract.getContractNumber() + " v" + newVersion,
+                    legalNoticeService.noticeAppendixHtml());
             String pdfHash = pdfService.calculateHash(pdfBytes);
 
             // Uploader le nouveau PDF
