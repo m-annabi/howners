@@ -76,6 +76,55 @@ sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.
 
 (Liquibase applique les migrations tout seul au démarrage du backend.)
 
+## 6. Mettre le staging en pause (arrêter les frais, garder la configuration)
+
+Seul AWS génère des frais récurrents : l'instance Lightsail (~24 $/mois, facturée
+**même arrêtée**), l'IP statique si elle n'est plus attachée à une instance
+(~3,6 $/mois), la zone hébergée Route 53 (0,50 $/mois) et le domaine
+`howners-app.com` (renouvellement annuel chez Amazon Registrar). Mailtrap (plan
+gratuit), Stripe (mode test), DocuSign (démo) et Sentry ne facturent rien.
+
+Le job `deploy-staging` de la CI ne tourne que si la variable de dépôt GitHub
+`STAGING_DEPLOY_ENABLED` vaut `true` : sans elle, un push sur `main` ne tente
+plus de joindre le serveur et la CI reste verte. Les secrets (`STAGING_SSH_KEY`)
+et le workflow sont conservés.
+
+1. **Sauvegarder la configuration du serveur** (le seul fichier qui n'est pas
+   dans Git) :
+   ```bash
+   scp ubuntu@51.44.0.177:~/howners/.env.prod ./howners-staging.env.prod   # à garder hors Git
+   ```
+   Optionnel, si les données de test ont de la valeur : `scripts/db-backup.sh`.
+2. **Snapshot de l'instance** : console Lightsail → instance → *Snapshots* →
+   *Create snapshot*. Le snapshot conserve le disque complet (Docker, volumes
+   Postgres/MinIO, `.env.prod`) pour ~0,05 $/Go/mois (≈ 1-2 $/mois).
+3. **Supprimer l'instance** (pas seulement l'arrêter) : *Delete*.
+4. **Libérer l'IP statique** : *Networking* → IP statique → *Delete* (sinon
+   elle est facturée dès qu'elle n'est plus attachée). Retenir que l'IP figure
+   dans `.github/workflows/ci.yml` et dans les 3 entrées A de Route 53 : elle
+   changera à la reprise.
+5. **Route 53 / domaine** : laisser la zone hébergée (0,50 $/mois, évite de
+   refaire les entrées) ou la supprimer si ces centimes comptent. Pour le
+   domaine, vérifier dans *Route 53 → Registered domains* que le renouvellement
+   automatique correspond au choix (le domaine est perdu s'il n'est pas
+   renouvelé à l'échéance, en août).
+6. Ne **pas** activer `STAGING_DEPLOY_ENABLED` : le déploiement reste en pause.
+
+Vérifier le lendemain dans *Billing → Bills* que seules les lignes Route 53 /
+snapshot subsistent (l'alerte « My Monthly Cost Budget » à 10 $ ne doit plus
+partir).
+
+### Reprendre
+
+1. Lightsail → *Snapshots* → *Create new instance* depuis le snapshot (même taille
+   ou plus grande), attacher une nouvelle IP statique, ouvrir 22/80/443.
+2. Mettre à jour les 3 entrées A de Route 53 avec la nouvelle IP, puis remplacer
+   l'ancienne IP dans `.github/workflows/ci.yml` (deux occurrences).
+3. Vérifier que `~/howners/.env.prod` est bien présent sur l'instance restaurée
+   (sinon le recopier depuis la sauvegarde de l'étape 1).
+4. Créer la variable de dépôt `STAGING_DEPLOY_ENABLED=true`, puis relancer le
+   dernier workflow de `main` (ou pousser) : la CI redéploie les images.
+
 ## Variante : vrai S3 AWS au lieu de MinIO
 
 Le backend parle au stockage via le SDK AWS — MinIO n'est qu'un S3 local. Pour
@@ -106,4 +155,4 @@ hôtes s'accommodent mal avec l'option MinIO public.
 - **Données** : le volume `postgres_data` persiste tant qu'on ne fait pas
   `docker compose down -v`. Sauvegardes : `scripts/db-backup.sh`.
 - **Coût total** : ~24 $/mois (Lightsail 4 GB) + quelques centimes de S3.
-  Penser à supprimer l'instance quand le staging ne sert plus.
+  Penser à supprimer l'instance quand le staging ne sert plus (procédure §6).
