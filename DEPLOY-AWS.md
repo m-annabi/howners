@@ -103,23 +103,32 @@ et le workflow sont conservés.
    elle est facturée dès qu'elle n'est plus attachée). Retenir que l'IP figure
    dans `.github/workflows/ci.yml` et dans les 3 entrées A de Route 53 : elle
    changera à la reprise.
-5. **Route 53 / domaine** : laisser la zone hébergée (0,50 $/mois, évite de
-   refaire les entrées) ou la supprimer si ces centimes comptent. Pour le
-   domaine, vérifier dans *Route 53 → Registered domains* que le renouvellement
-   automatique correspond au choix (le domaine est perdu s'il n'est pas
-   renouvelé à l'échéance, en août).
-6. Ne **pas** activer `STAGING_DEPLOY_ENABLED` : le déploiement reste en pause.
+5. **Domaine `howners-app.com`** (décision : ne pas le conserver) : *Route 53 →
+   Registered domains → howners-app.com → Auto-renew → Disable*. Le domaine
+   reste actif jusqu'à son échéance (août 2027, déjà payé) puis expire sans
+   nouveau prélèvement ; il ne peut pas être remboursé avant. Il redevient
+   ensuite disponible pour n'importe qui.
+6. **Zone hébergée Route 53** : *Hosted zones → howners-app.com* → supprimer
+   d'abord les 3 entrées A (`staging`, `api.staging`, `s3.staging`), puis
+   *Delete hosted zone* (les entrées NS/SOA partent avec). Fin des 0,50 $/mois.
+7. Ne **pas** activer `STAGING_DEPLOY_ENABLED` : le déploiement reste en pause.
 
-Vérifier le lendemain dans *Billing → Bills* que seules les lignes Route 53 /
-snapshot subsistent (l'alerte « My Monthly Cost Budget » à 10 $ ne doit plus
-partir).
+Vérifier le lendemain dans *Billing → Bills* que seule la ligne du snapshot
+subsiste (l'alerte « My Monthly Cost Budget » à 10 $ ne doit plus partir).
+
+> Le domaine `howners.com` (cible de `environment.prod.ts`, du `Caddyfile` et de
+> la demande d'approbation Mailtrap) n'est pas enregistré sur ce compte AWS ; s'il
+> est déposé chez un autre registrar, son renouvellement se gère là-bas.
 
 ### Reprendre
 
 1. Lightsail → *Snapshots* → *Create new instance* depuis le snapshot (même taille
    ou plus grande), attacher une nouvelle IP statique, ouvrir 22/80/443.
-2. Mettre à jour les 3 entrées A de Route 53 avec la nouvelle IP, puis remplacer
-   l'ancienne IP dans `.github/workflows/ci.yml` (deux occurrences).
+2. DNS : sans domaine, choisir un nouveau nom (ou re-déposer `howners-app.com`
+   s'il est encore libre), recréer une zone hébergée et les 3 entrées A vers la
+   nouvelle IP ; remplacer l'ancienne IP dans `.github/workflows/ci.yml` (deux
+   occurrences) et, si le nom change, `APP_DOMAIN` dans le workflow (build-arg
+   de l'image `:staging` et URLs du contrôle de santé) et dans `.env.prod`.
 3. Vérifier que `~/howners/.env.prod` est bien présent sur l'instance restaurée
    (sinon le recopier depuis la sauvegarde de l'étape 1).
 4. Créer la variable de dépôt `STAGING_DEPLOY_ENABLED=true`, puis relancer le
