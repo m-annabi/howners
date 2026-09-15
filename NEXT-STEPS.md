@@ -1,5 +1,11 @@
 # Next steps — what's left and why I can't ship it from here
 
+> Mise à jour : les sections historiques ci-dessous ne constituent plus l'état du code.
+> Stripe Connect utilise désormais les **direct charges** (`setStripeAccount`) ; ne pas
+> ajouter de destination charges sur la base de l'ancien item #2. La notice d'information
+> est déjà annexée par `LegalNoticeService`. L'inventaire mobilier existe (migration 109).
+> Voir `HARDENING-STATUS.md` pour le lot de sécurisation, ses vérifications et ses limites.
+
 Cette session a traité 11 items du backlog d'audit (#1, #6, #8, #9, #10, #16, #17, #18, #19, #20, #5/RGPD). Les 5 suivants nécessitent des actions externes — du code seul ne les déverrouille pas.
 
 ## #2 — Routing Stripe Connect des paiements

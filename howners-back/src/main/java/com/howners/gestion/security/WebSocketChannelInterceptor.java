@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.UUID;
 
@@ -36,12 +37,39 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
             if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
                 UUID userId = tokenProvider.getUserIdFromToken(token);
                 UserDetails userDetails = customUserDetailsService.loadUserById(userId);
+                if (!(userDetails instanceof UserPrincipal principal) || !principal.isEnabled()
+                        || tokenProvider.getTokenVersionFromToken(token) != principal.getTokenVersion()) {
+                    throw new AccessDeniedException("Session invalide ou révoquée");
+                }
+                if (accessor.getSessionAttributes() == null) {
+                    throw new AccessDeniedException("Session WebSocket absente");
+                }
+                accessor.getSessionAttributes().put("authToken", token);
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 accessor.setUser(auth);
                 log.debug("WebSocket authenticated user: {}", userId);
             } else {
-                log.warn("WebSocket CONNECT with invalid or missing token");
+                throw new AccessDeniedException("Authentification requise");
+            }
+        }
+
+        if (accessor != null && (StompCommand.SUBSCRIBE.equals(accessor.getCommand())
+                || StompCommand.SEND.equals(accessor.getCommand()))) {
+            String token = accessor.getSessionAttributes() == null ? null
+                    : (String) accessor.getSessionAttributes().get("authToken");
+            if (accessor.getUser() == null || !StringUtils.hasText(token) || !tokenProvider.validateToken(token)) {
+                throw new AccessDeniedException("Authentification requise");
+            }
+            UserDetails current = customUserDetailsService.loadUserById(tokenProvider.getUserIdFromToken(token));
+            if (!(current instanceof UserPrincipal principal) || !principal.isEnabled()
+                    || principal.getTokenVersion() != tokenProvider.getTokenVersionFromToken(token)) {
+                throw new AccessDeniedException("Session révoquée");
+            }
+            // Les messages sont envoyés par l'API REST ; le socket ne permet que la réception privée.
+            if (StompCommand.SEND.equals(accessor.getCommand())
+                    || !"/user/queue/messages".equals(accessor.getDestination())) {
+                throw new AccessDeniedException("Destination interdite");
             }
         }
 

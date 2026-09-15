@@ -27,6 +27,11 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Version
+    @Builder.Default
+    @Column(nullable = false)
+    private Long version = 0L;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rental_id", nullable = false)
     private Rental rental;
@@ -54,6 +59,13 @@ public class Payment {
 
     @Column(name = "stripe_charge_id")
     private String stripeChargeId;
+
+    @Column(name = "stripe_checkout_session_id")
+    private String stripeCheckoutSessionId;
+
+    @Builder.Default
+    @Column(name = "stripe_checkout_attempt", nullable = false)
+    private Integer stripeCheckoutAttempt = 0;
 
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;

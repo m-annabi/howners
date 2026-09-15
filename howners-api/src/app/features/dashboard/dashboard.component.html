@@ -93,9 +93,15 @@
     <div *ngIf="error" class="hw-alert hw-alert--danger">
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>{{ error }}</span>
+      <button type="button" class="dash-btn" (click)="loadStats()">Réessayer</button>
     </div>
 
     <!-- Onboarding -->
+    <div *ngIf="actionItemsError" class="hw-alert hw-alert--danger" role="alert">
+      Certaines actions à traiter n'ont pas pu être chargées. Les compteurs peuvent être incomplets.
+      <button type="button" class="dash-btn" (click)="loadActionItems()">Recharger les actions</button>
+    </div>
+
     <section *ngIf="showOnboarding" class="onboarding">
       <header class="onboarding__header">
         <h3 class="onboarding__title">
@@ -236,8 +242,10 @@
                 </div>
                 <ng-template #noActions>
                   <div class="widget-empty">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <span>Tout est à jour — aucune action urgente</span>
+                    <i class="bi" [class.bi-check-circle-fill]="!actionItemsError && !!actionItems"
+                       [class.bi-exclamation-triangle]="actionItemsError"></i>
+                    <span>{{ actionItemsError ? 'Vérification incomplète — rechargez les actions.' :
+                      (actionItems ? 'Tout est à jour — aucune action urgente' : 'Vérification des actions en cours…') }}</span>
                   </div>
                 </ng-template>
               </div>

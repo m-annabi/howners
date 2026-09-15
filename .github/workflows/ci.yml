@@ -10,6 +10,21 @@ jobs:
   backend:
     name: Backend — Build & Test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: howners_ci
+          POSTGRES_USER: howners_ci
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U howners_ci -d howners_ci"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      HOWNERS_TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/howners_ci
+      HOWNERS_TEST_DATABASE_USER: howners_ci
+      HOWNERS_TEST_DATABASE_PASSWORD: ci-only-password
     defaults:
       run:
         working-directory: howners-back
@@ -52,6 +67,34 @@ jobs:
       - name: Build
         run: npx ng build
 
+      - name: Unit tests
+        run: npx ng test --watch=false --browsers=ChromeHeadless --code-coverage
+
+      - name: Use Node 22 for Cypress 15
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: End-to-end UI tests (API fixtures)
+        # Development build keeps all API requests on localhost, never on production.
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: howners-api
+          install: false
+          start: npx ng serve --configuration development --host 127.0.0.1
+          wait-on: http://localhost:4200
+          browser: chrome
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-artifacts
+          path: |
+            howners-api/cypress/screenshots
+            howners-api/cypress/videos
+            howners-api/coverage
+
   docker:
     name: Docker — Build & Push
     runs-on: ubuntu-latest
@@ -66,13 +109,13 @@ jobs:
             context: ./howners-back
             scope: howners-backend
             tags: |
-              type=sha,format=short
+              type=sha,format=long
               type=raw,value=latest,enable={{is_default_branch}}
           - image: howners-frontend
             context: ./howners-api
             scope: howners-frontend
             tags: |
-              type=sha,format=short
+              type=sha,format=long
               type=raw,value=latest,enable={{is_default_branch}}
           # Variante staging : l'URL de l'API est figée dans le bundle Angular au
           # build → une image par environnement (build-arg APP_DOMAIN).
@@ -83,6 +126,7 @@ jobs:
               APP_DOMAIN=staging.howners-app.com
             tags: |
               type=raw,value=staging,enable={{is_default_branch}}
+              type=sha,format=long,suffix=-staging
     steps:
       - uses: actions/checkout@v4
 
@@ -166,9 +210,8 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | ssh ubuntu@51.44.0.177 \
             "sudo docker login ghcr.io -u '$GHCR_USER' --password-stdin \
             && cd ~/howners \
-            && sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml pull backend frontend \
-            && sudo FRONTEND_TAG=staging docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans \
-            && sudo docker image prune -f \
+            && sudo BACKEND_TAG=sha-${{ github.sha }} FRONTEND_TAG=sha-${{ github.sha }}-staging docker compose --env-file .env.prod -f docker-compose.prod.yml pull backend frontend \
+            && sudo BACKEND_TAG=sha-${{ github.sha }} FRONTEND_TAG=sha-${{ github.sha }}-staging docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans \
             && df -h / | tail -1"
 
       - name: Vérifier la santé

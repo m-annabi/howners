@@ -34,7 +34,7 @@ services:
   backend:
     # Image construite par la CI (GHCR). `build:` reste disponible en secours :
     # `docker compose build` localement si besoin, mais le déploiement fait `pull`.
-    image: ghcr.io/m-annabi/howners-backend:latest
+    image: ghcr.io/m-annabi/howners-backend:${BACKEND_TAG:-latest}
     build:
       context: ./howners-back
       dockerfile: Dockerfile

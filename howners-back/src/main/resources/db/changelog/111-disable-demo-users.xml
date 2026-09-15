@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+    <changeSet id="111-disable-demo-users" author="howners" context="@prod">
+        <comment>Désactive les comptes du domaine de démonstration réservé, sans supprimer leurs données.</comment>
+        <sql>
+            UPDATE users SET enabled = false, token_version = COALESCE(token_version, 0) + 1,
+                             updated_at = CURRENT_TIMESTAMP
+            WHERE lower(email) LIKE '%@howners.test';
+        </sql>
+        <!-- Pas de rollback automatique : ne jamais réactiver ces accès lors d'un retour arrière. -->
+    </changeSet>
+</databaseChangeLog>

@@ -14,6 +14,8 @@ import java.util.UUID;
 @Repository
 public interface ReceiptRepository extends JpaRepository<Receipt, UUID> {
 
+    boolean existsByRentalPropertyOwnerId(UUID ownerId);
+
     List<Receipt> findByRentalId(UUID rentalId);
 
     // findByReceiptNumber supprimé : le numéro n'est plus unique globalement
