@@ -28,6 +28,7 @@ public class WebhookController {
 
     private final ContractESignatureService esignatureService;
     private final PaymentService paymentService;
+    private final com.howners.gestion.service.payment.StripeEventProcessor stripeEventProcessor;
     private final SubscriptionService subscriptionService;
     private final StripeConnectService stripeConnectService;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
@@ -37,9 +38,6 @@ public class WebhookController {
 
     @Value("${stripe.connect-webhook-secret:}")
     private String stripeConnectWebhookSecret;
-
-    @Value("${stripe.api-key:}")
-    private String stripeApiKey;
 
     /**
      * Webhook DocuSign
@@ -92,6 +90,7 @@ public class WebhookController {
         }
 
         try {
+            stripeEventProcessor.process(event, () -> {
             // Abonnements : on lit le JSON BRUT du payload (getRawJson) plutôt que l'objet typé.
             // getObject() renvoie vide quand la version d'API de l'événement diffère de celle du
             // SDK, et depuis l'API 2025+ la période est portée par la ligne d'abonnement (non
@@ -108,11 +107,12 @@ public class WebhookController {
             }
 
             // Événements de paiement (processStripeWebhook revérifie la signature)
-            paymentService.processStripeWebhook(payload, signature);
+            paymentService.handleStripeEvent(event);
+            });
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
             log.error("Error processing Stripe webhook", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Webhook processing failed");
+            return ResponseEntity.internalServerError().body("Webhook processing failed");
         }
     }
 
@@ -140,6 +140,7 @@ public class WebhookController {
         }
 
         try {
+            stripeEventProcessor.process(event, () -> {
             if ("account.updated".equals(event.getType())
                     && resolveEventObject(event) instanceof Account account) {
                 stripeConnectService.processAccountUpdate(
@@ -147,10 +148,11 @@ public class WebhookController {
             }
 
             paymentService.handleStripeEvent(event);
+            });
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
             log.error("Error processing Stripe Connect webhook", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Webhook processing failed");
+            return ResponseEntity.internalServerError().body("Webhook processing failed");
         }
     }
 
@@ -165,8 +167,7 @@ public class WebhookController {
             try {
                 return event.getDataObjectDeserializer().deserializeUnsafe();
             } catch (com.stripe.exception.EventDataObjectDeserializationException e) {
-                log.error("Impossible de désérialiser l'objet de l'événement Stripe {}", event.getType(), e);
-                return null;
+                throw new IllegalStateException("Événement Stripe illisible", e);
             }
         });
     }
@@ -180,8 +181,7 @@ public class WebhookController {
     private void handleSubscriptionEvent(Event event) {
         String rawJson = event.getDataObjectDeserializer().getRawJson();
         if (rawJson == null || rawJson.isBlank()) {
-            log.warn("Événement d'abonnement {} sans données JSON exploitables", event.getType());
-            return;
+            throw new IllegalArgumentException("Événement d'abonnement sans données");
         }
         try {
             com.fasterxml.jackson.databind.JsonNode sub = objectMapper.readTree(rawJson);
@@ -201,7 +201,7 @@ public class WebhookController {
             subscriptionService.processSubscriptionWebhook(
                     event.getType(), subscriptionId, customerId, priceId, periodStart, periodEnd);
         } catch (Exception e) {
-            log.error("Échec du traitement de l'événement d'abonnement {}", event.getType(), e);
+            throw new IllegalStateException("Échec du traitement de l'abonnement", e);
         }
     }
 
@@ -214,9 +214,7 @@ public class WebhookController {
     }
 
     /**
-     * Construit l'événement Stripe en vérifiant la signature quand un secret est
-     * configuré ; en l'absence de secret (dev local) on retombe sur un parsing simple,
-     * comme {@code PaymentService.processStripeWebhook}.
+     * Exige un secret et une signature valides dans tous les environnements.
      */
     private Event constructStripeEvent(String payload, String signature) throws SignatureVerificationException {
         return constructStripeEvent(payload, signature, stripeWebhookSecret);
@@ -229,11 +227,7 @@ public class WebhookController {
         }
         // Secret absent avec Stripe configuré : refus — un événement forgé non signé pourrait
         // solder un paiement ou basculer un statut Connect.
-        if (stripeApiKey != null && !stripeApiKey.isBlank()) {
-            throw new SignatureVerificationException("Webhook secret non configuré : événement refusé", signature);
-        }
-        // Ni clé ni secret = dev/local sans Stripe.
-        return Event.GSON.fromJson(payload, Event.class);
+        throw new SignatureVerificationException("Webhook secret non configuré : événement refusé", signature);
     }
 
     /**

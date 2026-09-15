@@ -78,7 +78,7 @@ class PaymentWebhookTest {
         String json = "{\"type\":\"" + type + "\",\"data\":{\"object\":{"
                 + "\"id\":\"pi_test_123\",\"object\":\"payment_intent\","
                 + meta
-                + "\"latest_charge\":\"ch_test_456\"}}}";
+                + "\"amount_received\":85000,\"currency\":\"eur\",\"latest_charge\":\"ch_test_456\"}}}";
         return ApiResource.GSON.fromJson(json, Event.class);
     }
 
@@ -128,5 +128,26 @@ class PaymentWebhookTest {
         payment.setStatus(PaymentStatus.PAID);
         paymentService.handleStripeEvent(intentEvent("payment_intent.payment_failed", paymentId.toString()));
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+    }
+
+    @Test
+    void succeeded_refuseUnMontantIncoherent() {
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.of(payment));
+        payment.setAmount(new BigDecimal("900.00"));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                paymentService.handleStripeEvent(intentEvent("payment_intent.succeeded", paymentId.toString())))
+                .isInstanceOf(com.howners.gestion.exception.BadRequestException.class);
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING);
+        verify(receiptService, never()).generateReceipt(any());
+    }
+
+    @Test
+    void succeeded_propageLEchecDeQuittancePourReprise() {
+        when(paymentRepository.findById(paymentId)).thenReturn(Optional.of(payment));
+        org.mockito.Mockito.doThrow(new IllegalStateException("Stockage indisponible"))
+                .when(receiptService).generateReceipt(paymentId);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                paymentService.handleStripeEvent(intentEvent("payment_intent.succeeded", paymentId.toString())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -32,6 +32,7 @@ public class OnboardingService {
     private final PropertyRepository propertyRepository;
     private final RentalRepository rentalRepository;
     private final ContractRepository contractRepository;
+    private final com.howners.gestion.repository.ReceiptRepository receiptRepository;
 
     /**
      * Retourne le statut d'onboarding de l'utilisateur courant.
@@ -80,6 +81,13 @@ public class OnboardingService {
                 .label("Créer votre premier contrat")
                 .done(hasContract)
                 .link("/contracts/new")
+                .build());
+
+        steps.add(OnboardingStepResponse.builder()
+                .key("first_receipt")
+                .label("Confirmer un loyer reçu et générer votre première quittance")
+                .done(receiptRepository.existsByRentalPropertyOwnerId(currentUserId))
+                .link("/payments")
                 .build());
 
         // Calcul du pourcentage de completion

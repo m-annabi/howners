@@ -28,7 +28,6 @@ import com.howners.gestion.service.notification.NotificationService;
 import com.howners.gestion.service.receipt.ReceiptService;
 import com.howners.gestion.domain.notification.NotificationType;
 import com.stripe.exception.SignatureVerificationException;
-import com.stripe.net.ApiResource;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
@@ -264,6 +263,11 @@ public class PaymentService {
         String connectedAccountId = requireOnlinePaymentEnabled(owner);
 
         try {
+            if (payment.getStripePaymentIntentId() != null) {
+                PaymentIntent existing = PaymentIntent.retrieve(payment.getStripePaymentIntentId(),
+                        RequestOptions.builder().setStripeAccount(connectedAccountId).build());
+                return new StripePaymentIntentResponse(existing.getClientSecret(), existing.getId(), existing.getStatus());
+            }
             long amountInCents = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
 
             BigDecimal platformFeePercent = platformFeeService.getFeePercentPourProprietaire(owner.getId());
@@ -280,7 +284,8 @@ public class PaymentService {
                     .putMetadata("payment_id", payment.getId().toString())
                     .putMetadata("rental_id", payment.getRental().getId().toString())
                     .build();
-            RequestOptions options = RequestOptions.builder().setStripeAccount(connectedAccountId).build();
+            RequestOptions options = RequestOptions.builder().setStripeAccount(connectedAccountId)
+                    .setIdempotencyKey("rent-intent:" + paymentId).build();
 
             PaymentIntent intent = PaymentIntent.create(params, options);
             log.info("Stripe Connect (direct charge): PaymentIntent {} créé sur le compte {} (commission {} % = {} c)",
@@ -311,14 +316,26 @@ public class PaymentService {
     public CheckoutSessionResponse createRentCheckoutSession(UUID paymentId) {
         Payment payment = findPaymentAndCheckAccess(paymentId);
 
-        if (payment.getStatus() == PaymentStatus.PAID) {
-            throw new BadRequestException("Ce paiement est déjà réglé.");
+        if (payment.getStatus() != PaymentStatus.PENDING && payment.getStatus() != PaymentStatus.LATE
+                && payment.getStatus() != PaymentStatus.FAILED) {
+            throw new BadRequestException("Ce paiement n'est pas payable dans son état actuel.");
         }
 
         User owner = payment.getRental().getProperty().getOwner();
         String connectedAccountId = requireOnlinePaymentEnabled(owner);
 
         try {
+            if (payment.getStripeCheckoutSessionId() != null) {
+                Session existing = Session.retrieve(payment.getStripeCheckoutSessionId(),
+                        RequestOptions.builder().setStripeAccount(connectedAccountId).build());
+                if ("open".equals(existing.getStatus())) {
+                    return new CheckoutSessionResponse(existing.getId(), existing.getUrl());
+                }
+                if (!"expired".equals(existing.getStatus())) {
+                    throw new BadRequestException("Paiement en cours de confirmation. Actualisez son état.");
+                }
+                payment.setStripeCheckoutAttempt(payment.getStripeCheckoutAttempt() + 1);
+            }
             long amountInCents = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
             BigDecimal feePercent = platformFeeService.getFeePercentPourProprietaire(owner.getId());
             long platformFee = Math.round(amountInCents * feePercent.doubleValue() / 100.0);
@@ -347,9 +364,11 @@ public class PaymentService {
                     .setPaymentIntentData(piData)
                     .putMetadata("payment_id", payment.getId().toString())
                     .build();
-            RequestOptions options = RequestOptions.builder().setStripeAccount(connectedAccountId).build();
+            RequestOptions options = RequestOptions.builder().setStripeAccount(connectedAccountId)
+                    .setIdempotencyKey("rent-checkout:" + paymentId + ":" + payment.getStripeCheckoutAttempt()).build();
 
             Session session = Session.create(params, options);
+            payment.setStripeCheckoutSessionId(session.getId());
             payment.setPaymentMethod("stripe");
             paymentRepository.save(payment);
 
@@ -468,6 +487,7 @@ public class PaymentService {
      * charges sur le compte Connect du bailleur, leurs événements n'arrivent QUE par ici
      * (l'endpoint plateforme ne les voit jamais). Secret de signature distinct.
      */
+    @Transactional
     public void processStripeConnectWebhook(String payload, String sigHeader) {
         handleStripeEvent(verifyAndParse(payload, sigHeader, stripeConnectWebhookSecret));
     }
@@ -483,8 +503,7 @@ public class PaymentService {
                 log.error("Webhook Stripe reçu sans secret configuré : événement rejeté");
                 throw new BadRequestException("Webhook secret not configured");
             }
-            // Ni clé ni secret = dev/local sans Stripe.
-            return ApiResource.GSON.fromJson(payload, Event.class);
+            throw new BadRequestException("Webhook secret not configured");
         } catch (BadRequestException e) {
             throw e;
         } catch (Exception e) {
@@ -495,6 +514,7 @@ public class PaymentService {
     }
 
     /** Dispatch d'un événement Stripe déjà vérifié (appelé par les deux endpoints). */
+    @Transactional
     public void handleStripeEvent(Event event) {
         log.info("Processing Stripe event: {}", event.getType());
         switch (event.getType()) {
@@ -515,14 +535,12 @@ public class PaymentService {
     private com.fasterxml.jackson.databind.JsonNode readEventObject(Event event) {
         String rawJson = event.getDataObjectDeserializer().getRawJson();
         if (rawJson == null || rawJson.isBlank()) {
-            log.warn("Événement Stripe {} sans données JSON exploitables", event.getType());
-            return null;
+            throw new IllegalArgumentException("Événement Stripe sans données");
         }
         try {
             return objectMapper.readTree(rawJson);
         } catch (Exception e) {
-            log.error("JSON d'événement Stripe illisible ({})", event.getType(), e);
-            return null;
+            throw new IllegalArgumentException("Événement Stripe illisible", e);
         }
     }
 
@@ -551,6 +569,15 @@ public class PaymentService {
         if (intent == null) return;
 
         resolveWebhookPayment(intent).ifPresent(payment -> {
+            if (!intent.hasNonNull("amount_received")
+                    || intent.path("amount_received").asLong(-1) != payment.getAmount().movePointRight(2).longValueExact()
+                    || !payment.getCurrency().equalsIgnoreCase(intent.path("currency").asText(""))) {
+                throw new BadRequestException("Montant ou devise Stripe incohérent");
+            }
+            if (event.getAccount() != null && !event.getAccount().equals(
+                    payment.getRental().getProperty().getOwner().getStripeConnectAccountId())) {
+                throw new BadRequestException("Compte Connect incohérent");
+            }
             // Idempotent : le retour navigateur (finalizeCheckout) a pu finaliser avant nous.
             if (payment.getStatus() == PaymentStatus.PAID) {
                 // Compléter la traçabilité si le retour navigateur n'avait pas la charge.
@@ -570,11 +597,8 @@ public class PaymentService {
 
             log.info("Payment {} marked as PAID via Stripe webhook", payment.getId());
 
-            try {
-                receiptService.generateReceipt(payment.getId());
-            } catch (Exception e) {
-                log.error("Failed to generate receipt for payment {}: {}", payment.getId(), e.getMessage());
-            }
+            // L'échec doit annuler le traitement de l'événement pour permettre une reprise Stripe.
+            receiptService.generateReceipt(payment.getId());
             auditService.logAction(AuditAction.PAYMENT_CONFIRMED, "Payment", payment.getId());
         });
     }
@@ -584,6 +608,10 @@ public class PaymentService {
         if (intent == null) return;
 
         resolveWebhookPayment(intent).ifPresent(payment -> {
+            if (event.getAccount() != null && !event.getAccount().equals(
+                    payment.getRental().getProperty().getOwner().getStripeConnectAccountId())) {
+                throw new BadRequestException("Compte Connect incohérent");
+            }
             // Un paiement déjà soldé ne repasse jamais FAILED (événement retardataire/rejoué).
             if (payment.getStatus() == PaymentStatus.PAID) return;
             payment.setStatus(PaymentStatus.FAILED);

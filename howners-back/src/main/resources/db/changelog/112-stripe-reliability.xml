@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.28.xsd">
+    <changeSet id="112-stripe-reliability" author="howners">
+        <createTable tableName="stripe_processed_events">
+            <column name="event_id" type="varchar(255)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="event_type" type="varchar(255)"><constraints nullable="false"/></column>
+            <column name="processed_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addColumn tableName="payments">
+            <column name="version" type="bigint" defaultValueNumeric="0"><constraints nullable="false"/></column>
+            <column name="stripe_checkout_session_id" type="varchar(255)"/>
+            <column name="stripe_checkout_attempt" type="integer" defaultValueNumeric="0"><constraints nullable="false"/></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

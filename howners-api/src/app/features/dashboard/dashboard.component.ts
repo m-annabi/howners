@@ -42,6 +42,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   stats: DashboardStats | null = null;
   loading = true;
   error: string | null = null;
+  actionItemsError = false;
   actionItems: ActionItems | null = null;
   private missingEdlRentalIds: string[] = [];
 
@@ -324,15 +325,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 
   loadActionItems(): void {
+    this.actionItemsError = false;
     const today = new Date();
     const in30Days = new Date();
     in30Days.setDate(today.getDate() + 30);
 
     forkJoin({
-      payments: this.paymentService.getAll().pipe(catchError(() => of([]))),
-      contracts: this.contractService.getMyContracts().pipe(catchError(() => of([]))),
-      applications: this.applicationService.getReceivedApplications().pipe(catchError(() => of([]))),
-      edls: this.etatDesLieuxService.getMyEdls().pipe(catchError(() => of([])))
+      payments: this.paymentService.getAll().pipe(catchError(() => { this.actionItemsError = true; return of([]); })),
+      contracts: this.contractService.getMyContracts().pipe(catchError(() => { this.actionItemsError = true; return of([]); })),
+      applications: this.applicationService.getReceivedApplications().pipe(catchError(() => { this.actionItemsError = true; return of([]); })),
+      edls: this.etatDesLieuxService.getMyEdls().pipe(catchError(() => { this.actionItemsError = true; return of([]); }))
     }).pipe(
       map(({ payments, contracts, applications, edls }) => ({
         latePayments: payments.filter(p =>

@@ -5,6 +5,7 @@ spring:
 
   liquibase:
     enabled: true
+    contexts: prod
 
 logging:
   level:

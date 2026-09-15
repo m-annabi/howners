@@ -27,7 +27,7 @@ export class ErrorInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         let errorMessage = 'Une erreur est survenue';
 
-        if (error.error instanceof ErrorEvent) {
+        if (typeof ErrorEvent !== 'undefined' && error.error instanceof ErrorEvent) {
           // Erreur côté client
           errorMessage = `Erreur: ${error.error.message}`;
         } else {
@@ -53,7 +53,7 @@ export class ErrorInterceptor implements HttpInterceptor {
               if (this.storageService.getItem('access_token')) {
                 this.storageService.removeItem('access_token');
                 this.notificationService.error('Session expirée. Veuillez vous reconnecter.');
-                this.router.navigate(['/auth/login']);
+                this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
               }
               return throwError(() => error);
             case 402:
@@ -74,10 +74,16 @@ export class ErrorInterceptor implements HttpInterceptor {
               errorMessage = error.error?.message || 'Ressource non trouvée';
               break;
             case 409:
-              errorMessage = error.error?.message || 'Conflit détecté';
+              errorMessage = error.error?.message || 'Ces données ont changé. Actualisez la page avant de réessayer.';
               break;
+            case 429:
+              errorMessage = 'Trop de demandes. Patientez quelques instants avant de réessayer.';
+              break;
+            case 502:
+            case 503:
+            case 504:
             case 500:
-              errorMessage = error.error?.message || 'Erreur serveur. Veuillez réessayer plus tard.';
+              errorMessage = 'Le service est temporairement indisponible. Actualisez pour vérifier si votre action a abouti avant de la renouveler.';
               break;
             case 0:
               errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';

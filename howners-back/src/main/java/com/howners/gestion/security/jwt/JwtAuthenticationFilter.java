@@ -38,6 +38,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID userId = tokenProvider.getUserIdFromToken(jwt);
 
                 UserDetails userDetails = customUserDetailsService.loadUserById(userId);
+                if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()
+                        || !userDetails.isAccountNonExpired() || !userDetails.isCredentialsNonExpired()) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
                 // Révocation : un jeton dont la version est inférieure à la version courante de
                 // l'utilisateur a été invalidé (« déconnexion de toutes les sessions ») → on n'authentifie pas.
