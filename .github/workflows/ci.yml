@@ -170,7 +170,11 @@ jobs:
     permissions:
       contents: read
       packages: read
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Le job est en pause tant que la variable de dépôt STAGING_DEPLOY_ENABLED
+    # (Settings → Secrets and variables → Actions → Variables) ne vaut pas "true" :
+    # l'instance Lightsail peut être supprimée sans casser la CI, les secrets et
+    # la configuration restent en place. Procédure : DEPLOY-AWS.md §6.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.STAGING_DEPLOY_ENABLED == 'true'
     # Un seul déploiement à la fois ; les pushes rapprochés s'enchaînent.
     concurrency:
       group: deploy-staging
